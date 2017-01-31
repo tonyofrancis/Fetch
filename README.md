@@ -4,7 +4,7 @@ Fetch
 A better in app Download Manager for Android.
 
 Overview
-________
+--------
 
 Fetch is a simple yet powerful Android library that allows you to manage downloads
 more efficiently in your Android apps. It uses a background service on the device 
@@ -98,7 +98,7 @@ fetch.retry(downloadId);
 ```
 
 When you are done with an instance of Fetch, simply release it. **It is important
-to release instances of fetch to prevent memory leaks.**
+that you release instances of fetch to prevent memory leaks.**
 ```java
 //do work
 
