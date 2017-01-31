@@ -39,7 +39,7 @@ Using Fetch is easy! Just add the Gradle dependency to your application's build.
 file.
 
 ```java 
-compile 'com.tonyodev:fetch:1.0'
+compile 'com.tonyodev.fetch:fetch:1.0.0'
 ``` 
 
 Next, get an instance of Fetch and request a download. A unique ID will be returned 
