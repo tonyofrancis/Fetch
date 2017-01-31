@@ -21,6 +21,17 @@ Features
 * Easy progress and status tracking.
 * And more...
 
+Prerequisites
+-------------
+
+If you are saving downloads outside of your application's sandbox, you will need to
+add the following storage permissions to your application's manifest. For Android SDK version
+23(M) and above, you will also need to explicitly request these permissions from the user.
+```xml
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+```
+
 How to use Fetch
 ----------------
 
