@@ -44,6 +44,13 @@
             android:layout_height="wrap_content" />
 
         <Button
+            android:id="@+id/multiFragmentButton"
+            android:text="@string/multi_fragment"
+            android:layout_width="match_parent"
+            android:layout_marginBottom="20dp"
+            android:layout_height="wrap_content" />
+
+        <Button
             android:id="@+id/deleteAllButton"
             android:text="@string/delete_all_files"
             android:layout_width="match_parent"

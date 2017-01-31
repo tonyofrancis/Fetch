@@ -10,7 +10,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
+import com.tonyodev.fetch.Fetch;
+import com.tonyodev.fetch.request.RequestInfo;
+
 import java.io.File;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -57,6 +61,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.multiFragmentButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(MainActivity.this,FragmentActivity.class);
+                MainActivity.this.startActivity(intent);
+            }
+        });
+
         findViewById(R.id.deleteAllButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -76,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void deleteDownloadedFiles() {
 
+        clearAllDownloads();
+
         try {
 
             File fetchDir = new File(Data.getSaveDir());
@@ -86,6 +101,19 @@ public class MainActivity extends AppCompatActivity {
         }catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /*Removes all downloads managed by Fetch*/
+    private void clearAllDownloads() {
+
+        Fetch fetch = Fetch.getInstance(this);
+        List<RequestInfo> infos = fetch.get();
+
+        for (RequestInfo info : infos) {
+            fetch.remove(info.getId());
+        }
+
+        fetch.release();
     }
 
     @Override

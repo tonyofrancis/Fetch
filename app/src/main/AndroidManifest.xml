@@ -31,6 +31,8 @@
 
         <activity android:name=".MultiEnqueueActivity" />
 
+        <activity android:name=".FragmentActivity" />
+
     </application>
 
 </manifest>

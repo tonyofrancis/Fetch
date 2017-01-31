@@ -46,7 +46,7 @@ public class MultiEnqueueActivity extends AppCompatActivity implements FetchList
 
         fetch.enqueue(requests);
 
-        Toast.makeText(this,"Enqueued " + size + " requests. Check LogCat for" +
+        Toast.makeText(this,"Enqueued " + size + " requests. Check Logcat for" +
                 "progress status",Toast.LENGTH_LONG).show();
 
         fetch.release();

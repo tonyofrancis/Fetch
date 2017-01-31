@@ -28,4 +28,6 @@
     <string name="downloaded_files_deleted">Downloads Files Deleted</string>
     <string name="game_download_error">An error occurred, could not get game files.</string>
     <string name="multi_enqueue">Multi Enqueue Demo</string>
+    <string name="multi_fragment">MULTI FRAGMENT DEMO</string>
+    <string name="enqueue_error">Could not enqueue this request. Check logcat.</string>
 </resources>
