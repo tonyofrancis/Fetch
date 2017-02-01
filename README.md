@@ -1,3 +1,5 @@
+[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch/images/download.svg?version=1.0.0) ](https://bintray.com/tonyofrancis/maven/fetch/1.0.0/link)
+
 Fetch
 =====
 
