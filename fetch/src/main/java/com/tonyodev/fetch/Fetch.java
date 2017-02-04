@@ -180,6 +180,19 @@ public final class Fetch implements FetchConst {
     }
 
     /**
+     * Removes all FetchListeners from Fetch. The removed listeners will no longer be notified
+     * of status and progress updates.
+     *
+     * @throws NotUsableException if the release method has been called on Fetch.
+     * */
+    public void removeFetchListeners() {
+
+        Utils.throwIfNotUsable(this);
+
+        listeners.clear();
+    }
+
+    /**
      * Enqueues the new download request for downloading.
      *
      * @param request a download request.
