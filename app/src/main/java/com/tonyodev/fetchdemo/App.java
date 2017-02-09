@@ -28,6 +28,33 @@ public class App extends Application {
 
             }
         });
+
+
+        /*
+        * New Feature - FetchCall
+        * FetchCall Example
+        * */
+        /*
+        String url = Data.sampleUrls[1];
+        Request request = new Request(url);
+
+        Fetch.call(request, new FetchCall<String>() {
+
+            @Override
+            public void onSuccess(@Nullable String response, @NonNull Request request) {
+
+                Log.d("fetchCall",response);
+            }
+
+            @Override
+            public void onError(int error,@NonNull Request request) {
+                Log.d("fetchCall","error: " + error + "for request:" + request.toString());
+            }
+        });
+
+       // Fetch.cancelCall(request);
+
+       */
     }
 
     public Fetch getFetch() {

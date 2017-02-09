@@ -29,7 +29,9 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.util.ArrayMap;
 
+import com.tonyodev.fetch.callback.FetchCall;
 import com.tonyodev.fetch.callback.FetchTask;
 import com.tonyodev.fetch.exception.EnqueueException;
 import com.tonyodev.fetch.exception.InvalidStatusException;
@@ -57,6 +59,7 @@ public final class Fetch implements FetchConst {
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final Executor executor = Executors.newSingleThreadExecutor();
+    private static final ArrayMap<Request,FetchCallRunnable> callsMap = new ArrayMap<>();
 
     private final Context context;
     private final LocalBroadcastManager broadcastManager;
@@ -113,6 +116,65 @@ public final class Fetch implements FetchConst {
         }
 
         return new Fetch(context);
+    }
+
+    /**
+     * Runs a GET request in the background and returns the response as a String.
+     *
+     * @param request a download request. Cannot be null.
+     * @param fetchCall Callback used to return the GET response/data back to the caller.
+     *                  Cannot be null.
+     *
+     * @throws NullPointerException if request is null.
+     * @throws NullPointerException if the callback is null.
+     * */
+    public static void call(@NonNull Request request,@NonNull FetchCall<String> fetchCall) {
+
+        if(request == null) {
+            throw new NullPointerException("Request cannot be null");
+        }
+
+        if(fetchCall == null) {
+            throw new NullPointerException("FetchCall cannot be null");
+        }
+
+        if(callsMap.containsKey(request)) {
+            return;
+        }
+
+        FetchCallRunnable callRunnable = new FetchCallRunnable(request,fetchCall, callsCallback);
+
+        callsMap.put(request,callRunnable);
+
+        new Thread(callRunnable).start();
+    }
+
+    private static FetchCallRunnable.Callback callsCallback = new FetchCallRunnable.Callback() {
+        @Override
+        public void onDone(Request request) {
+            callsMap.remove(request);
+        }
+    };
+
+    /**
+     * Cancels a currently running FetchCall.
+     *
+     * @param request Request used to start the FetchCall.
+     * */
+    public static void cancelCall(@NonNull Request request) {
+
+        if(request == null) {
+            return;
+        }
+
+        if(callsMap.containsKey(request)) {
+
+            FetchCallRunnable fetchCallRunnable = callsMap.get(request);
+
+            if(fetchCallRunnable != null) {
+                fetchCallRunnable.setInterrupted(true);
+            }
+        }
     }
 
     /**

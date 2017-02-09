@@ -16,12 +16,14 @@
 package com.tonyodev.fetch.request;
 
 import android.net.Uri;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.tonyodev.fetch.Fetch;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,6 +39,18 @@ public final class Request {
     private final String filePath;
     private final List<Header> headers = new ArrayList<>();
     private int priority = Fetch.PRIORITY_NORMAL;
+
+    /**
+     * This class contains all the information necessary to request a new download with Fetch.
+     *
+     * @param url The download url where the file can be downloaded from. This parameter cannot
+     *            be null.
+     *
+     * @throws IllegalArgumentException if the url does not have an http or https scheme.
+     * */
+    public Request(@NonNull String url) {
+        this(url,generateFilePathFromUrl(url));
+    }
 
     /**
      * This class contains all the information necessary to request a new download with Fetch.
@@ -154,5 +168,26 @@ public final class Request {
         return "{url:" + url + " ,filePath:" + filePath + ",headers:{"
                 + headerBuilder.toString() + "}"
                 + ",priority:" + priority + "}";
+    }
+
+    static String generateFilePathFromUrl(String url) {
+
+        if(url == null) {
+            throw new NullPointerException("Url cannot be null");
+        }
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        String dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                .toString();
+
+        stringBuilder.append(dir)
+                     .append("/");
+
+        String fileName = new Date().toString() + "_" + Uri.parse(url).getLastPathSegment() ;
+
+        stringBuilder.append(fileName);
+
+        return stringBuilder.toString();
     }
 }
