@@ -34,10 +34,10 @@ public interface FetchListener {
      *
      * @param status download status of a request.
      * @param progress progress/percentage of a request.
-     * @param writtenBytes downloaded file bytes.
+     * @param downloadedBytes downloaded file bytes.
      * @param fileSize total file size.
      * @param error error code if the download status is STATUS_ERROR.
      *              Default value is -1(NO ERROR).
      * */
-    void onUpdate(long id, int status, int progress, long writtenBytes, long fileSize, int error);
+    void onUpdate(long id, int status, int progress, long downloadedBytes, long fileSize, int error);
 }

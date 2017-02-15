@@ -288,10 +288,10 @@ public final class Fetch implements FetchConst {
             int status = Fetch.STATUS_QUEUED;
             String headers = Utils.headerListToString(request.getHeaders());
             long fileSize = 0L;
-            long writtenBytes = 0L;
+            long downloadedBytes = 0L;
             int error = DEFAULT_EMPTY_VALUE;
 
-            boolean enqueued = dbHelper.insert(id,url,filePath,status,headers,writtenBytes,
+            boolean enqueued = dbHelper.insert(id,url,filePath,status,headers,downloadedBytes,
                     fileSize,priority,error);
 
             if(!enqueued) {
@@ -338,7 +338,7 @@ public final class Fetch implements FetchConst {
         String headers;
         int status;
         int priority;
-        long writtenBytes;
+        long downloadedBytes;
         long fileSize;
         int error;
 
@@ -356,12 +356,12 @@ public final class Fetch implements FetchConst {
                     headers = Utils.headerListToString(request.getHeaders());
                     status = Fetch.STATUS_QUEUED;
                     priority = request.getPriority();
-                    writtenBytes = 0L;
+                    downloadedBytes = 0L;
                     fileSize = 0L;
                     error = DEFAULT_EMPTY_VALUE;
 
                     String statement = dbHelper.getInsertStatement(id,url,filePath,status,headers,
-                            writtenBytes,fileSize,priority,error);
+                            downloadedBytes,fileSize,priority,error);
 
                     if(statement != null) {
                         statements.add(statement);
@@ -684,12 +684,12 @@ public final class Fetch implements FetchConst {
             int status = Fetch.STATUS_DONE;
             String headers = Utils.headerListToString(null);
             long fileSize = file.length();
-            long writtenBytes= fileSize;
+            long downloadedBytes= fileSize;
             int priority = Fetch.PRIORITY_NORMAL;
             int error = DEFAULT_EMPTY_VALUE;
 
             boolean inserted = dbHelper.insert(id, url, filePath, status, headers,
-                   writtenBytes,fileSize, priority, error);
+                   downloadedBytes,fileSize, priority, error);
 
             if(!inserted) {
                 throw new EnqueueException("could not insert request:" + filePath,ERROR_ENQUEUE_ERROR);
@@ -734,7 +734,7 @@ public final class Fetch implements FetchConst {
         String headers;
         int status;
         int priority;
-        long writtenBytes;
+        long downloadedBytes;
         long fileSize;
         int error;
 
@@ -758,12 +758,12 @@ public final class Fetch implements FetchConst {
                     headers = Utils.headerListToString(null);
                     status = Fetch.STATUS_DONE;
                     priority = Fetch.PRIORITY_NORMAL;
-                    writtenBytes = file.length();
-                    fileSize = writtenBytes;
+                    downloadedBytes = file.length();
+                    fileSize = downloadedBytes;
                     error = DEFAULT_EMPTY_VALUE;
 
                     String statement = dbHelper.getInsertStatement(id,url,filePath,status,headers,
-                            writtenBytes,fileSize,priority,error);
+                            downloadedBytes,fileSize,priority,error);
 
                     if(statement != null) {
                         statements.add(statement);
@@ -854,7 +854,7 @@ public final class Fetch implements FetchConst {
         private long id;
         private int status;
         private int progress;
-        private long writtenBytes;
+        private long downloadedBytes;
         private long fileSize;
         private int error;
 
@@ -868,12 +868,12 @@ public final class Fetch implements FetchConst {
             id = intent.getLongExtra(FetchService.EXTRA_ID, DEFAULT_EMPTY_VALUE);
             status = intent.getIntExtra(FetchService.EXTRA_STATUS,DEFAULT_EMPTY_VALUE);
             progress = intent.getIntExtra(FetchService.EXTRA_PROGRESS,DEFAULT_EMPTY_VALUE);
-            writtenBytes = intent.getLongExtra(FetchService.EXTRA_WRITTEN_BYTES,DEFAULT_EMPTY_VALUE);
+            downloadedBytes = intent.getLongExtra(FetchService.EXTRA_DOWNLOADED_BYTES,DEFAULT_EMPTY_VALUE);
             fileSize = intent.getLongExtra(FetchService.EXTRA_FILE_SIZE,DEFAULT_EMPTY_VALUE);
             error = intent.getIntExtra(FetchService.EXTRA_ERROR,DEFAULT_EMPTY_VALUE);
 
             for (FetchListener listener : listeners) {
-                listener.onUpdate(id,status,progress,writtenBytes,fileSize,error);
+                listener.onUpdate(id,status,progress,downloadedBytes,fileSize,error);
             }
         }
     };

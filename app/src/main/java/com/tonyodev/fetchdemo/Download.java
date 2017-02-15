@@ -12,7 +12,7 @@ public class Download {
     private int progress;
     private int status;
     private int error;
-    private long writtenBytes;
+    private long downloadedBytes;
     private long fileSize;
 
     public Download() {
@@ -50,12 +50,12 @@ public class Download {
         this.progress = progress;
     }
 
-    public long getWrittenBytes() {
-        return writtenBytes;
+    public long getDownloadedBytes() {
+        return downloadedBytes;
     }
 
-    public void setWrittenBytes(long writtenBytes) {
-        this.writtenBytes = writtenBytes;
+    public void setDownloadedBytes(long downloadedBytes) {
+        this.downloadedBytes = downloadedBytes;
     }
 
     public long getFileSize() {

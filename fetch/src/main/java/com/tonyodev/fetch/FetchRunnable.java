@@ -58,7 +58,7 @@ final class FetchRunnable implements Runnable {
     private FileOutputStream output;
 
     private int progress = 0;
-    private long writtenBytes = 0;
+    private long downloadedBytes = 0;
     private long fileSize = -1;
 
     static IntentFilter getDoneFilter() {
@@ -103,11 +103,11 @@ final class FetchRunnable implements Runnable {
             setHttpConnectionPrefs();
             Utils.createFileOrThrow(filePath);
 
-            writtenBytes = Utils.getFileSize(filePath);
-            progress = Utils.getProgress(writtenBytes,fileSize);
-            databaseHelper.updateFileBytes(id,writtenBytes,fileSize);
+            downloadedBytes = Utils.getFileSize(filePath);
+            progress = Utils.getProgress(downloadedBytes,fileSize);
+            databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
 
-            httpURLConnection.setRequestProperty("Range", "bytes=" + writtenBytes + "-");
+            httpURLConnection.setRequestProperty("Range", "bytes=" + downloadedBytes + "-");
 
             if (isInterrupted()) {
                 throw new InterruptedException("TI");
@@ -123,8 +123,8 @@ final class FetchRunnable implements Runnable {
                 }
 
                 setContentLength();
-                databaseHelper.updateFileBytes(id,writtenBytes,fileSize);
-                progress = Utils.getProgress(writtenBytes,fileSize);
+                databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
+                progress = Utils.getProgress(downloadedBytes,fileSize);
                 databaseHelper.updateStatus(id,FetchConst.STATUS_DOWNLOADING,FetchConst.DEFAULT_EMPTY_VALUE);
 
                 input = httpURLConnection.getInputStream();
@@ -136,14 +136,14 @@ final class FetchRunnable implements Runnable {
                 }
 
                 writeToFileAndPost();
-                databaseHelper.updateFileBytes(id,writtenBytes,fileSize);
+                databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
 
-                if(writtenBytes >= fileSize && !isInterrupted()) {
+                if(downloadedBytes >= fileSize && !isInterrupted()) {
 
                     if(fileSize == -1) {
                         fileSize = Utils.getFileSize(filePath);
-                        databaseHelper.updateFileBytes(id,writtenBytes,fileSize);
-                        progress = Utils.getProgress(writtenBytes,fileSize);
+                        databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
+                        progress = Utils.getProgress(downloadedBytes,fileSize);
                     }
 
                     boolean updated = databaseHelper.updateStatus(id, FetchConst.STATUS_DONE,
@@ -152,7 +152,7 @@ final class FetchRunnable implements Runnable {
                     if(updated) {
 
                         Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_DONE,
-                                progress,writtenBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
+                                progress, downloadedBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
                     }
                 }
 
@@ -171,7 +171,7 @@ final class FetchRunnable implements Runnable {
 
                 if(updated) {
                     Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_QUEUED,
-                            progress,writtenBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
+                            progress, downloadedBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
                 }
 
             } else {
@@ -180,7 +180,7 @@ final class FetchRunnable implements Runnable {
 
                 if(updated) {
                     Utils.sendEventUpdate(broadcastManager,id,FetchConst.STATUS_ERROR,progress,
-                            writtenBytes,fileSize,error);
+                            downloadedBytes,fileSize,error);
                 }
             }
 
@@ -239,15 +239,15 @@ final class FetchRunnable implements Runnable {
 
         while((read = input.read(buffer)) != -1 && !isInterrupted()) {
             output.write(buffer, 0, read);
-            writtenBytes += read;
+            downloadedBytes += read;
 
-            progress = Utils.getProgress(writtenBytes,fileSize);
+            progress = Utils.getProgress(downloadedBytes,fileSize);
             stopTime = System.nanoTime();
 
             if (Utils.hasTwoSecondsPassed(startTime, stopTime) && !isInterrupted()) {
 
                 Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_DOWNLOADING,
-                        progress,writtenBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
+                        progress, downloadedBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
 
                 startTime = System.nanoTime();
             }

@@ -83,14 +83,14 @@ final class Utils {
         return false;
     }
 
-    static int getProgress(long bytesWritten,long totalBytes) {
+    static int getProgress(long downloadedBytes,long fileSize) {
 
-        if (totalBytes < 1 || bytesWritten < 1) {
+        if (fileSize < 1 || downloadedBytes < 1) {
             return  0;
-        } else if(bytesWritten >= totalBytes) {
+        } else if(downloadedBytes >= fileSize) {
             return 100;
         } else {
-            return (int) (((double) bytesWritten / (double) totalBytes) * 100);
+            return (int) (((double) downloadedBytes / (double) fileSize) * 100);
         }
     }
 
@@ -250,15 +250,15 @@ final class Utils {
            int error = cursor.getInt(DatabaseHelper.INDEX_COLUMN_ERROR);
            long fileSize = cursor.getLong(DatabaseHelper.INDEX_COLUMN_FILE_SIZE);
            int priority = cursor.getInt(DatabaseHelper.INDEX_COLUMN_PRIORITY);
-           long writtenBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_WRITTEN_BYTES);
+           long downloadedBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_DOWNLOADED_BYTES);
 
            String headers = cursor.getString(DatabaseHelper.INDEX_COLUMN_HEADERS);
            List<Header> headersList = headerStringToList(headers);
 
 
-           int progress = getProgress(writtenBytes,fileSize);
+           int progress = getProgress(downloadedBytes,fileSize);
 
-           requestInfo = new RequestInfo(id,status,url,filePath,progress,writtenBytes,fileSize,
+           requestInfo = new RequestInfo(id,status,url,filePath,progress,downloadedBytes,fileSize,
                    error,headersList,priority);
 
            if(closeCursor) {
@@ -292,16 +292,16 @@ final class Utils {
                 int error = cursor.getInt(DatabaseHelper.INDEX_COLUMN_ERROR);
                 long fileSize = cursor.getLong(DatabaseHelper.INDEX_COLUMN_FILE_SIZE);
                 int priority = cursor.getInt(DatabaseHelper.INDEX_COLUMN_PRIORITY);
-                long writtenBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_WRITTEN_BYTES);
+                long downloadedBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_DOWNLOADED_BYTES);
 
                 String headers = cursor.getString(DatabaseHelper.INDEX_COLUMN_HEADERS);
                 List<Header> headersList = headerStringToList(headers);
 
 
-                int progress = getProgress(writtenBytes,fileSize);
+                int progress = getProgress(downloadedBytes,fileSize);
 
                 RequestInfo requestInfo = new RequestInfo(id,status,url,filePath,progress,
-                        writtenBytes,fileSize,error,headersList,priority);
+                        downloadedBytes,fileSize,error,headersList,priority);
 
                 requests.add(requestInfo);
 
@@ -339,12 +339,12 @@ final class Utils {
                 int error = cursor.getInt(DatabaseHelper.INDEX_COLUMN_ERROR);
                 long fileSize = cursor.getLong(DatabaseHelper.INDEX_COLUMN_FILE_SIZE);
                 int priority = cursor.getInt(DatabaseHelper.INDEX_COLUMN_PRIORITY);
-                long writtenBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_WRITTEN_BYTES);
+                long downloadedBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_DOWNLOADED_BYTES);
 
                 String headers = cursor.getString(DatabaseHelper.INDEX_COLUMN_HEADERS);
                 ArrayList<Bundle> headersList = headersToBundleList(headers);
 
-                int progress = getProgress(writtenBytes,fileSize);
+                int progress = getProgress(downloadedBytes,fileSize);
 
                 Bundle bundle = new Bundle();
                 bundle.putLong(FetchService.EXTRA_ID,id);
@@ -352,7 +352,7 @@ final class Utils {
                 bundle.putString(FetchService.EXTRA_URL,url);
                 bundle.putString(FetchService.EXTRA_FILE_PATH,filePath);
                 bundle.putInt(FetchService.EXTRA_ERROR,error);
-                bundle.putLong(FetchService.EXTRA_WRITTEN_BYTES,writtenBytes);
+                bundle.putLong(FetchService.EXTRA_DOWNLOADED_BYTES,downloadedBytes);
                 bundle.putLong(FetchService.EXTRA_FILE_SIZE,fileSize);
                 bundle.putInt(FetchService.EXTRA_PROGRESS,progress);
                 bundle.putInt(FetchService.EXTRA_PRIORITY,priority);
@@ -380,7 +380,7 @@ final class Utils {
     }
 
     static void sendEventUpdate(LocalBroadcastManager broadcastManager,long id,
-                                int status,int progress,long writtenBytes,long fileSize,int error) {
+                                int status,int progress,long downloadedBytes,long fileSize,int error) {
 
         if(broadcastManager == null) {
             return;
@@ -390,7 +390,7 @@ final class Utils {
         intent.putExtra(FetchService.EXTRA_ID,id);
         intent.putExtra(FetchService.EXTRA_STATUS,status);
         intent.putExtra(FetchService.EXTRA_PROGRESS,progress);
-        intent.putExtra(FetchService.EXTRA_WRITTEN_BYTES,writtenBytes);
+        intent.putExtra(FetchService.EXTRA_DOWNLOADED_BYTES,downloadedBytes);
         intent.putExtra(FetchService.EXTRA_FILE_SIZE,fileSize);
         intent.putExtra(FetchService.EXTRA_ERROR,error);
 

@@ -120,7 +120,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     @Override
-    public void onUpdate(long id, int status, int progress, long writtenBytes, long fileSize, int error) {
+    public void onUpdate(long id, int status, int progress, long downloadedBytes, long fileSize, int error) {
 
         if(id == downloadId) {
 

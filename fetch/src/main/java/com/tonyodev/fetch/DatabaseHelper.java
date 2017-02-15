@@ -43,7 +43,7 @@ final class DatabaseHelper extends SQLiteOpenHelper {
     static final String COLUMN_FILEPATH = "_file_path";
     static final String COLUMN_STATUS = "_status";
     static final String COLUMN_HEADERS = "_headers";
-    static final String COLUMN_WRITTEN_BYTES = "_written_bytes";
+    static final String COLUMN_DOWNLOADED_BYTES = "_written_bytes";
     static final String COLUMN_FILE_SIZE = "_file_size";
     static final String COLUMN_ERROR = "_error";
     static final String COLUMN_PRIORITY = "_priority";
@@ -53,7 +53,7 @@ final class DatabaseHelper extends SQLiteOpenHelper {
     static final int INDEX_COLUMN_FILEPATH = 2;
     static final int INDEX_COLUMN_STATUS = 3;
     static final int INDEX_COLUMN_HEADERS = 4;
-    static final int INDEX_COLUMN_WRITTEN_BYTES = 5;
+    static final int INDEX_COLUMN_DOWNLOADED_BYTES = 5;
     static final int INDEX_COLUMN_FILE_SIZE = 6;
     static final int INDEX_COLUMN_ERROR = 7;
     static final int INDEX_COLUMN_PRIORITY = 8;
@@ -78,7 +78,7 @@ final class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_FILEPATH + " TEXT NOT NULL, "
                 + COLUMN_STATUS + " INTEGER NOT NULL, "
                 + COLUMN_HEADERS + " TEXT NOT NULL, "
-                + COLUMN_WRITTEN_BYTES + " INTEGER NOT NULL, "
+                + COLUMN_DOWNLOADED_BYTES + " INTEGER NOT NULL, "
                 + COLUMN_FILE_SIZE + " INTEGER NOT NULL, "
                 + COLUMN_ERROR + " INTEGER NOT NULL, "
                 + COLUMN_PRIORITY + " INTEGER NOT NULL )");
@@ -128,7 +128,7 @@ final class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     String getInsertStatement(long id, String url, String filePath, int status,
-                                      String headers,long writtenBytes,long fileSize,
+                                      String headers,long downloadedBytes,long fileSize,
                                       int priority, int error) throws EnqueueException {
 
 
@@ -143,18 +143,18 @@ final class DatabaseHelper extends SQLiteOpenHelper {
                 + "', '" + filePath
                 + "', " + status
                 + ", '" + headers
-                + "', " + writtenBytes
+                + "', " + downloadedBytes
                 + ", " + fileSize
                 + ", " + error
                 + ", " + priority +" )";
     }
 
     synchronized boolean insert(long id, String url, String filePath, int status,
-                                String headers,long writtenBytes,long fileSize,
+                                String headers,long downloadedBytes,long fileSize,
                                 int priority, int error) {
 
         String statement = getInsertStatement(id,url,filePath,status,headers,
-                writtenBytes,fileSize,priority,error);
+                downloadedBytes,fileSize,priority,error);
 
         List<String> insertStatements = new ArrayList<>(1);
         insertStatements.add(statement);
@@ -290,14 +290,14 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         return updated;
     }
 
-    synchronized boolean updateFileBytes(long id, long writtenBytes, long fileSize) {
+    synchronized boolean updateFileBytes(long id, long downloadedBytes, long fileSize) {
 
         boolean updated = false;
 
         try {
             db.beginTransaction();
             db.execSQL("UPDATE " + TABLE_NAME + " SET " + COLUMN_FILE_SIZE + " = "
-                    + fileSize + ", " + COLUMN_WRITTEN_BYTES + " = " + writtenBytes
+                    + fileSize + ", " + COLUMN_DOWNLOADED_BYTES + " = " + downloadedBytes
                     + " WHERE " + COLUMN_ID + " = " + id);
 
             db.setTransactionSuccessful();

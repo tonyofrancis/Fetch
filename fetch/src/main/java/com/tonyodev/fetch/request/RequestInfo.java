@@ -39,14 +39,14 @@ public final class RequestInfo {
     private final String url;
     private final String filePath;
     private final int progress;
-    private final long writtenBytes;
+    private final long downloadedBytes;
     private final long fileSize;
     private final int error;
     private final List<Header> headers;
     private final int priority;
 
     public RequestInfo(long id, int status, @NonNull String url, @NonNull String filePath, int progress,
-                       long writtenBytes, long fileSize, int error, @NonNull List<Header> headers,int priority) {
+                       long downloadedBytes, long fileSize, int error, @NonNull List<Header> headers, int priority) {
 
         if(url == null) {
             throw new NullPointerException("Url cannot be null");
@@ -65,7 +65,7 @@ public final class RequestInfo {
         this.url = url;
         this.filePath = filePath;
         this.progress = progress;
-        this.writtenBytes = writtenBytes;
+        this.downloadedBytes = downloadedBytes;
         this.fileSize = fileSize;
         this.error = error;
         this.headers = headers;
@@ -111,10 +111,10 @@ public final class RequestInfo {
     }
 
     /**
-     * @return the current written bytes of the download request.
+     * @return the downloaded bytes of the download request.
      * */
-    public long getWrittenBytes() {
-        return writtenBytes;
+    public long getDownloadedBytes() {
+        return downloadedBytes;
     }
 
     /**

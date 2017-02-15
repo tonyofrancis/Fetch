@@ -21,15 +21,14 @@ public class App extends Application {
 
         fetch.addFetchListener(new FetchListener() {
             @Override
-            public void onUpdate(long id, int status, int progress, long writtenBytes, long fileSize, int error) {
+            public void onUpdate(long id, int status, int progress, long downloadedBytes, long fileSize, int error) {
 
                 Log.d("fetchDebug","id:" + id + ",status:" + status + ",progress:" + progress
                 + ",error:" + error);
 
-                Log.i("fetchDebug","id: " + id + " written: " + writtenBytes + " / fileSize: " + fileSize);
+                Log.i("fetchDebug","id: " + id + " downloadedBytes: " + downloadedBytes + " / fileSize: " + fileSize);
             }
         });
-
 
         /*
         * New Feature - FetchCall

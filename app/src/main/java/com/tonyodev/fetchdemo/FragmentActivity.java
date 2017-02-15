@@ -138,7 +138,7 @@ public class FragmentActivity extends AppCompatActivity {
 
     private FetchListener fetchListener = new FetchListener() {
         @Override
-        public void onUpdate(long id, int status, int progress, long writtenBytes, long fileSize, int error) {
+        public void onUpdate(long id, int status, int progress, long downloadedBytes, long fileSize, int error) {
 
             if(downloadId == id) {
                 Log.d("FragmentActivity","id:" + id + ",status:" + status + ",progress:" + progress

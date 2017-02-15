@@ -58,7 +58,7 @@ public final class FetchService extends Service implements FetchConst {
     public static final String EXTRA_STATUS = "com.tonyodev.fetch.extra_status";
     public static final String EXTRA_PROGRESS = "com.tonyodev.fetch.extra_progress";
     public static final String EXTRA_ERROR = "com.tonyodev.fetch.extra_error";
-    public static final String EXTRA_WRITTEN_BYTES = "com.tonyodev.fetch.extra_written_bytes";
+    public static final String EXTRA_DOWNLOADED_BYTES = "com.tonyodev.fetch.extra_downloaded_bytes";
     public static final String EXTRA_FILE_SIZE = "com.tonyodev.fetch.extra_file_size";
     public static final String EXTRA_URL = "com.tonyodev.fetch.extra_url";
     public static final String EXTRA_FILE_PATH = "com.tonyodev.fetch.extra_file_path";
@@ -311,11 +311,11 @@ public final class FetchService extends Service implements FetchConst {
             long id = Utils.generateRequestId();
             String headerString = Utils.bundleListToHeaderString(headers);
             long fileSize = 0L;
-            long writtenBytes = 0L;
+            long downloadedBytes = 0L;
             int error = DEFAULT_EMPTY_VALUE;
 
            boolean enqueued = databaseHelper.insert(id,url,filePath,STATUS_QUEUED,headerString,
-                    writtenBytes,fileSize,priority,error);
+                    downloadedBytes,fileSize,priority,error);
 
             if(!enqueued) {
                 throw new EnqueueException("could not enqueue request",ERROR_ENQUEUE_ERROR);
@@ -347,7 +347,7 @@ public final class FetchService extends Service implements FetchConst {
 
                 Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
                         requestInfo.getStatus(), requestInfo.getProgress(),
-                        requestInfo.getWrittenBytes(),requestInfo.getFileSize(),
+                        requestInfo.getDownloadedBytes(),requestInfo.getFileSize(),
                         requestInfo.getError());
             }
         }
@@ -371,7 +371,7 @@ public final class FetchService extends Service implements FetchConst {
             if(requestInfo != null) {
                 Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
                         requestInfo.getStatus(), requestInfo.getProgress(),
-                        requestInfo.getWrittenBytes(),requestInfo.getFileSize(),
+                        requestInfo.getDownloadedBytes(),requestInfo.getFileSize(),
                         requestInfo.getError());
             }
         }
@@ -461,7 +461,7 @@ public final class FetchService extends Service implements FetchConst {
             if(requestInfo != null) {
                 Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
                         requestInfo.getStatus(), requestInfo.getProgress(),
-                        requestInfo.getWrittenBytes(),requestInfo.getFileSize(),
+                        requestInfo.getDownloadedBytes(),requestInfo.getFileSize(),
                         requestInfo.getError());
             }
         }

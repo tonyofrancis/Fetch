@@ -189,7 +189,7 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> im
     }
 
     @Override
-    public void onUpdate(long id, int status, int progress, long writtenBytes, long fileSize, int error) {
+    public void onUpdate(long id, int status, int progress, long downloadedBytes, long fileSize, int error) {
 
         Download download = getDownload(id);
 
