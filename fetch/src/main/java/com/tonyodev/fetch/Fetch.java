@@ -854,6 +854,8 @@ public final class Fetch implements FetchConst {
         private long id;
         private int status;
         private int progress;
+        private long writtenBytes;
+        private long fileSize;
         private int error;
 
         @Override
@@ -866,10 +868,12 @@ public final class Fetch implements FetchConst {
             id = intent.getLongExtra(FetchService.EXTRA_ID, DEFAULT_EMPTY_VALUE);
             status = intent.getIntExtra(FetchService.EXTRA_STATUS,DEFAULT_EMPTY_VALUE);
             progress = intent.getIntExtra(FetchService.EXTRA_PROGRESS,DEFAULT_EMPTY_VALUE);
+            writtenBytes = intent.getLongExtra(FetchService.EXTRA_WRITTEN_BYTES,DEFAULT_EMPTY_VALUE);
+            fileSize = intent.getLongExtra(FetchService.EXTRA_FILE_SIZE,DEFAULT_EMPTY_VALUE);
             error = intent.getIntExtra(FetchService.EXTRA_ERROR,DEFAULT_EMPTY_VALUE);
 
             for (FetchListener listener : listeners) {
-                listener.onUpdate(id,status,progress,error);
+                listener.onUpdate(id,status,progress,writtenBytes,fileSize,error);
             }
         }
     };

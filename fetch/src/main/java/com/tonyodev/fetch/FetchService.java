@@ -58,6 +58,7 @@ public final class FetchService extends Service implements FetchConst {
     public static final String EXTRA_STATUS = "com.tonyodev.fetch.extra_status";
     public static final String EXTRA_PROGRESS = "com.tonyodev.fetch.extra_progress";
     public static final String EXTRA_ERROR = "com.tonyodev.fetch.extra_error";
+    public static final String EXTRA_WRITTEN_BYTES = "com.tonyodev.fetch.extra_written_bytes";
     public static final String EXTRA_FILE_SIZE = "com.tonyodev.fetch.extra_file_size";
     public static final String EXTRA_URL = "com.tonyodev.fetch.extra_url";
     public static final String EXTRA_FILE_PATH = "com.tonyodev.fetch.extra_file_path";
@@ -346,6 +347,7 @@ public final class FetchService extends Service implements FetchConst {
 
                 Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
                         requestInfo.getStatus(), requestInfo.getProgress(),
+                        requestInfo.getWrittenBytes(),requestInfo.getFileSize(),
                         requestInfo.getError());
             }
         }
@@ -369,6 +371,7 @@ public final class FetchService extends Service implements FetchConst {
             if(requestInfo != null) {
                 Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
                         requestInfo.getStatus(), requestInfo.getProgress(),
+                        requestInfo.getWrittenBytes(),requestInfo.getFileSize(),
                         requestInfo.getError());
             }
         }
@@ -392,7 +395,7 @@ public final class FetchService extends Service implements FetchConst {
             Utils.deleteFile(request.getFilePath());
 
             Utils.sendEventUpdate(broadcastManager,id,
-                    STATUS_REMOVED,0,DEFAULT_EMPTY_VALUE);
+                    STATUS_REMOVED,0,0,0,DEFAULT_EMPTY_VALUE);
         }
 
         startDownload();
@@ -458,6 +461,7 @@ public final class FetchService extends Service implements FetchConst {
             if(requestInfo != null) {
                 Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
                         requestInfo.getStatus(), requestInfo.getProgress(),
+                        requestInfo.getWrittenBytes(),requestInfo.getFileSize(),
                         requestInfo.getError());
             }
         }

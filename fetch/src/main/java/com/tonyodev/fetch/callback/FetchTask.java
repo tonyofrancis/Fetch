@@ -27,5 +27,15 @@ import com.tonyodev.fetch.Fetch;
  */
 public interface FetchTask {
 
+    /**
+     * onProcess runs the short tasks on a
+     * worker or UI thread.
+     *
+     * @param fetch A new instance of fetch. Use this
+     *              instance to enqueue requests or query fetch
+     *              for download request data. Do not attach
+     *              FetchListeners to this instance because they will
+     *              be releases once the onProcess method returns.
+     * */
     void onProcess(@NonNull Fetch fetch);
 }

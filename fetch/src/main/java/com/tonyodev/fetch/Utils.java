@@ -258,7 +258,7 @@ final class Utils {
 
            int progress = getProgress(writtenBytes,fileSize);
 
-           requestInfo = new RequestInfo(id,status,url,filePath,progress,fileSize,
+           requestInfo = new RequestInfo(id,status,url,filePath,progress,writtenBytes,fileSize,
                    error,headersList,priority);
 
            if(closeCursor) {
@@ -301,7 +301,7 @@ final class Utils {
                 int progress = getProgress(writtenBytes,fileSize);
 
                 RequestInfo requestInfo = new RequestInfo(id,status,url,filePath,progress,
-                        fileSize,error,headersList,priority);
+                        writtenBytes,fileSize,error,headersList,priority);
 
                 requests.add(requestInfo);
 
@@ -352,6 +352,7 @@ final class Utils {
                 bundle.putString(FetchService.EXTRA_URL,url);
                 bundle.putString(FetchService.EXTRA_FILE_PATH,filePath);
                 bundle.putInt(FetchService.EXTRA_ERROR,error);
+                bundle.putLong(FetchService.EXTRA_WRITTEN_BYTES,writtenBytes);
                 bundle.putLong(FetchService.EXTRA_FILE_SIZE,fileSize);
                 bundle.putInt(FetchService.EXTRA_PROGRESS,progress);
                 bundle.putInt(FetchService.EXTRA_PRIORITY,priority);
@@ -379,7 +380,7 @@ final class Utils {
     }
 
     static void sendEventUpdate(LocalBroadcastManager broadcastManager,long id,
-                                int status,int progress,int error) {
+                                int status,int progress,long writtenBytes,long fileSize,int error) {
 
         if(broadcastManager == null) {
             return;
@@ -389,6 +390,8 @@ final class Utils {
         intent.putExtra(FetchService.EXTRA_ID,id);
         intent.putExtra(FetchService.EXTRA_STATUS,status);
         intent.putExtra(FetchService.EXTRA_PROGRESS,progress);
+        intent.putExtra(FetchService.EXTRA_WRITTEN_BYTES,writtenBytes);
+        intent.putExtra(FetchService.EXTRA_FILE_SIZE,fileSize);
         intent.putExtra(FetchService.EXTRA_ERROR,error);
 
         broadcastManager.sendBroadcast(intent);

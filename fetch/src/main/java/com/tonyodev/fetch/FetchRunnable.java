@@ -152,7 +152,7 @@ final class FetchRunnable implements Runnable {
                     if(updated) {
 
                         Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_DONE,
-                                progress,FetchConst.DEFAULT_EMPTY_VALUE);
+                                progress,writtenBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
                     }
                 }
 
@@ -171,7 +171,7 @@ final class FetchRunnable implements Runnable {
 
                 if(updated) {
                     Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_QUEUED,
-                            progress,FetchConst.DEFAULT_EMPTY_VALUE);
+                            progress,writtenBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
                 }
 
             } else {
@@ -179,7 +179,8 @@ final class FetchRunnable implements Runnable {
                 boolean updated = databaseHelper.updateStatus(id,FetchConst.STATUS_ERROR,error);
 
                 if(updated) {
-                    Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_ERROR,progress,error);
+                    Utils.sendEventUpdate(broadcastManager,id,FetchConst.STATUS_ERROR,progress,
+                            writtenBytes,fileSize,error);
                 }
             }
 
@@ -246,7 +247,7 @@ final class FetchRunnable implements Runnable {
             if (Utils.hasTwoSecondsPassed(startTime, stopTime) && !isInterrupted()) {
 
                 Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_DOWNLOADING,
-                        progress,FetchConst.DEFAULT_EMPTY_VALUE);
+                        progress,writtenBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
 
                 startTime = System.nanoTime();
             }

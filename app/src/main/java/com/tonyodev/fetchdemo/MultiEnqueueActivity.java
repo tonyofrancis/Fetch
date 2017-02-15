@@ -65,7 +65,7 @@ public class MultiEnqueueActivity extends AppCompatActivity implements FetchList
     }
 
     @Override
-    public void onUpdate(long id, int status, int progress, int error) {
+    public void onUpdate(long id, int status, int progress, long writtenBytes, long fileSize, int error) {
         Log.i("MultiEnqueueActivity","Download id:" + id + " - progress:" + progress);
     }
 }

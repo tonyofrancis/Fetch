@@ -218,7 +218,7 @@ public class GameFilesActivity extends AppCompatActivity {
 
     private final FetchListener fetchListener = new FetchListener() {
         @Override
-        public void onUpdate(long id, int status, int progress, int error) {
+        public void onUpdate(long id, int status, int progress, long writtenBytes, long fileSize, int error) {
 
             if(fileProgress.containsKey(id)) {
 

@@ -84,7 +84,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         for (RequestInfo info : infos) {
 
             fileAdapter.onUpdate(info.getId(), info.getStatus()
-                    , info.getProgress(), info.getError());
+                    , info.getProgress(),info.getWrittenBytes(),info.getFileSize(),info.getError());
         }
 
         fetch.addFetchListener(fileAdapter);

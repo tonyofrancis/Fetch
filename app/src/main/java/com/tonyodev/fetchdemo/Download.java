@@ -12,6 +12,8 @@ public class Download {
     private int progress;
     private int status;
     private int error;
+    private long writtenBytes;
+    private long fileSize;
 
     public Download() {
     }
@@ -46,6 +48,22 @@ public class Download {
 
     public void setProgress(int progress) {
         this.progress = progress;
+    }
+
+    public long getWrittenBytes() {
+        return writtenBytes;
+    }
+
+    public void setWrittenBytes(long writtenBytes) {
+        this.writtenBytes = writtenBytes;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(long fileSize) {
+        this.fileSize = fileSize;
     }
 
     public int getStatus() {
