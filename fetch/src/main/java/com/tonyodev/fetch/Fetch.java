@@ -591,6 +591,31 @@ public final class Fetch implements FetchConst {
     }
 
     /**
+     * Query the FetchService database for a download request.
+     *
+     * @param request the request to check. This parameter cannot be null.
+     *
+     * @throws NullPointerException if the passed in request is null.
+     * @throws NotUsableException if the release method has been called on Fetch.
+     *
+     * @return a RequestInfo object that contains the status and progress of a request.
+     *         If the request could not be found null will be returned.
+     * */
+    @Nullable
+    public RequestInfo get(@NonNull Request request) {
+
+        Utils.throwIfNotUsable(this);
+
+        if(request == null) {
+            throw new NullPointerException("Request cannot be null.");
+        }
+
+        Cursor cursor = dbHelper.getByUrlAndFilePath(request.getUrl(),request.getFilePath());
+
+        return Utils.cursorToRequestInfo(cursor,true);
+    }
+
+    /**
      * Gets a downloaded file for a download request that
      * has been successfully downloaded.
      *

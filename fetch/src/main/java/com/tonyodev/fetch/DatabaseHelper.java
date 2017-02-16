@@ -428,6 +428,18 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
+    synchronized Cursor getByUrlAndFilePath(String url,String filePath) {
+
+        try {
+            return db.rawQuery("SELECT * FROM " + TABLE_NAME
+                    + " WHERE " + COLUMN_URL + " LIKE '%"
+                    + url + "%' AND " + COLUMN_FILEPATH
+                    + " LIKE '%" + filePath + "%' LIMIT 1",null);
+        }catch (SQLiteException e) {
+            return null;
+        }
+    }
+
     synchronized Cursor getNextPending() {
 
         Cursor cursor = db.rawQuery("SELECT * FROM "
