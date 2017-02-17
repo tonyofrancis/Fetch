@@ -460,4 +460,18 @@ final class Utils {
 
         return headerString;
     }
+
+    static boolean containsRequest(Cursor cursor,boolean closeCursor) {
+
+        if(cursor != null && cursor.getCount() > 0) {
+
+            if(closeCursor) {
+                cursor.close();
+            }
+
+            return true;
+        }
+
+        return false;
+    }
 }

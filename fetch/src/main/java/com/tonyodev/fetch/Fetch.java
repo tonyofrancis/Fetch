@@ -867,6 +867,30 @@ public final class Fetch implements FetchConst {
     }
 
     /**
+     * Checks if a request is already being managed by the Fetch Service.
+     *
+     * @param request the request to check. This parameter cannot be null.
+     *
+     * @throws NullPointerException if the passed in request is null.
+     * @throws NotUsableException if the release method has been called on Fetch.
+     *
+     * @return returns true if the request is being managed by the Fetch Service
+     *         or false if it is not.
+     * */
+    public boolean contains(@NonNull Request request) {
+
+        Utils.throwIfNotUsable(this);
+
+        if(request == null) {
+            throw new NullPointerException("Request cannot be null.");
+        }
+
+        Cursor cursor = dbHelper.getByUrlAndFilePath(request.getUrl(),request.getFilePath());
+
+        return Utils.containsRequest(cursor,true);
+    }
+
+    /**
      * @return returns true if this instance of Fetch is still
      * valid for use.
      * */
