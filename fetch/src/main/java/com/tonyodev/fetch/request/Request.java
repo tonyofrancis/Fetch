@@ -36,7 +36,7 @@ import java.util.List;
 public final class Request {
 
     private final String url;
-    private String filePath;
+    private final String filePath;
     private final List<Header> headers = new ArrayList<>();
     private int priority = Fetch.PRIORITY_NORMAL;
 
@@ -84,6 +84,7 @@ public final class Request {
      * @param url The download url where the file can be downloaded from. This parameter cannot
      *            be null.
      * @param dir The directory path on the device or SD Card where the download will be stored.
+     *            eg: /storage/videos
      * @param fileName The file name for the download. eg: video.mp4
      *                 This parameter cannot be null.
      *
@@ -180,27 +181,12 @@ public final class Request {
     }
 
     /**
-     * @return the absolute local file path where the downloaded file will be stored. This
-     * includes the downloaded file name. eg: /storage/videos/video.mp4
+     * @return the absolute local file path including file name where the downloaded
+     * file will be stored. eg: /storage/videos/video.mp4
      * */
     @NonNull
     public String getFilePath() {
         return filePath;
-    }
-
-    /**
-     * Sets the file path for a new request.
-     *
-     * @param filePath the absolute local file path including file name where the download
-     *                 will be stored. eg: /storage/videos/video.mp4. This parameter cannot be null.
-     * */
-    public void setFilePath(@NonNull String filePath) {
-
-        if(filePath == null) {
-            throw new NullPointerException("File  Path cannot be null");
-        }
-
-        this.filePath = filePath;
     }
 
     /**
