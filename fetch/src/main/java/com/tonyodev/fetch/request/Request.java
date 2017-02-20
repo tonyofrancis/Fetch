@@ -57,8 +57,10 @@ public final class Request {
      *
      * @param url The download url where the file can be downloaded from. This parameter cannot
      *            be null.
-     * @param filePath the absolute local file path where the downloaded file will be stored. This
-     *                 parameter cannot be null.
+     * @param filePath the absolute local file path including file name where the download
+     *                 will be stored. eg: /storage/videos/video.mp4
+     *                 Note: if you pass in a directory path, a random file name will be generated for
+     *                 the downloaded file. This parameter cannot be null.
      *
      * @throws NullPointerException if the url or filePath parameters are null.
      * @throws IllegalArgumentException if the url does not have an http or https scheme.
@@ -101,9 +103,29 @@ public final class Request {
     }
 
     /**
+     * An HTTP header to be included with the download request.
+     *
+     * @param header header object
+     *
+     * @return the same instance of Request.
+     *
+     * @throws NullPointerException if the HTTP header object is null
+     * */
+    @NonNull
+    public Request addHeader(@NonNull Header header) {
+
+        if(header == null) {
+            throw new NullPointerException("Header cannot be null");
+        }
+
+        headers.add(header);
+        return this;
+    }
+
+    /**
      * Sets the download priority of the request.
      *
-     * @param priority priority of the download. PRIORITY_HIGH, PRIORITY_NORMAL
+     * @param priority priority of the download. Fetch.PRIORITY_HIGH, Fetch.PRIORITY_NORMAL
      *
      * @return the same instance of Request.
      * */
@@ -129,7 +151,8 @@ public final class Request {
     }
 
     /**
-     * @return the absolute local file path where the downloaded file will be stored.
+     * @return the absolute local file path where the downloaded file will be stored. This
+     * includes the downloaded file name. eg: /storage/videos/video.mp4
      * */
     @NonNull
     public String getFilePath() {
@@ -170,7 +193,7 @@ public final class Request {
                 + ",priority:" + priority + "}";
     }
 
-    static String generateFilePathFromUrl(String url) {
+    private static String generateFilePathFromUrl(String url) {
 
         if(url == null) {
             throw new NullPointerException("Url cannot be null");
