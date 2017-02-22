@@ -348,7 +348,7 @@ public final class Fetch implements FetchConst {
 
                 id = DEFAULT_EMPTY_VALUE;
 
-                if(request != null) {
+                if(request != null && !Utils.fileExist(request.getFilePath())) {
 
                     id = Utils.generateRequestId();
                     url = request.getUrl();
