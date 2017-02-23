@@ -29,7 +29,6 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.util.ArrayMap;
 
 import com.tonyodev.fetch.callback.FetchCall;
 import com.tonyodev.fetch.callback.FetchTask;
@@ -43,6 +42,8 @@ import com.tonyodev.fetch.request.RequestInfo;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -59,7 +60,7 @@ public final class Fetch implements FetchConst {
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final Executor executor = Executors.newSingleThreadExecutor();
-    private static final ArrayMap<Request,FetchCallRunnable> callsMap = new ArrayMap<>();
+    private static final ConcurrentMap<Request,FetchCallRunnable> callsMap = new ConcurrentHashMap<>();
 
     private final Context context;
     private final LocalBroadcastManager broadcastManager;
