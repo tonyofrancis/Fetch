@@ -279,6 +279,11 @@ public final class Fetch implements FetchConst {
 
         try {
 
+            if(Utils.fileExist(request.getFilePath())) {
+                throw new EnqueueException("File already located at filePath: " + request.getFilePath()
+                        + ". The requested will not be enqueued.",ERROR_REQUEST_ALREADY_EXIST);
+            }
+
             String url = request.getUrl();
             String filePath = request.getFilePath();
             int priority = request.getPriority();
