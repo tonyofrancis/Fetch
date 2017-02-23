@@ -44,8 +44,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 /**
  * Fetch is a download manager for the FetchService.
@@ -59,7 +57,6 @@ import java.util.concurrent.Executors;
 public final class Fetch implements FetchConst {
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private static final Executor executor = Executors.newSingleThreadExecutor();
     private static final ConcurrentMap<Request,FetchCallRunnable> callsMap = new ConcurrentHashMap<>();
 
     private final Context context;
@@ -253,7 +250,6 @@ public final class Fetch implements FetchConst {
     public void removeFetchListeners() {
 
         Utils.throwIfNotUsable(this);
-
         listeners.clear();
     }
 
@@ -268,7 +264,7 @@ public final class Fetch implements FetchConst {
      * @throws NullPointerException if the passed in request is null.
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
-    public long enqueue(final @NonNull Request request) {
+    public long enqueue(@NonNull Request request) {
 
         Utils.throwIfNotUsable(this);
 
@@ -544,7 +540,7 @@ public final class Fetch implements FetchConst {
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
     @Nullable
-    public RequestInfo get(final long id) {
+    public RequestInfo get(long id) {
 
         Utils.throwIfNotUsable(this);
 
@@ -583,7 +579,7 @@ public final class Fetch implements FetchConst {
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
     @NonNull
-    public List<RequestInfo> getByStatus(final int status) {
+    public List<RequestInfo> getByStatus(int status) {
 
         Utils.throwIfNotUsable(this);
         Utils.throwIfInvalidStatus(status);
@@ -630,7 +626,7 @@ public final class Fetch implements FetchConst {
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
     @Nullable
-    public File getDownloadedFile(final long id) {
+    public File getDownloadedFile(long id) {
 
         Utils.throwIfNotUsable(this);
 
@@ -665,7 +661,7 @@ public final class Fetch implements FetchConst {
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
     @Nullable
-    public String getFilePath(final long id) {
+    public String getFilePath(long id) {
 
         Utils.throwIfNotUsable(this);
 
@@ -691,7 +687,7 @@ public final class Fetch implements FetchConst {
      * @throws NotUsableException if the release method has been called on Fetch.
      *
      * */
-    public long addCompletedDownload(@NonNull final String filePath) {
+    public long addCompletedDownload(@NonNull String filePath) {
 
         Utils.throwIfNotUsable(this);
 
@@ -837,15 +833,14 @@ public final class Fetch implements FetchConst {
         Utils.throwIfNotUsable(this);
         Utils.throwIfFetchTaskNull(fetchTask);
 
-        executor.execute(new Runnable() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
-
                 Fetch fetch = Fetch.getInstance(context);
                 fetchTask.onProcess(fetch);
                 fetch.release();
             }
-        });
+        }).start();
     }
 
     /**
