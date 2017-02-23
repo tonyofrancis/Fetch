@@ -386,7 +386,7 @@ public final class Fetch implements FetchConst {
             e.printStackTrace();
 
             ids.clear();
-            for (int i = 0; i < ids.size(); i++) {
+            for (int i = 0; i < requests.size(); i++) {
                 ids.add(-1L);
             }
         }
