@@ -93,16 +93,16 @@ public final class Request {
      * */
     public Request(@NonNull String url,@NonNull String dir,@NonNull String fileName) {
 
-        if(url == null) {
-            throw new NullPointerException("Url cannot be null");
+        if(url == null || url.isEmpty()) {
+            throw new NullPointerException("Url cannot be null or empty");
         }
 
-        if(dir == null) {
-            throw new NullPointerException("Dir cannot be null");
+        if(dir == null || dir.isEmpty()) {
+            throw new NullPointerException("directory path cannot be null or empty");
         }
 
-        if(fileName == null) {
-            throw new NullPointerException("File Name cannot be null");
+        if(fileName == null || fileName.isEmpty()) {
+            throw new NullPointerException("File Name cannot be null or empty");
         }
 
         String scheme = Uri.parse(url).getScheme();
