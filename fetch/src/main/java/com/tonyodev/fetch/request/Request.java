@@ -42,35 +42,67 @@ public final class Request {
 
     /**
      * This class contains all the information necessary to request a new download with Fetch.
+     * Note: A file name will be generated for this request. The downloaded file will be stored
+     * in the Public Download Directory on the device. For Android M and above, be sure to
+     * request the WRITE_EXTERNAL_STORAGE PERMISSION from the user.
+     * Use Request(String url, String dir, String fileName) to specify a file name and download
+     * directory.
      *
      * @param url The download url where the file can be downloaded from. This parameter cannot
      *            be null.
      *
-     * @throws IllegalArgumentException if the url does not have an http or https scheme.
+     * @throws NullPointerException if the url is null.
      * */
     public Request(@NonNull String url) {
-        this(url,generateFilePathFromUrl(url));
+        this(url,generateFileName(url));
     }
 
     /**
      * This class contains all the information necessary to request a new download with Fetch.
+     * Note: The downloaded file will be stored in the Public Download Directory on the device.
+     * For Android M and above, be sure to request the WRITE_EXTERNAL_STORAGE PERMISSION from the user.
+     * Use Request(String url, String dir, String fileName) to specify a file name and download
+     * directory.
      *
      * @param url The download url where the file can be downloaded from. This parameter cannot
      *            be null.
-     * @param filePath the absolute local file path where the downloaded file will be stored. This
-     *                 parameter cannot be null.
+     * @param fileName The file name for the download. eg: video.mp4
+     *                 This parameter cannot be null.
      *
-     * @throws NullPointerException if the url or filePath parameters are null.
+     * @throws NullPointerException if the url or fileName parameters are null.
      * @throws IllegalArgumentException if the url does not have an http or https scheme.
      * */
-    public Request(@NonNull String url,@NonNull String filePath) {
+    public Request(@NonNull String url,@NonNull String fileName) {
+        this(url,generateDirectoryName(),fileName);
+    }
+
+    /**
+     * This class contains all the information necessary to request a new download with Fetch.
+     * Note: For Android M and above, be sure to request the WRITE_EXTERNAL_STORAGE PERMISSION
+     * from the user.
+     *
+     * @param url The download url where the file can be downloaded from. This parameter cannot
+     *            be null.
+     * @param dir The directory path on the device or SD Card where the download will be stored.
+     *            eg: /storage/videos
+     * @param fileName The file name for the download. eg: video.mp4
+     *                 This parameter cannot be null.
+     *
+     * @throws NullPointerException if the url or fileName parameters are null.
+     * @throws IllegalArgumentException if the url does not have an http or https scheme.
+     * */
+    public Request(@NonNull String url,@NonNull String dir,@NonNull String fileName) {
 
         if(url == null) {
             throw new NullPointerException("Url cannot be null");
         }
 
-        if(filePath == null) {
-            throw new NullPointerException("File  Path cannot be null");
+        if(dir == null) {
+            throw new NullPointerException("Dir cannot be null");
+        }
+
+        if(fileName == null) {
+            throw new NullPointerException("File Name cannot be null");
         }
 
         String scheme = Uri.parse(url).getScheme();
@@ -79,7 +111,7 @@ public final class Request {
         }
 
         this.url = url;
-        this.filePath = filePath;
+        this.filePath = generateFilePath(dir,fileName);
     }
 
     /**
@@ -101,9 +133,29 @@ public final class Request {
     }
 
     /**
+     * An HTTP header to be included with the download request.
+     *
+     * @param header header object
+     *
+     * @return the same instance of Request.
+     *
+     * @throws NullPointerException if the HTTP header object is null
+     * */
+    @NonNull
+    public Request addHeader(@NonNull Header header) {
+
+        if(header == null) {
+            throw new NullPointerException("Header cannot be null");
+        }
+
+        headers.add(header);
+        return this;
+    }
+
+    /**
      * Sets the download priority of the request.
      *
-     * @param priority priority of the download. PRIORITY_HIGH, PRIORITY_NORMAL
+     * @param priority priority of the download. Fetch.PRIORITY_HIGH, Fetch.PRIORITY_NORMAL
      *
      * @return the same instance of Request.
      * */
@@ -129,7 +181,8 @@ public final class Request {
     }
 
     /**
-     * @return the absolute local file path where the downloaded file will be stored.
+     * @return the absolute local file path including file name where the downloaded
+     * file will be stored. eg: /storage/videos/video.mp4
      * */
     @NonNull
     public String getFilePath() {
@@ -170,24 +223,28 @@ public final class Request {
                 + ",priority:" + priority + "}";
     }
 
-    static String generateFilePathFromUrl(String url) {
+    private static String generateFileName(String url) {
 
         if(url == null) {
             throw new NullPointerException("Url cannot be null");
         }
 
-        StringBuilder stringBuilder = new StringBuilder();
+        return new Date().getTime() + "_" + Uri.parse(url).getLastPathSegment();
+    }
 
-        String dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+    private static String generateDirectoryName() {
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 .toString();
+    }
 
-        stringBuilder.append(dir)
-                     .append("/");
+    private static String generateFilePath(String parentDir, String fileName) {
 
-        String fileName = new Date().toString() + "_" + Uri.parse(url).getLastPathSegment() ;
+        Uri uri = Uri.parse(fileName);
 
-        stringBuilder.append(fileName);
+        if(uri.getPathSegments().size() == 1) {
+            return parentDir + "/" + fileName;
+        }
 
-        return stringBuilder.toString();
+        return fileName;
     }
 }

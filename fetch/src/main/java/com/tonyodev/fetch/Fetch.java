@@ -85,7 +85,7 @@ public final class Fetch implements FetchConst {
 
     /**
      * Starts the FetchService and begins processing/downloading any
-     * STATUS_QUEUED Requests in the background.
+     * Fetch.STATUS_QUEUED Requests in the background.
      *
      * <p>Call this method if you need queued downloads to start
      * on application launch, or in a JobService without getting
@@ -120,6 +120,8 @@ public final class Fetch implements FetchConst {
 
     /**
      * Runs a GET request in the background and returns the response as a String.
+     * Experimental Feature. The implementation of Fetch.Call() may change in
+     * the future.
      *
      * @param request a download request. Cannot be null.
      * @param fetchCall Callback used to return the GET response/data back to the caller.
@@ -277,11 +279,6 @@ public final class Fetch implements FetchConst {
 
         try {
 
-            if(Utils.fileExist(request.getFilePath())) {
-                throw new EnqueueException("File already located at filePath: " + request.getFilePath()
-                        + ". The requested will not be enqueued.",ErrorUtils.REQUEST_ALREADY_EXIST);
-            }
-
             String url = request.getUrl();
             String filePath = request.getFilePath();
             int priority = request.getPriority();
@@ -416,8 +413,8 @@ public final class Fetch implements FetchConst {
     /**
      * Sets the status of a download request to STATUS_PAUSED.
      *
-     * <p>The STATUS_PAUSED status will only be set for the download request if its current status
-     * is STATUS_QUEUED or STATUS_DOWNLOADING.
+     * <p>The Fetch.STATUS_PAUSED status will only be set for the download request if its current status
+     * is Fetch.STATUS_QUEUED or Fetch.STATUS_DOWNLOADING.
      *
      * @param id a unique ID used by Fetch and the FetchService to identify a download
      *           request.
@@ -436,7 +433,7 @@ public final class Fetch implements FetchConst {
     }
 
     /**
-     * Sets the status of a paused download request to STATUS_QUEUED. The FetchService
+     * Sets the status of a paused download request to Fetch.STATUS_QUEUED. The FetchService
      * will queue the request, and resume the download.
      *
      * @param id a unique ID used by Fetch and the FetchService to identify a download
@@ -458,8 +455,8 @@ public final class Fetch implements FetchConst {
     /**
      * Sets the allowed network connection type the FetchService can use to download requests.
      *
-     * <p>This method only accepts two values: NETWORK_WIFI or NETWORK_ALL. The default is
-     * NETWORK_ALL.
+     * <p>This method only accepts two values: Fetch.NETWORK_WIFI or Fetch.NETWORK_ALL. The default is
+     * Fetch.NETWORK_ALL.
      *
      * @param networkType allowed network type
      *
@@ -488,7 +485,7 @@ public final class Fetch implements FetchConst {
      * @param id a unique ID used by Fetch and the FetchService to identify a download
      *           request.
      *
-     * @param priority download priority. PRIORITY_HIGH or PRIORITY_NORMAL
+     * @param priority download priority. Fetch.PRIORITY_HIGH or Fetch.PRIORITY_NORMAL
      *
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
@@ -571,7 +568,7 @@ public final class Fetch implements FetchConst {
     /**
      * Query the FetchService database for all download requests with the passed in status.
      *
-     * @param status eg. STATUS_DONE, STATUS_QUEUED
+     * @param status eg. Fetch.STATUS_DONE, Fetch.STATUS_QUEUED
      *
      * @return a List of RequestInfo object that contains the status and progress of a request.
      *         If no requests are found, an empty list will be returned.

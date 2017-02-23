@@ -299,11 +299,6 @@ public final class FetchService extends Service implements FetchConst {
                         + url + ", filePath:" + filePath,ERROR_BAD_REQUEST);
             }
 
-            if(Utils.fileExist(filePath)) {
-                throw new EnqueueException("File already located at filePath: " + filePath
-                        + ". The requested will not be enqueued.",ERROR_REQUEST_ALREADY_EXIST);
-            }
-
             if(headers == null) {
                 headers = new ArrayList<>();
             }

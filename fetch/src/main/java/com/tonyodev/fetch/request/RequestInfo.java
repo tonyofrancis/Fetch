@@ -95,8 +95,8 @@ public final class RequestInfo {
     }
 
     /**
-     * @return the local absolute path where the downloaded file is stored on the device
-     * or SD Card.
+     * @return the local absolute path including file name where the downloaded file is stored on the device
+     * or SD Card. eg: /storage/videos/video.mp4
      * */
     @NonNull
     public String getFilePath() {
