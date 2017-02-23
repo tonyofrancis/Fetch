@@ -653,6 +653,8 @@ public final class Fetch implements FetchConst {
 
     /**
      * Query the FetchService database for a download request's file path.
+     * The FilePath is the absolute local file path including file name where the downloaded
+     * file is stored. eg: /storage/videos/video.mp4
      *
      * @param id a unique ID used by Fetch and the FetchService to identify a download
      *           request.
