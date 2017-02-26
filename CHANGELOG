@@ -1,6 +1,6 @@
 Version 1.0.1
 
-- Bug fixes and performance improvments.
+- Bug fixes and performance improvements.
 - Fetch Listener now also reports downloaded bytes and file size.
 - New Fetch Call feature.
 - Update Fetch documentation.
