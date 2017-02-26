@@ -1,4 +1,4 @@
-[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch/images/download.svg?version=1.0.0) ](https://bintray.com/tonyofrancis/maven/fetch/1.0.0/link)
+[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch/images/download.svg?version=1.0.1) ](https://bintray.com/tonyofrancis/maven/fetch/1.0.1/link)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Networking-blue.svg?style=flat)](https://android-arsenal.com/details/1/5196)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tonyofrancis/Fetch/blob/master/LICENSE)
 
@@ -43,7 +43,7 @@ Using Fetch is easy! Just add the Gradle dependency to your application's build.
 file.
 
 ```java 
-compile 'com.tonyodev.fetch:fetch:1.0.0'
+compile 'com.tonyodev.fetch:fetch:1.0.1'
 ``` 
 
 Next, get an instance of Fetch and request a download. A unique ID will be returned 
@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
         
         ...
         
-        Request request = new Request(url,filePath);
+        Request request = new Request(url,dirPath,fileName);
         long downloadId = fetch.enqueue(request);        
     }
 
@@ -75,7 +75,7 @@ status or progress changes.
 fetch.addFetchListener(new FetchListener() {
             
     @Override
-    public void onUpdate(long id, int status, int progress, int error) {
+    public void onUpdate(long id, int status, int progress, long downloadedBytes, long fileSize, int error) {
                 
         if(downloadId == id) {
 
