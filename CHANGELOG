@@ -1,3 +1,9 @@
+Version 1.0.1
+
+- Bug fixes and performance improvments.
+- Fetch Listener now also reports downloaded bytes and file size.
+- New Fetch Call feature.
+- Update Fetch documentation.
 
 Verson 1.0
 
