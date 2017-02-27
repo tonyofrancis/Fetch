@@ -19,12 +19,15 @@ import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.util.ArrayMap;
 
 import com.tonyodev.fetch.Fetch;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class contains all the information necessary to request a new download
@@ -37,7 +40,7 @@ public final class Request {
 
     private final String url;
     private final String filePath;
-    private final List<Header> headers = new ArrayList<>();
+    private final Map<String,String> headers = new ArrayMap<>();
     private int priority = Fetch.PRIORITY_NORMAL;
 
     /**
@@ -127,9 +130,7 @@ public final class Request {
      * */
     @NonNull
     public Request addHeader(@NonNull String header,@Nullable String value) {
-
-        headers.add(new Header(header,value));
-        return this;
+        return addHeader(new Header(header,value));
     }
 
     /**
@@ -148,7 +149,7 @@ public final class Request {
             throw new NullPointerException("Header cannot be null");
         }
 
-        headers.add(header);
+        headers.put(header.getHeader(),header.getValue());
         return this;
     }
 
@@ -194,7 +195,15 @@ public final class Request {
      * */
     @NonNull
     public List<Header> getHeaders() {
-        return headers;
+
+        List<Header> headerList = new ArrayList<>(headers.size());
+        Set<String> keys = headers.keySet();
+
+        for (String key : keys) {
+            headerList.add(new Header(key,headers.get(key)));
+        }
+
+        return headerList;
     }
 
     /**
@@ -208,8 +217,9 @@ public final class Request {
     public String toString() {
 
         StringBuilder headerBuilder = new StringBuilder();
+        List<Header> headerList = getHeaders();
 
-        for (Header header : headers) {
+        for (Header header : headerList) {
             headerBuilder.append(header.toString())
                     .append(",");
         }
