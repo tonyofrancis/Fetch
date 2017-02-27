@@ -339,6 +339,29 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         return removed;
     }
 
+    synchronized boolean deleteAll() {
+
+        boolean removed = false;
+
+        try {
+            db.beginTransaction();
+            db.execSQL("DELETE FROM " + TABLE_NAME);
+
+            db.setTransactionSuccessful();
+        }catch (SQLiteException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            db.endTransaction();
+            removed = true;
+        }catch (SQLiteException e) {
+            e.printStackTrace();
+        }
+
+        return removed;
+    }
+
     synchronized boolean setPriority(long id, int priority) {
 
         boolean updated = false;

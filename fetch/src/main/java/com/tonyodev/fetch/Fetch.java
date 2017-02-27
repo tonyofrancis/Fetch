@@ -413,6 +413,23 @@ public final class Fetch implements FetchConst {
     }
 
     /**
+     * Removes all download requests completely from the FetchService. If a request is currently
+     * downloading, the download will be halted. Calling this method will also delete the
+     * partial or fully downloaded files on the device or SD Card.
+     *
+     * @throws NotUsableException if the release method has been called on Fetch.
+     * */
+    public void removeAll() {
+
+        Utils.throwIfNotUsable(this);
+
+        Bundle extras = new Bundle();
+        extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_REMOVE_ALL);
+
+        FetchService.sendToService(context,extras);
+    }
+
+    /**
      * Sets the status of a download request to STATUS_PAUSED.
      *
      * <p>The Fetch.STATUS_PAUSED status will only be set for the download request if its current status

@@ -32,6 +32,7 @@ import com.tonyodev.fetch.exception.EnqueueException;
 import com.tonyodev.fetch.request.RequestInfo;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -82,6 +83,7 @@ public final class FetchService extends Service implements FetchConst {
     public static final int ACTION_QUERY = 316;
     public static final int ACTION_PRIORITY = 317;
     public static final int ACTION_RETRY = 318;
+    public static final int ACTION_REMOVE_ALL = 319;
 
     public static final int QUERY_SINGLE = 480;
     public static final int QUERY_ALL = 481;
@@ -96,6 +98,7 @@ public final class FetchService extends Service implements FetchConst {
     private SharedPreferences sharedPreferences;
     private FetchRunnable fetchRunnable;
     private volatile boolean fetchRunnableQueued = false;
+    private volatile boolean removingRequest = false;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public static void sendToService(@NonNull Context context,@Nullable Bundle extras) {
@@ -240,6 +243,10 @@ public final class FetchService extends Service implements FetchConst {
                             retry(id);
                             break;
                         }
+                        case ACTION_REMOVE_ALL: {
+                            removeAll();
+                            break;
+                        }
                         default: {
                             break;
                         }
@@ -250,6 +257,10 @@ public final class FetchService extends Service implements FetchConst {
     }
 
     private synchronized void startDownload() {
+
+        if(removingRequest) {
+            return;
+        }
 
         databaseHelper.verifyOK();
         boolean networkAvailable = Utils.isNetworkAvailable(context);
@@ -381,6 +392,8 @@ public final class FetchService extends Service implements FetchConst {
 
     private void remove(final long id) {
 
+        removingRequest = true;
+
         if (fetchRunnable != null && fetchRunnable.getId() == id) {
             fetchRunnable.setInterrupted(true);
         }
@@ -398,6 +411,35 @@ public final class FetchService extends Service implements FetchConst {
                     STATUS_REMOVED,0,0,0,DEFAULT_EMPTY_VALUE);
         }
 
+        removingRequest = false;
+        startDownload();
+    }
+
+    private void removeAll() {
+
+        removingRequest = true;
+
+        if (fetchRunnable != null) {
+            fetchRunnable.setInterrupted(true);
+        }
+
+        Cursor cursor = databaseHelper.get();
+        List<RequestInfo> requests = Utils.cursorToRequestInfoList(cursor,true);
+
+        boolean removed = databaseHelper.deleteAll();
+
+        if(requests != null && removed) {
+
+            for (RequestInfo request : requests) {
+
+                Utils.deleteFile(request.getFilePath());
+
+                Utils.sendEventUpdate(broadcastManager,request.getId(),
+                        STATUS_REMOVED,0,0,0,DEFAULT_EMPTY_VALUE);
+            }
+        }
+
+        removingRequest = false;
         startDownload();
     }
 
