@@ -133,11 +133,7 @@ public class GameFilesActivity extends AppCompatActivity {
 
     private void removeDownloads() {
 
-        Set<Long> ids = fileProgress.keySet();
-
-        for (Long id : ids) {
-            fetch.remove(id);
-        }
+        fetch.removeAll();
     }
 
     private void updateUI() {

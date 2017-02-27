@@ -16,8 +16,6 @@ import com.tonyodev.fetch.listener.FetchListener;
 import com.tonyodev.fetch.request.Request;
 import com.tonyodev.fetch.request.RequestInfo;
 
-import java.util.List;
-
 public class SingleDownloadActivity extends AppCompatActivity implements FetchListener {
 
     private static final int STORAGE_PERMISSION_CODE = 100;
@@ -73,11 +71,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     /*Removes all downloads managed by Fetch*/
     private void clearAllDownloads() {
 
-        List<RequestInfo> infos = fetch.get();
-
-        for (RequestInfo info : infos) {
-            fetch.remove(info.getId());
-        }
+        fetch.removeAll();
 
         createRequest();
     }

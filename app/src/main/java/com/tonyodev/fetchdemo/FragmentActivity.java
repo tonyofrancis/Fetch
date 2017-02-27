@@ -16,9 +16,6 @@ import android.widget.Toast;
 import com.tonyodev.fetch.Fetch;
 import com.tonyodev.fetch.listener.FetchListener;
 import com.tonyodev.fetch.request.Request;
-import com.tonyodev.fetch.request.RequestInfo;
-
-import java.util.List;
 
 /**
  * Created by tonyofrancis on 1/31/17.
@@ -66,11 +63,7 @@ public class FragmentActivity extends AppCompatActivity {
     /*Removes all downloads managed by Fetch*/
     private void clearAllDownloads() {
 
-        List<RequestInfo> infos = fetch.get();
-
-        for (RequestInfo info : infos) {
-            fetch.remove(info.getId());
-        }
+        fetch.removeAll();
     }
 
     private void createRequest() {

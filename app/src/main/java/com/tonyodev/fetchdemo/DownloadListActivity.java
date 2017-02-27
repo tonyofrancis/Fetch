@@ -42,12 +42,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     private void clearAllDownloads() {
 
         Fetch fetch = Fetch.getInstance(this);
-
-        List<RequestInfo> infos = fetch.get();
-
-        for (RequestInfo info : infos) {
-            fetch.remove(info.getId());
-        }
+        fetch.removeAll();
 
         createNewRequests();
         fetch.release();

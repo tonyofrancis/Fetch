@@ -11,10 +11,8 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.tonyodev.fetch.Fetch;
-import com.tonyodev.fetch.request.RequestInfo;
 
 import java.io.File;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -107,11 +105,7 @@ public class MainActivity extends AppCompatActivity {
     private void clearAllDownloads() {
 
         Fetch fetch = Fetch.getInstance(this);
-        List<RequestInfo> infos = fetch.get();
-
-        for (RequestInfo info : infos) {
-            fetch.remove(info.getId());
-        }
+        fetch.removeAll();
 
         fetch.release();
     }
