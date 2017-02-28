@@ -77,7 +77,7 @@ fetch.addFetchListener(new FetchListener() {
     @Override
     public void onUpdate(long id, int status, int progress, long downloadedBytes, long fileSize, int error) {
                 
-        if(downloadId == id) {
+        if(downloadId == id && status == Fetch.STATUS_DOWNLOADING) {
 
             progressBar.setProgress(progress);
             ...
