@@ -57,7 +57,7 @@ interface FetchConst {
     int STATUS_PAUSED = 902;
 
     /**
-     * Status of a download request if the file has been download successfully.
+     * Status of a download request if the file has been downloaded successfully.
      * */
     int STATUS_DONE  = 903;
 
