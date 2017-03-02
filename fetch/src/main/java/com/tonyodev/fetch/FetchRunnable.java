@@ -315,4 +315,13 @@ final class FetchRunnable implements Runnable {
     synchronized long getId() {
         return id;
     }
+
+    static long getId(Intent intent) {
+
+        if(intent == null) {
+            return -1;
+        }
+
+        return intent.getLongExtra(EXTRA_ID,-1);
+    }
 }
