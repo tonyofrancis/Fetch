@@ -39,8 +39,8 @@ import java.util.List;
  */
 final class FetchRunnable implements Runnable {
 
-    static final String ACTION_DONE = "com.tonyodev.fetch.action_done";
-    static final String EXTRA_ID = "com.tonyodev.fetch.extra_id";
+    private static final String ACTION_DONE = "com.tonyodev.fetch.action_done";
+    private static final String EXTRA_ID = "com.tonyodev.fetch.extra_id";
 
     private final long id;
     private final String url;
@@ -124,7 +124,7 @@ final class FetchRunnable implements Runnable {
 
                 if(fileSize < 1) {
                     setContentLength();
-                    databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
+                    databaseHelper.updateFileBytes(id,downloadedBytes,fileSize);
                     progress = Utils.getProgress(downloadedBytes,fileSize);
                 }
 
@@ -138,13 +138,15 @@ final class FetchRunnable implements Runnable {
                 }
 
                 writeToFileAndPost();
+
                 databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
+                progress = Utils.getProgress(downloadedBytes,fileSize);
 
                 if(downloadedBytes >= fileSize && !isInterrupted()) {
 
                     if(fileSize < 1) {
                         fileSize = Utils.getFileSize(filePath);
-                        databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
+                        databaseHelper.updateFileBytes(id,downloadedBytes,fileSize);
                         progress = Utils.getProgress(downloadedBytes,fileSize);
                     }
 
@@ -243,13 +245,14 @@ final class FetchRunnable implements Runnable {
             output.write(buffer, 0, read);
             downloadedBytes += read;
 
-            progress = Utils.getProgress(downloadedBytes,fileSize);
             stopTime = System.nanoTime();
 
             if (Utils.hasTwoSecondsPassed(startTime, stopTime) && !isInterrupted()) {
 
+                progress = Utils.getProgress(downloadedBytes,fileSize);
+
                 Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_DOWNLOADING,
-                        progress, downloadedBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
+                        progress,downloadedBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
 
                 startTime = System.nanoTime();
             }
@@ -309,7 +312,7 @@ final class FetchRunnable implements Runnable {
         this.interrupted = interrupted;
     }
 
-    long getId() {
+    synchronized long getId() {
         return id;
     }
 }
