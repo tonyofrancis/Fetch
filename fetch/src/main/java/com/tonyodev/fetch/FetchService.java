@@ -352,6 +352,10 @@ public final class FetchService extends Service implements FetchConst {
 
     private void resume(final long id) {
 
+        if(fetchRunnable != null && fetchRunnable.getId() == id) {
+            return;
+        }
+
         boolean resumed = databaseHelper.resume(id);
 
         if(resumed) {
