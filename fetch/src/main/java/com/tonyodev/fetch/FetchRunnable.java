@@ -122,11 +122,13 @@ final class FetchRunnable implements Runnable {
                     throw new InterruptedException("TI");
                 }
 
-                setContentLength();
-                databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
-                progress = Utils.getProgress(downloadedBytes,fileSize);
-                databaseHelper.updateStatus(id,FetchConst.STATUS_DOWNLOADING,FetchConst.DEFAULT_EMPTY_VALUE);
+                if(fileSize < 1) {
+                    setContentLength();
+                    databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
+                    progress = Utils.getProgress(downloadedBytes,fileSize);
+                }
 
+                databaseHelper.updateStatus(id,FetchConst.STATUS_DOWNLOADING,FetchConst.DEFAULT_EMPTY_VALUE);
                 input = httpURLConnection.getInputStream();
 
                 if(responseCode == HttpURLConnection.HTTP_PARTIAL) {
@@ -140,7 +142,7 @@ final class FetchRunnable implements Runnable {
 
                 if(downloadedBytes >= fileSize && !isInterrupted()) {
 
-                    if(fileSize == -1) {
+                    if(fileSize < 1) {
                         fileSize = Utils.getFileSize(filePath);
                         databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
                         progress = Utils.getProgress(downloadedBytes,fileSize);
