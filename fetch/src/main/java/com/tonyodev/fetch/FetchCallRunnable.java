@@ -39,11 +39,10 @@ final class FetchCallRunnable implements Runnable {
 
     private final Request request;
     private final FetchCall<String> fetchCall;
-    private final Handler handler;
     private final Callback callback;
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
     private volatile boolean interrupted = false;
-
     private HttpURLConnection httpURLConnection;
     private InputStream input;
     private BufferedReader bufferedReader;
@@ -60,10 +59,13 @@ final class FetchCallRunnable implements Runnable {
             throw new NullPointerException("FetchCall cannot be null");
         }
 
+        if(callback == null) {
+            throw new NullPointerException("Callback cannot be null");
+        }
+
         this.request = request;
         this.fetchCall = fetchCall;
         this.callback = callback;
-        this.handler = new Handler(Looper.getMainLooper());
     }
 
     @Override
@@ -110,10 +112,7 @@ final class FetchCallRunnable implements Runnable {
             }
         }finally {
             release();
-
-            if(callback != null) {
-                callback.onDone(request);
-            }
+            callback.onDone(request);
         }
     }
 
