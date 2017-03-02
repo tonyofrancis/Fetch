@@ -63,14 +63,14 @@ public final class Fetch implements FetchConst {
     private final LocalBroadcastManager broadcastManager;
     private final List<FetchListener> listeners = new ArrayList<>();
     private final DatabaseHelper dbHelper;
-    private boolean isReleased = false;
+    private volatile boolean isReleased = false;
 
     private Fetch(Context context) {
 
         this.context = context.getApplicationContext();
 
-        broadcastManager = LocalBroadcastManager.getInstance(this.context);
-        dbHelper = DatabaseHelper.getInstance(this.context);
+        this.broadcastManager = LocalBroadcastManager.getInstance(this.context);
+        this.dbHelper = DatabaseHelper.getInstance(this.context);
 
         broadcastManager.registerReceiver(updateReceiver,
                 FetchService.getEventUpdateFilter());
@@ -186,7 +186,7 @@ public final class Fetch implements FetchConst {
      * Fetch.getInstance().
      *
      * */
-    public void release() {
+    public synchronized void release() {
 
         if(!isReleased()) {
 
@@ -284,14 +284,12 @@ public final class Fetch implements FetchConst {
             String url = request.getUrl();
             String filePath = request.getFilePath();
             int priority = request.getPriority();
-            int status = Fetch.STATUS_QUEUED;
             String headers = Utils.headerListToString(request.getHeaders());
             long fileSize = 0L;
             long downloadedBytes = 0L;
-            int error = DEFAULT_EMPTY_VALUE;
 
-            boolean enqueued = dbHelper.insert(id,url,filePath,status,headers,downloadedBytes,
-                    fileSize,priority,error);
+            boolean enqueued = dbHelper.insert(id,url,filePath, Fetch.STATUS_QUEUED,headers,downloadedBytes,
+                    fileSize,priority, DEFAULT_EMPTY_VALUE);
 
             if(!enqueued) {
                 throw new EnqueueException("could not insert request",ERROR_ENQUEUE_ERROR);
@@ -557,7 +555,7 @@ public final class Fetch implements FetchConst {
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
     @Nullable
-    public RequestInfo get(long id) {
+    public synchronized RequestInfo get(long id) {
 
         Utils.throwIfNotUsable(this);
 
@@ -575,7 +573,7 @@ public final class Fetch implements FetchConst {
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
     @NonNull
-    public List<RequestInfo> get() {
+    public synchronized List<RequestInfo> get() {
 
         Utils.throwIfNotUsable(this);
 
@@ -596,7 +594,7 @@ public final class Fetch implements FetchConst {
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
     @NonNull
-    public List<RequestInfo> getByStatus(int status) {
+    public synchronized List<RequestInfo> getByStatus(int status) {
 
         Utils.throwIfNotUsable(this);
         Utils.throwIfInvalidStatus(status);
@@ -618,7 +616,7 @@ public final class Fetch implements FetchConst {
      *         If the request could not be found null will be returned.
      * */
     @Nullable
-    public RequestInfo get(@NonNull Request request) {
+    public synchronized RequestInfo get(@NonNull Request request) {
 
         Utils.throwIfNotUsable(this);
 
@@ -643,7 +641,7 @@ public final class Fetch implements FetchConst {
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
     @Nullable
-    public File getDownloadedFile(long id) {
+    public synchronized File getDownloadedFile(long id) {
 
         Utils.throwIfNotUsable(this);
 
@@ -678,7 +676,7 @@ public final class Fetch implements FetchConst {
      * @throws NotUsableException if the release method has been called on Fetch.
      * */
     @Nullable
-    public String getFilePath(long id) {
+    public synchronized String getFilePath(long id) {
 
         Utils.throwIfNotUsable(this);
 
@@ -724,15 +722,11 @@ public final class Fetch implements FetchConst {
             id = Utils.generateRequestId();
             File file = Utils.getFile(filePath);
             String url = Uri.fromFile(file).toString();
-            int status = Fetch.STATUS_DONE;
             String headers = Utils.headerListToString(null);
             long fileSize = file.length();
-            long downloadedBytes= fileSize;
-            int priority = Fetch.PRIORITY_NORMAL;
-            int error = DEFAULT_EMPTY_VALUE;
 
-            boolean inserted = dbHelper.insert(id, url, filePath, status, headers,
-                   downloadedBytes,fileSize, priority, error);
+            boolean inserted = dbHelper.insert(id, url, filePath, Fetch.STATUS_DONE, headers,
+                    fileSize,fileSize, Fetch.PRIORITY_NORMAL, DEFAULT_EMPTY_VALUE);
 
             if(!inserted) {
                 throw new EnqueueException("could not insert request:" + filePath,ERROR_ENQUEUE_ERROR);
@@ -894,7 +888,7 @@ public final class Fetch implements FetchConst {
      * @return returns true if the request is being managed by the Fetch Service
      *         or false if it is not.
      * */
-    public boolean contains(@NonNull Request request) {
+    public synchronized boolean contains(@NonNull Request request) {
 
         Utils.throwIfNotUsable(this);
 
@@ -911,7 +905,7 @@ public final class Fetch implements FetchConst {
      * @return returns true if this instance of Fetch is still
      * valid for use.
      * */
-    public boolean isValid() {
+    public synchronized boolean isValid() {
         return !isReleased();
     }
 

@@ -38,16 +38,19 @@ final class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "com_tonyodev_fetch.db";
     private static final String TABLE_NAME = "requests";
 
-    static final String COLUMN_ID = "_id";
-    static final String COLUMN_URL = "_url";
-    static final String COLUMN_FILEPATH = "_file_path";
-    static final String COLUMN_STATUS = "_status";
-    static final String COLUMN_HEADERS = "_headers";
-    static final String COLUMN_DOWNLOADED_BYTES = "_written_bytes";
-    static final String COLUMN_FILE_SIZE = "_file_size";
-    static final String COLUMN_ERROR = "_error";
-    static final String COLUMN_PRIORITY = "_priority";
+    private static final String COLUMN_ID = "_id";
+    private static final String COLUMN_URL = "_url";
+    private static final String COLUMN_FILEPATH = "_file_path";
+    private static final String COLUMN_STATUS = "_status";
+    private static final String COLUMN_HEADERS = "_headers";
+    private static final String COLUMN_DOWNLOADED_BYTES = "_written_bytes";
+    private static final String COLUMN_FILE_SIZE = "_file_size";
+    private static final String COLUMN_ERROR = "_error";
+    private static final String COLUMN_PRIORITY = "_priority";
 
+    /*Convenience INDEXES. DO NOT USE for anything else other than extracting
+     *from a cursor that has all columns. Helps with
+     *faster lookup*/
     static final int INDEX_COLUMN_ID = 0;
     static final int INDEX_COLUMN_URL = 1;
     static final int INDEX_COLUMN_FILEPATH = 2;
