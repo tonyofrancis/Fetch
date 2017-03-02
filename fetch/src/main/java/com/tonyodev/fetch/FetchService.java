@@ -531,6 +531,10 @@ public final class FetchService extends Service implements FetchConst {
 
     private void retry(long id) {
 
+        if(fetchRunnable != null && fetchRunnable.getId() == id) {
+            return;
+        }
+
         boolean retry = databaseHelper.retry(id);
 
         if(retry) {
