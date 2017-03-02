@@ -507,11 +507,9 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         }catch (SQLiteException e) {
             e.printStackTrace();
         }
-
-        clean();
     }
 
-    private void clean() {
+    synchronized void clean() {
 
         Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID + ", " + COLUMN_FILEPATH
                 + " FROM " + TABLE_NAME + " WHERE " + COLUMN_STATUS + " = "

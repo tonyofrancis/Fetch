@@ -154,6 +154,16 @@ public final class FetchService extends Service implements FetchConst {
         databaseHelper = DatabaseHelper.getInstance(context);
         broadcastManager.registerReceiver(fetchDoneReceiver,FetchRunnable.getDoneFilter());
         registeredReceivers.add(fetchDoneReceiver);
+
+
+        if(!executor.isShutdown()) {
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    databaseHelper.clean();
+                }
+            });
+        }
     }
 
     @Nullable
