@@ -493,9 +493,9 @@ public final class FetchService extends Service implements FetchConst {
 
     private void retry(long id) {
 
-        boolean willRetry = databaseHelper.retry(id);
+        boolean retry = databaseHelper.retry(id);
 
-        if(willRetry) {
+        if(retry) {
 
             Cursor cursor = databaseHelper.get(id);
             RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true);
