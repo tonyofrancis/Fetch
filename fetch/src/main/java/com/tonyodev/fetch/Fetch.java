@@ -149,7 +149,7 @@ public final class Fetch implements FetchConst {
         new Thread(callRunnable).start();
     }
 
-    private static FetchCallRunnable.Callback callsCallback = new FetchCallRunnable.Callback() {
+    private static final FetchCallRunnable.Callback callsCallback = new FetchCallRunnable.Callback() {
         @Override
         public void onDone(Request request) {
             callsMap.remove(request);
