@@ -186,7 +186,7 @@ public final class Fetch implements FetchConst {
      * Fetch.getInstance().
      *
      * */
-    public synchronized void release() {
+    public void release() {
 
         if(!isReleased()) {
 
@@ -905,7 +905,7 @@ public final class Fetch implements FetchConst {
      * @return returns true if this instance of Fetch is still
      * valid for use.
      * */
-    public synchronized boolean isValid() {
+    public boolean isValid() {
         return !isReleased();
     }
 
