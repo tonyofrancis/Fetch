@@ -242,24 +242,7 @@ final class Utils {
            }
 
            cursor.moveToFirst();
-
-           long id = cursor.getLong(DatabaseHelper.INDEX_COLUMN_ID);
-           int status = cursor.getInt(DatabaseHelper.INDEX_COLUMN_STATUS);
-           String url = cursor.getString(DatabaseHelper.INDEX_COLUMN_URL);
-           String filePath = cursor.getString(DatabaseHelper.INDEX_COLUMN_FILEPATH);
-           int error = cursor.getInt(DatabaseHelper.INDEX_COLUMN_ERROR);
-           long fileSize = cursor.getLong(DatabaseHelper.INDEX_COLUMN_FILE_SIZE);
-           int priority = cursor.getInt(DatabaseHelper.INDEX_COLUMN_PRIORITY);
-           long downloadedBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_DOWNLOADED_BYTES);
-
-           String headers = cursor.getString(DatabaseHelper.INDEX_COLUMN_HEADERS);
-           List<Header> headersList = headerStringToList(headers);
-
-
-           int progress = getProgress(downloadedBytes,fileSize);
-
-           requestInfo = new RequestInfo(id,status,url,filePath,progress,downloadedBytes,fileSize,
-                   error,headersList,priority);
+           requestInfo = createRequestInfo(cursor);
 
            if(closeCursor) {
                cursor.close();
@@ -285,26 +268,7 @@ final class Utils {
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
 
-                long id = cursor.getLong(DatabaseHelper.INDEX_COLUMN_ID);
-                int status = cursor.getInt(DatabaseHelper.INDEX_COLUMN_STATUS);
-                String url = cursor.getString(DatabaseHelper.INDEX_COLUMN_URL);
-                String filePath = cursor.getString(DatabaseHelper.INDEX_COLUMN_FILEPATH);
-                int error = cursor.getInt(DatabaseHelper.INDEX_COLUMN_ERROR);
-                long fileSize = cursor.getLong(DatabaseHelper.INDEX_COLUMN_FILE_SIZE);
-                int priority = cursor.getInt(DatabaseHelper.INDEX_COLUMN_PRIORITY);
-                long downloadedBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_DOWNLOADED_BYTES);
-
-                String headers = cursor.getString(DatabaseHelper.INDEX_COLUMN_HEADERS);
-                List<Header> headersList = headerStringToList(headers);
-
-
-                int progress = getProgress(downloadedBytes,fileSize);
-
-                RequestInfo requestInfo = new RequestInfo(id,status,url,filePath,progress,
-                        downloadedBytes,fileSize,error,headersList,priority);
-
-                requests.add(requestInfo);
-
+                requests.add(createRequestInfo(cursor));
                 cursor.moveToNext();
             }
 
@@ -317,6 +281,32 @@ final class Utils {
         }
 
         return requests;
+    }
+
+    static RequestInfo createRequestInfo(Cursor cursor) {
+
+        if(cursor == null || cursor.isClosed() || cursor.getCount() < 1) {
+            return null;
+        }
+
+        long id = cursor.getLong(DatabaseHelper.INDEX_COLUMN_ID);
+        int status = cursor.getInt(DatabaseHelper.INDEX_COLUMN_STATUS);
+        String url = cursor.getString(DatabaseHelper.INDEX_COLUMN_URL);
+        String filePath = cursor.getString(DatabaseHelper.INDEX_COLUMN_FILEPATH);
+        int error = cursor.getInt(DatabaseHelper.INDEX_COLUMN_ERROR);
+        long fileSize = cursor.getLong(DatabaseHelper.INDEX_COLUMN_FILE_SIZE);
+        int priority = cursor.getInt(DatabaseHelper.INDEX_COLUMN_PRIORITY);
+        long downloadedBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_DOWNLOADED_BYTES);
+
+        String headers = cursor.getString(DatabaseHelper.INDEX_COLUMN_HEADERS);
+        List<Header> headersList = headerStringToList(headers);
+
+
+        int progress = getProgress(downloadedBytes,fileSize);
+
+        return new RequestInfo(id,status,url,filePath,progress,
+                downloadedBytes,fileSize,error,headersList,priority);
+
     }
 
     static ArrayList<Bundle> cursorToQueryResultList(Cursor cursor, boolean closeCursor) {
