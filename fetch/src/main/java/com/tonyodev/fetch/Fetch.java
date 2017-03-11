@@ -172,7 +172,7 @@ public final class Fetch implements FetchConst {
             FetchCallRunnable fetchCallRunnable = callsMap.get(request);
 
             if(fetchCallRunnable != null) {
-                fetchCallRunnable.setInterrupted(true);
+                fetchCallRunnable.interrupt();
             }
         }
     }

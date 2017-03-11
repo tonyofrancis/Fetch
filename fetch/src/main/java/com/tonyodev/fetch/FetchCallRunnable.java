@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.tonyodev.fetch.callback.FetchCall;
+import com.tonyodev.fetch.exception.DownloadInterruptedException;
 import com.tonyodev.fetch.request.Header;
 import com.tonyodev.fetch.request.Request;
 
@@ -80,7 +81,7 @@ final class FetchCallRunnable implements Runnable {
             if(responseCode == HttpURLConnection.HTTP_OK) {
 
                 if (isInterrupted()) {
-                    throw new InterruptedException("TI");
+                    throw new DownloadInterruptedException("DIE",ErrorUtils.DOWNLOAD_INTERRUPTED);
                 }
 
                 input = httpURLConnection.getInputStream();
@@ -178,8 +179,8 @@ final class FetchCallRunnable implements Runnable {
         return interrupted;
     }
 
-    synchronized void setInterrupted(boolean interrupted) {
-        this.interrupted = interrupted;
+    synchronized void interrupt() {
+        this.interrupted = true;
     }
 
     public Request getRequest() {

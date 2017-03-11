@@ -55,7 +55,9 @@ final class ErrorUtils {
             return FILE_NOT_CREATED;
         } else if(message.equalsIgnoreCase("TI")) {
             return THREAD_INTERRUPTED;
-        }else if(message.equalsIgnoreCase("recvfrom failed: ETIMEDOUT (Connection timed out)") || message.equalsIgnoreCase("timeout")) {
+        }else if(message.equalsIgnoreCase("DIE")) {
+            return DOWNLOAD_INTERRUPTED;
+        } else if(message.equalsIgnoreCase("recvfrom failed: ETIMEDOUT (Connection timed out)") || message.equalsIgnoreCase("timeout")) {
             return CONNECTION_TIMED_OUT;
         }else if(message.equalsIgnoreCase("java.io.IOException: 404") || message.contains("No address associated with hostname")) {
             return HTTP_NOT_FOUND;
