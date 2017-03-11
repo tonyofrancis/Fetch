@@ -308,8 +308,8 @@ final class FetchRunnable implements Runnable {
         return interrupted;
     }
 
-    synchronized void setInterrupted(boolean interrupted) {
-        this.interrupted = interrupted;
+    synchronized void interrupt() {
+        this.interrupted = true;
     }
 
     synchronized long getId() {

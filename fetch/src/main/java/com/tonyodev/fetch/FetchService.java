@@ -191,7 +191,7 @@ public final class FetchService extends Service implements FetchConst {
         executor.shutdown();
 
         if(fetchRunnable != null) {
-            fetchRunnable.setInterrupted(true);
+            fetchRunnable.interrupt();
         }
 
         for (BroadcastReceiver registeredReceiver : registeredReceivers) {
@@ -285,7 +285,7 @@ public final class FetchService extends Service implements FetchConst {
         if((!networkAvailable || (getAllowedNetwork() == NETWORK_WIFI && !onWiFi))
                 && fetchRunnable != null) {
 
-            fetchRunnable.setInterrupted(true);
+            fetchRunnable.interrupt();
 
         }else if(!fetchRunnableQueued) {
 
@@ -422,7 +422,7 @@ public final class FetchService extends Service implements FetchConst {
 
             registeredReceivers.add(broadcastReceiver);
             broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
-            fetchRunnable.setInterrupted(true);
+            fetchRunnable.interrupt();
         }
 
         startDownload();
@@ -433,7 +433,7 @@ public final class FetchService extends Service implements FetchConst {
         removingRequest = true;
 
         if (fetchRunnable != null && fetchRunnable.getId() == id) {
-            fetchRunnable.setInterrupted(true);
+            fetchRunnable.interrupt();
         }
 
         Cursor cursor = databaseHelper.get(id);
@@ -458,7 +458,7 @@ public final class FetchService extends Service implements FetchConst {
         removingRequest = true;
 
         if (fetchRunnable != null) {
-            fetchRunnable.setInterrupted(true);
+            fetchRunnable.interrupt();
         }
 
         Cursor cursor = databaseHelper.get();
@@ -512,7 +512,7 @@ public final class FetchService extends Service implements FetchConst {
         boolean updated = databaseHelper.setPriority(id,priority);
 
         if(updated && fetchRunnable != null) {
-            fetchRunnable.setInterrupted(true);
+            fetchRunnable.interrupt();
         }
 
         startDownload();
@@ -523,7 +523,7 @@ public final class FetchService extends Service implements FetchConst {
         sharedPreferences.edit().putInt(EXTRA_NETWORK_ID,networkType).apply();
 
         if(fetchRunnable != null) {
-            fetchRunnable.setInterrupted(true);
+            fetchRunnable.interrupt();
         }
 
         startDownload();
