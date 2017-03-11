@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.tonyodev.fetch.exception.DownloadInterruptedException;
@@ -58,16 +59,17 @@ final class FetchRunnable implements Runnable {
     private InputStream input;
     private FileOutputStream output;
 
-    private int progress = 0;
-    private long downloadedBytes = 0;
-    private long fileSize = -1;
+    private int progress;
+    private long downloadedBytes;
+    private long fileSize;
 
+    @NonNull
     static IntentFilter getDoneFilter() {
         return new IntentFilter(ACTION_DONE);
     }
 
-    FetchRunnable(Context context, long id, String url, String filePath,
-                  List<Header> headers,long fileSize) {
+    FetchRunnable(@NonNull Context context, long id,@NonNull String url,@NonNull String filePath,
+                  @NonNull List<Header> headers,long fileSize) {
 
         if(context == null) {
             throw new NullPointerException("Context cannot be null");
@@ -106,12 +108,12 @@ final class FetchRunnable implements Runnable {
 
             downloadedBytes = Utils.getFileSize(filePath);
             progress = Utils.getProgress(downloadedBytes,fileSize);
-            databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
+            databaseHelper.updateFileBytes(id,downloadedBytes,fileSize);
 
             httpURLConnection.setRequestProperty("Range", "bytes=" + downloadedBytes + "-");
 
             if (isInterrupted()) {
-                throw new DownloadInterruptedException("TI",ErrorUtils.DOWNLOAD_INTERRUPTED);
+                throw new DownloadInterruptedException("DIE",ErrorUtils.DOWNLOAD_INTERRUPTED);
             }
 
             httpURLConnection.connect();
@@ -120,7 +122,7 @@ final class FetchRunnable implements Runnable {
             if (isResponseOk(responseCode)) {
 
                 if (isInterrupted()) {
-                    throw new DownloadInterruptedException("TI",ErrorUtils.DOWNLOAD_INTERRUPTED);
+                    throw new DownloadInterruptedException("DIE",ErrorUtils.DOWNLOAD_INTERRUPTED);
                 }
 
                 if(fileSize < 1) {
@@ -130,7 +132,6 @@ final class FetchRunnable implements Runnable {
                 }
 
                 databaseHelper.updateStatus(id,FetchConst.STATUS_DOWNLOADING,FetchConst.DEFAULT_EMPTY_VALUE);
-                input = httpURLConnection.getInputStream();
 
                 if(responseCode == HttpURLConnection.HTTP_PARTIAL) {
                     output = new FileOutputStream(filePath, true);
@@ -138,10 +139,10 @@ final class FetchRunnable implements Runnable {
                     output = new FileOutputStream(filePath,false);
                 }
 
+                input = httpURLConnection.getInputStream();
                 writeToFileAndPost();
 
-                databaseHelper.updateFileBytes(id, downloadedBytes,fileSize);
-                progress = Utils.getProgress(downloadedBytes,fileSize);
+                databaseHelper.updateFileBytes(id,downloadedBytes,fileSize);
 
                 if(downloadedBytes >= fileSize && !isInterrupted()) {
 
@@ -149,15 +150,17 @@ final class FetchRunnable implements Runnable {
                         fileSize = Utils.getFileSize(filePath);
                         databaseHelper.updateFileBytes(id,downloadedBytes,fileSize);
                         progress = Utils.getProgress(downloadedBytes,fileSize);
+                    }else {
+                        progress = Utils.getProgress(downloadedBytes,fileSize);
                     }
 
-                    boolean updated = databaseHelper.updateStatus(id, FetchConst.STATUS_DONE,
+                    boolean updated = databaseHelper.updateStatus(id,FetchConst.STATUS_DONE,
                             FetchConst.DEFAULT_EMPTY_VALUE);
 
-                    if(updated) {
+                    if(updated){
 
-                        Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_DONE,
-                                progress, downloadedBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
+                        Utils.sendEventUpdate(broadcastManager,id,FetchConst.STATUS_DONE,
+                                progress,downloadedBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
                     }
                 }
 
@@ -171,12 +174,12 @@ final class FetchRunnable implements Runnable {
 
             if(canRetry(error)) {
 
-                boolean updated = databaseHelper.updateStatus(id, FetchConst.STATUS_QUEUED,
+                boolean updated = databaseHelper.updateStatus(id,FetchConst.STATUS_QUEUED,
                         FetchConst.DEFAULT_EMPTY_VALUE);
 
                 if(updated) {
-                    Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_QUEUED,
-                            progress, downloadedBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
+                    Utils.sendEventUpdate(broadcastManager,id,FetchConst.STATUS_QUEUED,
+                            progress,downloadedBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
                 }
 
             } else {
@@ -227,9 +230,9 @@ final class FetchRunnable implements Runnable {
     private void setContentLength() {
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            fileSize = httpURLConnection.getContentLengthLong();
+            fileSize = downloadedBytes + httpURLConnection.getContentLengthLong();
         } else {
-            fileSize = httpURLConnection.getContentLength();
+            fileSize = downloadedBytes + httpURLConnection.getContentLength();
         }
     }
 
@@ -248,12 +251,14 @@ final class FetchRunnable implements Runnable {
 
             stopTime = System.nanoTime();
 
-            if (Utils.hasTwoSecondsPassed(startTime, stopTime) && !isInterrupted()) {
+            if (Utils.hasTwoSecondsPassed(startTime,stopTime) && !isInterrupted()) {
 
                 progress = Utils.getProgress(downloadedBytes,fileSize);
 
                 Utils.sendEventUpdate(broadcastManager,id, FetchConst.STATUS_DOWNLOADING,
                         progress,downloadedBytes,fileSize,FetchConst.DEFAULT_EMPTY_VALUE);
+
+                databaseHelper.updateFileBytes(id,downloadedBytes,fileSize);
 
                 startTime = System.nanoTime();
             }
@@ -318,7 +323,7 @@ final class FetchRunnable implements Runnable {
         return id;
     }
 
-    static long getId(Intent intent) {
+    static long getIdFromIntent(Intent intent) {
 
         if(intent == null) {
             return -1;

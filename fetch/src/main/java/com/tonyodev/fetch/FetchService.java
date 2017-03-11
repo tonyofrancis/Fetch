@@ -89,16 +89,17 @@ public final class FetchService extends Service implements FetchConst {
     public static final int QUERY_ALL = 481;
     public static final int QUERY_BY_STATUS = 482;
 
-
     private static final String SHARED_PREFERENCES = "com.tonyodev.fetch.shared_preferences";
 
     private Context context;
     private DatabaseHelper databaseHelper;
     private LocalBroadcastManager broadcastManager;
     private SharedPreferences sharedPreferences;
-    private FetchRunnable fetchRunnable;
+
+    private volatile FetchRunnable fetchRunnable;
     private volatile boolean fetchRunnableQueued = false;
     private volatile boolean runningTask = false;
+    private volatile boolean shuttingDown = false;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final List<BroadcastReceiver> registeredReceivers = new ArrayList<>();
 
@@ -128,18 +129,22 @@ public final class FetchService extends Service implements FetchConst {
         context.startService(intent);
     }
 
+    @NonNull
     public static IntentFilter getEventEnqueuedFilter() {
         return new IntentFilter(EVENT_ACTION_ENQUEUED);
     }
 
+    @NonNull
     public static IntentFilter getEventEnqueueFailedFilter() {
         return new IntentFilter(EVENT_ACTION_ENQUEUE_FAILED);
     }
 
+    @NonNull
     public static IntentFilter getEventUpdateFilter() {
         return new IntentFilter(EVENT_ACTION_UPDATE);
     }
 
+    @NonNull
     public static IntentFilter getEventQueryFilter() {
         return new IntentFilter(EVENT_ACTION_QUERY);
     }
@@ -152,8 +157,8 @@ public final class FetchService extends Service implements FetchConst {
         broadcastManager = LocalBroadcastManager.getInstance(context);
         sharedPreferences = getSharedPreferences(SHARED_PREFERENCES,Context.MODE_PRIVATE);
         databaseHelper = DatabaseHelper.getInstance(context);
-        broadcastManager.registerReceiver(fetchDoneReceiver,FetchRunnable.getDoneFilter());
-        registeredReceivers.add(fetchDoneReceiver);
+        broadcastManager.registerReceiver(doneReceiver,FetchRunnable.getDoneFilter());
+        registeredReceivers.add(doneReceiver);
 
 
         if(!executor.isShutdown()) {
@@ -188,7 +193,11 @@ public final class FetchService extends Service implements FetchConst {
     public void onDestroy() {
         super.onDestroy();
 
-        executor.shutdown();
+        shuttingDown = true;
+
+        if(!executor.isShutdown()){
+            executor.shutdown();
+        }
 
         if(fetchRunnable != null) {
             fetchRunnable.interrupt();
@@ -202,6 +211,10 @@ public final class FetchService extends Service implements FetchConst {
     }
 
     private void processAction(final Intent intent) {
+
+        if(intent == null) {
+            return;
+        }
 
         if(!executor.isShutdown()) {
 
@@ -275,7 +288,7 @@ public final class FetchService extends Service implements FetchConst {
 
     private synchronized void startDownload() {
 
-        if(runningTask) {
+        if(shuttingDown || fetchRunnableQueued || runningTask) {
             return;
         }
 
@@ -294,7 +307,7 @@ public final class FetchService extends Service implements FetchConst {
 
             try {
 
-                Cursor cursor = databaseHelper.getNextPending();
+                Cursor cursor = databaseHelper.getNextPendingRequest();
 
                 if(cursor != null && !cursor.isClosed() && cursor.getCount() > 0) {
 
@@ -388,86 +401,131 @@ public final class FetchService extends Service implements FetchConst {
 
     private void pause(final long id) {
 
-        final boolean paused = databaseHelper.pause(id);
+        if(fetchRunnable != null && fetchRunnable.getId() == id) {
 
-        if(paused && fetchRunnable != null && fetchRunnable.getId() == id) {
+            runningTask = true;
 
             BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
 
-                    if(intent != null && FetchRunnable.getId(intent) == id) {
-
-                        try {
-
-                            Cursor cursor = databaseHelper.get(id);
-                            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true);
-
-                            if(requestInfo != null) {
-                                Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
-                                        requestInfo.getStatus(), requestInfo.getProgress(),
-                                        requestInfo.getDownloadedBytes(),requestInfo.getFileSize(),
-                                        requestInfo.getError());
-                            }
-
-                        }catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                    if(FetchRunnable.getIdFromIntent(intent) == id) {
+                        pauseAction(id);
                     }
 
                     broadcastManager.unregisterReceiver(this);
                     registeredReceivers.remove(this);
+                    runningTask = false;
+                    startDownload();
                 }
             };
-
 
             registeredReceivers.add(broadcastReceiver);
             broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
             fetchRunnable.interrupt();
-        }
+        }else {
 
-        startDownload();
+            pauseAction(id);
+            startDownload();
+        }
+    }
+
+    private void pauseAction(long id) {
+
+        if(databaseHelper.pause(id)) {
+
+            Cursor cursor = databaseHelper.get(id);
+            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true);
+
+            if(requestInfo != null) {
+
+                Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
+                        requestInfo.getStatus(), requestInfo.getProgress(),
+                        requestInfo.getDownloadedBytes(),requestInfo.getFileSize(),
+                        requestInfo.getError());
+            }
+
+        }
     }
 
     private void remove(final long id) {
 
-        runningTask = true;
-
         if (fetchRunnable != null && fetchRunnable.getId() == id) {
+
+            runningTask = true;
+
+            BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+
+                    if(FetchRunnable.getIdFromIntent(intent) == id) {
+                        removeAction(id);
+                    }
+
+                    broadcastManager.unregisterReceiver(this);
+                    registeredReceivers.remove(this);
+                    runningTask = false;
+                    startDownload();
+                }
+            };
+
+            registeredReceivers.add(broadcastReceiver);
+            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
             fetchRunnable.interrupt();
+        }else {
+            removeAction(id);
+            startDownload();
         }
+    }
+
+    private void removeAction(long id) {
 
         Cursor cursor = databaseHelper.get(id);
         RequestInfo request = Utils.cursorToRequestInfo(cursor,true);
 
-        boolean removed = databaseHelper.delete(id);
-
-        if(removed && request != null) {
+        if(request != null && databaseHelper.delete(id)) {
 
             Utils.deleteFile(request.getFilePath());
 
             Utils.sendEventUpdate(broadcastManager,id,
                     STATUS_REMOVED,0,0,0,DEFAULT_EMPTY_VALUE);
         }
-
-        runningTask = false;
-        startDownload();
     }
 
     private void removeAll() {
 
-        runningTask = true;
-
         if (fetchRunnable != null) {
+
+            runningTask = true;
+
+            BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+
+                    removeAllAction();
+
+                    broadcastManager.unregisterReceiver(this);
+                    registeredReceivers.remove(this);
+                    runningTask = false;
+                    startDownload();
+                }
+            };
+
+            registeredReceivers.add(broadcastReceiver);
+            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
             fetchRunnable.interrupt();
+        }else {
+            removeAllAction();
+            startDownload();
         }
+    }
+
+    private void removeAllAction() {
 
         Cursor cursor = databaseHelper.get();
         List<RequestInfo> requests = Utils.cursorToRequestInfoList(cursor,true);
 
-        boolean removed = databaseHelper.deleteAll();
-
-        if(requests != null && removed) {
+        if(requests != null && databaseHelper.deleteAll()) {
 
             for (RequestInfo request : requests) {
 
@@ -477,12 +535,9 @@ public final class FetchService extends Service implements FetchConst {
                         STATUS_REMOVED,0,0,0,DEFAULT_EMPTY_VALUE);
             }
         }
-
-        runningTask = false;
-        startDownload();
     }
 
-    private void query(int queryType,long queryId, long requestId,int status) {
+    private void query(int queryType,long queryId,long requestId,int status) {
 
         Cursor cursor;
 
@@ -502,17 +557,13 @@ public final class FetchService extends Service implements FetchConst {
         }
 
         ArrayList<Bundle> queryResults = Utils.cursorToQueryResultList(cursor,true);
-
         sendEventQuery(queryId,queryResults);
-
         startDownload();
     }
 
     private void setRequestPriority(long id, int priority) {
 
-        boolean updated = databaseHelper.setPriority(id,priority);
-
-        if(updated && fetchRunnable != null) {
+        if(databaseHelper.setPriority(id,priority) && fetchRunnable != null) {
             fetchRunnable.interrupt();
         }
 
@@ -536,9 +587,7 @@ public final class FetchService extends Service implements FetchConst {
             return;
         }
 
-        boolean retry = databaseHelper.retry(id);
-
-        if(retry) {
+        if(databaseHelper.retry(id)) {
 
             Cursor cursor = databaseHelper.get(id);
             RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true);
@@ -558,10 +607,11 @@ public final class FetchService extends Service implements FetchConst {
         return sharedPreferences.getInt(EXTRA_NETWORK_ID, NETWORK_ALL);
     }
 
-    private final BroadcastReceiver fetchDoneReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver doneReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 
+            fetchRunnable = null;
             fetchRunnableQueued = false;
             startDownload();
         }
@@ -588,7 +638,6 @@ public final class FetchService extends Service implements FetchConst {
     private void sendEventQuery(long queryId,ArrayList<Bundle> results) {
 
         Intent intent = new Intent(FetchService.EVENT_ACTION_QUERY);
-
         intent.putExtra(FetchService.EXTRA_QUERY_ID,queryId);
         intent.putExtra(FetchService.EXTRA_QUERY_RESULT,results);
 
