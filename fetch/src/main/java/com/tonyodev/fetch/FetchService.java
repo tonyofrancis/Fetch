@@ -98,7 +98,7 @@ public final class FetchService extends Service implements FetchConst {
     private SharedPreferences sharedPreferences;
     private FetchRunnable fetchRunnable;
     private volatile boolean fetchRunnableQueued = false;
-    private volatile boolean removingRequest = false;
+    private volatile boolean runningTask = false;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final List<BroadcastReceiver> registeredReceivers = new ArrayList<>();
 
@@ -264,6 +264,7 @@ public final class FetchService extends Service implements FetchConst {
                             break;
                         }
                         default: {
+                            startDownload();
                             break;
                         }
                     }
@@ -274,7 +275,7 @@ public final class FetchService extends Service implements FetchConst {
 
     private synchronized void startDownload() {
 
-        if(removingRequest) {
+        if(runningTask) {
             return;
         }
 
@@ -287,7 +288,7 @@ public final class FetchService extends Service implements FetchConst {
 
             fetchRunnable.interrupt();
 
-        }else if(!fetchRunnableQueued) {
+        }else if(networkAvailable && !fetchRunnableQueued) {
 
             fetchRunnableQueued = true;
 
@@ -430,7 +431,7 @@ public final class FetchService extends Service implements FetchConst {
 
     private void remove(final long id) {
 
-        removingRequest = true;
+        runningTask = true;
 
         if (fetchRunnable != null && fetchRunnable.getId() == id) {
             fetchRunnable.interrupt();
@@ -449,13 +450,13 @@ public final class FetchService extends Service implements FetchConst {
                     STATUS_REMOVED,0,0,0,DEFAULT_EMPTY_VALUE);
         }
 
-        removingRequest = false;
+        runningTask = false;
         startDownload();
     }
 
     private void removeAll() {
 
-        removingRequest = true;
+        runningTask = true;
 
         if (fetchRunnable != null) {
             fetchRunnable.interrupt();
@@ -477,7 +478,7 @@ public final class FetchService extends Service implements FetchConst {
             }
         }
 
-        removingRequest = false;
+        runningTask = false;
         startDownload();
     }
 
