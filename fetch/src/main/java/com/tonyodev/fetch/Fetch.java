@@ -142,7 +142,7 @@ public final class Fetch implements FetchConst {
             return;
         }
 
-        FetchCallRunnable callRunnable = new FetchCallRunnable(request,fetchCall, callsCallback);
+        FetchCallRunnable callRunnable = new FetchCallRunnable(request,fetchCall,callsCallback);
 
         callsMap.put(request,callRunnable);
 

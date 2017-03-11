@@ -79,7 +79,7 @@ public class FragmentActivity extends AppCompatActivity {
 
     private void enqueueDownload() {
 
-        String url = Data.sampleUrls[1];
+        String url = Data.sampleUrls[0];
         String filePath = Data.getSaveDir() + "/fragments/smallFile.txt";
 
         Request request = new Request(url,filePath);

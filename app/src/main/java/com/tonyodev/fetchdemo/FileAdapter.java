@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.support.annotation.StringRes;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
@@ -13,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.tonyodev.fetch.Fetch;
 import com.tonyodev.fetch.listener.FetchListener;
@@ -128,6 +130,14 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> im
             public void onClick(View v) {
 
                 if(status == Fetch.STATUS_DONE) {
+
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+
+                        Toast.makeText(context,"Downloaded Path:" +
+                                download.getFilePath(),Toast.LENGTH_LONG).show();
+
+                        return;
+                    }
 
                     File file = new File(download.getFilePath());
                     Uri uri = Uri.fromFile(file);

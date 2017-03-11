@@ -52,7 +52,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
                 setProgressView(info.getStatus(),info.getProgress());
             }
 
-            fetch.addFetchListener(SingleDownloadActivity.this);
+            fetch.addFetchListener(this);
         }
     }
 
@@ -102,8 +102,8 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
 
     private void enqueueDownload() {
 
-        String url = Data.sampleUrls[4];
-        String filePath = Data.getSaveDir() + "/image/android" + System.nanoTime() + ".png";
+        String url = Data.sampleUrls[0];
+        String filePath = Data.getSaveDir() + "/movies/buckbunny" + System.nanoTime() + ".m4v";
 
         Request request = new Request(url,filePath);
 
