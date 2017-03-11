@@ -466,7 +466,7 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    synchronized Cursor getNextPending() {
+    synchronized Cursor getNextPendingRequest() {
 
         Cursor cursor = db.rawQuery("SELECT * FROM "
                 + TABLE_NAME + " WHERE " + COLUMN_STATUS + " = "
