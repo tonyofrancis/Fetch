@@ -21,6 +21,7 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.tonyodev.fetch.exception.DownloadInterruptedException;
 import com.tonyodev.fetch.request.Header;
 
 import java.io.FileOutputStream;
@@ -110,7 +111,7 @@ final class FetchRunnable implements Runnable {
             httpURLConnection.setRequestProperty("Range", "bytes=" + downloadedBytes + "-");
 
             if (isInterrupted()) {
-                throw new InterruptedException("TI");
+                throw new DownloadInterruptedException("TI",ErrorUtils.DOWNLOAD_INTERRUPTED);
             }
 
             httpURLConnection.connect();
@@ -119,7 +120,7 @@ final class FetchRunnable implements Runnable {
             if (isResponseOk(responseCode)) {
 
                 if (isInterrupted()) {
-                    throw new InterruptedException("TI");
+                    throw new DownloadInterruptedException("TI",ErrorUtils.DOWNLOAD_INTERRUPTED);
                 }
 
                 if(fileSize < 1) {
@@ -268,6 +269,7 @@ final class FetchRunnable implements Runnable {
             switch (error) {
                 case ErrorUtils.CONNECTION_TIMED_OUT:
                 case ErrorUtils.THREAD_INTERRUPTED:
+                case ErrorUtils.DOWNLOAD_INTERRUPTED:
                     return true;
                 default:
                     return false;

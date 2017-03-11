@@ -42,6 +42,7 @@ final class ErrorUtils {
     static final int NOT_USABLE = -115;
     static final int BAD_REQUEST = -116;
     static final int ENQUEUE_ERROR = -117;
+    static final int DOWNLOAD_INTERRUPTED = -118;
 
     private ErrorUtils() {
     }
