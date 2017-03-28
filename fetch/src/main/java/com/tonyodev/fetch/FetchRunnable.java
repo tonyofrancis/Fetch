@@ -25,9 +25,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.tonyodev.fetch.exception.DownloadInterruptedException;
 import com.tonyodev.fetch.request.Header;
 
-import java.io.FileOutputStream;
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -56,8 +56,8 @@ final class FetchRunnable implements Runnable {
     private volatile boolean interrupted = false;
 
     private HttpURLConnection httpURLConnection;
-    private InputStream input;
-    private FileOutputStream output;
+    private BufferedInputStream input;
+    private RandomAccessFile output;
 
     private int progress;
     private long downloadedBytes;
@@ -133,13 +133,14 @@ final class FetchRunnable implements Runnable {
 
                 databaseHelper.updateStatus(id,FetchConst.STATUS_DOWNLOADING,FetchConst.DEFAULT_EMPTY_VALUE);
 
+                output = new RandomAccessFile(filePath,"rw");
                 if(responseCode == HttpURLConnection.HTTP_PARTIAL) {
-                    output = new FileOutputStream(filePath, true);
+                    output.seek(downloadedBytes);
                 }else {
-                    output = new FileOutputStream(filePath,false);
+                    output.seek(0);
                 }
 
-                input = httpURLConnection.getInputStream();
+                input = new BufferedInputStream(httpURLConnection.getInputStream());
                 writeToFileAndPost();
 
                 databaseHelper.updateFileBytes(id,downloadedBytes,fileSize);
@@ -203,8 +204,8 @@ final class FetchRunnable implements Runnable {
         URL httpUrl = new URL(url);
         httpURLConnection = (HttpURLConnection) httpUrl.openConnection();
         httpURLConnection.setRequestMethod("GET");
-        httpURLConnection.setReadTimeout(15_000);
-        httpURLConnection.setConnectTimeout(10_000);
+        httpURLConnection.setReadTimeout(20_000);
+        httpURLConnection.setConnectTimeout(15_000);
         httpURLConnection.setUseCaches(false);
         httpURLConnection.setDefaultUseCaches(false);
         httpURLConnection.setInstanceFollowRedirects(true);
@@ -245,8 +246,8 @@ final class FetchRunnable implements Runnable {
 
         startTime = System.nanoTime();
 
-        while((read = input.read(buffer)) != -1 && !isInterrupted()) {
-            output.write(buffer, 0, read);
+        while((read = input.read(buffer,0,1024)) != -1 && !isInterrupted()) {
+            output.write(buffer,0,read);
             downloadedBytes += read;
 
             stopTime = System.nanoTime();
