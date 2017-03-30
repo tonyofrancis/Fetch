@@ -48,6 +48,7 @@ final class FetchRunnable implements Runnable {
     private final String url;
     private final String filePath;
     private final List<Header> headers;
+    private final boolean loggingEnabled;
 
     private final Context context;
     private final LocalBroadcastManager broadcastManager;
@@ -69,7 +70,7 @@ final class FetchRunnable implements Runnable {
     }
 
     FetchRunnable(@NonNull Context context, long id,@NonNull String url,@NonNull String filePath,
-                  @NonNull List<Header> headers,long fileSize) {
+                  @NonNull List<Header> headers,long fileSize,boolean loggingEnabled) {
 
         if(context == null) {
             throw new NullPointerException("Context cannot be null");
@@ -96,6 +97,8 @@ final class FetchRunnable implements Runnable {
         this.context = context.getApplicationContext();
         this.broadcastManager = LocalBroadcastManager.getInstance(this.context);
         this.databaseHelper = DatabaseHelper.getInstance(this.context);
+        this.loggingEnabled = loggingEnabled;
+        this.databaseHelper.setLoggingEnabled(loggingEnabled);
     }
 
     @Override
@@ -170,6 +173,10 @@ final class FetchRunnable implements Runnable {
             }
 
         }catch (Exception exception) {
+
+            if(loggingEnabled) {
+                exception.printStackTrace();
+            }
 
             int error = ErrorUtils.getCode(exception.getMessage());
 
@@ -290,7 +297,10 @@ final class FetchRunnable implements Runnable {
                 input.close();
             }
         }catch (IOException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
@@ -298,7 +308,10 @@ final class FetchRunnable implements Runnable {
                 output.close();
             }
         }catch (IOException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         if (httpURLConnection != null) {

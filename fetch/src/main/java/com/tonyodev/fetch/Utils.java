@@ -94,7 +94,7 @@ final class Utils {
         }
     }
 
-    static String headerListToString(List<Header> headers) {
+    static String headerListToString(List<Header> headers,boolean loggingEnabled) {
 
         if(headers == null) {
             return "{}";
@@ -112,13 +112,18 @@ final class Utils {
 
             headerString = headerObject.toString();
         }catch (JSONException e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
+
             headerString = "{}";
         }
 
         return headerString;
     }
 
-    static List<Header> headerStringToList(String headers) {
+    static List<Header> headerStringToList(String headers,boolean loggingEnabled) {
 
         List<Header> headerList = new ArrayList<>();
 
@@ -133,7 +138,10 @@ final class Utils {
             }
 
         }catch (JSONException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return headerList;
@@ -231,7 +239,7 @@ final class Utils {
         }
     }
 
-   static RequestInfo cursorToRequestInfo(Cursor cursor, boolean closeCursor) {
+   static RequestInfo cursorToRequestInfo(Cursor cursor, boolean closeCursor,boolean loggingEnabled) {
 
        RequestInfo requestInfo = null;
 
@@ -242,20 +250,23 @@ final class Utils {
            }
 
            cursor.moveToFirst();
-           requestInfo = createRequestInfo(cursor);
+           requestInfo = createRequestInfo(cursor,loggingEnabled);
 
            if(closeCursor) {
                cursor.close();
            }
 
        }catch (Exception e) {
-           e.printStackTrace();
+
+           if(loggingEnabled) {
+               e.printStackTrace();
+           }
        }
 
        return requestInfo;
     }
 
-    static List<RequestInfo> cursorToRequestInfoList(Cursor cursor, boolean closeCursor) {
+    static List<RequestInfo> cursorToRequestInfoList(Cursor cursor, boolean closeCursor,boolean loggingEnabled) {
 
         List<RequestInfo> requests = new ArrayList<>();
 
@@ -268,7 +279,7 @@ final class Utils {
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
 
-                requests.add(createRequestInfo(cursor));
+                requests.add(createRequestInfo(cursor,loggingEnabled));
                 cursor.moveToNext();
             }
 
@@ -277,13 +288,16 @@ final class Utils {
             }
 
         }catch (Exception e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return requests;
     }
 
-    static RequestInfo createRequestInfo(Cursor cursor) {
+    static RequestInfo createRequestInfo(Cursor cursor,boolean loggingEnabled) {
 
         if(cursor == null || cursor.isClosed() || cursor.getCount() < 1) {
             return null;
@@ -299,7 +313,7 @@ final class Utils {
         long downloadedBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_DOWNLOADED_BYTES);
 
         String headers = cursor.getString(DatabaseHelper.INDEX_COLUMN_HEADERS);
-        List<Header> headersList = headerStringToList(headers);
+        List<Header> headersList = headerStringToList(headers,loggingEnabled);
 
 
         int progress = getProgress(downloadedBytes,fileSize);
@@ -309,7 +323,7 @@ final class Utils {
 
     }
 
-    static ArrayList<Bundle> cursorToQueryResultList(Cursor cursor, boolean closeCursor) {
+    static ArrayList<Bundle> cursorToQueryResultList(Cursor cursor, boolean closeCursor,boolean loggingEnabled) {
 
         ArrayList<Bundle> requests = new ArrayList<>();
 
@@ -332,7 +346,7 @@ final class Utils {
                 long downloadedBytes = cursor.getLong(DatabaseHelper.INDEX_COLUMN_DOWNLOADED_BYTES);
 
                 String headers = cursor.getString(DatabaseHelper.INDEX_COLUMN_HEADERS);
-                ArrayList<Bundle> headersList = headersToBundleList(headers);
+                ArrayList<Bundle> headersList = headersToBundleList(headers,loggingEnabled);
 
                 int progress = getProgress(downloadedBytes,fileSize);
 
@@ -358,7 +372,10 @@ final class Utils {
             }
 
         }catch (Exception e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return requests;
@@ -387,7 +404,7 @@ final class Utils {
         broadcastManager.sendBroadcast(intent);
     }
 
-    static ArrayList<Bundle> headersToBundleList(String headers) {
+    static ArrayList<Bundle> headersToBundleList(String headers,boolean loggingEnabled) {
 
         ArrayList<Bundle> headerList = new ArrayList<>();
 
@@ -411,13 +428,16 @@ final class Utils {
             }
 
         }catch (JSONException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return headerList;
     }
 
-    static String bundleListToHeaderString(List<Bundle> headers) {
+    static String bundleListToHeaderString(List<Bundle> headers,boolean loggingEnabled) {
 
         String headerString;
 
@@ -443,7 +463,11 @@ final class Utils {
 
                 headerString = headerObject.toString();
             }catch (JSONException e) {
-                e.printStackTrace();
+
+                if(loggingEnabled) {
+                    e.printStackTrace();
+                }
+
                 headerString = "{}";
             }
         }

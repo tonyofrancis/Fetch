@@ -99,6 +99,7 @@ final class FetchCallRunnable implements Runnable {
                 throw new IllegalStateException("SSRV:" + responseCode);
             }
         }catch (Exception exception) {
+            exception.printStackTrace();
 
             final int error = ErrorUtils.getCode(exception.getMessage());
 

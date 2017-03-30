@@ -71,6 +71,7 @@ public final class Fetch implements FetchConst {
 
         this.broadcastManager = LocalBroadcastManager.getInstance(this.context);
         this.dbHelper = DatabaseHelper.getInstance(this.context);
+        this.dbHelper.setLoggingEnabled(isLoggingEnabled());
 
         broadcastManager.registerReceiver(updateReceiver,
                 FetchService.getEventUpdateFilter());
@@ -284,7 +285,7 @@ public final class Fetch implements FetchConst {
             String url = request.getUrl();
             String filePath = request.getFilePath();
             int priority = request.getPriority();
-            String headers = Utils.headerListToString(request.getHeaders());
+            String headers = Utils.headerListToString(request.getHeaders(),isLoggingEnabled());
             long fileSize = 0L;
             long downloadedBytes = 0L;
 
@@ -298,7 +299,11 @@ public final class Fetch implements FetchConst {
             startService(context);
 
         }catch (EnqueueException e) {
-            e.printStackTrace();
+
+            if(isLoggingEnabled()) {
+                e.printStackTrace();
+            }
+
             id = DEFAULT_EMPTY_VALUE;
         }
 
@@ -350,7 +355,7 @@ public final class Fetch implements FetchConst {
                     id = Utils.generateRequestId();
                     url = request.getUrl();
                     filePath = request.getFilePath();
-                    headers = Utils.headerListToString(request.getHeaders());
+                    headers = Utils.headerListToString(request.getHeaders(),isLoggingEnabled());
                     status = Fetch.STATUS_QUEUED;
                     priority = request.getPriority();
                     downloadedBytes = 0L;
@@ -378,7 +383,10 @@ public final class Fetch implements FetchConst {
 
             startService(context);
         }catch (EnqueueException e) {
-            e.printStackTrace();
+
+            if(isLoggingEnabled()) {
+                e.printStackTrace();
+            }
 
             ids.clear();
             for (int i = 0; i < requests.size(); i++) {
@@ -561,7 +569,7 @@ public final class Fetch implements FetchConst {
 
         Cursor cursor = dbHelper.get(id);
 
-        return Utils.cursorToRequestInfo(cursor,true);
+        return Utils.cursorToRequestInfo(cursor,true,isLoggingEnabled());
     }
 
     /**
@@ -579,7 +587,7 @@ public final class Fetch implements FetchConst {
 
         Cursor cursor = dbHelper.get();
 
-        return Utils.cursorToRequestInfoList(cursor,true);
+        return Utils.cursorToRequestInfoList(cursor,true,isLoggingEnabled());
     }
 
     /**
@@ -601,7 +609,7 @@ public final class Fetch implements FetchConst {
 
         Cursor cursor = dbHelper.getByStatus(status);
 
-        return Utils.cursorToRequestInfoList(cursor,true);
+        return Utils.cursorToRequestInfoList(cursor,true,isLoggingEnabled());
     }
 
     /**
@@ -626,7 +634,7 @@ public final class Fetch implements FetchConst {
 
         Cursor cursor = dbHelper.getByUrlAndFilePath(request.getUrl(),request.getFilePath());
 
-        return Utils.cursorToRequestInfo(cursor,true);
+        return Utils.cursorToRequestInfo(cursor,true,isLoggingEnabled());
     }
 
     /**
@@ -646,7 +654,7 @@ public final class Fetch implements FetchConst {
         Utils.throwIfNotUsable(this);
 
         Cursor cursor = dbHelper.get(id);
-        RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true);
+        RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,isLoggingEnabled());
 
         if(requestInfo == null || requestInfo.getStatus() != STATUS_DONE) {
             return null;
@@ -681,7 +689,7 @@ public final class Fetch implements FetchConst {
         Utils.throwIfNotUsable(this);
 
         Cursor cursor = dbHelper.get(id);
-        RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true);
+        RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,isLoggingEnabled());
 
         if(requestInfo == null) {
             return null;
@@ -722,7 +730,7 @@ public final class Fetch implements FetchConst {
             id = Utils.generateRequestId();
             File file = Utils.getFile(filePath);
             String url = Uri.fromFile(file).toString();
-            String headers = Utils.headerListToString(null);
+            String headers = Utils.headerListToString(null,isLoggingEnabled());
             long fileSize = file.length();
 
             boolean inserted = dbHelper.insert(id, url, filePath, Fetch.STATUS_DONE, headers,
@@ -733,7 +741,11 @@ public final class Fetch implements FetchConst {
             }
 
         }catch (EnqueueException e) {
-            e.printStackTrace();
+
+            if(isLoggingEnabled()) {
+                e.printStackTrace();
+            }
+
             id = DEFAULT_EMPTY_VALUE;
         }
 
@@ -792,7 +804,7 @@ public final class Fetch implements FetchConst {
                     id = Utils.generateRequestId();
                     url = Uri.fromFile(file).toString();
                     filePath = path;
-                    headers = Utils.headerListToString(null);
+                    headers = Utils.headerListToString(null,isLoggingEnabled());
                     status = Fetch.STATUS_DONE;
                     priority = Fetch.PRIORITY_NORMAL;
                     downloadedBytes = file.length();
@@ -819,7 +831,10 @@ public final class Fetch implements FetchConst {
             }
 
         }catch (EnqueueException e) {
-            e.printStackTrace();
+
+            if(isLoggingEnabled()) {
+                e.printStackTrace();
+            }
 
             ids.clear();
             for (int i = 0; i < filePaths.size(); i++) {
@@ -951,5 +966,26 @@ public final class Fetch implements FetchConst {
 
     private void setReleased(boolean released) {
         isReleased = released;
+    }
+
+    private boolean isLoggingEnabled() {
+        return FetchService.isLoggingEnabled(context);
+    }
+
+    /**
+     * Enables or Disables console logging
+     * for Fetch and the FetchService. Logging
+     * is ON by default.
+     *
+     * @param enabled enable or disable console logging
+     */
+    public void enableLogging(boolean enabled) {
+
+        Bundle extras = new Bundle();
+        extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_LOGGING);
+        extras.putBoolean(FetchService.EXTRA_LOGGING_ID, enabled);
+
+        FetchService.sendToService(context,extras);
+
     }
 }

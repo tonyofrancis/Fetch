@@ -66,6 +66,7 @@ final class DatabaseHelper extends SQLiteOpenHelper {
     private static DatabaseHelper databaseHelper;
 
     private final SQLiteDatabase db;
+    private boolean loggingEnabled = true;
 
     private DatabaseHelper(Context context) {
         super(context, DB_NAME,null,VERSION);
@@ -124,6 +125,11 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             }
 
         }catch (SQLiteException e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
+
             found = true;
         }
 
@@ -183,6 +189,11 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
         }catch (Exception e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
+
             throw new EnqueueException(e.getMessage(),ErrorUtils.getCode(e.getMessage()));
         }
 
@@ -190,6 +201,11 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             db.endTransaction();
             inserted = true;
         }catch (SQLiteException e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
+
             throw new EnqueueException(e.getMessage(),ErrorUtils.getCode(e.getMessage()));
         }
 
@@ -210,7 +226,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
@@ -227,7 +246,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             }
 
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return paused;
@@ -246,7 +268,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
@@ -262,7 +287,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             }
 
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return resumed;
@@ -280,14 +308,20 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
         }catch (SQLiteException e){
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
             db.endTransaction();
             updated = true;
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return updated;
@@ -305,14 +339,20 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
         }catch (SQLiteException e){
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
             db.endTransaction();
             updated = true;
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return updated;
@@ -329,14 +369,20 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
             db.endTransaction();
             removed = true;
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return removed;
@@ -352,14 +398,20 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
             db.endTransaction();
             removed = true;
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return removed;
@@ -377,14 +429,20 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
         }catch (SQLiteException e){
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
             db.endTransaction();
             updated = true;
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return updated;
@@ -403,7 +461,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
         }catch (SQLiteException e){
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
@@ -419,7 +480,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             }
 
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         return updated;
@@ -431,6 +495,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             return db.rawQuery("SELECT * FROM " + TABLE_NAME
                     + " WHERE " + COLUMN_ID + " = " + id,null);
         }catch (SQLiteException e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
             return null;
         }
     }
@@ -440,6 +508,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         try {
             return db.rawQuery("SELECT * FROM " + TABLE_NAME,null);
         }catch (SQLiteException e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
             return null;
         }
     }
@@ -450,6 +522,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             return db.rawQuery("SELECT * FROM " + TABLE_NAME
                     + " WHERE " + COLUMN_STATUS + " = " + status,null);
         }catch (SQLiteException e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
             return null;
         }
     }
@@ -462,6 +538,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
                     + url + "%' AND " + COLUMN_FILEPATH
                     + " LIKE '%" + filePath + "%' LIMIT 1",null);
         }catch (SQLiteException e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
             return null;
         }
     }
@@ -499,13 +579,19 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
 
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
             db.endTransaction();
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -550,17 +636,27 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
 
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
         }
 
         try {
             db.endTransaction();
 
         }catch (SQLiteException e) {
-            e.printStackTrace();
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
 
         } finally {
             cursor.close();
         }
+    }
+
+    synchronized void setLoggingEnabled(boolean enabled) {
+        this.loggingEnabled = enabled;
     }
 }

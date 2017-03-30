@@ -71,6 +71,7 @@ public final class FetchService extends Service implements FetchConst {
     public static final String EXTRA_QUERY_RESULT = "com.tonyodev.fetch.extra_query_result";
     public static final String EXTRA_PRIORITY = "com.tonyodev.fetch.extra_priority";
     public static final String EXTRA_QUERY_TYPE = "com.tonyodev.fetch.extra_query_type";
+    public static final String EXTRA_LOGGING_ID = "com.tonyodev.fetch.extra_logging_id";
 
     public static final String ACTION_TYPE = "com.tonyodev.fetch.action_type";
 
@@ -84,6 +85,7 @@ public final class FetchService extends Service implements FetchConst {
     public static final int ACTION_PRIORITY = 317;
     public static final int ACTION_RETRY = 318;
     public static final int ACTION_REMOVE_ALL = 319;
+    public static final int ACTION_LOGGING = 320;
 
     public static final int QUERY_SINGLE = 480;
     public static final int QUERY_ALL = 481;
@@ -100,6 +102,8 @@ public final class FetchService extends Service implements FetchConst {
     private volatile boolean fetchRunnableQueued = false;
     private volatile boolean runningTask = false;
     private volatile boolean shuttingDown = false;
+    private boolean loggingEnabled = true;
+    private int preferredNetwork = NETWORK_ALL;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final List<BroadcastReceiver> registeredReceivers = new ArrayList<>();
 
@@ -160,6 +164,9 @@ public final class FetchService extends Service implements FetchConst {
         broadcastManager.registerReceiver(doneReceiver,FetchRunnable.getDoneFilter());
         registeredReceivers.add(doneReceiver);
 
+        preferredNetwork = getAllowedNetwork();
+        loggingEnabled = isLoggingEnabled();
+        databaseHelper.setLoggingEnabled(loggingEnabled);
 
         if(!executor.isShutdown()) {
             executor.execute(new Runnable() {
@@ -252,6 +259,11 @@ public final class FetchService extends Service implements FetchConst {
                             setAllowedNetwork(network);
                             break;
                         }
+                        case ACTION_LOGGING : {
+                            boolean enabled = intent.getBooleanExtra(EXTRA_LOGGING_ID,true);
+                            setLoggingEnabled(enabled);
+                            break;
+                        }
                         case ACTION_PROCESS_PENDING : {
                             startDownload();
                             break;
@@ -296,7 +308,7 @@ public final class FetchService extends Service implements FetchConst {
         boolean networkAvailable = Utils.isNetworkAvailable(context);
         boolean onWiFi = Utils.isOnWiFi(context);
 
-        if((!networkAvailable || (getAllowedNetwork() == NETWORK_WIFI && !onWiFi))
+        if((!networkAvailable || (preferredNetwork == NETWORK_WIFI && !onWiFi))
                 && fetchRunnable != null) {
 
             fetchRunnable.interrupt();
@@ -311,11 +323,11 @@ public final class FetchService extends Service implements FetchConst {
 
                 if(cursor != null && !cursor.isClosed() && cursor.getCount() > 0) {
 
-                    RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true);
+                    RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
 
                     fetchRunnable = new FetchRunnable(context,requestInfo.getId(),
                             requestInfo.getUrl(), requestInfo.getFilePath()
-                            ,requestInfo.getHeaders(),requestInfo.getFileSize());
+                            ,requestInfo.getHeaders(),requestInfo.getFileSize(),loggingEnabled);
 
                     new Thread(fetchRunnable).start();
 
@@ -324,7 +336,11 @@ public final class FetchService extends Service implements FetchConst {
                 }
 
             }catch (Exception e) {
-                e.printStackTrace();
+
+                if(loggingEnabled) {
+                    e.printStackTrace();
+                }
+
                 fetchRunnableQueued = false;
                 startDownload();
             }
@@ -350,7 +366,7 @@ public final class FetchService extends Service implements FetchConst {
             }
 
             long id = Utils.generateRequestId();
-            String headerString = Utils.bundleListToHeaderString(headers);
+            String headerString = Utils.bundleListToHeaderString(headers,loggingEnabled);
             long fileSize = 0L;
             long downloadedBytes = 0L;
 
@@ -365,6 +381,10 @@ public final class FetchService extends Service implements FetchConst {
                     STATUS_QUEUED,headers,priority,DEFAULT_EMPTY_VALUE);
 
         }catch (EnqueueException e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
 
             sendEnqueueEvent(EVENT_ACTION_ENQUEUE_FAILED,DEFAULT_EMPTY_VALUE,
                     url,filePath,STATUS_NOT_QUEUED,headers,priority,e.getErrorCode());
@@ -385,7 +405,7 @@ public final class FetchService extends Service implements FetchConst {
         if(resumed) {
 
             Cursor cursor = databaseHelper.get(id);
-            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true);
+            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
 
             if(requestInfo != null) {
 
@@ -435,7 +455,7 @@ public final class FetchService extends Service implements FetchConst {
         if(databaseHelper.pause(id)) {
 
             Cursor cursor = databaseHelper.get(id);
-            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true);
+            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
 
             if(requestInfo != null) {
 
@@ -481,7 +501,7 @@ public final class FetchService extends Service implements FetchConst {
     private void removeAction(long id) {
 
         Cursor cursor = databaseHelper.get(id);
-        RequestInfo request = Utils.cursorToRequestInfo(cursor,true);
+        RequestInfo request = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
 
         if(request != null && databaseHelper.delete(id)) {
 
@@ -523,7 +543,7 @@ public final class FetchService extends Service implements FetchConst {
     private void removeAllAction() {
 
         Cursor cursor = databaseHelper.get();
-        List<RequestInfo> requests = Utils.cursorToRequestInfoList(cursor,true);
+        List<RequestInfo> requests = Utils.cursorToRequestInfoList(cursor,true,loggingEnabled);
 
         if(requests != null && databaseHelper.deleteAll()) {
 
@@ -556,7 +576,7 @@ public final class FetchService extends Service implements FetchConst {
             }
         }
 
-        ArrayList<Bundle> queryResults = Utils.cursorToQueryResultList(cursor,true);
+        ArrayList<Bundle> queryResults = Utils.cursorToQueryResultList(cursor,true,loggingEnabled);
         sendEventQuery(queryId,queryResults);
         startDownload();
     }
@@ -573,6 +593,7 @@ public final class FetchService extends Service implements FetchConst {
     private void setAllowedNetwork(final int networkType) {
 
         sharedPreferences.edit().putInt(EXTRA_NETWORK_ID,networkType).apply();
+        preferredNetwork = networkType;
 
         if(fetchRunnable != null) {
             fetchRunnable.interrupt();
@@ -590,7 +611,7 @@ public final class FetchService extends Service implements FetchConst {
         if(databaseHelper.retry(id)) {
 
             Cursor cursor = databaseHelper.get(id);
-            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true);
+            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
 
             if(requestInfo != null) {
                 Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
@@ -642,5 +663,21 @@ public final class FetchService extends Service implements FetchConst {
         intent.putExtra(FetchService.EXTRA_QUERY_RESULT,results);
 
         broadcastManager.sendBroadcast(intent);
+    }
+
+    private void setLoggingEnabled(boolean enabled) {
+        sharedPreferences.edit().putBoolean(EXTRA_LOGGING_ID,enabled).apply();
+        loggingEnabled = enabled;
+        databaseHelper.setLoggingEnabled(loggingEnabled);
+        startDownload();
+    }
+
+    private boolean isLoggingEnabled() {
+        return sharedPreferences.getBoolean(EXTRA_LOGGING_ID,true);
+    }
+
+    static boolean isLoggingEnabled(Context context) {
+        return  context.getSharedPreferences(SHARED_PREFERENCES,Context.MODE_PRIVATE)
+                .getBoolean(EXTRA_LOGGING_ID,true);
     }
 }
