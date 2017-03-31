@@ -17,6 +17,13 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        //Set settings for Fetch
+        new Fetch.Settings(this)
+                .setAllowedNetwork(Fetch.NETWORK_ALL)
+                .enableLogging(true)
+                .apply();
+
         fetch = Fetch.getInstance(this);
 
         fetch.addFetchListener(new FetchListener() {

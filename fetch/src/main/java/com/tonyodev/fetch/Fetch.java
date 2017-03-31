@@ -490,18 +490,7 @@ public final class Fetch implements FetchConst {
     public void setAllowedNetwork(int networkType) {
 
         Utils.throwIfNotUsable(this);
-
-        int type = NETWORK_ALL;
-
-        if (networkType == NETWORK_WIFI) {
-            type = NETWORK_WIFI;
-        }
-
-        Bundle extras = new Bundle();
-        extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_NETWORK);
-        extras.putInt(FetchService.EXTRA_NETWORK_ID, type);
-
-        FetchService.sendToService(context,extras);
+        new Settings(context).setAllowedNetwork(networkType).apply();
     }
 
     /**
@@ -978,14 +967,86 @@ public final class Fetch implements FetchConst {
      * is ON by default.
      *
      * @param enabled enable or disable console logging
+     *
+     * @throws NotUsableException if the release method has been called on Fetch.
      */
     public void enableLogging(boolean enabled) {
 
-        Bundle extras = new Bundle();
-        extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_LOGGING);
-        extras.putBoolean(FetchService.EXTRA_LOGGING_ID, enabled);
-
-        FetchService.sendToService(context,extras);
-
+        Utils.throwIfNotUsable(this);
+        new Settings(context).enableLogging(enabled).apply();
     }
+
+    /**
+     * The Settings class is used to apply
+     * settings to Fetch and the FetchService.
+     * */
+    public static class Settings {
+
+        private final Context context;
+        private final List<Bundle> settings = new ArrayList<>();
+
+        public Settings(@NonNull Context context) {
+
+            if(context == null) {
+                throw new NullPointerException("Context cannot be null");
+            }
+           this.context = context;
+        }
+
+        /**
+         * Enables or Disables console logging
+         * for Fetch and the FetchService. Logging
+         * is ON by default.
+         *
+         * @param enabled enable or disable console logging
+         *
+         * @return the settings instance
+         */
+        public Settings enableLogging(boolean enabled) {
+
+            Bundle extras = new Bundle();
+            extras.putInt(FetchService.ACTION_TYPE,FetchService.ACTION_LOGGING);
+            extras.putBoolean(FetchService.EXTRA_LOGGING_ID,enabled);
+            settings.add(extras);
+
+            return this;
+        }
+
+        /**
+         * Sets the allowed network connection type the FetchService can use to download requests.
+         *
+         * <p>This method only accepts two values: Fetch.NETWORK_WIFI or Fetch.NETWORK_ALL. The default is
+         * Fetch.NETWORK_ALL.
+         *
+         * @param networkType allowed network type
+         *
+         * @return the settings instance
+         * */
+        public Settings setAllowedNetwork(int networkType) {
+
+            int type = NETWORK_ALL;
+
+            if (networkType == NETWORK_WIFI) {
+                type = NETWORK_WIFI;
+            }
+
+            Bundle extras = new Bundle();
+            extras.putInt(FetchService.ACTION_TYPE,FetchService.ACTION_NETWORK);
+            extras.putInt(FetchService.EXTRA_NETWORK_ID,type);
+            settings.add(extras);
+
+            return this;
+        }
+
+        /**
+         * Apply the new settings to Fetch and the FetchService
+         * */
+        public void apply(){
+
+            for (Bundle setting : settings) {
+                FetchService.sendToService(context,setting);
+            }
+        }
+    }
+
 }
