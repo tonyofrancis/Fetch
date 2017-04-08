@@ -166,4 +166,14 @@ interface FetchConst {
      * Default empty value of a Field.
      * */
     int DEFAULT_EMPTY_VALUE = DatabaseHelper.EMPTY_COLUMN_VALUE;
+
+    /**
+     * Default concurrent downloads limit.
+     * */
+    int DEFAULT_DOWNLOADS_LIMIT = 1;
+
+    /**
+     * Max concurrent downloads limit.
+     * */
+    int MAX_DOWNLOADS_LIMIT = 7;
 }

@@ -1039,6 +1039,26 @@ public final class Fetch implements FetchConst {
         }
 
         /**
+         * Sets the allowed concurrent downloads by the Fetch Service between 1-7. The default is 1
+         * and the max is 7. The Fetch Service will only allow up to 7 concurrent downloads.
+         *
+         * <p>See Fetch.DEFAULT_DOWNLOADS_LIMIT and Fetch.MAX_DOWNLOADS_LIMIT
+         *
+         * @param limit concurrent downloads limit
+         *
+         * @return the settings instance
+         * */
+        public Settings setConcurrentDownloadsLimit(int limit) {
+
+            Bundle extras = new Bundle();
+            extras.putInt(FetchService.ACTION_TYPE,FetchService.ACTION_CONCURRENT_DOWNLOADS_LIMIT);
+            extras.putInt(FetchService.EXTRA_CONCURRENT_DOWNLOADS_LIMIT,limit);
+            settings.add(extras);
+
+            return this;
+        }
+
+        /**
          * Apply the new settings to Fetch and the FetchService
          * */
         public void apply(){

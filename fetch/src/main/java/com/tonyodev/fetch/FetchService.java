@@ -33,6 +33,7 @@ import com.tonyodev.fetch.request.RequestInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -72,6 +73,7 @@ public final class FetchService extends Service implements FetchConst {
     public static final String EXTRA_PRIORITY = "com.tonyodev.fetch.extra_priority";
     public static final String EXTRA_QUERY_TYPE = "com.tonyodev.fetch.extra_query_type";
     public static final String EXTRA_LOGGING_ID = "com.tonyodev.fetch.extra_logging_id";
+    public static final String EXTRA_CONCURRENT_DOWNLOADS_LIMIT = "com.tonyodev.fetch.extra_concurrent_download_limit";
 
     public static final String ACTION_TYPE = "com.tonyodev.fetch.action_type";
 
@@ -86,6 +88,7 @@ public final class FetchService extends Service implements FetchConst {
     public static final int ACTION_RETRY = 318;
     public static final int ACTION_REMOVE_ALL = 319;
     public static final int ACTION_LOGGING = 320;
+    public static final int ACTION_CONCURRENT_DOWNLOADS_LIMIT = 321;
 
     public static final int QUERY_SINGLE = 480;
     public static final int QUERY_ALL = 481;
@@ -102,10 +105,12 @@ public final class FetchService extends Service implements FetchConst {
     private volatile boolean fetchRunnableQueued = false;
     private volatile boolean runningTask = false;
     private volatile boolean shuttingDown = false;
+    private int downloadsLimit = DEFAULT_DOWNLOADS_LIMIT;
     private boolean loggingEnabled = true;
     private int preferredNetwork = NETWORK_ALL;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final List<BroadcastReceiver> registeredReceivers = new ArrayList<>();
+    private final ConcurrentHashMap<Long,FetchRunnable> fetchRunnableMap = new ConcurrentHashMap<>();
 
     public static void sendToService(@NonNull Context context,@Nullable Bundle extras) {
 
@@ -163,7 +168,7 @@ public final class FetchService extends Service implements FetchConst {
         databaseHelper = DatabaseHelper.getInstance(context);
         broadcastManager.registerReceiver(doneReceiver,FetchRunnable.getDoneFilter());
         registeredReceivers.add(doneReceiver);
-
+        downloadsLimit = getDownloadsLimit();
         preferredNetwork = getAllowedNetwork();
         loggingEnabled = isLoggingEnabled();
         databaseHelper.setLoggingEnabled(loggingEnabled);
@@ -286,6 +291,11 @@ public final class FetchService extends Service implements FetchConst {
                         }
                         case ACTION_REMOVE_ALL: {
                             removeAll();
+                            break;
+                        }
+                        case ACTION_CONCURRENT_DOWNLOADS_LIMIT: {
+                            int limit = intent.getIntExtra(EXTRA_CONCURRENT_DOWNLOADS_LIMIT,DEFAULT_DOWNLOADS_LIMIT);
+                            setDownloadsLimit(limit);
                             break;
                         }
                         default: {
@@ -663,6 +673,21 @@ public final class FetchService extends Service implements FetchConst {
         intent.putExtra(FetchService.EXTRA_QUERY_RESULT,results);
 
         broadcastManager.sendBroadcast(intent);
+    }
+
+    private int getDownloadsLimit() {
+        return sharedPreferences.getInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT,DEFAULT_DOWNLOADS_LIMIT);
+    }
+
+    private void setDownloadsLimit(int limit) {
+
+        if(limit > MAX_DOWNLOADS_LIMIT || limit < DEFAULT_DOWNLOADS_LIMIT) {
+            limit = DEFAULT_DOWNLOADS_LIMIT;
+        }
+
+        sharedPreferences.edit().putInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT,limit).apply();
+        downloadsLimit = limit;
+        startDownload();
     }
 
     private void setLoggingEnabled(boolean enabled) {
