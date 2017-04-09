@@ -19,7 +19,7 @@ public final class Data {
             "http://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v",
             "http://media.mongodb.org/zips.json",
             "http://www.example/some/unknown/123/Errorlink.txt",
-            "http://www.drodd.com/gump/boxachoc.mp3",
+            "http://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v",
             "http://storage.googleapis.com/ix_choosemuse/uploads/2016/02/android-logo.png"};
 
     private Data() {
@@ -38,7 +38,7 @@ public final class Data {
         return requests;
     }
 
-    private static String getFilePath(String url) {
+    public static String getFilePath(String url) {
 
         Uri uri = Uri.parse(url);
 

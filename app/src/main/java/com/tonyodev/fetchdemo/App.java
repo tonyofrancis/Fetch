@@ -22,6 +22,7 @@ public class App extends Application {
         new Fetch.Settings(this)
                 .setAllowedNetwork(Fetch.NETWORK_ALL)
                 .enableLogging(true)
+                .setConcurrentDownloadsLimit(1)
                 .apply();
 
         fetch = Fetch.getInstance(this);

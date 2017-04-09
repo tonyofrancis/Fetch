@@ -101,8 +101,6 @@ public final class FetchService extends Service implements FetchConst {
     private LocalBroadcastManager broadcastManager;
     private SharedPreferences sharedPreferences;
 
-    private volatile FetchRunnable fetchRunnable;
-    private volatile boolean fetchRunnableQueued = false;
     private volatile boolean runningTask = false;
     private volatile boolean shuttingDown = false;
     private int downloadsLimit = DEFAULT_DOWNLOADS_LIMIT;
@@ -110,7 +108,7 @@ public final class FetchService extends Service implements FetchConst {
     private int preferredNetwork = NETWORK_ALL;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final List<BroadcastReceiver> registeredReceivers = new ArrayList<>();
-    private final ConcurrentHashMap<Long,FetchRunnable> fetchRunnableMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long,FetchRunnable> activeDownloads = new ConcurrentHashMap<>();
 
     public static void sendToService(@NonNull Context context,@Nullable Bundle extras) {
 
@@ -178,6 +176,7 @@ public final class FetchService extends Service implements FetchConst {
                 @Override
                 public void run() {
                     databaseHelper.clean();
+                    databaseHelper.verifyOK();
                 }
             });
         }
@@ -211,9 +210,7 @@ public final class FetchService extends Service implements FetchConst {
             executor.shutdown();
         }
 
-        if(fetchRunnable != null) {
-            fetchRunnable.interrupt();
-        }
+        interruptActiveDownloads();
 
         for (BroadcastReceiver registeredReceiver : registeredReceivers) {
             broadcastManager.unregisterReceiver(registeredReceiver);
@@ -310,22 +307,23 @@ public final class FetchService extends Service implements FetchConst {
 
     private synchronized void startDownload() {
 
-        if(shuttingDown || fetchRunnableQueued || runningTask) {
+        if(shuttingDown || runningTask) {
             return;
         }
 
-        databaseHelper.verifyOK();
         boolean networkAvailable = Utils.isNetworkAvailable(context);
         boolean onWiFi = Utils.isOnWiFi(context);
 
-        if((!networkAvailable || (preferredNetwork == NETWORK_WIFI && !onWiFi))
-                && fetchRunnable != null) {
+        if((!networkAvailable || (preferredNetwork == NETWORK_WIFI && !onWiFi)) && activeDownloads.size() > 0) {
 
-            fetchRunnable.interrupt();
+            runningTask = true;
+            interruptActiveDownloads();
+            runningTask = false;
 
-        }else if(networkAvailable && !fetchRunnableQueued) {
+        }else if(networkAvailable && !runningTask && activeDownloads.size() < downloadsLimit
+                && databaseHelper.hasPendingRequests()) {
 
-            fetchRunnableQueued = true;
+            runningTask = true;
 
             try {
 
@@ -335,14 +333,14 @@ public final class FetchService extends Service implements FetchConst {
 
                     RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
 
-                    fetchRunnable = new FetchRunnable(context,requestInfo.getId(),
+                    FetchRunnable fetchRunnable = new FetchRunnable(context,requestInfo.getId(),
                             requestInfo.getUrl(), requestInfo.getFilePath()
                             ,requestInfo.getHeaders(),requestInfo.getFileSize(),loggingEnabled);
 
-                    new Thread(fetchRunnable).start();
+                    databaseHelper.updateStatus(requestInfo.getId(),FetchService.STATUS_DOWNLOADING,DEFAULT_EMPTY_VALUE);
+                    activeDownloads.put(fetchRunnable.getId(),fetchRunnable);
 
-                }else {
-                    stopSelf();
+                    new Thread(fetchRunnable).start();
                 }
 
             }catch (Exception e) {
@@ -350,9 +348,35 @@ public final class FetchService extends Service implements FetchConst {
                 if(loggingEnabled) {
                     e.printStackTrace();
                 }
+            }
 
-                fetchRunnableQueued = false;
+            runningTask = false;
+
+            if(activeDownloads.size() < downloadsLimit && databaseHelper.hasPendingRequests()) {
                 startDownload();
+            }
+        }
+    }
+
+    private void interruptActiveDownloads() {
+
+        for (Long id : activeDownloads.keySet()) {
+
+            FetchRunnable fetchRunnable = activeDownloads.get(id);
+
+            if(fetchRunnable != null) {
+                fetchRunnable.interrupt();
+            }
+        }
+    }
+
+    private void interruptActiveDownload(long id) {
+
+        if(activeDownloads.containsKey(id)) {
+            FetchRunnable fetchRunnable = activeDownloads.get(id);
+
+            if(fetchRunnable != null) {
+                fetchRunnable.interrupt();
             }
         }
     }
@@ -406,7 +430,7 @@ public final class FetchService extends Service implements FetchConst {
 
     private void resume(final long id) {
 
-        if(fetchRunnable != null && fetchRunnable.getId() == id) {
+        if(activeDownloads.containsKey(id)) {
             return;
         }
 
@@ -431,7 +455,7 @@ public final class FetchService extends Service implements FetchConst {
 
     private void pause(final long id) {
 
-        if(fetchRunnable != null && fetchRunnable.getId() == id) {
+        if(activeDownloads.containsKey(id)) {
 
             runningTask = true;
 
@@ -441,18 +465,18 @@ public final class FetchService extends Service implements FetchConst {
 
                     if(FetchRunnable.getIdFromIntent(intent) == id) {
                         pauseAction(id);
-                    }
 
-                    broadcastManager.unregisterReceiver(this);
-                    registeredReceivers.remove(this);
-                    runningTask = false;
-                    startDownload();
+                        broadcastManager.unregisterReceiver(this);
+                        registeredReceivers.remove(this);
+                        runningTask = false;
+                        startDownload();
+                    }
                 }
             };
 
             registeredReceivers.add(broadcastReceiver);
             broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
-            fetchRunnable.interrupt();
+            interruptActiveDownload(id);
         }else {
 
             pauseAction(id);
@@ -480,7 +504,7 @@ public final class FetchService extends Service implements FetchConst {
 
     private void remove(final long id) {
 
-        if (fetchRunnable != null && fetchRunnable.getId() == id) {
+        if (activeDownloads.containsKey(id)) {
 
             runningTask = true;
 
@@ -490,18 +514,18 @@ public final class FetchService extends Service implements FetchConst {
 
                     if(FetchRunnable.getIdFromIntent(intent) == id) {
                         removeAction(id);
-                    }
 
-                    broadcastManager.unregisterReceiver(this);
-                    registeredReceivers.remove(this);
-                    runningTask = false;
-                    startDownload();
+                        broadcastManager.unregisterReceiver(this);
+                        registeredReceivers.remove(this);
+                        runningTask = false;
+                        startDownload();
+                    }
                 }
             };
 
             registeredReceivers.add(broadcastReceiver);
             broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
-            fetchRunnable.interrupt();
+            interruptActiveDownload(id);
         }else {
             removeAction(id);
             startDownload();
@@ -524,7 +548,7 @@ public final class FetchService extends Service implements FetchConst {
 
     private void removeAll() {
 
-        if (fetchRunnable != null) {
+        if (activeDownloads.size() > 0) {
 
             runningTask = true;
 
@@ -532,18 +556,24 @@ public final class FetchService extends Service implements FetchConst {
                 @Override
                 public void onReceive(Context context, Intent intent) {
 
-                    removeAllAction();
+                    if(intent != null) {
+                        long id = FetchRunnable.getIdFromIntent(intent);
+                        removeAction(id);
+                    }
 
-                    broadcastManager.unregisterReceiver(this);
-                    registeredReceivers.remove(this);
-                    runningTask = false;
-                    startDownload();
+                    if(activeDownloads.size() == 0) {
+                        removeAllAction();
+                        broadcastManager.unregisterReceiver(this);
+                        registeredReceivers.remove(this);
+                        runningTask = false;
+                        startDownload();
+                    }
                 }
             };
 
             registeredReceivers.add(broadcastReceiver);
             broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
-            fetchRunnable.interrupt();
+            interruptActiveDownloads();
         }else {
             removeAllAction();
             startDownload();
@@ -593,8 +623,8 @@ public final class FetchService extends Service implements FetchConst {
 
     private void setRequestPriority(long id, int priority) {
 
-        if(databaseHelper.setPriority(id,priority) && fetchRunnable != null) {
-            fetchRunnable.interrupt();
+        if(databaseHelper.setPriority(id,priority) && activeDownloads.size() > 0) {
+            interruptActiveDownloads();
         }
 
         startDownload();
@@ -602,11 +632,11 @@ public final class FetchService extends Service implements FetchConst {
 
     private void setAllowedNetwork(final int networkType) {
 
-        sharedPreferences.edit().putInt(EXTRA_NETWORK_ID,networkType).apply();
         preferredNetwork = networkType;
+        sharedPreferences.edit().putInt(EXTRA_NETWORK_ID,networkType).apply();
 
-        if(fetchRunnable != null) {
-            fetchRunnable.interrupt();
+        if(activeDownloads.size() > 0) {
+            interruptActiveDownloads();
         }
 
         startDownload();
@@ -614,7 +644,7 @@ public final class FetchService extends Service implements FetchConst {
 
     private void retry(long id) {
 
-        if(fetchRunnable != null && fetchRunnable.getId() == id) {
+        if(activeDownloads.containsKey(id)) {
             return;
         }
 
@@ -642,9 +672,16 @@ public final class FetchService extends Service implements FetchConst {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            fetchRunnable = null;
-            fetchRunnableQueued = false;
-            startDownload();
+            if(intent != null) {
+
+                long id = FetchRunnable.getIdFromIntent(intent);
+
+                if(activeDownloads.containsKey(id)) {
+                    activeDownloads.remove(id);
+                }
+
+                startDownload();
+            }
         }
     };
 
@@ -685,14 +722,20 @@ public final class FetchService extends Service implements FetchConst {
             limit = DEFAULT_DOWNLOADS_LIMIT;
         }
 
-        sharedPreferences.edit().putInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT,limit).apply();
         downloadsLimit = limit;
+        sharedPreferences.edit().putInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT,limit).apply();
+
+        if(activeDownloads.size() > 0) {
+            interruptActiveDownloads();
+        }
+
         startDownload();
     }
 
     private void setLoggingEnabled(boolean enabled) {
-        sharedPreferences.edit().putBoolean(EXTRA_LOGGING_ID,enabled).apply();
+
         loggingEnabled = enabled;
+        sharedPreferences.edit().putBoolean(EXTRA_LOGGING_ID,enabled).apply();
         databaseHelper.setLoggingEnabled(loggingEnabled);
         startDownload();
     }

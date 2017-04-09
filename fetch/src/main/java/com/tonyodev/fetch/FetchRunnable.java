@@ -134,8 +134,6 @@ final class FetchRunnable implements Runnable {
                     progress = Utils.getProgress(downloadedBytes,fileSize);
                 }
 
-                databaseHelper.updateStatus(id,FetchConst.STATUS_DOWNLOADING,FetchConst.DEFAULT_EMPTY_VALUE);
-
                 output = new RandomAccessFile(filePath,"rw");
                 if(responseCode == HttpURLConnection.HTTP_PARTIAL) {
                     output.seek(downloadedBytes);
@@ -148,7 +146,10 @@ final class FetchRunnable implements Runnable {
 
                 databaseHelper.updateFileBytes(id,downloadedBytes,fileSize);
 
-                if(downloadedBytes >= fileSize && !isInterrupted()) {
+                if (isInterrupted()) {
+                    throw new DownloadInterruptedException("DIE",ErrorUtils.DOWNLOAD_INTERRUPTED);
+
+                }else if(downloadedBytes >= fileSize && !isInterrupted()) {
 
                     if(fileSize < 1) {
                         fileSize = Utils.getFileSize(filePath);

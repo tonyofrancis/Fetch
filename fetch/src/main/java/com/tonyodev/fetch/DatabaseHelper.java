@@ -567,6 +567,25 @@ final class DatabaseHelper extends SQLiteOpenHelper {
                 + FetchConst.STATUS_QUEUED + " LIMIT 1" ,null);
     }
 
+    synchronized boolean hasPendingRequests() {
+
+        Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID + " FROM "
+                + TABLE_NAME + " WHERE " + COLUMN_STATUS + " = "
+                + FetchConst.STATUS_QUEUED + " LIMIT 1" ,null);
+
+        boolean hasPending = false;
+
+        if(cursor != null && cursor.getCount() > 0) {
+            hasPending = true;
+        }
+
+        if(cursor != null) {
+            cursor.close();
+        }
+
+        return hasPending;
+    }
+
     synchronized void verifyOK() {
 
         try {
