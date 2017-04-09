@@ -1,3 +1,9 @@
+Version 1.1.0
+- Concurrent Downloads Support.
+- Logging improvements.
+- New Settings class to change Fetch's behavior.
+- Bug fixes and performance improvements.
+
 Version 1.0.3
 - Improved progress reporting.
 - Bug fixes and performance improvements.

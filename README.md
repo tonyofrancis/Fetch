@@ -1,4 +1,4 @@
-[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch/images/download.svg?version=1.0.3) ](https://bintray.com/tonyofrancis/maven/fetch/1.0.3/link)
+[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch/images/download.svg?version=1.1.0) ](https://bintray.com/tonyofrancis/maven/fetch/1.1.0/link)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Networking-blue.svg?style=flat)](https://android-arsenal.com/details/1/5196)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tonyofrancis/Fetch/blob/master/LICENSE)
 
@@ -19,6 +19,7 @@ Features
 
 * Simple and easy to use API.
 * Continuous downloading in the background.
+* Concurrent Downloads Support.
 * Ability to pause and resume downloads.
 * Set the priority of a download request.
 * Ability to retry failed downloads.
@@ -43,7 +44,7 @@ Using Fetch is easy! Just add the Gradle dependency to your application's build.
 file.
 
 ```java 
-compile 'com.tonyodev.fetch:fetch:1.0.3'
+compile 'com.tonyodev.fetch:fetch:1.1.0'
 ``` 
 
 Next, get an instance of Fetch and request a download. A unique ID will be returned 
@@ -109,6 +110,15 @@ that you release instances of fetch to prevent memory leaks.**
 fetch.release();
 
 //do more work
+```
+
+Changing Fetch settings are easy!
+```java
+new Fetch.Settings(getApplicationContext())
+	.setAllowedNetwork(Fetch.NETWORK_ALL)
+	.enableLogging(true)
+	.setConcurrentDownloadsLimit(3)
+	.apply();
 ```
 
 Contribute
