@@ -114,7 +114,7 @@ fetch.release();
 
 Changing Fetch settings are easy!
 ```java
-new Fetch.Settings(this)
+new Fetch.Settings(getApplicationContext())
 	.setAllowedNetwork(Fetch.NETWORK_ALL)
 	.enableLogging(true)
 	.setConcurrentDownloadsLimit(3)
