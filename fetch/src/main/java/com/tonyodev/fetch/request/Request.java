@@ -114,7 +114,7 @@ public final class Request {
         }
 
         this.url = url;
-        this.filePath = generateFilePath(dir,fileName);
+        this.filePath = cleanFilePath(generateFilePath(dir,fileName));
     }
 
     /**
@@ -256,5 +256,15 @@ public final class Request {
         }
 
         return fileName;
+    }
+
+    private static String cleanFilePath(String string) {
+
+        String filePath = string;
+
+        filePath = filePath.replace("//","/");
+
+
+        return filePath;
     }
 }
