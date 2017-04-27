@@ -17,6 +17,7 @@ package com.tonyodev.fetch;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -115,8 +116,8 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         try {
 
             Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID
-                    + " FROM " + TABLE_NAME + " WHERE " + COLUMN_FILEPATH + " LIKE '%"
-                    + filePath + "%'",null);
+                    + " FROM " + TABLE_NAME + " WHERE " + COLUMN_FILEPATH + " = "
+                    + DatabaseUtils.sqlEscapeString(filePath),null);
 
 
             if(cursor != null && cursor.getCount() > 0) {
@@ -148,11 +149,11 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         }
 
         return "INSERT INTO " + TABLE_NAME + " VALUES ( " + id
-                + ", '" + url
-                + "', '" + filePath
-                + "', " + status
-                + ", '" + headers
-                + "', " + downloadedBytes
+                + ", " + DatabaseUtils.sqlEscapeString(url)
+                + ", " + DatabaseUtils.sqlEscapeString(filePath)
+                + ", " + status
+                + ", " + DatabaseUtils.sqlEscapeString(headers)
+                + ", " + downloadedBytes
                 + ", " + fileSize
                 + ", " + error
                 + ", " + priority +" )";
