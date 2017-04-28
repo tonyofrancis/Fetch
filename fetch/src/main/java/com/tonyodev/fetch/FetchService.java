@@ -89,6 +89,7 @@ public final class FetchService extends Service implements FetchConst {
     public static final int ACTION_REMOVE_ALL = 319;
     public static final int ACTION_LOGGING = 320;
     public static final int ACTION_CONCURRENT_DOWNLOADS_LIMIT = 321;
+    public static final int ACTION_UPDATE_REQUEST_URL = 322;
 
     public static final int QUERY_SINGLE = 480;
     public static final int QUERY_ALL = 481;
@@ -293,6 +294,11 @@ public final class FetchService extends Service implements FetchConst {
                         case ACTION_CONCURRENT_DOWNLOADS_LIMIT: {
                             int limit = intent.getIntExtra(EXTRA_CONCURRENT_DOWNLOADS_LIMIT,DEFAULT_DOWNLOADS_LIMIT);
                             setDownloadsLimit(limit);
+                            break;
+                        }
+                        case ACTION_UPDATE_REQUEST_URL: {
+                            String url = intent.getStringExtra(EXTRA_URL);
+                            updateRequestUrl(id,url);
                             break;
                         }
                         default: {
@@ -662,6 +668,42 @@ public final class FetchService extends Service implements FetchConst {
         }
 
         startDownload();
+    }
+
+    private void updateRequestUrl(final long id,final String url) {
+
+        if (activeDownloads.containsKey(id)) {
+
+            runningTask = true;
+
+            BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+
+                    if(FetchRunnable.getIdFromIntent(intent) == id) {
+                        updateRequestUrlAction(id,url);
+
+                        broadcastManager.unregisterReceiver(this);
+                        registeredReceivers.remove(this);
+                        runningTask = false;
+                        startDownload();
+                    }
+                }
+            };
+
+            registeredReceivers.add(broadcastReceiver);
+            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
+            interruptActiveDownload(id);
+        }else {
+            updateRequestUrlAction(id,url);
+            startDownload();
+        }
+    }
+
+    private void updateRequestUrlAction(long id,String url) {
+
+        databaseHelper.updateUrl(id,url);
+        databaseHelper.retry(id);
     }
 
     private int getAllowedNetwork() {

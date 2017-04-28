@@ -490,6 +490,45 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         return updated;
     }
 
+    synchronized boolean updateUrl(long id,String url) {
+
+        boolean updated = false;
+
+        try {
+            db.beginTransaction();
+            db.execSQL("UPDATE " + TABLE_NAME + " SET " + COLUMN_URL + " = "
+                    + DatabaseUtils.sqlEscapeString(url) + " WHERE " + COLUMN_ID + " = " + id);
+
+            db.setTransactionSuccessful();
+        }catch (SQLiteException e){
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            db.endTransaction();
+
+            Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID
+                    + " FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = " + id
+                    + " AND " + COLUMN_URL + " = " + DatabaseUtils.sqlEscapeString(url),null);
+
+            if(cursor != null && cursor.getCount() > 0) {
+                updated = true;
+                cursor.close();
+            }
+
+        }catch (SQLiteException e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
+        }
+
+        return updated;
+    }
+
     synchronized Cursor get(long id) {
 
         try {
@@ -535,9 +574,9 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
         try {
             return db.rawQuery("SELECT * FROM " + TABLE_NAME
-                    + " WHERE " + COLUMN_URL + " LIKE '%"
-                    + url + "%' AND " + COLUMN_FILEPATH
-                    + " LIKE '%" + filePath + "%' LIMIT 1",null);
+                    + " WHERE " + COLUMN_URL + " = "
+                    + DatabaseUtils.sqlEscapeString(url) + " AND " + COLUMN_FILEPATH
+                    + " = " + DatabaseUtils.sqlEscapeString(filePath) + " LIMIT 1",null);
         }catch (SQLiteException e) {
 
             if(loggingEnabled) {

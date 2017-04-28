@@ -994,6 +994,32 @@ public final class Fetch implements FetchConst {
     }
 
     /**
+     * Updates the url for an existing request
+     *
+     * @param id request id
+     * @param url new url
+     *
+     * @throws NotUsableException if the release method has been called on Fetch
+     * */
+    public void updateUrlForRequest(long id,@Nullable String url) {
+
+        Utils.throwIfNotUsable(this);
+
+        if(url == null) {
+            throw new NullPointerException("Url cannot be null");
+        }
+
+        Utils.throwIfInvalidUrl(url);
+
+        Bundle extras = new Bundle();
+        extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_UPDATE_REQUEST_URL);
+        extras.putLong(FetchService.EXTRA_ID,id);
+        extras.putString(FetchService.EXTRA_URL,url);
+
+        FetchService.sendToService(context,extras);
+    }
+
+    /**
      * The Settings class is used to apply
      * settings to Fetch and the FetchService.
      * */

@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 
@@ -487,5 +488,13 @@ final class Utils {
         }
 
         return false;
+    }
+
+    static void throwIfInvalidUrl(String url) {
+
+        String scheme = Uri.parse(url).getScheme();
+        if (scheme == null || (!scheme.equals("http") && !scheme.equals("https"))) {
+            throw new IllegalArgumentException("Can only download HTTP/HTTPS URIs: " + url);
+        }
     }
 }
