@@ -1,4 +1,4 @@
-[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch/images/download.svg?version=1.1.0) ](https://bintray.com/tonyofrancis/maven/fetch/1.1.0/link)
+[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch/images/download.svg?version=1.1.1) ](https://bintray.com/tonyofrancis/maven/fetch/1.1.1/link)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Networking-blue.svg?style=flat)](https://android-arsenal.com/details/1/5196)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tonyofrancis/Fetch/blob/master/LICENSE)
 
@@ -44,7 +44,7 @@ Using Fetch is easy! Just add the Gradle dependency to your application's build.
 file.
 
 ```java 
-compile 'com.tonyodev.fetch:fetch:1.1.0'
+compile 'com.tonyodev.fetch:fetch:1.1.1'
 ``` 
 
 Next, get an instance of Fetch and request a download. A unique ID will be returned 
