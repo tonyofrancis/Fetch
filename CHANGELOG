@@ -1,4 +1,9 @@
 Version 1.1.0
+- Fixed SQLite error when strings where not escaped when inserting into the database.
+- Added new updateUrlForRequest method to Fetch.
+- Bug fixes.
+
+Version 1.1.0
 - Concurrent Downloads Support.
 - Logging improvements.
 - New Settings class to change Fetch's behavior.
