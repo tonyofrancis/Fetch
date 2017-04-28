@@ -1,4 +1,4 @@
-Version 1.1.0
+Version 1.1.1
 - Fixed SQLite error when strings where not escaped when inserting into the database.
 - Added new updateUrlForRequest method to Fetch.
 - Bug fixes.
