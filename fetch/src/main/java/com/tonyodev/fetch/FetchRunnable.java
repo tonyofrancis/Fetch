@@ -228,11 +228,10 @@ final class FetchRunnable implements Runnable {
     }
 
     private void setContentLength() {
-
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            fileSize = downloadedBytes + httpURLConnection.getContentLengthLong();
-        } else {
-            fileSize = downloadedBytes + httpURLConnection.getContentLength();
+        try {
+            fileSize = downloadedBytes + Long.valueOf(httpURLConnection.getHeaderField("Content-Length"));
+        } catch (Exception e) {
+            fileSize = -1;
         }
     }
 
