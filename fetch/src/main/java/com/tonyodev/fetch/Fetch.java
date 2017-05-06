@@ -100,6 +100,14 @@ public final class Fetch implements FetchConst {
     }
 
     /**
+     * @deprecated <p>See {@link Fetch#newInstance(Context)}
+     * */
+    public static Fetch getInstance(@NonNull Context context) {
+
+        return newInstance(context);
+    }
+
+    /**
      * Gets a new instance of Fetch.
      *
      * @param context Context
@@ -108,7 +116,7 @@ public final class Fetch implements FetchConst {
      *
      * @throws NullPointerException if context is null
      * */
-    public static Fetch getInstance(@NonNull Context context) {
+    public static Fetch newInstance(@NonNull Context context) {
 
         if(context == null) {
             throw new NullPointerException("Context cannot be null");
