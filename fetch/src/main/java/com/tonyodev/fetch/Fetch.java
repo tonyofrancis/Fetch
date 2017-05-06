@@ -980,7 +980,7 @@ public final class Fetch implements FetchConst {
      * Sets the allowed concurrent downloads value between 1-7. The default is 1
      * and the max is 7. The Fetch Service will only allow up to the MAX concurrent downloads.
      *
-     * <p>See Fetch.DEFAULT_DOWNLOADS_LIMIT and Fetch.MAX_DOWNLOADS_LIMIT
+     * <p>See {@link FetchConst#DEFAULT_DOWNLOADS_LIMIT} and {@link FetchConst#MAX_DOWNLOADS_LIMIT}
      *
      * @param limit concurrent downloads limit
      *
@@ -1058,8 +1058,8 @@ public final class Fetch implements FetchConst {
         /**
          * Sets the allowed network connection type the FetchService can use to download requests.
          *
-         * <p>This method only accepts two values: Fetch.NETWORK_WIFI or Fetch.NETWORK_ALL. The default is
-         * Fetch.NETWORK_ALL.
+         * <p>This method only accepts two values: {@link FetchConst#NETWORK_WIFI} or {@link FetchConst#NETWORK_ALL}.
+         * The default is {@link FetchConst#NETWORK_ALL}.
          *
          * @param networkType allowed network type
          *
@@ -1085,7 +1085,7 @@ public final class Fetch implements FetchConst {
          * Sets the allowed concurrent downloads value between 1-7. The default is 1
          * and the max is 7. The Fetch Service will only allow up to the MAX concurrent downloads.
          *
-         * <p>See Fetch.DEFAULT_DOWNLOADS_LIMIT and Fetch.MAX_DOWNLOADS_LIMIT
+         * <p>See {@link FetchConst#DEFAULT_DOWNLOADS_LIMIT} and {@link FetchConst#MAX_DOWNLOADS_LIMIT}
          *
          * @param limit concurrent downloads limit
          *
