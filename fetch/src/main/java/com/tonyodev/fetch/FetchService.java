@@ -361,6 +361,9 @@ public final class FetchService extends Service implements FetchConst {
             if(activeDownloads.size() < downloadsLimit && databaseHelper.hasPendingRequests()) {
                 startDownload();
             }
+        }else if(!runningTask && activeDownloads.size() == 0 && !databaseHelper.hasPendingRequests()) {
+            shuttingDown = true;
+            stopSelf();
         }
     }
 
