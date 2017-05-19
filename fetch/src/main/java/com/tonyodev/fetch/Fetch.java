@@ -1009,10 +1009,7 @@ public final class Fetch implements FetchConst {
     }
 
     /**
-     * Sets the allowed concurrent downloads value between 1-7. The default is 1
-     * and the max is 7. The Fetch Service will only allow up to the MAX concurrent downloads.
-     *
-     * <p>See {@link FetchConst#DEFAULT_DOWNLOADS_LIMIT} and {@link FetchConst#MAX_DOWNLOADS_LIMIT}
+     * Sets the allowed concurrent downloads. Default 1.
      *
      * @param limit concurrent downloads limit
      *
@@ -1114,10 +1111,7 @@ public final class Fetch implements FetchConst {
         }
 
         /**
-         * Sets the allowed concurrent downloads value between 1-7. The default is 1
-         * and the max is 7. The Fetch Service will only allow up to the MAX concurrent downloads.
-         *
-         * <p>See {@link FetchConst#DEFAULT_DOWNLOADS_LIMIT} and {@link FetchConst#MAX_DOWNLOADS_LIMIT}
+         * Sets the allowed concurrent downloads. Default is 1
          *
          * @param limit concurrent downloads limit
          *

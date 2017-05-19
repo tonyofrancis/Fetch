@@ -760,7 +760,7 @@ public final class FetchService extends Service implements FetchConst {
 
     private void setDownloadsLimit(int limit) {
 
-        if(limit > MAX_DOWNLOADS_LIMIT || limit < DEFAULT_DOWNLOADS_LIMIT) {
+        if(limit < DEFAULT_DOWNLOADS_LIMIT) {
             limit = DEFAULT_DOWNLOADS_LIMIT;
         }
 

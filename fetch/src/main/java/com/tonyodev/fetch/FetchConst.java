@@ -174,6 +174,7 @@ interface FetchConst {
 
     /**
      * Max concurrent downloads limit.
+     * @deprecated Use your best judgement
      * */
     int MAX_DOWNLOADS_LIMIT = 7;
 }
