@@ -588,6 +588,30 @@ public final class Fetch implements FetchConst {
     }
 
     /**
+     * Query the FetchService database for download requests that matches a list of ids.
+     *
+     * @param ids IDs of requests
+     *
+     * @return a List of RequestInfo object that contains the status and progress of a request.
+     *         If no requests are found, an empty list will be returned.
+     *
+     * @throws NotUsableException if the release method has been called on Fetch.
+     * */
+    @NonNull
+    public synchronized List<RequestInfo> get(long... ids) {
+
+        Utils.throwIfNotUsable(this);
+
+        if(ids == null) {
+            return new ArrayList<>();
+        }
+
+        Cursor cursor = dbHelper.get(ids);
+
+        return Utils.cursorToRequestInfoList(cursor,true,isLoggingEnabled());
+    }
+
+    /**
      * Query the FetchService database for all download requests with the passed in status.
      *
      * @param status eg. Fetch.STATUS_DONE, Fetch.STATUS_QUEUED

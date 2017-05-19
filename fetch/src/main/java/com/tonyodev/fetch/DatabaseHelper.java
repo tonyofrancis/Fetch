@@ -556,6 +556,36 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
+    synchronized Cursor get(long[] ids) {
+
+        try {
+
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append('(');
+
+            if(ids.length > 0) {
+                for (long id : ids) {
+                    stringBuilder.append(id)
+                            .append(',');
+                }
+
+                stringBuilder.deleteCharAt(stringBuilder.length()-1);
+            }
+
+            stringBuilder.append(')');
+
+
+            return db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_ID
+                    + " IN " + stringBuilder.toString(),null);
+        }catch (SQLiteException e) {
+
+            if(loggingEnabled) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
     synchronized Cursor getByStatus(int status) {
 
         try {
