@@ -177,4 +177,10 @@ interface FetchConst {
      * @deprecated Use your best judgement
      * */
     int MAX_DOWNLOADS_LIMIT = 7;
+
+    /** indicates that no errors occurred*/
+    int NO_ERROR =  -1;
+
+    /** The ID value that is returned when a request was not enqueued*/
+    int ENQUEUE_ERROR_ID = -1;
 }
