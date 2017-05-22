@@ -232,6 +232,8 @@ public final class FetchService extends Service implements FetchConst {
                 @Override
                 public void run() {
 
+                    databaseHelper.clean();
+                    
                     final long id = intent.getLongExtra(EXTRA_ID, DEFAULT_EMPTY_VALUE);
 
                     switch (intent.getIntExtra(ACTION_TYPE, DEFAULT_EMPTY_VALUE)) {
