@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentMap;
  * Instances of this class listen for status and progress updates from
  * the FetchService and notifies attached FetchListeners of these changes.
  *
- * Instances of this class are obtained by calling the Fetch.getInstance(Context) method.
+ * Instances of this class are obtained by calling the Fetch.newInstance(Context) method.
  *
  * @author Tonyo Francis
  */
@@ -192,7 +192,7 @@ public final class Fetch implements FetchConst {
      *
      * <p>Method calls on this Fetch instance will throw a NotUsableException,
      * after this method is called. If needed, get a new instance of Fetch by calling
-     * Fetch.getInstance().
+     * Fetch.newInstance().
      *
      * */
     public void release() {
@@ -883,7 +883,7 @@ public final class Fetch implements FetchConst {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Fetch fetch = Fetch.getInstance(context);
+                Fetch fetch = Fetch.newInstance(context);
                 fetchTask.onProcess(fetch);
                 fetch.release();
             }
@@ -906,7 +906,7 @@ public final class Fetch implements FetchConst {
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
-                Fetch fetch = Fetch.getInstance(context);
+                Fetch fetch = Fetch.newInstance(context);
                 fetchTask.onProcess(fetch);
                 fetch.release();
             }
