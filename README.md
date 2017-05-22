@@ -62,7 +62,12 @@ public class MainActivity extends AppCompatActivity {
         ...
         
         Request request = new Request(url,dirPath,fileName);
-        long downloadId = fetch.enqueue(request);        
+        long downloadId = fetch.enqueue(request);
+	
+	if(downloadId != Fetch.ENQUEUE_ERROR_ID) {
+		//Download was successfully queued for download.
+	}
+	
     }
 
 }
@@ -82,7 +87,14 @@ fetch.addFetchListener(new FetchListener() {
 
             progressBar.setProgress(progress);
             ...
-        }
+        }else if(error != Fetch.NO_ERROR) {
+	    //An error occurred 
+	    
+	    if(error == Fetch.ERROR_HTTP_NOT_FOUND) {
+	    	//handle error
+	    }
+	    
+	}
     }     
 });
 ``` 
