@@ -1,3 +1,9 @@
+Version 1.1.2
+- Added new get(long...ids) method to Fetch.
+- Max Limit on concurrent downloads removed.
+- Fetch Service now stops when all work is done.
+- Bug fixes.
+
 Version 1.1.1
 - Fixed SQLite error when strings where not escaped when inserting into the database.
 - Added new updateUrlForRequest method to Fetch.
