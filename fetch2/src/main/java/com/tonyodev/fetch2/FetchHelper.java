@@ -85,7 +85,7 @@ final class FetchHelper {
         }
     }
 
-    static Long[] createIdArray(List<Long> ids) {
+    static long[] createIdArray(List<Long> ids) {
 
         for (Long id : ids) {
             if(id == null) {
@@ -93,8 +93,10 @@ final class FetchHelper {
             }
         }
 
-        Long[] idArray = new Long[ids.size()];
-        ids.toArray(idArray);
+        long[] idArray = new long[ids.size()];
+        for (int i = 0; i < ids.size(); i++) {
+            idArray[i] = ids.get(i);
+        }
 
         return idArray;
     }

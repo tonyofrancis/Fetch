@@ -1,5 +1,4 @@
 apply plugin: 'com.android.library'
-apply plugin: 'realm-android'
 
 
 android {
@@ -33,4 +32,6 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.4.0'
     testCompile 'junit:junit:4.12'
     compile 'com.squareup.okhttp3:okhttp:3.8.0'
+    compile 'android.arch.persistence.room:runtime:1.0.0-alpha2'
+    annotationProcessor 'android.arch.persistence.room:compiler:1.0.0-alpha2'
 }

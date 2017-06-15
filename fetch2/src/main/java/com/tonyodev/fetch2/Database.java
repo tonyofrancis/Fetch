@@ -16,7 +16,7 @@ interface Database {
     @NonNull List<RequestData> queryByStatus(int status);
     @Nullable RequestData query(final long id);
     @NonNull List<RequestData> query();
-    @NonNull List<RequestData> query(Long[] ids);
+    @NonNull List<RequestData> query(long[] ids);
     void updateDownloadedBytes(final long id, final long downloadedBytes);
     void setDownloadedBytesAndTotalBytes(final long id, final long downloadedBytes, final long totalBytes);
     void remove(final long id);

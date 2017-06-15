@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2;
 
+import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -7,87 +8,53 @@ import android.support.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.realm.Realm;
-import io.realm.RealmConfiguration;
-import io.realm.RealmResults;
-
 final class DatabaseManager implements Disposable {
 
-    private final String name;
-    private final RealmConfiguration realmConfiguration;
     private volatile boolean isDisposed;
-
-    static class LookUpField {
-        static final String ID = "id";
-        static final String STATUS = "status";
-    }
+    private final FetchDatabase db;
 
     static DatabaseManager newInstance(Context context, String name) {
         return new DatabaseManager(context,name);
     }
 
     private DatabaseManager(Context context, String name) {
-        Realm.init(context);
+
+        db = Room.databaseBuilder(context,
+                FetchDatabase.class, name.concat(".db")).build();
+
         this.isDisposed = false;
-        this.name = getRealmFileName(name);
-        this.realmConfiguration = getRealmConfiguration();
-    }
-
-    private String getRealmFileName(String name) {
-        return name.concat(".realm");
-    }
-
-    private RealmConfiguration getRealmConfiguration() {
-        return new RealmConfiguration.Builder()
-                .name(name)
-                .modules(new DatabaseModule())
-                .schemaVersion(1)
-                .build();
-    }
-
-    private Realm newRealmInstance() {
-       return Realm.getInstance(realmConfiguration);
     }
 
     void executeTransaction(final Transaction transaction) {
-        Realm realm = null;
 
         try {
-            realm = newRealmInstance();
             transaction.onPreExecute();
-            realm.beginTransaction();
-            transaction.onExecute(new RealmDatabase(realm));
-            realm.commitTransaction();
+            transaction.onExecute(new RealmDatabase(db));
         }catch (Exception e) {
             e.printStackTrace();
-
-            if (realm != null && realm.isInTransaction()) {
-                realm.cancelTransaction();
-            }
         }finally {
-            if(realm != null && !realm.isClosed()) {
-                realm.close();
-            }
             transaction.onPostExecute();
         }
     }
 
     private static class RealmDatabase implements Database {
 
-        private final Realm realm;
+        private final FetchDatabase fetchDatabase;
 
-        public RealmDatabase(Realm realm) {
-            this.realm = realm;
+        public RealmDatabase(FetchDatabase fetchDatabase) {
+            this.fetchDatabase = fetchDatabase;
         }
 
         @Override
         public boolean contains(long id) {
 
-            long count = realm.where(RealmRequestInfo.class)
-                    .equalTo(LookUpField.ID,id)
-                    .count();
+            RequestInfo requestInfo = fetchDatabase.requestInfoDao().query(id);
 
-            return count > 0;
+            if (requestInfo == null) {
+                return false;
+            }
+
+            return true;
         }
 
         @Override
@@ -96,7 +63,12 @@ final class DatabaseManager implements Disposable {
                 return false;
             }
 
-            realm.copyToRealm(RealmRequestInfo.newInstance(id,url,absoluteFilePath));
+            RequestInfo requestInfo = RequestInfo.newInstance(id,url,absoluteFilePath);
+            long inserted = fetchDatabase.requestInfoDao().insert(requestInfo);
+
+            if (inserted == -1) {
+                return false;
+            }
 
             return true;
         }
@@ -106,12 +78,15 @@ final class DatabaseManager implements Disposable {
        public  List<RequestData> queryByStatus(int status) {
             List<RequestData> list = new ArrayList<>();
 
-            RealmResults<RealmRequestInfo> results = realm.where(RealmRequestInfo.class)
-                    .equalTo(LookUpField.STATUS,status)
-                    .findAll();
+            List<RequestInfo> requestInfos = fetchDatabase.requestInfoDao().queryByStatus(status);
 
-            for (RealmRequestInfo result : results) {
-                list.add(result.toRequestData());
+            if (requestInfos == null) {
+                return list;
+            }
+
+
+            for (RequestInfo requestInfo : requestInfos) {
+                list.add(requestInfo.toRequestData());
             }
 
             return list;
@@ -122,12 +97,10 @@ final class DatabaseManager implements Disposable {
         public RequestData query(final long id) {
             RequestData requestData = null;
 
-            RealmRequestInfo realmRequestInfo = realm.where(RealmRequestInfo.class)
-                    .equalTo(LookUpField.ID,id)
-                    .findFirst();
+            RequestInfo requestInfo = fetchDatabase.requestInfoDao().query(id);
 
-            if (realmRequestInfo != null) {
-                requestData = realmRequestInfo.toRequestData();
+            if (requestInfo != null) {
+                requestData = requestInfo.toRequestData();
             }
 
             return requestData;
@@ -138,10 +111,14 @@ final class DatabaseManager implements Disposable {
         public List<RequestData> query() {
             List<RequestData> list = new ArrayList<>();
 
-            RealmResults<RealmRequestInfo> results = realm.where(RealmRequestInfo.class).findAll();
+            List<RequestInfo> requestInfoList = fetchDatabase.requestInfoDao().query();
 
-            for (RealmRequestInfo result : results) {
-                list.add(result.toRequestData());
+            if (requestInfoList == null) {
+                return list;
+            }
+
+            for (RequestInfo requestInfo : requestInfoList) {
+                list.add(requestInfo.toRequestData());
             }
 
             return list;
@@ -149,15 +126,17 @@ final class DatabaseManager implements Disposable {
 
         @Override
         @NonNull
-        public List<RequestData> query(Long[] ids) {
+        public List<RequestData> query(long[] ids) {
             List<RequestData> list = new ArrayList<>();
 
-            RealmResults<RealmRequestInfo> results = realm.where(RealmRequestInfo.class)
-                    .in(LookUpField.ID,ids)
-                    .findAll();
+            List<RequestInfo> requestInfos = fetchDatabase.requestInfoDao().query(ids);
 
-            for (RealmRequestInfo result : results) {
-                list.add(result.toRequestData());
+            if (requestInfos == null) {
+             return list;
+            }
+
+            for (RequestInfo requestInfo : requestInfos) {
+                list.add(requestInfo.toRequestData());
             }
 
             return list;
@@ -165,51 +144,22 @@ final class DatabaseManager implements Disposable {
 
         @Override
         public void updateDownloadedBytes(final long id,final long downloadedBytes) {
-
-            RealmRequestInfo realmRequestInfo = realm.where(RealmRequestInfo.class)
-                    .equalTo(LookUpField.ID,id)
-                    .findFirst();
-
-            if(realmRequestInfo != null) {
-                realmRequestInfo.setDownloadedBytes(downloadedBytes);
-            }
+            fetchDatabase.requestInfoDao().updateDownloadedBytes(id,downloadedBytes);
         }
 
         @Override
         public void setDownloadedBytesAndTotalBytes(final long id, final long downloadedBytes, final long totalBytes){
-
-            RealmRequestInfo realmRequestInfo = realm.where(RealmRequestInfo.class)
-                    .equalTo(LookUpField.ID,id)
-                    .findFirst();
-
-            if(realmRequestInfo != null){
-                realmRequestInfo.setDownloadedBytes(downloadedBytes);
-                realmRequestInfo.setTotalBytes(totalBytes);
-            }
+            fetchDatabase.requestInfoDao().setDownloadedBytesAndTotalBytes(id,downloadedBytes,totalBytes);
         }
 
         @Override
         public void remove(final long id) {
-            RealmRequestInfo realmRequestInfo = realm.where(RealmRequestInfo.class)
-                    .equalTo(LookUpField.ID,id)
-                    .findFirst();
-
-            if(realmRequestInfo != null) {
-                realmRequestInfo.deleteFromRealm();
-            }
+            fetchDatabase.requestInfoDao().remove(id);
         }
 
         @Override
         public void setStatusAndError(final long id,final Status status, final int error) {
-
-            RealmRequestInfo realmRequestInfo = realm.where(RealmRequestInfo.class)
-                    .equalTo(LookUpField.ID,id)
-                    .findFirst();
-
-            if(realmRequestInfo != null) {
-                realmRequestInfo.setStatus(status.getValue());
-                realmRequestInfo.setError(error);
-            }
+            fetchDatabase.requestInfoDao().setStatusAndError(id,status.getValue(),error);
         }
     };
 

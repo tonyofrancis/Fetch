@@ -4,7 +4,6 @@ import android.app.Application;
 
 import com.tonyodev.fetch2.Fetch;
 
-import io.realm.Realm;
 
 /**
  * Created by tonyofrancis onQueued 1/30/17.
@@ -17,7 +16,6 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        Realm.init(this);
         fetch = Fetch.getDefaultInstance(this);
     }
 
