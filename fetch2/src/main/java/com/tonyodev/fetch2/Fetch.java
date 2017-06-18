@@ -136,8 +136,7 @@ public final class Fetch extends FetchCore {
         mainHandler.post(action);
     }
 
-    @NonNull
-    public Fetch download(@NonNull final Request request) {
+    public void download(@NonNull final Request request) {
         FetchHelper.throwIfDisposed(this);
         FetchHelper.throwIfRequestIsNull(request);
 
@@ -165,10 +164,8 @@ public final class Fetch extends FetchCore {
                 });
             }
         });
-        return this;
     }
 
-    @NonNull
     public void download(@NonNull final Request request, @NonNull final Callback callback) {
         FetchHelper.throwIfDisposed(this);
         FetchHelper.throwIfRequestIsNull(request);
@@ -216,7 +213,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void download(@NonNull final List<Request> requests) {
         FetchHelper.throwIfDisposed(this);
         FetchHelper.throwIfRequestListIsNull(requests);
@@ -254,7 +250,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void download(@NonNull final List<Request> requests, @NonNull final Callback callback) {
         FetchHelper.throwIfDisposed(this);
         FetchHelper.throwIfRequestListIsNull(requests);
@@ -317,7 +312,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void pause(final long id) {
         FetchHelper.throwIfDisposed(this);
 
@@ -328,8 +322,7 @@ public final class Fetch extends FetchCore {
             }
         });
     }
-
-    @NonNull
+    
     public void pauseAll() {
         FetchHelper.throwIfDisposed(this);
         actionProcessor.queueAction(new Runnable() {
@@ -340,7 +333,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void resume(final long id) {
         FetchHelper.throwIfDisposed(this);
 
@@ -352,7 +344,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void resumeAll() {
         FetchHelper.throwIfDisposed(this);
         actionProcessor.queueAction(new Runnable() {
@@ -363,7 +354,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void retry(final long id) {
         FetchHelper.throwIfDisposed(this);
 
@@ -375,7 +365,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void cancel(final long id) {
         FetchHelper.throwIfDisposed(this);
 
@@ -388,7 +377,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void cancelAll() {
         FetchHelper.throwIfDisposed(this);
         actionProcessor.queueAction(new Runnable() {
@@ -399,7 +387,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void remove(final long id) {
         FetchHelper.throwIfDisposed(this);
 
@@ -411,7 +398,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void removeAll() {
         FetchHelper.throwIfDisposed(this);
         actionProcessor.queueAction(new Runnable() {
@@ -422,7 +408,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public void delete(final long id) {
         FetchHelper.throwIfDisposed(this);
         actionProcessor.queueAction(new Runnable() {
@@ -456,7 +441,6 @@ public final class Fetch extends FetchCore {
 
     }
 
-    @NonNull
     public void deleteAll() {
         FetchHelper.throwIfDisposed(this);
         actionProcessor.queueAction(new Runnable() {
@@ -703,7 +687,6 @@ public final class Fetch extends FetchCore {
         });
     }
 
-    @NonNull
     public synchronized void addListener(@NonNull FetchListener fetchListener) {
         FetchHelper.throwIfDisposed(this);
 
@@ -728,7 +711,6 @@ public final class Fetch extends FetchCore {
         return false;
     }
 
-    @NonNull
     public synchronized void removeListener(@NonNull FetchListener fetchListener) {
         FetchHelper.throwIfDisposed(this);
 
@@ -749,7 +731,6 @@ public final class Fetch extends FetchCore {
         }
     }
 
-    @NonNull
     public synchronized void removeListeners() {
         FetchHelper.throwIfDisposed(this);
 
