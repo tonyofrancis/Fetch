@@ -19,6 +19,7 @@ dependencies:
         - chmod +x gradlew
         - echo y | android update sdk --no-ui --all --filter "platform-tools, tools"
         - echo y | android update sdk --no-ui --all --filter "android-25, build-tools-26.0.0"
+        - echo y | android update sdk --no-ui --all --filter "android-25, build-tools-25.0.3"
         - echo y | android update sdk --no-ui --all --filter "extra-android-m2repository"
         - echo y | android update sdk --no-ui --all --filter "extra-android-support"
     
