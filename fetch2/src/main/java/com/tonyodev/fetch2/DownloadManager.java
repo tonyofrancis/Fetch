@@ -54,6 +54,30 @@ final class DownloadManager implements Disposable {
         actionProcessor.processNext();
     }
 
+    void pause(final String groupId) {
+        if (isDisposed) {
+            return;
+        }
+
+        databaseManager.executeTransaction(new AbstractTransaction<List<RequestData>>() {
+            @Override
+            public void onExecute(Database database) {
+                List<RequestData> requestDataList = database.queryByGroupId(groupId);
+                setValue(requestDataList);
+            }
+
+            @Override
+            public void onPostExecute() {
+                if (getValue() != null) {
+                    for (RequestData requestData : getValue()) {
+                        interrupt(requestData.getId(), InterruptReason.PAUSED);
+                    }
+                }
+            }
+        });
+        actionProcessor.processNext();
+    }
+
     void pauseAll() {
         if (isDisposed) {
             return;
@@ -84,6 +108,40 @@ final class DownloadManager implements Disposable {
                         download(requestData);
                     }
                 }
+            }
+
+            @Override
+            public void onPostExecute() {
+
+            }
+        });
+
+        actionProcessor.processNext();
+    }
+
+    void resume(final String groupId) {
+        if (isDisposed) {
+            return;
+        }
+
+        databaseManager.executeTransaction(new Transaction() {
+            @Override
+            public void onExecute(Database database) {
+                List<RequestData> requestDataList = database.queryByGroupId(groupId);
+
+                for (RequestData requestData : requestDataList) {
+
+                    if(!downloadsMap.containsKey(requestData.getId())
+                            && DownloadHelper.canRetry(requestData.getStatus())){
+                        database.setStatusAndError(requestData.getId(), Status.DOWNLOADING, Error.NONE.getValue());
+                        download(requestData);
+                    }
+                }
+            }
+
+            @Override
+            public void onPreExecute() {
+
             }
 
             @Override
@@ -134,6 +192,40 @@ final class DownloadManager implements Disposable {
         resume(id);
     }
 
+    void retryGroup(final String groupId) {
+
+        if (isDisposed) {
+            return;
+        }
+
+        databaseManager.executeTransaction(new Transaction() {
+            @Override
+            public void onPreExecute() {
+
+            }
+
+            @Override
+            public void onExecute(Database database) {
+                List<RequestData> requestDataList = database.queryByGroupId(groupId);
+
+                for (RequestData requestData : requestDataList) {
+
+                    if(!downloadsMap.containsKey(requestData.getId())
+                            && DownloadHelper.canRetry(requestData.getStatus())){
+                        database.setStatusAndError(requestData.getId(), Status.DOWNLOADING, Error.NONE.getValue());
+                        download(requestData);
+                    }
+                }
+            }
+
+            @Override
+            public void onPostExecute() {
+
+            }
+        });
+        actionProcessor.processNext();
+    }
+
     void cancel(final long id) {
         if (isDisposed) {
             return;
@@ -167,6 +259,46 @@ final class DownloadManager implements Disposable {
 
             }
         });
+        actionProcessor.processNext();
+    }
+
+    void cancelGroup(final String groupId) {
+        if (isDisposed) {
+            return;
+        }
+
+        databaseManager.executeTransaction(new Transaction() {
+            @Override
+            public void onPreExecute() {
+            }
+
+            @Override
+            public void onExecute(Database database) {
+                List<RequestData> list = database.queryByGroupId(groupId);
+
+                for (RequestData requestData : list) {
+
+                    if(DownloadHelper.canCancel(requestData.getStatus())) {
+
+                        if(downloadsMap.containsKey(requestData.getId())){
+                            interrupt(requestData.getId(), InterruptReason.CANCELLED);
+
+                        }else {
+
+                            database.setStatusAndError(requestData.getId(), Status.CANCELLED, Error.NONE.getValue());
+                            downloadListener.onCancelled(requestData.getId(),
+                                    DownloadHelper.calculateProgress(requestData.getDownloadedBytes(), requestData.getTotalBytes())
+                                    , requestData.getDownloadedBytes(), requestData.getTotalBytes());
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onPostExecute() {
+            }
+        });
+
         actionProcessor.processNext();
     }
 
@@ -246,6 +378,43 @@ final class DownloadManager implements Disposable {
                 }
             });
         }
+
+        actionProcessor.processNext();
+    }
+
+    void removeGroup(final String groupId) {
+        if (isDisposed) {
+            return;
+        }
+
+        databaseManager.executeTransaction(new Transaction() {
+
+            @Override
+            public void onPreExecute() {
+            }
+
+            @Override
+            public void onExecute(Database database) {
+                List<RequestData> list = database.queryByGroupId(groupId);
+
+                for (RequestData requestData : list) {
+
+                    if(downloadsMap.containsKey(requestData.getId())){
+                        interrupt(requestData.getId(), InterruptReason.REMOVED);
+
+                    }else {
+                        database.remove(requestData.getId());
+                        downloadListener.onRemoved(requestData.getId(),
+                                DownloadHelper.calculateProgress(requestData.getDownloadedBytes(), requestData.getTotalBytes())
+                                , requestData.getDownloadedBytes(), requestData.getTotalBytes());
+                    }
+                }
+            }
+
+            @Override
+            public void onPostExecute() {
+            }
+        });
 
         actionProcessor.processNext();
     }

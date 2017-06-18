@@ -15,4 +15,14 @@ abstract class AbstractTransaction<T> implements Transaction {
     public void setValue(T value) {
         this.value = value;
     }
+
+    @Override
+    public void onPreExecute() {
+
+    }
+
+    @Override
+    public void onPostExecute() {
+
+    }
 }

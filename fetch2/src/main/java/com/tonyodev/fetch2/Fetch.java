@@ -322,6 +322,18 @@ public final class Fetch extends FetchCore {
             }
         });
     }
+
+    public void pause(final String groupId) {
+        FetchHelper.throwIfDisposed(this);
+        FetchHelper.throwIfGroupIDIsNull(groupId);
+
+        actionProcessor.queueAction(new Runnable() {
+            @Override
+            public void run() {
+                downloadManager.pause(groupId);
+            }
+        });
+    }
     
     public void pauseAll() {
         FetchHelper.throwIfDisposed(this);
@@ -340,6 +352,18 @@ public final class Fetch extends FetchCore {
             @Override
             public void run() {
                 downloadManager.resume(id);
+            }
+        });
+    }
+
+    public void resume(final String groupId) {
+        FetchHelper.throwIfDisposed(this);
+        FetchHelper.throwIfGroupIDIsNull(groupId);
+
+        actionProcessor.queueAction(new Runnable() {
+            @Override
+            public void run() {
+                downloadManager.resume(groupId);
             }
         });
     }
@@ -365,6 +389,18 @@ public final class Fetch extends FetchCore {
         });
     }
 
+    public void retry(final String groupId) {
+        FetchHelper.throwIfDisposed(this);
+        FetchHelper.throwIfGroupIDIsNull(groupId);
+
+        actionProcessor.queueAction(new Runnable() {
+            @Override
+            public void run() {
+                downloadManager.retryGroup(groupId);
+            }
+        });
+    }
+
     public void cancel(final long id) {
         FetchHelper.throwIfDisposed(this);
 
@@ -375,6 +411,19 @@ public final class Fetch extends FetchCore {
                 downloadManager.cancel(id);
             }
         });
+    }
+
+    public void cancel(final String groupId) {
+        FetchHelper.throwIfDisposed(this);
+        FetchHelper.throwIfGroupIDIsNull(groupId);
+
+        actionProcessor.queueAction(new Runnable() {
+            @Override
+            public void run() {
+                downloadManager.cancelGroup(groupId);
+            }
+        });
+
     }
 
     public void cancelAll() {
@@ -394,6 +443,18 @@ public final class Fetch extends FetchCore {
             @Override
             public void run() {
                 downloadManager.remove(id);
+            }
+        });
+    }
+
+    public void remove(final String groupId) {
+        FetchHelper.throwIfDisposed(this);
+        FetchHelper.throwIfGroupIDIsNull(groupId);
+
+        actionProcessor.queueAction(new Runnable() {
+            @Override
+            public void run() {
+                downloadManager.removeGroup(groupId);
             }
         });
     }
@@ -432,6 +493,44 @@ public final class Fetch extends FetchCore {
 
                             if (file.exists()) {
                                 file.delete();
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+    }
+
+    public void delete(final String groupId) {
+        FetchHelper.throwIfDisposed(this);
+        FetchHelper.throwIfGroupIDIsNull(groupId);
+
+        actionProcessor.queueAction(new Runnable() {
+            @Override
+            public void run() {
+                databaseManager.executeTransaction(new AbstractTransaction<List<RequestData>>() {
+                    @Override
+                    public void onPreExecute() {
+                    }
+
+                    @Override
+                    public void onExecute(Database database) {
+                        List<RequestData> requestList = database.queryByGroupId(groupId);
+                        setValue(requestList);
+                    }
+
+                    @Override
+                    public void onPostExecute() {
+                        downloadManager.removeGroup(groupId);
+
+                        if (getValue() != null) {
+                            for (RequestData requestData : getValue()) {
+                                File file = new File(requestData.getAbsoluteFilePath());
+
+                                if (file.exists()) {
+                                    file.delete();
+                                }
                             }
                         }
                     }
