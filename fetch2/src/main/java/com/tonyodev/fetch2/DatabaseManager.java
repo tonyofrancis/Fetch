@@ -58,12 +58,12 @@ final class DatabaseManager implements Disposable {
         }
 
         @Override
-        public boolean insert(final long id,final String url,final String absoluteFilePath) {
+        public boolean insert(final long id,final String url,final String absoluteFilePath,String groupId) {
             if(contains(id)) {
                 return false;
             }
 
-            RequestInfo requestInfo = RequestInfo.newInstance(id,url,absoluteFilePath);
+            RequestInfo requestInfo = RequestInfo.newInstance(id,url,absoluteFilePath,groupId);
             long inserted = fetchDatabase.requestInfoDao().insert(requestInfo);
 
             if (inserted == -1) {
@@ -133,6 +133,24 @@ final class DatabaseManager implements Disposable {
 
             if (requestInfos == null) {
              return list;
+            }
+
+            for (RequestInfo requestInfo : requestInfos) {
+                list.add(requestInfo.toRequestData());
+            }
+
+            return list;
+        }
+
+        @NonNull
+        @Override
+        public List<RequestData> queryByGroupId(String groupId) {
+            List<RequestData> list = new ArrayList<>();
+
+            List<RequestInfo> requestInfos = fetchDatabase.requestInfoDao().queryByGroupId(groupId);
+
+            if (requestInfos == null) {
+                return list;
             }
 
             for (RequestInfo requestInfo : requestInfos) {

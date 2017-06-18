@@ -27,6 +27,7 @@ public class RequestInfo {
     private long totalBytes;
     private int error;
     private Map<String,String> headers;
+    private String groupId;
 
     public RequestInfo() {
     }
@@ -34,7 +35,7 @@ public class RequestInfo {
     @Ignore
     public RequestInfo(long id, String url, String absoluteFilePath,
                        int status, long downloadedBytes, long totalBytes,
-                       int error, Map<String,String> headers) {
+                       int error, Map<String,String> headers,String groupId) {
         this.id = id;
         this.url = url;
         this.absoluteFilePath = absoluteFilePath;
@@ -43,6 +44,7 @@ public class RequestInfo {
         this.totalBytes = totalBytes;
         this.error = error;
         this.headers = headers;
+        this.groupId = groupId;
     }
 
     public long getId() {
@@ -109,14 +111,22 @@ public class RequestInfo {
         this.headers = headers;
     }
 
-    @Ignore
-    RequestData toRequestData() {
+    public String getGroupId() {
+        return groupId;
+    }
 
-        return new RequestData(url,absoluteFilePath,status,error,downloadedBytes,totalBytes,headers);
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
     }
 
     @Ignore
-    static RequestInfo newInstance(long id, String url, String absoluteFilePath) {
+    RequestData toRequestData() {
+
+        return new RequestData(url,absoluteFilePath,status,error,downloadedBytes,totalBytes,headers,groupId);
+    }
+
+    @Ignore
+    static RequestInfo newInstance(long id, String url, String absoluteFilePath,String groupId) {
 
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setId(id);
@@ -127,6 +137,7 @@ public class RequestInfo {
         requestInfo.setDownloadedBytes(0L);
         requestInfo.setError(Error.NONE.getValue());
         requestInfo.setHeaders(new ArrayMap<String, String>());
+        requestInfo.setGroupId(groupId);
 
         return requestInfo;
     }

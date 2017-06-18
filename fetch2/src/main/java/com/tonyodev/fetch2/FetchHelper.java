@@ -2,6 +2,7 @@ package com.tonyodev.fetch2;
 
 import android.content.Context;
 
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -26,6 +27,13 @@ final class FetchHelper {
 
         if(databaseName == null || databaseName.isEmpty()) {
             throw new IllegalArgumentException("DatabaseManager Name cannot be null or empty");
+        }
+    }
+
+    static void throwIfGroupIDIsNull(String groupId) {
+
+        if (groupId == null) {
+            throw new IllegalArgumentException("groupId cannot be null");
         }
     }
 

@@ -152,7 +152,7 @@ public final class Fetch extends FetchCore {
 
                     @Override
                     public void onExecute(Database database) {
-                        Boolean inserted = database.insert(request.getId(),request.getUrl(),request.getAbsoluteFilePath());
+                        Boolean inserted = database.insert(request.getId(),request.getUrl(),request.getAbsoluteFilePath(),request.getGroupId());
                         setValue(inserted);
                     }
 
@@ -186,7 +186,7 @@ public final class Fetch extends FetchCore {
                     @Override
                     public void onExecute(Database database) {
 
-                        boolean inserted = database.insert(request.getId(), request.getUrl(), request.getAbsoluteFilePath());
+                        boolean inserted = database.insert(request.getId(), request.getUrl(), request.getAbsoluteFilePath(),request.getGroupId());
                         setValue(inserted);
                     }
 
@@ -235,7 +235,7 @@ public final class Fetch extends FetchCore {
                         List<Long> ids = new ArrayList<>();
 
                         for (Request request : requests) {
-                            if(request != null && database.insert(request.getId(),request.getUrl(),request.getAbsoluteFilePath())) {
+                            if(request != null && database.insert(request.getId(),request.getUrl(),request.getAbsoluteFilePath(),request.getGroupId())) {
                                 ids.add(request.getId());
                             }
                         }
@@ -277,7 +277,7 @@ public final class Fetch extends FetchCore {
 
                         for (final Request request : requests) {
                             if(request != null) {
-                                boolean inserted = database.insert(request.getId(), request.getUrl(), request.getAbsoluteFilePath());
+                                boolean inserted = database.insert(request.getId(), request.getUrl(), request.getAbsoluteFilePath(),request.getGroupId());
                                 map.put(request, inserted);
                             }
                         }
@@ -617,6 +617,40 @@ public final class Fetch extends FetchCore {
                     @Override
                     public void onExecute(Database database) {
                         final List<RequestData> result = database.queryByStatus(status.getValue());
+                        postOnMain(new Runnable() {
+                            @Override
+                            public void run() {
+                                query.onResult(result);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onPostExecute() {
+
+                    }
+                });
+            }
+        });
+    }
+
+    public void queryByGroupId(@NonNull final String groupId,@NonNull final Query<List<RequestData>> query) {
+        FetchHelper.throwIfDisposed(this);
+        FetchHelper.throwIfQueryIsNull(query);
+        FetchHelper.throwIfGroupIDIsNull(groupId);
+
+        actionProcessor.queueAction(new Runnable() {
+            @Override
+            public void run() {
+                databaseManager.executeTransaction(new Transaction() {
+                    @Override
+                    public void onPreExecute() {
+
+                    }
+
+                    @Override
+                    public void onExecute(Database database) {
+                        final List<RequestData> result = database.queryByGroupId(groupId);
                         postOnMain(new Runnable() {
                             @Override
                             public void run() {

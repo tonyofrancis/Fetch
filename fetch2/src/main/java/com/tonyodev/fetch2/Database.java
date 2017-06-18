@@ -12,11 +12,12 @@ import java.util.List;
 interface Database {
 
     boolean contains(long id);
-    boolean insert(final long id, final String url, final String absoluteFilePath);
+    boolean insert(final long id, final String url, final String absoluteFilePath,String groupId);
     @NonNull List<RequestData> queryByStatus(int status);
     @Nullable RequestData query(final long id);
     @NonNull List<RequestData> query();
     @NonNull List<RequestData> query(long[] ids);
+    @NonNull List<RequestData> queryByGroupId(String groupId);
     void updateDownloadedBytes(final long id, final long downloadedBytes);
     void setDownloadedBytesAndTotalBytes(final long id, final long downloadedBytes, final long totalBytes);
     void remove(final long id);

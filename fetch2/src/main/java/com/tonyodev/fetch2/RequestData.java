@@ -16,9 +16,10 @@ public final class RequestData {
     private final int progress;
     private final Map<String,String> headers;
     private final Request request;
+    private final String groupId;
 
     public RequestData(@NonNull String url,@NonNull String absoluteFilePath, int status,
-                       int error, long downloadedBytes, long totalBytes,@NonNull Map<String,String> headers) {
+                       int error, long downloadedBytes, long totalBytes,@NonNull Map<String,String> headers,@NonNull String groupId) {
 
         if (url == null) {
             throw new IllegalArgumentException("Url cannot be null");
@@ -26,6 +27,10 @@ public final class RequestData {
 
         if(absoluteFilePath == null) {
             throw new IllegalArgumentException("AbsoluteFilePath cannot be null");
+        }
+
+        if (groupId == null) {
+            throw new IllegalArgumentException("groupId cannot be null");
         }
 
         if (headers == null) {
@@ -41,6 +46,7 @@ public final class RequestData {
         this.progress = DownloadHelper.calculateProgress(downloadedBytes,totalBytes);
         this.headers = headers;
         this.request = new Request(url,absoluteFilePath,headers);
+        this.groupId = groupId;
     }
 
     public long getId() {
@@ -87,6 +93,11 @@ public final class RequestData {
     @NonNull
     public Request getRequest() {
         return request;
+    }
+
+    @NonNull
+    public String getGroupId() {
+        return groupId;
     }
 
     @Override

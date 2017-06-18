@@ -13,6 +13,7 @@ public final class Request {
     private final String url;
     private final String absoluteFilePath;
     private final Map<String,String> headers;
+    private String groupId;
 
     public Request(@NonNull String url, @NonNull String absoluteFilePath) {
         this(url,absoluteFilePath,null);
@@ -34,6 +35,7 @@ public final class Request {
         this.url = url;
         this.absoluteFilePath = absoluteFilePath;
         this.headers = headers;
+        this.groupId = "";
         this.id = generateId();
     }
 
@@ -64,6 +66,19 @@ public final class Request {
         if(value == null) value = "";
 
         headers.put(key,value);
+    }
+
+    @NonNull
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(@NonNull String groupId) {
+
+        if (groupId == null) {
+            throw new IllegalArgumentException("groupId cannot be null");
+        }
+        this.groupId = groupId;
     }
 
     private long generateId() {
