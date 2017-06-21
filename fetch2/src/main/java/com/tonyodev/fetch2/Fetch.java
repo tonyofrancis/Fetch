@@ -751,6 +751,41 @@ public final class Fetch extends FetchCore {
         });
     }
 
+    public void queryGroupByStatusId(final @NonNull String groupId,final @NonNull Status status, final @NonNull Query<List<RequestData>> query) {
+        FetchHelper.throwIfDisposed(this);
+        FetchHelper.throwIfGroupIDIsNull(groupId);
+        FetchHelper.throwIfStatusIsNull(status);
+        FetchHelper.throwIfQueryIsNull(query);
+
+        actionProcessor.queueAction(new Runnable() {
+            @Override
+            public void run() {
+                databaseManager.executeTransaction(new Transaction() {
+                    @Override
+                    public void onPreExecute() {
+
+                    }
+
+                    @Override
+                    public void onExecute(Database database) {
+                        final List<RequestData> result = database.queryGroupByStatusId(groupId,status.getValue());
+                        postOnMain(new Runnable() {
+                            @Override
+                            public void run() {
+                                query.onResult(result);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onPostExecute() {
+
+                    }
+                });
+            }
+        });
+    }
+
     public void queryContains(final long id, @NonNull final Query<Boolean> query) {
         FetchHelper.throwIfDisposed(this);
         FetchHelper.throwIfQueryIsNull(query);

@@ -160,6 +160,24 @@ final class DatabaseManager implements Disposable {
             return list;
         }
 
+        @NonNull
+        @Override
+        public List<RequestData> queryGroupByStatusId(String groupId,int status) {
+            List<RequestData> list = new ArrayList<>();
+
+            List<RequestInfo> requestInfos = fetchDatabase.requestInfoDao().queryGroupByStatusId(groupId, status);
+
+            if (requestInfos == null) {
+                return list;
+            }
+
+            for (RequestInfo requestInfo : requestInfos) {
+                list.add(requestInfo.toRequestData());
+            }
+
+            return list;
+        }
+
         @Override
         public void updateDownloadedBytes(final long id,final long downloadedBytes) {
             fetchDatabase.requestInfoDao().updateDownloadedBytes(id,downloadedBytes);

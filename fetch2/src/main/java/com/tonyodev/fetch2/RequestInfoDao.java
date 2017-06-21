@@ -25,6 +25,9 @@ public interface RequestInfoDao {
  @Query("SELECT * FROM requestInfos WHERE groupId = :groupId")
  List<RequestInfo> queryByGroupId(String groupId);
 
+ @Query("SELECT * FROM requestInfos WHERE groupId = :groupId AND status = :status")
+ List<RequestInfo> queryGroupByStatusId(String groupId,int status);
+
  @Query("SELECT * FROM requestInfos WHERE id = :id LIMIT 1")
  RequestInfo query(long id);
 

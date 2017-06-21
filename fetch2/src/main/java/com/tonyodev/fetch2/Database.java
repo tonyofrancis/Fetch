@@ -18,6 +18,7 @@ interface Database {
     @NonNull List<RequestData> query();
     @NonNull List<RequestData> query(long[] ids);
     @NonNull List<RequestData> queryByGroupId(String groupId);
+    @NonNull List<RequestData> queryGroupByStatusId(String groupId,int status);
     void updateDownloadedBytes(final long id, final long downloadedBytes);
     void setDownloadedBytesAndTotalBytes(final long id, final long downloadedBytes, final long totalBytes);
     void remove(final long id);
