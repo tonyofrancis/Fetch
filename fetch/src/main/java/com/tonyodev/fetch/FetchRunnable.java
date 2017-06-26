@@ -49,6 +49,7 @@ final class FetchRunnable implements Runnable {
     private final String filePath;
     private final List<Header> headers;
     private final boolean loggingEnabled;
+    private final long onUpdateInterval;
 
     private final Context context;
     private final LocalBroadcastManager broadcastManager;
@@ -70,7 +71,8 @@ final class FetchRunnable implements Runnable {
     }
 
     FetchRunnable(@NonNull Context context, long id,@NonNull String url,@NonNull String filePath,
-                  @NonNull List<Header> headers,long fileSize,boolean loggingEnabled) {
+                  @NonNull List<Header> headers,long fileSize,boolean loggingEnabled,
+                  long onUpdateInterval) {
 
         if(context == null) {
             throw new NullPointerException("Context cannot be null");
@@ -98,6 +100,7 @@ final class FetchRunnable implements Runnable {
         this.broadcastManager = LocalBroadcastManager.getInstance(this.context);
         this.databaseHelper = DatabaseHelper.getInstance(this.context);
         this.loggingEnabled = loggingEnabled;
+        this.onUpdateInterval = onUpdateInterval;
         this.databaseHelper.setLoggingEnabled(loggingEnabled);
     }
 
@@ -259,7 +262,7 @@ final class FetchRunnable implements Runnable {
 
             stopTime = System.nanoTime();
 
-            if (Utils.hasTwoSecondsPassed(startTime,stopTime) && !isInterrupted()) {
+            if (Utils.hasIntervalElapsed(startTime,stopTime,onUpdateInterval) && !isInterrupted()) {
 
                 progress = Utils.getProgress(downloadedBytes,fileSize);
 
