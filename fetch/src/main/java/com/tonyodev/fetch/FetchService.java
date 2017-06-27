@@ -303,7 +303,7 @@ public final class FetchService extends Service implements FetchConst {
                             break;
                         }
                         case ACTION_ON_UPDATE_INTERVAL: {
-                            long interval = intent.getIntExtra(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_DOWNLOADS_LIMIT);
+                            long interval = intent.getLongExtra(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_ON_UPDATE_INTERVAL);
                             setOnUpdateInterval(interval);
                             break;
                         }
@@ -812,6 +812,7 @@ public final class FetchService extends Service implements FetchConst {
     }
 
     private long getOnUpdateInterval() {
-        return sharedPreferences.getLong(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_ON_UPDATE_INTERVAL);
+        onUpdateInterval = sharedPreferences.getLong(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_ON_UPDATE_INTERVAL);
+        return onUpdateInterval;
     }
 }
