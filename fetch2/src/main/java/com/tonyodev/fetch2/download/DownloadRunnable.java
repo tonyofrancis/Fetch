@@ -31,7 +31,7 @@ import okhttp3.ResponseBody;
  * Created by tonyofrancis on 6/24/17.
  */
 
-class DownloadRunnable implements Runnable, Closeable {
+public final class DownloadRunnable implements Runnable, Closeable {
 
     private final long requestId;
     private final OkHttpClient okHttpClient;
@@ -51,7 +51,7 @@ class DownloadRunnable implements Runnable, Closeable {
     private int progress = 0;
     private volatile boolean isInterrupted;
 
-    DownloadRunnable(long requestId, OkHttpClient okHttpClient, DatabaseManager databaseManager, DownloadListener downloadListener,Context context) {
+    public DownloadRunnable(long requestId, OkHttpClient okHttpClient, DatabaseManager databaseManager, DownloadListener downloadListener,Context context) {
         this.requestId = requestId;
         this.isInterrupted = false;
         this.okHttpClient = okHttpClient;
@@ -60,14 +60,14 @@ class DownloadRunnable implements Runnable, Closeable {
         this.context = context;
     }
 
-    synchronized void interrupt() {
+    public synchronized void interrupt() {
         if(isInterrupted) {
             return;
         }
         isInterrupted = true;
     }
 
-    boolean isInterrupted() {
+    public boolean isInterrupted() {
         return isInterrupted;
     }
 
