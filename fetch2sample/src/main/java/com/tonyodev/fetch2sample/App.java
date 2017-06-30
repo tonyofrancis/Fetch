@@ -4,6 +4,8 @@ import android.app.Application;
 
 import com.tonyodev.fetch2.Fetch;
 
+import okhttp3.OkHttpClient;
+
 
 /**
  * Created by tonyofrancis onQueued 1/30/17.
@@ -11,15 +13,9 @@ import com.tonyodev.fetch2.Fetch;
 
 public class App extends Application {
 
-    private Fetch fetch;
-
     @Override
     public void onCreate() {
         super.onCreate();
-        fetch = Fetch.getDefaultInstance(this);
-    }
-
-    public Fetch getFetch() {
-        return fetch;
+        Fetch.init(this,new OkHttpClient());
     }
 }

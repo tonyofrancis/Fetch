@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2sample;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -9,11 +10,11 @@ import android.support.v7.widget.RecyclerView;
 import com.tonyodev.fetch2.Callback;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Query;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.RequestData;
 import com.tonyodev.fetch2.Status;
+import com.tonyodev.fetch2.listener.FetchListener;
 
 import java.io.File;
 import java.util.List;
@@ -30,9 +31,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         setContentView(R.layout.activity_download_list);
         setViews();
 
-        fetch = new Fetch.Builder(this)
-                .name("DownloadListActivity")
-                .build();
+        fetch = Fetch.getInstance();
 
 
         fetch.queryAll(new Query<List<RequestData>>() {
@@ -75,17 +74,11 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         fetch.removeListener(this);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        fetch.dispose();
-    }
-
     private void enqueueDownloads() {
 
         List<Request> requests = Data.getFetchRequests();
 
-        fetch.download(requests, new Callback() {
+        fetch.enqueue(requests, new Callback() {
             @Override
             public void onQueued(Request request) {
 
@@ -155,7 +148,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     }
 
     @Override
-    public void onError(long id, Error reason, int progress, long downloadedBytes, long totalBytes) {
+    public void onError(long id, @NonNull Error reason, int progress, long downloadedBytes, long totalBytes) {
         fileAdapter.onUpdate(id, Status.ERROR,progress,downloadedBytes,totalBytes,reason);
     }
 
@@ -165,7 +158,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     }
 
     @Override
-    public void onPause(long id, int progress, long downloadedBytes, long totalBytes) {
+    public void onPaused(long id, int progress, long downloadedBytes, long totalBytes) {
         fileAdapter.onUpdate(id, Status.PAUSED,progress,downloadedBytes,totalBytes, Error.NONE);
     }
 

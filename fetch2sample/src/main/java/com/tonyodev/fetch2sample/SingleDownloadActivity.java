@@ -8,14 +8,14 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Callback;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Query;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.RequestData;
+import com.tonyodev.fetch2.listener.AbstractFetchListener;
+import com.tonyodev.fetch2.listener.FetchListener;
 
 import java.io.File;
 
@@ -31,13 +31,13 @@ public class SingleDownloadActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setUpViews();
 
-        fetch = Fetch.getDefaultInstance(this);
+        fetch = Fetch.getInstance();
         request = createRequest();
         deleteFileIfExist();
 
         fetch.addListener(listener);
         fetch.remove(request.getId());
-        fetch.download(request,new Callback() {
+        fetch.enqueue(request,new Callback() {
             @Override
             public void onQueued(Request request) {
                 Log.d("onQueued",request.toString());
@@ -91,12 +91,6 @@ public class SingleDownloadActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         fetch.removeListener(listener);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        fetch.dispose();
     }
 
     private final FetchListener listener = new AbstractFetchListener() {

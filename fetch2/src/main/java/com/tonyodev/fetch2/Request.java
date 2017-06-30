@@ -4,6 +4,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.ArrayMap;
 
+import com.tonyodev.fetch2.util.Assert;
+
 import java.util.Map;
 
 
@@ -20,22 +22,18 @@ public final class Request {
     }
 
     public Request(@NonNull String url, @NonNull String absoluteFilePath,@Nullable Map<String,String> headers) {
-        if (url == null || url.isEmpty()) {
-            throw new IllegalArgumentException("Url cannot be null or empty");
-        }
-
-        if(absoluteFilePath == null || absoluteFilePath.isEmpty()) {
-            throw new IllegalArgumentException("AbsoluteFilePath cannot be null or empty");
-        }
+        Assert.urlIsNotNullOrEmpty(url);
+        Assert.validUriSchema(url);
+        Assert.filePathIsNotNull(absoluteFilePath);
 
         if(headers == null) {
             headers = new ArrayMap<>();
         }
 
+        this.groupId = "";
         this.url = url;
         this.absoluteFilePath = absoluteFilePath;
         this.headers = headers;
-        this.groupId = "";
         this.id = generateId();
     }
 
@@ -59,11 +57,11 @@ public final class Request {
     }
 
     public void putHeader(@NonNull String key, @Nullable String value) {
-        if (key == null) {
-            throw new IllegalArgumentException("Key cannot be null");
-        }
+        Assert.keyIsNotNullOrEmpty(key);
 
-        if(value == null) value = "";
+        if(value == null) {
+            value = "";
+        }
 
         headers.put(key,value);
     }
@@ -74,10 +72,7 @@ public final class Request {
     }
 
     public void setGroupId(@NonNull String groupId) {
-
-        if (groupId == null) {
-            throw new IllegalArgumentException("groupId cannot be null");
-        }
+        Assert.groupIDIsNotNull(groupId);
         this.groupId = groupId;
     }
 

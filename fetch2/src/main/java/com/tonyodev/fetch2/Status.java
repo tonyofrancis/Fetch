@@ -3,7 +3,14 @@ package com.tonyodev.fetch2;
 import android.support.annotation.NonNull;
 
 public enum Status {
-    ERROR(-1), CANCELLED(0), QUEUED(1), DOWNLOADING(2), PAUSED(3), COMPLETED(4), REMOVED(5), INVALID(6);
+    ERROR(-1),
+    CANCELLED(0),
+    QUEUED(1),
+    DOWNLOADING(2),
+    PAUSED(3),
+    COMPLETED(4),
+    REMOVED(5),
+    INVALID(6);
 
     private int value;
 

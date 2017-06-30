@@ -14,15 +14,14 @@ import android.widget.Toast;
 import com.tonyodev.fetch2.Callback;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Query;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.RequestData;
+import com.tonyodev.fetch2.listener.FetchListener;
 
 import java.io.File;
 import java.util.List;
 
-import okhttp3.OkHttpClient;
 
 public class GameFilesActivity extends AppCompatActivity {
 
@@ -43,10 +42,7 @@ public class GameFilesActivity extends AppCompatActivity {
         setViews();
 
         requestList = Data.getGameUpdates();
-        fetch = new Fetch.Builder(this)
-                .name("GameFiles")
-                .client(new OkHttpClient())
-                .build();
+        fetch = Fetch.getInstance();
 
         fetch.addListener(fetchListener);
 
@@ -97,13 +93,6 @@ public class GameFilesActivity extends AppCompatActivity {
         });
     }
 
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        fetch.dispose();
-    }
-
     private void updateUI() {
 
         int totalFiles = requestList.size();
@@ -141,7 +130,7 @@ public class GameFilesActivity extends AppCompatActivity {
 
     private void enqueueFiles() {
 
-        fetch.download(requestList, new Callback() {
+        fetch.enqueue(requestList, new Callback() {
             @Override
             public void onQueued(Request request) {
                 Log.d("onQueued",request.toString());
@@ -182,7 +171,7 @@ public class GameFilesActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onPause(long id, int progress, long downloadedBytes, long totalBytes) {
+        public void onPaused(long id, int progress, long downloadedBytes, long totalBytes) {
 
         }
 

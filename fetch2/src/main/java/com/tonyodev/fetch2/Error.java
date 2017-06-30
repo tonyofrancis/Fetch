@@ -3,7 +3,6 @@ package com.tonyodev.fetch2;
 import android.support.annotation.NonNull;
 
 public enum Error {
-
     UNKNOWN(-1),
     NONE(0),
     REQUEST_ALREADY_EXIST(1),
@@ -20,7 +19,8 @@ public enum Error {
     NO_NETWORK_CONNECTION (12),
     BAD_URL (13),
     BAD_FILE_PATH (14),
-    INVALID_SERVER_RESPONSE(15);
+    INVALID_SERVER_RESPONSE(15),
+    REQUEST_NOT_FOUND_IN_DATABASE(16);
 
     private int value;
 
@@ -52,11 +52,11 @@ public enum Error {
             case 13:return BAD_URL;
             case 14:return BAD_FILE_PATH;
             case 15:return INVALID_SERVER_RESPONSE;
+            case 16:return REQUEST_NOT_FOUND_IN_DATABASE;
             default:return UNKNOWN;
         }
     }
-
-
+    
     @Override
     public String toString() {
         return "Error Code: " + value;

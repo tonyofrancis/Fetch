@@ -1,11 +1,13 @@
-package com.tonyodev.fetch2;
+package com.tonyodev.fetch2.util;
 
 
-final class ErrorUtils {
+import com.tonyodev.fetch2.Error;
+
+public final class ErrorUtils {
 
     private ErrorUtils(){}
 
-    static Error getCode(String message) {
+    public static Error getCode(String message) {
         if (message == null) {
             return Error.UNKNOWN;
         }else if(message.equalsIgnoreCase("FNC") || message.equalsIgnoreCase("open failed: ENOENT (No such file or directory)")) {
@@ -34,6 +36,9 @@ final class ErrorUtils {
         }
         else if(message.equalsIgnoreCase("invalid server response")){
             return Error.INVALID_SERVER_RESPONSE;
+        }
+        else if (message.equalsIgnoreCase("Request not found in the database")) {
+            return Error.REQUEST_NOT_FOUND_IN_DATABASE;
         }
         else {
             return Error.UNKNOWN;

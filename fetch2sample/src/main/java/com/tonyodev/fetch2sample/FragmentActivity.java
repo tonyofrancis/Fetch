@@ -9,8 +9,8 @@ import android.view.View;
 
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2.listener.FetchListener;
 
 /**
  * Created by tonyofrancis on 1/31/17.
@@ -31,7 +31,7 @@ public class FragmentActivity extends AppCompatActivity {
         setContentView(R.layout.activity_fragment_progress);
         rootView = findViewById(R.id.rootView);
 
-        fetch = Fetch.getDefaultInstance(this);
+        fetch = Fetch.getInstance();
 
         FragmentManager fragmentManager = getSupportFragmentManager();
 
@@ -66,7 +66,7 @@ public class FragmentActivity extends AppCompatActivity {
         progressFragment1.setRequest(request);
         progressFragment2.setRequest(request);
 
-        fetch.download(request);
+        fetch.enqueue(request);
     }
 
     @Override
@@ -83,12 +83,6 @@ public class FragmentActivity extends AppCompatActivity {
         fetch.removeListener(progressFragment1);
         fetch.removeListener(progressFragment2);
         fetch.removeListener(fetchListener);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        fetch.dispose();
     }
 
     private FetchListener fetchListener = new FetchListener() {
@@ -123,7 +117,7 @@ public class FragmentActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onPause(long id, int progress, long downloadedBytes, long totalBytes) {
+        public void onPaused(long id, int progress, long downloadedBytes, long totalBytes) {
 
         }
 

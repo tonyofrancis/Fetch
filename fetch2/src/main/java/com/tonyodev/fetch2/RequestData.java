@@ -1,7 +1,8 @@
 package com.tonyodev.fetch2;
 
 import android.support.annotation.NonNull;
-import android.support.v4.util.ArrayMap;
+
+import com.tonyodev.fetch2.util.Utils;
 
 import java.util.Map;
 
@@ -18,24 +19,8 @@ public final class RequestData {
     private final Request request;
     private final String groupId;
 
-    public RequestData(@NonNull String url,@NonNull String absoluteFilePath, int status,
-                       int error, long downloadedBytes, long totalBytes,@NonNull Map<String,String> headers,@NonNull String groupId) {
-
-        if (url == null) {
-            throw new IllegalArgumentException("Url cannot be null");
-        }
-
-        if(absoluteFilePath == null) {
-            throw new IllegalArgumentException("AbsoluteFilePath cannot be null");
-        }
-
-        if (groupId == null) {
-            throw new IllegalArgumentException("groupId cannot be null");
-        }
-
-        if (headers == null) {
-            headers = new ArrayMap<>();
-        }
+    public RequestData(String url,String absoluteFilePath, int status, int error,
+                long downloadedBytes, long totalBytes,Map<String,String> headers,String groupId) {
 
         this.url = url;
         this.absoluteFilePath = absoluteFilePath;
@@ -43,7 +28,7 @@ public final class RequestData {
         this.totalBytes = totalBytes;
         this.error = Error.valueOf(error);
         this.status = Status.valueOf(status);
-        this.progress = DownloadHelper.calculateProgress(downloadedBytes,totalBytes);
+        this.progress = Utils.calculateProgress(downloadedBytes,totalBytes);
         this.headers = headers;
         this.request = new Request(url,absoluteFilePath,headers);
         this.groupId = groupId;

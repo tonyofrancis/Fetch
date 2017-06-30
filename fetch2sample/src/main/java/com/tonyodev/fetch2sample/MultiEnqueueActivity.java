@@ -6,12 +6,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Callback;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2.listener.AbstractFetchListener;
+import com.tonyodev.fetch2.listener.FetchListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ public class MultiEnqueueActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_multi_enqueue);
 
-        Fetch fetch = ((App)getApplication()).getFetch();
+        Fetch fetch = Fetch.getInstance();
 
         List<Request> requests = new ArrayList<>();
 
@@ -53,7 +53,7 @@ public class MultiEnqueueActivity extends AppCompatActivity {
 
 
 
-        fetch.download(requests, new Callback() {
+        fetch.enqueue(requests, new Callback() {
             @Override
             public void onQueued(Request request) {
                 Log.d("onQueued",request.toString());
@@ -72,13 +72,13 @@ public class MultiEnqueueActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        ((App)getApplication()).getFetch().addListener(listener);
+        Fetch.getInstance().addListener(listener);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        ((App)getApplication()).getFetch().removeListener(listener);
+        Fetch.getInstance().removeListener(listener);
     }
 
     private final FetchListener listener = new AbstractFetchListener() {

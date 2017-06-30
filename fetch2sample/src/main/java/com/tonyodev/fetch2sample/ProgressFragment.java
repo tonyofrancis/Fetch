@@ -11,8 +11,8 @@ import android.widget.TextView;
 
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2.listener.FetchListener;
 
 /**
  * Created by tonyofrancis on 1/31/17.
@@ -90,7 +90,7 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     @Override
-    public void onPause(long id, int progress, long downloadedBytes, long totalBytes) {
+    public void onPaused(long id, int progress, long downloadedBytes, long totalBytes) {
 
     }
 

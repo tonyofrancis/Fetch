@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2;
+package com.tonyodev.fetch2.database;
 
 import android.arch.persistence.room.TypeConverter;
 import android.support.v4.util.ArrayMap;
@@ -6,16 +6,14 @@ import android.support.v4.util.ArrayMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Created by tonyofrancis on 6/14/17.
  */
 
-public class DatabaseConverters {
+public class TypeConverters {
 
     @TypeConverter
     public Map<String,String> headerStringToList(String headers) {
@@ -33,6 +31,7 @@ public class DatabaseConverters {
             }
 
         }catch (JSONException e) {
+            e.printStackTrace();
         }
 
         return headerMap;
