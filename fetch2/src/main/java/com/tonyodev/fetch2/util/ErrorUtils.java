@@ -18,7 +18,8 @@ public final class ErrorUtils {
             return Error.DOWNLOAD_INTERRUPTED;
         } else if(message.equalsIgnoreCase("recvfrom failed: ETIMEDOUT (Connection timed out)") || message.equalsIgnoreCase("timeout")) {
             return Error.CONNECTION_TIMED_OUT;
-        }else if(message.equalsIgnoreCase("java.io.IOException: 404") || message.contains("No address associated getDefaultInstance hostname")) {
+        }else if(message.equalsIgnoreCase("java.io.IOException: 404") || message.contains("No address associated getDefaultInstance hostname") ||
+                message.contains("Failed to connect to")) {
             return Error.HTTP_NOT_FOUND;
         }else if(message.contains("Unable to resolve host")){
             return Error.UNKNOWN_HOST;

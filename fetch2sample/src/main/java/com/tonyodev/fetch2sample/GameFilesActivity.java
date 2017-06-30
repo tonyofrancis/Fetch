@@ -2,7 +2,6 @@ package com.tonyodev.fetch2sample;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -14,12 +13,9 @@ import android.widget.Toast;
 import com.tonyodev.fetch2.Callback;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.Query;
 import com.tonyodev.fetch2.Request;
-import com.tonyodev.fetch2.RequestData;
 import com.tonyodev.fetch2.listener.FetchListener;
 
-import java.io.File;
 import java.util.List;
 
 
@@ -77,20 +73,7 @@ public class GameFilesActivity extends AppCompatActivity {
     }
 
     private void deleteFiles() {
-        fetch.queryAll(new Query<List<RequestData>>() {
-            @Override
-            public void onResult(@Nullable List<RequestData> result) {
-                if (result != null) {
-                    for (RequestData requestData : result) {
-                        File file = new File(requestData.getAbsoluteFilePath());
-                        if(file.exists()){
-                            file.delete();
-                        }
-                    }
-                    fetch.removeAll();
-                }
-            }
-        });
+       fetch.deleteGroup("gameFiles");
     }
 
     private void updateUI() {

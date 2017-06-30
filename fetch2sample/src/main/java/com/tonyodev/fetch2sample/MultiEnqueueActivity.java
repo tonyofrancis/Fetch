@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2sample;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -27,13 +28,12 @@ public class MultiEnqueueActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_multi_enqueue);
 
-        Fetch fetch = Fetch.getInstance();
+        final Fetch fetch = Fetch.getInstance();
 
         List<Request> requests = new ArrayList<>();
 
         final String url = "https://www.notdownloadable.com/test.txt";
-
-        final int size = 15;
+        final int size = 50;
 
         for(int x = 0; x < size; x++) {
 
@@ -44,28 +44,24 @@ public class MultiEnqueueActivity extends AppCompatActivity {
                     .concat(".txt");
 
             Request request = new Request(url,filePath);
+            request.setGroupId("multiEnqueue");
             requests.add(request);
         }
 
-        for (Request request : requests) {
-            fetch.remove(request.getId());
-        }
-
-
-
+        fetch.deleteGroup("multiEnqueue");
         fetch.enqueue(requests, new Callback() {
             @Override
-            public void onQueued(Request request) {
+            public void onQueued(@NonNull Request request) {
                 Log.d("onQueued",request.toString());
             }
 
             @Override
-            public void onFailure(Request request, Error reason) {
+            public void onFailure(@NonNull Request request, @NonNull Error reason) {
                 Log.d("onFailure",reason.toString());
             }
         });
 
-        Toast.makeText(this,"Enqueued " + size + " requests. Check Logcat for" +
+        Toast.makeText(MultiEnqueueActivity.this,"Enqueued " + size + " requests. Check Logcat for" +
                 "progress status",Toast.LENGTH_LONG).show();
     }
 
@@ -88,7 +84,7 @@ public class MultiEnqueueActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onError(long id, Error reason, int progress, long downloadedBytes, long totalBytes) {
+        public void onError(long id, @NonNull Error reason, int progress, long downloadedBytes, long totalBytes) {
             Log.d("MultiEnqueueActivity","Download id:" + id + " - error:" + reason.toString());
         }
     };
