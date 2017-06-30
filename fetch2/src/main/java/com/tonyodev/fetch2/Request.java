@@ -11,6 +11,8 @@ import java.util.Map;
 
 public final class Request {
 
+    public static final String DEFAULT_GROUP_ID = "fetch_group";
+
     private final long id;
     private final String url;
     private final String absoluteFilePath;
@@ -30,7 +32,7 @@ public final class Request {
             headers = new ArrayMap<>();
         }
 
-        this.groupId = "";
+        this.groupId = DEFAULT_GROUP_ID;
         this.url = url;
         this.absoluteFilePath = absoluteFilePath;
         this.headers = headers;
