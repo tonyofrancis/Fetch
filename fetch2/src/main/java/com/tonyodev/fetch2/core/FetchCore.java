@@ -2,8 +2,6 @@ package com.tonyodev.fetch2.core;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteConstraintException;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 
 import com.tonyodev.fetch2.Callback;
@@ -37,14 +35,12 @@ import static com.tonyodev.fetch2.Status.QUEUED;
 
 public final class FetchCore implements Fetchable {
 
-    private final Handler mainHandler;
     private final DownloadManager downloadManager;
     private final DatabaseManager databaseManager;
     private final DownloadListener downloadListener;
     private final ReadDatabase readDatabase;
 
     public FetchCore(Context context, OkHttpClient client, DownloadListener downloadListener) {
-        this.mainHandler = new Handler(Looper.getMainLooper());
         this.databaseManager = new DatabaseManager(context);
         this.downloadManager = new DownloadManager(context,client,downloadListener,databaseManager);
         this.downloadListener = downloadListener;
@@ -57,7 +53,7 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void enqueue(final Request request, final Callback callback) {
+    public void enqueue(Request request, Callback callback) {
         Error error = Error.NONE;
         try {
             insertAndQueue(request,callback);
@@ -68,17 +64,11 @@ public final class FetchCore implements Fetchable {
             error = Error.REQUEST_ALREADY_EXIST;
         }
         if(error.getValue() != Error.NONE.getValue()) {
-            final Error reason = error;
-            postOnMain(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onFailure(request,reason);
-                }
-            });
+            callback.onFailure(request,error);
         }
     }
 
-    private void insertAndQueue(final Request request, final Callback callback) {
+    private void insertAndQueue(Request request, Callback callback) {
         long id = request.getId();
         final DatabaseRow row = DatabaseRow.newInstance(request.getId(),request.getUrl(),request.getAbsoluteFilePath(),request.getGroupId());
         databaseManager.executeTransaction(new Transaction() {
@@ -89,12 +79,7 @@ public final class FetchCore implements Fetchable {
         });
 
         if (callback != null) {
-            postOnMain(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onQueued(request);
-                }
-            });
+            callback.onQueued(request);
         }
         downloadManager.resume(id);
     }
@@ -105,7 +90,7 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void enqueue(final List<Request> requests, final Callback callback) {
+    public void enqueue(List<Request> requests, Callback callback) {
         Error error = Error.NONE;
         try {
             insertAndQueue(requests, callback);
@@ -116,19 +101,13 @@ public final class FetchCore implements Fetchable {
             error = Error.REQUEST_ALREADY_EXIST;
         }
         if(error.getValue() != Error.NONE.getValue()) {
-            final Error reason = error;
-            postOnMain(new Runnable() {
-                @Override
-                public void run() {
-                    for (final Request request : requests) {
-                        callback.onFailure(request,reason);
-                    }
-                }
-            });
+            for (final Request request : requests) {
+                callback.onFailure(request, error);
+            }
         }
     }
 
-    private void insertAndQueue(final List<Request> requests, final Callback callback) {
+    private void insertAndQueue(List<Request> requests, Callback callback) {
         final List<DatabaseRow> rows = new ArrayList<>(requests.size());
 
         for (Request request : requests) {
@@ -144,14 +123,9 @@ public final class FetchCore implements Fetchable {
         });
 
         if (callback != null) {
-            postOnMain(new Runnable() {
-                @Override
-                public void run() {
-                    for (Request request : requests) {
-                        callback.onQueued(request);
-                    }
-                }
-            });
+            for (Request request : requests) {
+                callback.onQueued(request);
+            }
         }
 
         for (DatabaseRow row : rows) {
@@ -366,80 +340,45 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void query(long id, final Query<RequestData> query) {
+    public void query(long id, Query<RequestData> query) {
         final RequestData requestData = readDatabase.query(id);
-        postOnMain(new Runnable() {
-            @Override
-            public void run() {
-                query.onResult(requestData);
-            }
-        });
+        query.onResult(requestData);
     }
 
     @Override
-    public void query(final List<Long> ids, final Query<List<RequestData>> query) {
+    public void query(List<Long> ids, Query<List<RequestData>> query) {
         final List<RequestData> results = readDatabase.query(Utils.createIdArray(ids));
-        postOnMain(new Runnable() {
-            @Override
-            public void run() {
-                query.onResult(results);
-            }
-        });
+        query.onResult(results);
     }
 
     @Override
-    public void queryAll(final Query<List<RequestData>> query) {
+    public void queryAll(Query<List<RequestData>> query) {
         final List<RequestData> result = readDatabase.query();
-        postOnMain(new Runnable() {
-            @Override
-            public void run() {
-                query.onResult(result);
-            }
-        });
+        query.onResult(result);
     }
 
     @Override
-    public void queryByStatus(final Status status,final Query<List<RequestData>> query) {
+    public void queryByStatus(Status status, Query<List<RequestData>> query) {
         final List<RequestData> result = readDatabase.queryByStatus(status.getValue());
-        postOnMain(new Runnable() {
-            @Override
-            public void run() {
-                query.onResult(result);
-            }
-        });
+        query.onResult(result);
     }
 
     @Override
-    public void queryByGroupId(final String groupId, final Query<List<RequestData>> query) {
+    public void queryByGroupId(String groupId, Query<List<RequestData>> query) {
         final List<RequestData> result = readDatabase.queryByGroupId(groupId);
-        postOnMain(new Runnable() {
-            @Override
-            public void run() {
-                query.onResult(result);
-            }
-        });
+        query.onResult(result);
     }
 
     @Override
-    public void queryGroupByStatusId(final String groupId, final Status status, final Query<List<RequestData>> query) {
+    public void queryGroupByStatusId(String groupId, Status status, Query<List<RequestData>> query) {
         final List<RequestData> result = readDatabase.queryGroupByStatusId(groupId,status.getValue());
-        postOnMain(new Runnable() {
-            @Override
-            public void run() {
-                query.onResult(result);
-            }
-        });
+        query.onResult(result);
     }
 
     @Override
-    public void contains(final long id, @NonNull final Query<Boolean> query) {
+    public void contains(long id, @NonNull Query<Boolean> query) {
         final boolean found = readDatabase.contains(id);
-        postOnMain(new Runnable() {
-            @Override
-            public void run() {
-                query.onResult(found);
-            }
-        });
+        query.onResult(found);
     }
 
     private boolean canPause(Status currentStatus) {
@@ -478,9 +417,5 @@ public final class FetchCore implements Fetchable {
         if (file1.exists()) {
             file1.delete();
         }
-    }
-
-    private void postOnMain(Runnable runnable) {
-        mainHandler.post(runnable);
     }
 }
