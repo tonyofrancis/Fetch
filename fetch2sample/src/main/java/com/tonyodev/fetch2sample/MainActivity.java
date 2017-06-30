@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Fetch.getInstance().deleteAll();
+                Toast.makeText(MainActivity.this,R.string.downloaded_files_deleted,Toast.LENGTH_SHORT).show();
             }
         });
     }

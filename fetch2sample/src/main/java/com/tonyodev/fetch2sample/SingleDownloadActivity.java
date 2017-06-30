@@ -2,6 +2,7 @@ package com.tonyodev.fetch2sample;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -17,8 +18,6 @@ import com.tonyodev.fetch2.RequestData;
 import com.tonyodev.fetch2.listener.AbstractFetchListener;
 import com.tonyodev.fetch2.listener.FetchListener;
 
-import java.io.File;
-
 public class SingleDownloadActivity extends AppCompatActivity {
     private TextView progressTextView;
     private TextView titleTextView;
@@ -33,20 +32,27 @@ public class SingleDownloadActivity extends AppCompatActivity {
 
         fetch = Fetch.getInstance();
         request = createRequest();
-        deleteFileIfExist();
 
         fetch.addListener(listener);
-        fetch.remove(request.getId());
-        fetch.enqueue(request,new Callback() {
+        fetch.contains(request.getId(), new Query<Boolean>() {
             @Override
-            public void onQueued(Request request) {
-                Log.d("onQueued",request.toString());
-                setTitleView(request.getAbsoluteFilePath());
-                setDownloadProgressView(0);
-            }
-            @Override
-            public void onFailure(Request request, Error reason) {
-                progressTextView.setText("Enqueue Request: " + request.toString() + "\nFailed: Error:" + reason);
+            public void onResult(@Nullable Boolean contains) {
+                if (contains != null) {
+                    if (!contains) {
+                        fetch.enqueue(request,new Callback() {
+                            @Override
+                            public void onQueued(@NonNull Request request) {
+                                Log.d("onQueued",request.toString());
+                                setTitleView(request.getAbsoluteFilePath());
+                                setDownloadProgressView(0);
+                            }
+                            @Override
+                            public void onFailure(@NonNull Request request, @NonNull Error reason) {
+                                progressTextView.setText("Enqueue Request: " + request.toString() + "\nFailed: Error:" + reason);
+                            }
+                        });
+                    }
+                }
             }
         });
     }
@@ -55,14 +61,6 @@ public class SingleDownloadActivity extends AppCompatActivity {
         setContentView(R.layout.activity_single_download);
         progressTextView = (TextView) findViewById(R.id.progressTextView);
         titleTextView = (TextView) findViewById(R.id.titleTextView);
-    }
-
-    private void deleteFileIfExist() {
-        File file = new File(request.getAbsoluteFilePath());
-
-        if(file.exists()) {
-            file.delete();
-        }
     }
 
     private void setTitleView(String fileName) {
@@ -103,7 +101,7 @@ public class SingleDownloadActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onError(long id, Error reason, int progress, long downloadedBytes, long totalBytes) {
+        public void onError(long id, @NonNull Error reason, int progress, long downloadedBytes, long totalBytes) {
             if(request.getId() == id) {
                 progressTextView.setText("Enqueue Request: " + request.toString() + "\nFailed: Error:" + reason);
             }
@@ -118,7 +116,7 @@ public class SingleDownloadActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onAttach(Fetch fetch) {
+        public void onAttach(@NonNull Fetch fetch) {
             fetch.query(request.getId(), new Query<RequestData>() {
                 @Override
                 public void onResult(@Nullable RequestData result) {
