@@ -8,4 +8,5 @@ public interface RunnableProcessor {
     void queue(Runnable runnable);
     void next();
     void clear();
+    boolean isEmpty();
 }

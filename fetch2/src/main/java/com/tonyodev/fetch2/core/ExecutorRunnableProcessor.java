@@ -31,7 +31,7 @@ public final class ExecutorRunnableProcessor implements RunnableProcessor {
 
     @Override
     public synchronized void next() {
-        if(!queue.isEmpty()) {
+        if(!isEmpty()) {
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -48,5 +48,10 @@ public final class ExecutorRunnableProcessor implements RunnableProcessor {
     @Override
     public void clear() {
         queue.clear();
+    }
+
+    @Override
+    public synchronized boolean isEmpty() {
+        return queue.isEmpty();
     }
 }
