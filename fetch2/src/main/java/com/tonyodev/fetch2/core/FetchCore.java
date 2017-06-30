@@ -35,7 +35,7 @@ import static com.tonyodev.fetch2.Status.QUEUED;
  * Created by tonyofrancis on 6/28/17.
  */
 
-public final class FetchCore implements Fetchable, Disposable {
+public final class FetchCore implements Fetchable {
 
     private final Handler mainHandler;
     private final DownloadManager downloadManager;
@@ -43,15 +43,12 @@ public final class FetchCore implements Fetchable, Disposable {
     private final DownloadListener downloadListener;
     private final ReadDatabase readDatabase;
 
-    private volatile boolean isDisposed;
-
     public FetchCore(Context context, OkHttpClient client, DownloadListener downloadListener) {
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.databaseManager = new DatabaseManager(context);
         this.downloadManager = new DownloadManager(context,client,downloadListener,databaseManager);
         this.downloadListener = downloadListener;
         this.readDatabase = databaseManager.getReadDatabase();
-        this.isDisposed = false;
     }
 
     @Override
@@ -485,19 +482,5 @@ public final class FetchCore implements Fetchable, Disposable {
 
     private void postOnMain(Runnable runnable) {
         mainHandler.post(runnable);
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return isDisposed;
-    }
-
-    @Override
-    public void dispose() {
-        if (!isDisposed) {
-            downloadManager.dispose();
-            databaseManager.dispose();
-            isDisposed = true;
-        }
     }
 }
