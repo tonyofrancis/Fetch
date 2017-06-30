@@ -158,6 +158,15 @@ public final class DownloadRunnable implements Runnable, Closeable {
         });
     }
 
+    private void updateDatabaseBaseWithDownloadedBytes() {
+        databaseManager.executeTransaction(new Transaction() {
+            @Override
+            public void onExecute(Database database) {
+                database.updateDownloadedBytes(requestId, downloadedBytes);
+            }
+        });
+    }
+
     private void postProgress() {
         progress = Utils.calculateProgress(downloadedBytes, totalBytes);
         downloadListener.onProgress(requestId, progress, downloadedBytes, totalBytes);
@@ -211,7 +220,7 @@ public final class DownloadRunnable implements Runnable, Closeable {
         while ((read = input.read(buffer, 0, 1024)) != -1 && !isInterrupted) {
             output.write(buffer, 0, read);
             downloadedBytes += read;
-
+            updateDatabaseBaseWithDownloadedBytes();
             stopTime = System.nanoTime();
             if (hasTwoSecondsPassed(startTime, stopTime)) {
                 postProgress();
