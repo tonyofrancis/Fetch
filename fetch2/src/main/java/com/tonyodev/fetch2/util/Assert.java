@@ -7,8 +7,6 @@ import com.tonyodev.fetch2.Callback;
 import com.tonyodev.fetch2.Query;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.Status;
-import com.tonyodev.fetch2.core.Disposable;
-import com.tonyodev.fetch2.core.DisposedException;
 
 import java.util.List;
 
@@ -22,13 +20,6 @@ public final class Assert {
 
         if(context == null) {
             throw new IllegalArgumentException("Context cannot be null");
-        }
-    }
-    
-    public static void fetchNameIsNotNullOrEmpty(String databaseName) {
-
-        if(databaseName == null || databaseName.isEmpty()) {
-            throw new IllegalArgumentException("DatabaseManager Name cannot be null or empty");
         }
     }
 
@@ -85,13 +76,6 @@ public final class Assert {
 
         if(query == null) {
             throw new IllegalArgumentException("Query cannot be null");
-        }
-    }
-
-    public static void disposableIsNotDisposed(Disposable disposable) {
-
-        if(disposable.isDisposed()) {
-            throw new DisposedException("This instance cannot be reused after disposableIsNotDisposed is called");
         }
     }
 

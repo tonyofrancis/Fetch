@@ -6,37 +6,30 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.tonyodev.fetch2.RequestData;
-import com.tonyodev.fetch2.core.Disposable;
-import com.tonyodev.fetch2.core.DisposedException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class DatabaseManager implements Disposable {
+public final class DatabaseManager {
 
     public static final String DEFAULT_DATABASE_NAME = "com_tonyodev_fetch.db";
 
-    private volatile boolean isDisposed;
     private final FetchDatabase fetchDatabase;
 
     public DatabaseManager(Context context) {
-        this.isDisposed = false;
         this.fetchDatabase = Room.databaseBuilder(context, FetchDatabase.class, DEFAULT_DATABASE_NAME).build();
     }
 
     public synchronized void executeTransaction(Transaction transaction) {
-        throwIfDisposed();
         transaction.onExecute(database);
     }
 
     public ReadDatabase getReadDatabase() {
-        throwIfDisposed();
         return database;
     }
 
     public WriteDatabase getWriteDatabase() {
-        throwIfDisposed();
         return database;
     }
 
@@ -180,32 +173,7 @@ public final class DatabaseManager implements Disposable {
 
         @Override
         public void close() throws IOException {
-            if (isDisposed){
-                fetchDatabase.close();
-            }
+            fetchDatabase.close();
         }
     };
-
-    @Override
-    public synchronized void dispose() {
-        if(!isDisposed) {
-            isDisposed = true;
-            try {
-                database.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return isDisposed;
-    }
-
-    private void throwIfDisposed() {
-        if (isDisposed) {
-            throw new DisposedException("DatabaseManager has already been disposed");
-        }
-    }
 }
