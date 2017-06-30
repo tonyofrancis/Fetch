@@ -34,11 +34,11 @@ public final class Fetch implements Fetchable {
         init(context, NetworkUtils.okHttpClient());
     }
 
-    public static void init(@NonNull Context context,@NonNull OkHttpClient client) {
+    public static void init(@NonNull Context context, @NonNull OkHttpClient client) {
         Assert.contextNotNull(context);
         Assert.clientIsNotNull(client);
         if (fetch != null) {
-            fetch.dispose();
+            throw new RuntimeException("init was already called.");
         }
         fetch = new Fetch(context.getApplicationContext(), client);
     }
@@ -51,7 +51,7 @@ public final class Fetch implements Fetchable {
         return fetch;
     }
 
-    private Fetch(Context context,OkHttpClient okHttpClient) {
+    private Fetch(Context context, OkHttpClient okHttpClient) {
         this.listeners = new ArraySet<>();
         this.runnableProcessor = new ExecutorRunnableProcessor();
         this.fetchCore = new FetchCore(context, okHttpClient, getDownloadListener());
@@ -253,7 +253,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.resumeAll();
+                fetchCore.removeAll();
             }
         });
     }
@@ -290,12 +290,12 @@ public final class Fetch implements Fetchable {
     }
 
     @Override
-    public void query(final long id,final @NonNull Query<RequestData> query) {
+    public void query(final long id, final @NonNull Query<RequestData> query) {
         Assert.queryIsNotNull(query);
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.query(id,query);
+                fetchCore.query(id, query);
             }
         });
     }
@@ -307,7 +307,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.query(ids,query);
+                fetchCore.query(ids, query);
             }
         });
     }
@@ -330,7 +330,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.queryByStatus(status,query);
+                fetchCore.queryByStatus(status, query);
             }
         });
     }
@@ -342,7 +342,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-               fetchCore.queryByGroupId(groupId,query);
+               fetchCore.queryByGroupId(groupId, query);
             }
         });
     }
@@ -366,7 +366,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.contains(id,query);
+                fetchCore.contains(id, query);
             }
         });
     }
@@ -434,7 +434,7 @@ public final class Fetch implements Fetchable {
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if (ref.get() != null) {
-                                ref.get().onComplete(id,progress,downloadedBytes,totalBytes);
+                                ref.get().onComplete(id, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
@@ -448,7 +448,7 @@ public final class Fetch implements Fetchable {
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if(ref.get() != null) {
-                                ref.get().onError(id,error,progress,downloadedBytes,totalBytes);
+                                ref.get().onError(id, error, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
@@ -462,7 +462,7 @@ public final class Fetch implements Fetchable {
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if(ref.get() != null) {
-                                ref.get().onProgress(id,progress,downloadedBytes,totalBytes);
+                                ref.get().onProgress(id, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
@@ -476,7 +476,7 @@ public final class Fetch implements Fetchable {
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if(ref.get() != null) {
-                                ref.get().onPaused(id,progress,downloadedBytes,totalBytes);
+                                ref.get().onPaused(id, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
@@ -490,7 +490,7 @@ public final class Fetch implements Fetchable {
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if(ref.get() != null) {
-                                ref.get().onCancelled(id,progress,downloadedBytes,totalBytes);
+                                ref.get().onCancelled(id, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
@@ -504,18 +504,12 @@ public final class Fetch implements Fetchable {
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if(ref.get() != null) {
-                                ref.get().onRemoved(id,progress,downloadedBytes,totalBytes);
+                                ref.get().onRemoved(id, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
                 });
             }
         };
-    }
-
-    private void dispose() {
-        fetchCore.dispose();
-        listeners.clear();
-        runnableProcessor.clear();
     }
 }
