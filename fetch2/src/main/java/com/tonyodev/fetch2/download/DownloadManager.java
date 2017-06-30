@@ -3,7 +3,6 @@ package com.tonyodev.fetch2.download;
 import android.content.Context;
 
 import com.tonyodev.fetch2.database.DatabaseManager;
-import com.tonyodev.fetch2.listener.DownloadListener;
 
 import java.util.concurrent.ConcurrentHashMap;
 

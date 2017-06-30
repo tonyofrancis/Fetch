@@ -10,7 +10,7 @@ import android.support.v4.util.ArraySet;
 import com.tonyodev.fetch2.core.ExecutorRunnableProcessor;
 import com.tonyodev.fetch2.core.FetchCore;
 import com.tonyodev.fetch2.core.Fetchable;
-import com.tonyodev.fetch2.listener.DownloadListener;
+import com.tonyodev.fetch2.download.DownloadListener;
 import com.tonyodev.fetch2.listener.FetchListener;
 import com.tonyodev.fetch2.util.Assert;
 import com.tonyodev.fetch2.util.NetworkUtils;

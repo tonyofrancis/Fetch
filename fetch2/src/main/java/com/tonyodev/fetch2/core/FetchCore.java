@@ -17,7 +17,7 @@ import com.tonyodev.fetch2.database.DatabaseRow;
 import com.tonyodev.fetch2.database.ReadDatabase;
 import com.tonyodev.fetch2.database.Transaction;
 import com.tonyodev.fetch2.download.DownloadManager;
-import com.tonyodev.fetch2.listener.DownloadListener;
+import com.tonyodev.fetch2.download.DownloadListener;
 import com.tonyodev.fetch2.util.Utils;
 
 import java.io.File;

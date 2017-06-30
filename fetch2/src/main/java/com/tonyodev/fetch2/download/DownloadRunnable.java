@@ -9,7 +9,6 @@ import com.tonyodev.fetch2.database.Database;
 import com.tonyodev.fetch2.database.DatabaseException;
 import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.Transaction;
-import com.tonyodev.fetch2.listener.DownloadListener;
 import com.tonyodev.fetch2.util.ErrorUtils;
 import com.tonyodev.fetch2.util.NetworkUtils;
 import com.tonyodev.fetch2.util.Utils;
