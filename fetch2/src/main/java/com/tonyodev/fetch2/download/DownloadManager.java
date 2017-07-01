@@ -57,7 +57,7 @@ public final class DownloadManager implements Downloadable {
                 threadRunnablePair.downloadRunnable.interrupt();
 
                 try {
-                    threadRunnablePair.thread.join(200);
+                    threadRunnablePair.thread.join(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }finally {
