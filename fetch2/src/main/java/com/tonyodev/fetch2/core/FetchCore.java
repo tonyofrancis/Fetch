@@ -232,7 +232,7 @@ public final class FetchCore implements Fetchable {
         if (requestData != null) {
             List<RequestData> list = new ArrayList<>(1);
             list.add(requestData);
-            resume(list);
+            cancel(list);
         }
     }
 
@@ -272,7 +272,7 @@ public final class FetchCore implements Fetchable {
         if (requestData != null) {
             List<RequestData> list = new ArrayList<>(1);
             list.add(requestData);
-            resume(list);
+            remove(list);
         }
     }
 
