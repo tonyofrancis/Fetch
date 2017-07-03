@@ -634,7 +634,7 @@ public class FetchCoreTest {
     }
 
     @Test
-    public void contains() {
+    public void contains() throws Exception {
         clearDatabase();
         Request request = getRequest();
         fetchCore.enqueue(request);
@@ -649,7 +649,7 @@ public class FetchCoreTest {
     }
 
     @Test
-    public void containsNot() {
+    public void containsNot() throws Exception {
         clearDatabase();
         Request request = getRequest();
         fetchCore.enqueue(request);
