@@ -16,6 +16,7 @@ import com.tonyodev.fetch2.util.Assert;
 import com.tonyodev.fetch2.util.NetworkUtils;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -536,6 +537,17 @@ public final class Fetch implements Fetchable {
                 ref.get().onDetach(this);
             }
         }
+    }
+
+    public synchronized List<FetchListener> getListeners() {
+        List<FetchListener> listeners = new ArrayList<>();
+
+        for (WeakReference<FetchListener> listener : this.listeners) {
+            if (listener.get() != null) {
+                listeners.add(listener.get());
+            }
+        }
+        return listeners;
     }
 
     private DownloadListener getDownloadListener() {
