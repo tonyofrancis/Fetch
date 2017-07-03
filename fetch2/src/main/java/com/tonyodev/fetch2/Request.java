@@ -97,4 +97,21 @@ public final class Request {
     public String toString() {
         return "{\"url\":\"" + url + "\",\"absolutePath\":" + absoluteFilePath +"\"}";
     }
+
+    @Override
+    public int hashCode() {
+        return (int)id;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Request) {
+            Request request = (Request)obj;
+            if (id == request.getId()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
