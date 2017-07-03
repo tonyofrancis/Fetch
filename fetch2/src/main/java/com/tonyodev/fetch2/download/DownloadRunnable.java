@@ -3,11 +3,11 @@ package com.tonyodev.fetch2.download;
 import android.content.Context;
 
 import com.tonyodev.fetch2.Error;
-import com.tonyodev.fetch2.RequestData;
 import com.tonyodev.fetch2.Status;
 import com.tonyodev.fetch2.database.Database;
 import com.tonyodev.fetch2.database.DatabaseException;
 import com.tonyodev.fetch2.database.DatabaseManager;
+import com.tonyodev.fetch2.database.DatabaseRow;
 import com.tonyodev.fetch2.database.Transaction;
 import com.tonyodev.fetch2.util.ErrorUtils;
 import com.tonyodev.fetch2.util.NetworkUtils;
@@ -115,15 +115,15 @@ public final class DownloadRunnable implements Runnable, Closeable {
         databaseManager.executeTransaction(new Transaction() {
             @Override
             public void onExecute(Database database) {
-                RequestData requestData = database.query(requestId);
-                if (requestData == null) {
+                DatabaseRow row = database.query(requestId);
+                if (row == null) {
                     throw new DatabaseException("Request not found in the database");
                 }
 
-                url = requestData.getUrl();
-                filePath = requestData.getAbsoluteFilePath();
-                totalBytes = requestData.getTotalBytes();
-                headers = requestData.getHeaders();
+                url = row.getUrl();
+                filePath = row.getAbsoluteFilePath();
+                totalBytes = row.getTotalBytes();
+                headers = row.getHeaders();
             }
         });
         File file = Utils.createFileOrThrow(filePath);

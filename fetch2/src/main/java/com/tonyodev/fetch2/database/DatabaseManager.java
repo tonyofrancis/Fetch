@@ -5,10 +5,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.tonyodev.fetch2.RequestData;
-
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class DatabaseManager {
@@ -54,100 +51,54 @@ public final class DatabaseManager {
 
         @Override
         @NonNull
-        public List<RequestData> queryByStatus(int status) {
-            List<RequestData> list = new ArrayList<>();
-            List<DatabaseRow> databaseRows = fetchDatabase.fetchDao().queryByStatus(status);
-
-            if (databaseRows == null) {
-                return list;
-            }
-
-            for (DatabaseRow databaseRow : databaseRows) {
-                list.add(databaseRow.toRequestData());
-            }
-
-            return list;
+        public List<DatabaseRow> queryByStatus(int status) {
+            return fetchDatabase.fetchDao().queryByStatus(status);
         }
 
         @Override
         @Nullable
-        public RequestData query(final long id) {
-            RequestData requestData = null;
-            DatabaseRow databaseRow = fetchDatabase.fetchDao().query(id);
-
-            if (databaseRow != null) {
-                requestData = databaseRow.toRequestData();
-            }
-
-            return requestData;
+        public DatabaseRow query(final long id) {
+            return fetchDatabase.fetchDao().query(id);
         }
 
         @Override
         @NonNull
-        public List<RequestData> query() {
-            List<RequestData> list = new ArrayList<>();
-            List<DatabaseRow> databaseRowList = fetchDatabase.fetchDao().query();
-
-            if (databaseRowList == null) {
-                return list;
-            }
-
-            for (DatabaseRow databaseRow : databaseRowList) {
-                list.add(databaseRow.toRequestData());
-            }
-
-            return list;
+        public List<DatabaseRow> query() {
+            return fetchDatabase.fetchDao().query();
         }
 
         @Override
         @NonNull
-        public List<RequestData> query(long[] ids) {
-            List<RequestData> list = new ArrayList<>();
-            List<DatabaseRow> databaseRows = fetchDatabase.fetchDao().query(ids);
-
-            if (databaseRows == null) {
-                return list;
-            }
-
-            for (DatabaseRow databaseRow : databaseRows) {
-                list.add(databaseRow.toRequestData());
-            }
-
-            return list;
+        public List<DatabaseRow> query(long[] ids) {
+            return fetchDatabase.fetchDao().query(ids);
         }
 
         @NonNull
         @Override
-        public List<RequestData> queryByGroupId(String groupId) {
-            List<RequestData> list = new ArrayList<>();
-            List<DatabaseRow> databaseRows = fetchDatabase.fetchDao().queryByGroupId(groupId);
-
-            if (databaseRows == null) {
-                return list;
-            }
-
-            for (DatabaseRow databaseRow : databaseRows) {
-                list.add(databaseRow.toRequestData());
-            }
-
-            return list;
+        public List<DatabaseRow> queryByGroupId(String groupId) {
+            return fetchDatabase.fetchDao().queryByGroupId(groupId);
         }
 
         @NonNull
         @Override
-        public List<RequestData> queryGroupByStatusId(String groupId,int status) {
-            List<RequestData> list = new ArrayList<>();
-            List<DatabaseRow> databaseRows = fetchDatabase.fetchDao().queryGroupByStatusId(groupId, status);
+        public List<DatabaseRow> queryGroupByStatusId(String groupId,int status) {
+            return fetchDatabase.fetchDao().queryGroupByStatusId(groupId, status);
+        }
 
-            if (databaseRows == null) {
-                return list;
-            }
+        @Override
+        public boolean remove(final long id) {
+            long rows = fetchDatabase.fetchDao().remove(id);
+            return rows > 0;
+        }
 
-            for (DatabaseRow databaseRow : databaseRows) {
-                list.add(databaseRow.toRequestData());
-            }
+        @Override
+        public void removeAll() {
+            fetchDatabase.fetchDao().removeAll();
+        }
 
-            return list;
+        @Override
+        public void remove(long[] ids) {
+            fetchDatabase.fetchDao().remove(ids);
         }
 
         @Override
@@ -158,12 +109,6 @@ public final class DatabaseManager {
         @Override
         public void setDownloadedBytesAndTotalBytes(final long id, final long downloadedBytes, final long totalBytes){
             fetchDatabase.fetchDao().setDownloadedBytesAndTotalBytes(id,downloadedBytes,totalBytes);
-        }
-
-        @Override
-        public boolean remove(final long id) {
-            long rows = fetchDatabase.fetchDao().remove(id);
-            return rows > 0;
         }
 
         @Override

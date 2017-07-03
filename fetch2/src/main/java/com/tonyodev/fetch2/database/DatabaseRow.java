@@ -7,7 +7,6 @@ import android.arch.persistence.room.PrimaryKey;
 import android.support.v4.util.ArrayMap;
 
 import com.tonyodev.fetch2.Error;
-import com.tonyodev.fetch2.RequestData;
 import com.tonyodev.fetch2.Status;
 
 import java.util.Map;
@@ -120,10 +119,6 @@ public class DatabaseRow {
 
     public void setGroupId(String groupId) {
         this.groupId = groupId;
-    }
-
-    public RequestData toRequestData() {
-        return new RequestData(url,absoluteFilePath,status,error,downloadedBytes,totalBytes,headers,groupId);
     }
 
     public static DatabaseRow newInstance(long id, String url, String absoluteFilePath, String groupId) {

@@ -11,4 +11,6 @@ public interface WriteDatabase extends Closeable {
     boolean remove(final long id);
     boolean insert(DatabaseRow databaseRow);
     void insert(List<DatabaseRow> databaseRows);
+    void removeAll();
+    void remove(long[] ids);
 }

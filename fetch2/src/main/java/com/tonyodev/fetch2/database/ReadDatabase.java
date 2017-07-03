@@ -1,7 +1,5 @@
 package com.tonyodev.fetch2.database;
 
-import com.tonyodev.fetch2.RequestData;
-
 import java.io.Closeable;
 import java.util.List;
 
@@ -11,10 +9,10 @@ import java.util.List;
 
 public interface ReadDatabase extends Closeable {
     boolean contains(long id);
-    List<RequestData> queryByStatus(int status);
-    RequestData query(final long id);
-    List<RequestData> query();
-    List<RequestData> query(long[] ids);
-    List<RequestData> queryByGroupId(String groupId);
-    List<RequestData> queryGroupByStatusId(String groupId,int status);
+    List<DatabaseRow> queryByStatus(int status);
+    DatabaseRow query(final long id);
+    List<DatabaseRow> query();
+    List<DatabaseRow> query(long[] ids);
+    List<DatabaseRow> queryByGroupId(String groupId);
+    List<DatabaseRow> queryGroupByStatusId(String groupId, int status);
 }

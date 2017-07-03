@@ -50,6 +50,9 @@ public interface FetchDao {
  @Query("DELETE FROM fetch WHERE id = :id")
  int remove(long id);
 
+ @Query("DELETE FROM fetch WHERE id IN(:ids)")
+ void remove(long[] ids);
+
  @Query("DELETE FROM fetch")
- void deleteAll();
+ void removeAll();
 }
