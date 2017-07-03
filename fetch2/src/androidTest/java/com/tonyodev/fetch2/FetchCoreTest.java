@@ -17,7 +17,9 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import okhttp3.OkHttpClient;
 
@@ -505,6 +507,161 @@ public class FetchCoreTest {
         for (Request request : list) {
             Assert.assertFalse(fileExist(request.getAbsoluteFilePath()));
         }
+    }
+
+    @Test
+    public void query() throws Exception {
+        clearDatabase();
+        final Request request = getRequest();
+        fetchCore.enqueue(request);
+        fetchCore.query(request.getId(), new Query<RequestData>() {
+            @Override
+            public void onResult(@Nullable RequestData result) {
+                Assert.assertNotNull(result);
+            }
+        });
+    }
+
+    @Test
+    public void queryList() throws Exception {
+        clearDatabase();
+        final List<Request> list = getRequestList();
+        List<Long> ids = new ArrayList<>();
+
+        for (Request request : list) {
+            ids.add(request.getId());
+        }
+
+        fetchCore.enqueue(list);
+        fetchCore.query(ids, new Query<List<RequestData>>() {
+            @Override
+            public void onResult(@Nullable List<RequestData> result) {
+                Assert.assertNotNull(result);
+                Assert.assertEquals(list.size(),result.size());
+                Set<Request> set = new HashSet<>(list);
+                for (RequestData requestData : result) {
+                    Assert.assertTrue(set.contains(requestData.getRequest()));
+                }
+            }
+        });
+    }
+
+    @Test
+    public void queryAll() throws Exception {
+        clearDatabase();
+        final List<Request> list = getRequestList();
+        fetchCore.enqueue(list);
+        fetchCore.queryAll(new Query<List<RequestData>>() {
+            @Override
+            public void onResult(@Nullable List<RequestData> result) {
+                Assert.assertNotNull(result);
+                Assert.assertEquals(list.size(),result.size());
+                Set<Request> set = new HashSet<>(list);
+                for (RequestData requestData : result) {
+                    Assert.assertTrue(set.contains(requestData.getRequest()));
+                }
+            }
+        });
+    }
+
+    @Test
+    public void queryByStatus() throws Exception {
+        clearDatabase();
+        final List<Request> list = getRequestList();
+        final List<Long> pausedIdList = new ArrayList<>();
+
+        for (int i = 0; i < list.size(); i += 2) {
+            pausedIdList.add(list.get(i).getId());
+        }
+
+        fetchCore.enqueue(list);
+
+        for (Long id : pausedIdList) {
+            fetchCore.pause(id);
+        }
+
+        fetchCore.queryByStatus(Status.PAUSED, new Query<List<RequestData>>() {
+            @Override
+            public void onResult(@Nullable List<RequestData> result) {
+                Assert.assertNotNull(result);
+                Assert.assertEquals(pausedIdList.size(),result.size());
+
+                Set<Long> setId = new HashSet<>(pausedIdList);
+
+                for (RequestData requestData : result) {
+                    Assert.assertTrue(setId.contains(requestData.getId()));
+                }
+            }
+        });
+    }
+
+    @Test
+    public void queryByGroupId() throws Exception {
+        clearDatabase();
+        final List<Request> list = getRequestList();
+        fetchCore.enqueue(list);
+        fetchCore.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
+            @Override
+            public void onResult(@Nullable List<RequestData> result) {
+                Assert.assertNotNull(result);
+                Assert.assertEquals(list.size(),result.size());
+                Set<Request> requests = new HashSet<>(list);
+
+                for (RequestData requestData : result) {
+                    Assert.assertTrue(requests.contains(requestData.getRequest()));
+                }
+            }
+        });
+    }
+
+    @Test
+    public void queryGroupByStatusId() throws Exception {
+        clearDatabase();
+        final List<Request> list = getRequestList();
+        fetchCore.enqueue(list);
+        fetchCore.cancelGroup(TEST_GROUP_ID);
+        fetchCore.queryGroupByStatusId(TEST_GROUP_ID, Status.CANCELLED, new Query<List<RequestData>>() {
+            @Override
+            public void onResult(@Nullable List<RequestData> result) {
+                Assert.assertNotNull(result);
+                Assert.assertEquals(list.size(),result.size());
+                Set<Request> requests = new HashSet<>(list);
+                for (RequestData requestData : result) {
+                    Assert.assertTrue(requests.contains(requestData.getRequest()));
+                }
+            }
+        });
+    }
+
+    @Test
+    public void contains() {
+        clearDatabase();
+        Request request = getRequest();
+        fetchCore.enqueue(request);
+        fetchCore.pause(request.getId());
+        fetchCore.contains(request.getId(), new Query<Boolean>() {
+            @Override
+            public void onResult(@Nullable Boolean result) {
+                Assert.assertNotNull(result);
+                Assert.assertTrue(result);
+            }
+        });
+    }
+
+    @Test
+    public void containsNot() {
+        clearDatabase();
+        Request request = getRequest();
+        fetchCore.enqueue(request);
+        fetchCore.pause(request.getId());
+        fetchCore.delete(request.getId());
+        fetchCore.contains(request.getId(), new Query<Boolean>() {
+            @Override
+            public void onResult(@Nullable Boolean result) {
+                Assert.assertNotNull(result);
+                Assert.assertFalse(result);
+            }
+        });
     }
 
     private boolean fileExist(String file) {
