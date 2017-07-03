@@ -45,6 +45,10 @@ public final class Fetch implements Fetchable {
         fetch = new Fetch(context.getApplicationContext(), client);
     }
 
+    public static boolean isInitialized() {
+        return fetch != null;
+    }
+
     @NonNull
     public static Fetch getInstance() {
         if (fetch == null) {

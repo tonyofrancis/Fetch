@@ -6,10 +6,16 @@ import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.tonyodev.fetch2.core.FetchCore;
+import com.tonyodev.fetch2.download.DownloadListener;
+import com.tonyodev.fetch2.util.NetworkUtils;
+
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,31 +26,72 @@ import okhttp3.OkHttpClient;
  */
 
 @RunWith(AndroidJUnit4.class)
-public class FetchTest {
+public class FetchCoreTest {
 
     public static final String TEST_GROUP_ID = "testGroup";
-    public static final String TEST_URL = "http://www.tonyofrancis.com/tonyodev/fetch/bunny.m4v";
+    public static final String TEST_URL = "http://www.tonyofrancis.com/tonyodev/fetchCore/bunny.m4v";
+
+    private FetchCore fetchCore;
+
+
+    @Before
+    public void setUp() throws Exception {
+
+        OkHttpClient client = NetworkUtils.okHttpClient();
+        Context context = getContext();
+
+        fetchCore = new FetchCore(context, client, new DownloadListener() {
+            @Override
+            public void onComplete(long id, int progress, long downloadedBytes, long totalBytes) {
+
+            }
+
+            @Override
+            public void onError(long id, @NonNull Error error, int progress, long downloadedBytes, long totalBytes) {
+
+            }
+
+            @Override
+            public void onProgress(long id, int progress, long downloadedBytes, long totalBytes) {
+
+            }
+
+            @Override
+            public void onPaused(long id, int progress, long downloadedBytes, long totalBytes) {
+
+            }
+
+            @Override
+            public void onCancelled(long id, int progress, long downloadedBytes, long totalBytes) {
+
+            }
+
+            @Override
+            public void onRemoved(long id, int progress, long downloadedBytes, long totalBytes) {
+
+            }
+        });
+
+        fetchCore.deleteAll();
+    }
 
     @Test
-    public void fetchNotNull() {
-        initFetch();
-        Assert.assertNotNull(Fetch.getInstance());
+    public void fetchCoreNotNull() {
+        Assert.assertNotNull(fetchCore);
     }
 
     @Test
     public void enqueue() {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         Request request = getRequest();
-        fetch.enqueue(request);
+        fetchCore.enqueue(request);
     }
 
     @Test
     public void enqueueWithCallback() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         Request request = getRequest();
-        fetch.enqueue(request, new Callback() {
+        fetchCore.enqueue(request, new Callback() {
             @Override
             public void onQueued(@NonNull Request request) {
             }
@@ -58,19 +105,16 @@ public class FetchTest {
 
     @Test
     public void enqueueList() {
-        initFetch();
-        Fetch fetch =  Fetch.getInstance();
+        clearDatabase();
         List<Request> list = getRequestList();
-        fetch.enqueue(list);
+        fetchCore.enqueue(list);
     }
 
     @Test
     public void enqueueListWithCallback() {
-        initFetch();
-        Fetch fetch =  Fetch.getInstance();
+        clearDatabase();
         List<Request> list = getRequestList();
-
-        fetch.enqueue(list, new Callback() {
+        fetchCore.enqueue(list, new Callback() {
             @Override
             public void onQueued(@NonNull Request request) {
 
@@ -85,13 +129,11 @@ public class FetchTest {
 
     @Test
     public void pause() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final Request request = getRequest();
-        ;
-        fetch.enqueue(request);
-        fetch.pause(request.getId());
-        fetch.query(request.getId(), new Query<RequestData>() {
+        fetchCore.enqueue(request);
+        fetchCore.pause(request.getId());
+        fetchCore.query(request.getId(), new Query<RequestData>() {
             @Override
             public void onResult(@Nullable RequestData result) {
 
@@ -106,12 +148,11 @@ public class FetchTest {
 
     @Test
     public void pauseGroup() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final List<Request> list = getRequestList();
-        fetch.enqueue(list);
-        fetch.pauseGroup(TEST_GROUP_ID);
-        fetch.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
+        fetchCore.enqueue(list);
+        fetchCore.pauseGroup(TEST_GROUP_ID);
+        fetchCore.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
             @Override
             public void onResult(@Nullable List<RequestData> result) {
 
@@ -131,12 +172,11 @@ public class FetchTest {
 
     @Test
     public void pauseAll() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final List<Request> list = getRequestList();
-        fetch.enqueue(list);
-        fetch.pauseAll();
-        fetch.queryAll(new Query<List<RequestData>>() {
+        fetchCore.enqueue(list);
+        fetchCore.pauseAll();
+        fetchCore.queryAll(new Query<List<RequestData>>() {
             @Override
             public void onResult(@Nullable List<RequestData> result) {
 
@@ -156,13 +196,12 @@ public class FetchTest {
 
     @Test
     public void resume() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final Request request = getRequest();
-        fetch.enqueue(request);
-        fetch.pause(request.getId());
-        fetch.resume(request.getId());
-        fetch.query(request.getId(), new Query<RequestData>() {
+        fetchCore.enqueue(request);
+        fetchCore.pause(request.getId());
+        fetchCore.resume(request.getId());
+        fetchCore.query(request.getId(), new Query<RequestData>() {
             @Override
             public void onResult(@Nullable RequestData result) {
 
@@ -177,13 +216,12 @@ public class FetchTest {
 
     @Test
     public void resumeGroup() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final List<Request> list = getRequestList();
-        fetch.enqueue(list);
-        fetch.pauseGroup(TEST_GROUP_ID);
-        fetch.resumeGroup(TEST_GROUP_ID);
-        fetch.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
+        fetchCore.enqueue(list);
+        fetchCore.pauseGroup(TEST_GROUP_ID);
+        fetchCore.resumeGroup(TEST_GROUP_ID);
+        fetchCore.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
             @Override
             public void onResult(@Nullable List<RequestData> result) {
 
@@ -203,13 +241,12 @@ public class FetchTest {
 
     @Test
     public void resumeAll() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final List<Request> list = getRequestList();
-        fetch.enqueue(list);
-        fetch.pauseAll();
-        fetch.resumeAll();
-        fetch.queryAll(new Query<List<RequestData>>() {
+        fetchCore.enqueue(list);
+        fetchCore.pauseAll();
+        fetchCore.resumeAll();
+        fetchCore.queryAll(new Query<List<RequestData>>() {
             @Override
             public void onResult(@Nullable List<RequestData> result) {
 
@@ -229,13 +266,12 @@ public class FetchTest {
 
     @Test
     public void retry() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final Request request = getRequest();
-        fetch.enqueue(request);
-        fetch.pause(request.getId());
-        fetch.retry(request.getId());
-        fetch.query(request.getId(), new Query<RequestData>() {
+        fetchCore.enqueue(request);
+        fetchCore.pause(request.getId());
+        fetchCore.retry(request.getId());
+        fetchCore.query(request.getId(), new Query<RequestData>() {
             @Override
             public void onResult(@Nullable RequestData result) {
 
@@ -250,13 +286,12 @@ public class FetchTest {
 
     @Test
     public void retryGroup() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final List<Request> list = getRequestList();
-        fetch.enqueue(list);
-        fetch.pauseGroup(TEST_GROUP_ID);
-        fetch.retryGroup(TEST_GROUP_ID);
-        fetch.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
+        fetchCore.enqueue(list);
+        fetchCore.pauseGroup(TEST_GROUP_ID);
+        fetchCore.retryGroup(TEST_GROUP_ID);
+        fetchCore.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
             @Override
             public void onResult(@Nullable List<RequestData> result) {
 
@@ -276,13 +311,12 @@ public class FetchTest {
 
     @Test
     public void retryAll() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final List<Request> list = getRequestList();
-        fetch.enqueue(list);
-        fetch.pauseAll();
-        fetch.retryAll();
-        fetch.queryAll(new Query<List<RequestData>>() {
+        fetchCore.enqueue(list);
+        fetchCore.pauseAll();
+        fetchCore.retryAll();
+        fetchCore.queryAll(new Query<List<RequestData>>() {
             @Override
             public void onResult(@Nullable List<RequestData> result) {
 
@@ -302,12 +336,11 @@ public class FetchTest {
 
     @Test
     public void cancel() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final Request request = getRequest();
-        fetch.enqueue(request);
-        fetch.cancel(request.getId());
-        fetch.query(request.getId(), new Query<RequestData>() {
+        fetchCore.enqueue(request);
+        fetchCore.cancel(request.getId());
+        fetchCore.query(request.getId(), new Query<RequestData>() {
             @Override
             public void onResult(@Nullable RequestData result) {
 
@@ -322,12 +355,11 @@ public class FetchTest {
 
     @Test
     public void cancelGroup() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final List<Request> list = getRequestList();
-        fetch.enqueue(list);
-        fetch.cancelGroup(TEST_GROUP_ID);
-        fetch.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
+        fetchCore.enqueue(list);
+        fetchCore.cancelGroup(TEST_GROUP_ID);
+        fetchCore.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
             @Override
             public void onResult(@Nullable List<RequestData> result) {
 
@@ -347,12 +379,11 @@ public class FetchTest {
 
     @Test
     public void cancelAll() throws Exception {
-        initFetch();
-        Fetch fetch = Fetch.getInstance();
+        clearDatabase();
         final List<Request> list = getRequestList();
-        fetch.enqueue(list);
-        fetch.cancelAll();
-        fetch.queryAll(new Query<List<RequestData>>() {
+        fetchCore.enqueue(list);
+        fetchCore.cancelAll();
+        fetchCore.queryAll(new Query<List<RequestData>>() {
             @Override
             public void onResult(@Nullable List<RequestData> result) {
 
@@ -370,13 +401,114 @@ public class FetchTest {
         });
     }
 
-    private void initFetch() {
-        if (!Fetch.isInitialized()) {
-            Context appContext = getContext();
-            Fetch.init(appContext,new OkHttpClient());
-        }
+    @Test
+    public void remove() throws Exception {
+        clearDatabase();
+        final Request request = getRequest();
+        fetchCore.enqueue(request);
+        fetchCore.remove(request.getId());
+        fetchCore.query(request.getId(), new Query<RequestData>() {
+            @Override
+            public void onResult(@Nullable RequestData result) {
+                Assert.assertNull(result);
+            }
+        });
+    }
 
-        Fetch.getInstance().deleteAll();
+    @Test
+    public void removeGroup() throws Exception {
+        clearDatabase();
+        final List<Request> list = getRequestList();
+        fetchCore.enqueue(list);
+        fetchCore.removeGroup(TEST_GROUP_ID);
+        fetchCore.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
+            @Override
+            public void onResult(@Nullable List<RequestData> result) {
+
+                if (result != null && result.size() > 0) {
+                    throw new RuntimeException("Requests were not removed");
+                }
+            }
+        });
+    }
+
+    @Test
+    public void removeAll() throws Exception {
+        clearDatabase();
+        final List<Request> list = getRequestList();
+        fetchCore.enqueue(list);
+        fetchCore.removeAll();
+        fetchCore.queryAll(new Query<List<RequestData>>() {
+            @Override
+            public void onResult(@Nullable List<RequestData> result) {
+
+                if (result != null && result.size() > 0) {
+                    throw new RuntimeException("Requests were not removed");
+                }
+            }
+        });
+    }
+
+    @Test
+    public void delete() throws Exception {
+        clearDatabase();
+        final Request request = getRequest();
+        fetchCore.enqueue(request);
+        fetchCore.delete(request.getId());
+        fetchCore.query(request.getId(), new Query<RequestData>() {
+            @Override
+            public void onResult(@Nullable RequestData result) {
+                Assert.assertNull(result);
+            }
+        });
+
+        Assert.assertFalse(fileExist(request.getAbsoluteFilePath()));
+    }
+
+    @Test
+    public void deleteGroup() throws Exception {
+        clearDatabase();
+        final List<Request> list = getRequestList();
+        fetchCore.enqueue(list);
+        fetchCore.deleteGroup(TEST_GROUP_ID);
+        fetchCore.queryByGroupId(TEST_GROUP_ID, new Query<List<RequestData>>() {
+            @Override
+            public void onResult(@Nullable List<RequestData> result) {
+
+                if (result != null && result.size() > 0) {
+                    throw new RuntimeException("Requests were not removed");
+                }
+            }
+        });
+
+        for (Request request : list) {
+            Assert.assertFalse(fileExist(request.getAbsoluteFilePath()));
+        }
+    }
+
+    @Test
+    public void deleteAll() throws Exception {
+        clearDatabase();
+        final List<Request> list = getRequestList();
+        fetchCore.enqueue(list);
+        fetchCore.deleteAll();
+        fetchCore.queryAll(new Query<List<RequestData>>() {
+            @Override
+            public void onResult(@Nullable List<RequestData> result) {
+
+                if (result != null && result.size() > 0) {
+                    throw new RuntimeException("Requests were not removed");
+                }
+            }
+        });
+
+        for (Request request : list) {
+            Assert.assertFalse(fileExist(request.getAbsoluteFilePath()));
+        }
+    }
+
+    private boolean fileExist(String file) {
+        return new File(file).exists();
     }
 
     private Request getRequest() {
@@ -388,7 +520,7 @@ public class FetchTest {
 
     private List<Request> getRequestList() {
         Context appContext = getContext();
-        int size = 100;
+        int size = 10;
         List<Request> list = new ArrayList<>(size);
 
         for (int i = 0; i < size; i++) {
@@ -403,4 +535,7 @@ public class FetchTest {
         return InstrumentationRegistry.getTargetContext();
     }
 
+    private void clearDatabase() {
+        fetchCore.deleteAll();
+    }
 }
