@@ -4,709 +4,382 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
-import android.support.v4.util.ArrayMap;
 import android.support.v4.util.ArraySet;
 
-import java.io.File;
+import com.tonyodev.fetch2.callback.Callback;
+import com.tonyodev.fetch2.callback.Query;
+import com.tonyodev.fetch2.core.ExecutorRunnableProcessor;
+import com.tonyodev.fetch2.core.FetchCore;
+import com.tonyodev.fetch2.core.Fetchable;
+import com.tonyodev.fetch2.core.RunnableProcessor;
+import com.tonyodev.fetch2.download.DownloadListener;
+import com.tonyodev.fetch2.listener.FetchListener;
+import com.tonyodev.fetch2.util.Assert;
+import com.tonyodev.fetch2.util.NetworkUtils;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import okhttp3.OkHttpClient;
 
 
-public final class Fetch extends FetchCore {
+public final class Fetch implements Fetchable {
 
-    private static ConcurrentHashMap<String,Fetch> pool = new ConcurrentHashMap<>();
+    private static volatile Fetch fetch;
 
-    private final String name;
-    private final DatabaseManager databaseManager;
-    private final DownloadManager downloadManager;
-    private final Handler mainHandler;
-    private final ExecutorService executor;
+    private final FetchCore fetchCore;
     private final Set<WeakReference<FetchListener>> listeners;
-    private volatile boolean isDisposed;
+    private final RunnableProcessor runnableProcessor;
+
+    public synchronized static void init(@NonNull Context context) {
+        init(context, NetworkUtils.okHttpClient());
+    }
+
+    public synchronized static void init(@NonNull Context context, @NonNull OkHttpClient client) {
+        Assert.contextNotNull(context);
+        Assert.clientIsNotNull(client);
+        if (fetch != null) {
+            throw new RuntimeException("init was already called.");
+        }
+        fetch = new Fetch(context.getApplicationContext(), client);
+    }
+
+    public static boolean isInitialized() {
+        return fetch != null;
+    }
 
     @NonNull
-    public static Fetch getDefaultInstance(@NonNull Context context) {
-
-        String defaultName = FetchHelper.getDefaultDatabaseName();
-        if (pool.containsKey(defaultName)) {
-            return pool.get(defaultName);
+    public static Fetch getInstance() {
+        if (!isInitialized()) {
+            throw new RuntimeException("Fetch was not initialized.");
         }
-
-        Fetch fetch = new Builder(context).build();
-        pool.put(defaultName,fetch);
         return fetch;
     }
 
-    public static class Builder {
-        private String name;
-        private OkHttpClient client;
-        private Context context;
-
-        public Builder(@NonNull Context context) {
-            this(context,FetchHelper.getDefaultDatabaseName());
-        }
-
-        public Builder(@NonNull Context context, @NonNull String name) {
-            FetchHelper.throwIfContextIsNull(context);
-            FetchHelper.throwIfFetchNameIsNullOrEmpty(name);
-            this.name = name;
-            this.context = context.getApplicationContext();
-            this.client = NetworkUtils.okHttpClient();
-        }
-
-        @NonNull
-        public Builder name(@NonNull String name) {
-            FetchHelper.throwIfFetchNameIsNullOrEmpty(name);
-            this.name = name;
-            return this;
-        }
-
-        @NonNull
-        public Builder client(@NonNull OkHttpClient client) {
-            FetchHelper.throwIfClientIsNull(client);
-            this.client = client;
-            return this;
-        }
-
-        @NonNull
-        public Fetch build() {
-
-            if (pool.containsKey(name)) {
-                return pool.get(name);
-            }
-
-            Fetch fetch = new Fetch(this);
-            pool.put(name,fetch);
-            return fetch;
-        }
-    }
-
-    private Fetch(Builder builder) {
-        this.isDisposed = false;
+    private Fetch(Context context, OkHttpClient okHttpClient) {
         this.listeners = new ArraySet<>();
-        this.mainHandler = new Handler(Looper.getMainLooper());
-        this.executor = Executors.newSingleThreadExecutor();
-
-        this.name = builder.name;
-        this.databaseManager = DatabaseManager.newInstance(builder.context.getApplicationContext(),name);
-        this.downloadManager = DownloadManager.newInstance(builder.context.getApplicationContext(),databaseManager,
-                builder.client,getDownloadListener(),actionProcessor);
+        this.runnableProcessor = new ExecutorRunnableProcessor();
+        this.fetchCore = new FetchCore(context, okHttpClient, getDownloadListener());
     }
 
-    private final ActionProcessor<Runnable> actionProcessor = new ActionProcessor<Runnable>() {
-
-        private final ConcurrentLinkedQueue<Runnable> queue = new ConcurrentLinkedQueue<>();
-
-        @Override
-        public synchronized void queueAction(Runnable action) {
-            boolean wasEmpty = queue.isEmpty();
-
-            queue.add(action);
-
-            if (wasEmpty) {
-                processNext();
-            }
-        }
-
-        @Override
-        public synchronized void processNext() {
-            if(!executor.isShutdown() && !queue.isEmpty()) {
-                executor.execute(queue.remove());
-            }
-        }
-
-        @Override
-        public void clearQueue() {
-            queue.clear();
-        }
-    };
-
-
-    private synchronized void postOnMain(Runnable action) {
-        mainHandler.post(action);
-    }
-
-    @NonNull
-    public Fetch download(@NonNull final Request request) {
-        FetchHelper.throwIfDisposed(this);
-        FetchHelper.throwIfRequestIsNull(request);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void enqueue(final @NonNull Request request) {
+        Assert.requestIsNotNull(request);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-
-                databaseManager.executeTransaction(new AbstractTransaction<Boolean>() {
-                    @Override
-                    public void onPreExecute() {
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-                        Boolean inserted = database.insert(request.getId(),request.getUrl(),request.getAbsoluteFilePath(),request.getGroupId());
-                        setValue(inserted);
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-                        if (getValue()) {
-                            downloadManager.resume(request.getId());
-                        }
-                    }
-                });
-            }
-        });
-        return this;
-    }
-
-    @NonNull
-    public void download(@NonNull final Request request, @NonNull final Callback callback) {
-        FetchHelper.throwIfDisposed(this);
-        FetchHelper.throwIfRequestIsNull(request);
-        FetchHelper.throwIfCallbackIsNull(callback);
-
-        actionProcessor.queueAction(new Runnable() {
-            @Override
-            public void run() {
-
-                databaseManager.executeTransaction(new AbstractTransaction<Boolean>() {
-                    @Override
-                    public void onPreExecute() {
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-
-                        boolean inserted = database.insert(request.getId(), request.getUrl(), request.getAbsoluteFilePath(),request.getGroupId());
-                        setValue(inserted);
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-
-                        if (getValue()){
-                            postOnMain(new Runnable() {
-                                @Override
-                                public void run() {
-                                    callback.onQueued(request);
-                                }
-                            });
-
-                            downloadManager.resume(request.getId());
-                        }else {
-                            postOnMain(new Runnable() {
-                                @Override
-                                public void run() {
-                                    callback.onFailure(request,Error.UNKNOWN);
-                                }
-                            });
-                        }
-                    }
-                });
+                fetchCore.enqueue(request);
             }
         });
     }
 
-    @NonNull
-    public void download(@NonNull final List<Request> requests) {
-        FetchHelper.throwIfDisposed(this);
-        FetchHelper.throwIfRequestListIsNull(requests);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void enqueue(final @NonNull Request request, final @NonNull Callback callback) {
+        Assert.requestIsNotNull(request);
+        Assert.callbackIsNotNull(callback);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                databaseManager.executeTransaction(new AbstractTransaction<List<Long>>() {
-                    @Override
-                    public void onPreExecute() {
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-
-                        List<Long> ids = new ArrayList<>();
-
-                        for (Request request : requests) {
-                            if(request != null && database.insert(request.getId(),request.getUrl(),request.getAbsoluteFilePath(),request.getGroupId())) {
-                                ids.add(request.getId());
-                            }
-                        }
-
-                        setValue(ids);
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-                        for (Long id : getValue()) {
-                            downloadManager.resume(id);
-                        }
-                    }
-                });
+                fetchCore.enqueue(request, callback);
             }
         });
     }
 
-    @NonNull
-    public void download(@NonNull final List<Request> requests, @NonNull final Callback callback) {
-        FetchHelper.throwIfDisposed(this);
-        FetchHelper.throwIfRequestListIsNull(requests);
-        FetchHelper.throwIfCallbackIsNull(callback);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void enqueue(final @NonNull List<Request> requests) {
+        Assert.requestListIsNotNull(requests);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-
-                databaseManager.executeTransaction(new AbstractTransaction<Map<Request,Boolean>>() {
-                    @Override
-                    public void onPreExecute() {
-
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-
-                        Map<Request,Boolean> map = new ArrayMap<>();
-
-                        for (final Request request : requests) {
-                            if(request != null) {
-                                boolean inserted = database.insert(request.getId(), request.getUrl(), request.getAbsoluteFilePath(),request.getGroupId());
-                                map.put(request, inserted);
-                            }
-                        }
-                        setValue(map);
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-
-                        Set<Request> requests = getValue().keySet();
-
-                        for (final Request request : requests) {
-
-                            if (getValue().get(request)) {
-
-                                downloadManager.resume(request.getId());
-
-                                postOnMain(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        callback.onQueued(request);
-                                    }
-                                });
-
-                            } else {
-                                postOnMain(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        callback.onFailure(request,Error.UNKNOWN);
-                                    }
-                                });
-                            }
-                        }
-                    }
-                });
+                fetchCore.enqueue(requests);
             }
         });
     }
 
-    @NonNull
-    public void pause(final long id) {
-        FetchHelper.throwIfDisposed(this);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void enqueue(final @NonNull List<Request> requests, final @NonNull Callback callback) {
+        Assert.requestListIsNotNull(requests);
+        Assert.callbackIsNotNull(callback);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                downloadManager.pause(id);
+                fetchCore.enqueue(requests, callback);
             }
         });
     }
 
-    @NonNull
+    @Override
+    public void pause(final long... ids) {
+        runnableProcessor.queue(new Runnable() {
+            @Override
+            public void run() {
+                fetchCore.pause(ids);
+            }
+        });
+    }
+
+    @Override
+    public void pauseGroup(final @NonNull String id) {
+        Assert.groupIDIsNotNullOrEmpty(id);
+        runnableProcessor.queue(new Runnable() {
+            @Override
+            public void run() {
+                fetchCore.pauseGroup(id);
+            }
+        });
+    }
+
+    @Override
     public void pauseAll() {
-        FetchHelper.throwIfDisposed(this);
-        actionProcessor.queueAction(new Runnable() {
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                downloadManager.pauseAll();
+                fetchCore.pauseAll();
             }
         });
     }
 
-    @NonNull
-    public void resume(final long id) {
-        FetchHelper.throwIfDisposed(this);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void resume(final long... ids) {
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                downloadManager.resume(id);
+                fetchCore.resume(ids);
             }
         });
     }
 
-    @NonNull
+    @Override
+    public void resumeGroup(final @NonNull String id) {
+        Assert.groupIDIsNotNullOrEmpty(id);
+        runnableProcessor.queue(new Runnable() {
+            @Override
+            public void run() {
+                fetchCore.resumeGroup(id);
+            }
+        });
+    }
+
+    @Override
     public void resumeAll() {
-        FetchHelper.throwIfDisposed(this);
-        actionProcessor.queueAction(new Runnable() {
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                downloadManager.resumeAll();
+                fetchCore.resumeAll();
             }
         });
     }
 
-    @NonNull
-    public void retry(final long id) {
-        FetchHelper.throwIfDisposed(this);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void retry(final long... ids) {
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                downloadManager.retry(id);
+                fetchCore.retry(ids);
             }
         });
     }
 
-    @NonNull
-    public void cancel(final long id) {
-        FetchHelper.throwIfDisposed(this);
-
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void retryGroup(final @NonNull String id) {
+        Assert.groupIDIsNotNullOrEmpty(id);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                downloadManager.cancel(id);
+                fetchCore.retryGroup(id);
             }
         });
     }
 
-    @NonNull
+    @Override
+    public void retryAll() {
+        runnableProcessor.queue(new Runnable() {
+            @Override
+            public void run() {
+                fetchCore.retryAll();
+            }
+        });
+    }
+
+    @Override
+    public void cancel(final long... ids) {
+        runnableProcessor.queue(new Runnable() {
+            @Override
+            public void run() {
+                fetchCore.cancel(ids);
+            }
+        });
+    }
+
+    @Override
+    public void cancelGroup(final @NonNull String id) {
+        Assert.groupIDIsNotNullOrEmpty(id);
+        runnableProcessor.queue(new Runnable() {
+            @Override
+            public void run() {
+                fetchCore.cancelGroup(id);
+            }
+        });
+    }
+
+    @Override
     public void cancelAll() {
-        FetchHelper.throwIfDisposed(this);
-        actionProcessor.queueAction(new Runnable() {
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                downloadManager.cancelAll();
+                fetchCore.cancelAll();
             }
         });
     }
 
-    @NonNull
-    public void remove(final long id) {
-        FetchHelper.throwIfDisposed(this);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void remove(final long... ids) {
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                downloadManager.remove(id);
+                fetchCore.remove(ids);
             }
         });
     }
 
-    @NonNull
+    @Override
+    public void removeGroup(final @NonNull String id) {
+        Assert.groupIDIsNotNullOrEmpty(id);
+        runnableProcessor.queue(new Runnable() {
+            @Override
+            public void run() {
+                fetchCore.removeGroup(id);
+            }
+        });
+    }
+
+    @Override
     public void removeAll() {
-        FetchHelper.throwIfDisposed(this);
-        actionProcessor.queueAction(new Runnable() {
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                downloadManager.removeAll();
+                fetchCore.removeAll();
             }
         });
     }
 
-    @NonNull
-    public void delete(final long id) {
-        FetchHelper.throwIfDisposed(this);
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void delete(final long... ids) {
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                databaseManager.executeTransaction(new AbstractTransaction<RequestData>() {
-                    @Override
-                    public void onPreExecute() {
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-                        RequestData requestData = database.query(id);
-                        setValue(requestData);
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-                        if (getValue() != null) {
-                            downloadManager.remove(id);
-                            File file = new File(getValue().getAbsoluteFilePath());
-
-                            if (file.exists()) {
-                                file.delete();
-                            }
-                        }
-                    }
-                });
+                fetchCore.delete(ids);
             }
         });
-
     }
 
-    @NonNull
+    @Override
+    public void deleteGroup(final @NonNull String id) {
+        Assert.groupIDIsNotNullOrEmpty(id);
+        runnableProcessor.queue(new Runnable() {
+            @Override
+            public void run() {
+                fetchCore.deleteGroup(id);
+            }
+        });
+    }
+
+    @Override
     public void deleteAll() {
-        FetchHelper.throwIfDisposed(this);
-        actionProcessor.queueAction(new Runnable() {
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                databaseManager.executeTransaction(new AbstractTransaction<List<RequestData>>() {
-
-                    @Override
-                    public void onPreExecute() {
-
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-                        List<RequestData> result = database.query();
-                        setValue(result);
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-                        downloadManager.removeAll();
-
-                        if (getValue() != null) {
-                            for (RequestData requestData : getValue()) {
-                                File file = new File(requestData.getAbsoluteFilePath());
-
-                                if (file.exists()) {
-                                    file.delete();
-                                }
-                            }
-                        }
-                    }
-                });
+                fetchCore.deleteAll();
             }
         });
     }
 
-    public void query(final long id, @NonNull final Query<RequestData> query) {
-        FetchHelper.throwIfDisposed(this);
-        FetchHelper.throwIfQueryIsNull(query);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void query(final long id, final @NonNull Query<RequestData> query) {
+        Assert.queryIsNotNull(query);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-
-                databaseManager.executeTransaction(new Transaction() {
-                    @Override
-                    public void onPreExecute() {
-
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-                        final RequestData requestData = database.query(id);
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(requestData);
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-
-                    }
-                });
+                fetchCore.query(id,query);
             }
         });
     }
 
-    public void query(@NonNull final List<Long> ids, @NonNull final Query<List<RequestData>> query) {
-        FetchHelper.throwIfDisposed(this);
-        FetchHelper.throwIfQueryIsNull(query);
-        FetchHelper.throwIfIdListIsNull(ids);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void query(final @NonNull List<Long> ids, final @NonNull Query<List<RequestData>> query) {
+        Assert.queryIsNotNull(query);
+        Assert.idListIsNotNull(ids);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-
-                databaseManager.executeTransaction(new Transaction() {
-
-                    @Override
-                    public void onPreExecute() {
-
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-
-                        final List<RequestData> results = database.query(FetchHelper.createIdArray(ids));
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(results);
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-
-                    }
-                });
+                fetchCore.query(ids,query);
             }
         });
     }
 
-    public void queryAll(@NonNull final Query<List<RequestData>> query) {
-        FetchHelper.throwIfDisposed(this);
-        FetchHelper.throwIfQueryIsNull(query);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void queryAll(final @NonNull Query<List<RequestData>> query) {
+        Assert.queryIsNotNull(query);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                databaseManager.executeTransaction(new Transaction() {
-
-                    @Override
-                    public void onPreExecute() {
-
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-                        final List<RequestData> result = database.query();
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(result);
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-
-                    }
-                });
+                fetchCore.queryAll(query);
             }
         });
     }
 
-    public void queryByStatus(@NonNull final Status status,@NonNull final Query<List<RequestData>> query) {
-        FetchHelper.throwIfDisposed(this);
-        FetchHelper.throwIfQueryIsNull(query);
-        FetchHelper.throwIfStatusIsNull(status);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void queryByStatus(final @NonNull Status status, final @NonNull Query<List<RequestData>> query) {
+        Assert.queryIsNotNull(query);
+        Assert.statusIsNotNull(status);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                databaseManager.executeTransaction(new Transaction() {
-
-                    @Override
-                    public void onPreExecute() {
-
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-                        final List<RequestData> result = database.queryByStatus(status.getValue());
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(result);
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-
-                    }
-                });
+                fetchCore.queryByStatus(status,query);
             }
         });
     }
 
-    public void queryByGroupId(@NonNull final String groupId,@NonNull final Query<List<RequestData>> query) {
-        FetchHelper.throwIfDisposed(this);
-        FetchHelper.throwIfQueryIsNull(query);
-        FetchHelper.throwIfGroupIDIsNull(groupId);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void queryByGroupId(final @NonNull String groupId, final @NonNull Query<List<RequestData>> query) {
+        Assert.queryIsNotNull(query);
+        Assert.groupIDIsNotNullOrEmpty(groupId);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                databaseManager.executeTransaction(new Transaction() {
-                    @Override
-                    public void onPreExecute() {
-
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-                        final List<RequestData> result = database.queryByGroupId(groupId);
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(result);
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-
-                    }
-                });
+                fetchCore.queryByGroupId(groupId,query);
             }
         });
     }
 
-    public void queryContains(final long id, @NonNull final Query<Boolean> query) {
-        FetchHelper.throwIfDisposed(this);
-        FetchHelper.throwIfQueryIsNull(query);
-
-        actionProcessor.queueAction(new Runnable() {
+    @Override
+    public void queryGroupByStatusId(final @NonNull String groupId, final @NonNull Status status, final @NonNull Query<List<RequestData>> query) {
+        Assert.groupIDIsNotNullOrEmpty(groupId);
+        Assert.statusIsNotNull(status);
+        Assert.queryIsNotNull(query);
+        runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-
-                databaseManager.executeTransaction(new Transaction() {
-
-                    @Override
-                    public void onPreExecute() {
-
-                    }
-
-                    @Override
-                    public void onExecute(Database database) {
-                        final boolean found = database.contains(id);
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(found);
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onPostExecute() {
-
-                    }
-                });
+                fetchCore.queryGroupByStatusId(groupId, status, query);
             }
         });
     }
 
-    @NonNull
+    @Override
+    public void contains(final long id, final @NonNull Query<Boolean> query) {
+        Assert.queryIsNotNull(query);
+        runnableProcessor.queue(new Runnable() {
+            @Override
+            public void run() {
+                fetchCore.contains(id, query);
+            }
+        });
+    }
+
     public synchronized void addListener(@NonNull FetchListener fetchListener) {
-        FetchHelper.throwIfDisposed(this);
-
         if(fetchListener != null && !containsListener(fetchListener)) {
             fetchListener.onAttach(this);
             listeners.add(new WeakReference<>(fetchListener));
@@ -719,27 +392,20 @@ public final class Fetch extends FetchCore {
 
         while (iterator.hasNext()) {
             ref = iterator.next();
-
             if (ref.get() != null && ref.get() == fetchListener){
                 return true;
             }
         }
-
         return false;
     }
 
-    @NonNull
     public synchronized void removeListener(@NonNull FetchListener fetchListener) {
-        FetchHelper.throwIfDisposed(this);
-
         if (fetchListener != null) {
-
             Iterator<WeakReference<FetchListener>> iterator = listeners.iterator();
             WeakReference<FetchListener> ref;
 
             while (iterator.hasNext()) {
                 ref = iterator.next();
-
                 if (ref.get() != null && ref.get() == fetchListener){
                     iterator.remove();
                     fetchListener.onDetach(this);
@@ -749,61 +415,40 @@ public final class Fetch extends FetchCore {
         }
     }
 
-    @NonNull
     public synchronized void removeListeners() {
-        FetchHelper.throwIfDisposed(this);
-
         Iterator<WeakReference<FetchListener>> iterator = listeners.iterator();
         WeakReference<FetchListener> ref;
 
         while(iterator.hasNext()) {
             ref = iterator.next();
             iterator.remove();
-
             if (ref.get() != null) {
                 ref.get().onDetach(this);
             }
         }
     }
 
-    @NonNull
-    public String getName() {
-        return this.name;
-    }
-
-    @Override
-    public String toString() {
-        return getName();
-    }
-
-    @Override
-    public synchronized void dispose() {
-        if(!isDisposed) {
-            removeListeners();
-            executor.shutdown();
-            actionProcessor.clearQueue();
-            downloadManager.dispose();
-            databaseManager.dispose();
-            isDisposed = true;
-            pool.remove(getName());
+    public synchronized List<FetchListener> getListeners() {
+        List<FetchListener> listeners = new ArrayList<>();
+        for (WeakReference<FetchListener> listener : this.listeners) {
+            if (listener.get() != null) {
+                listeners.add(listener.get());
+            }
         }
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return isDisposed;
+        return listeners;
     }
 
     private DownloadListener getDownloadListener() {
         return new DownloadListener() {
+            private final Handler handler = new Handler(Looper.getMainLooper());
             @Override
             public void onComplete(final long id,final int progress,final long downloadedBytes,final long totalBytes) {
-                postOnMain(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if (ref.get() != null) {
-                                ref.get().onComplete(id,progress,downloadedBytes,totalBytes);
+                                ref.get().onComplete(id, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
@@ -812,12 +457,12 @@ public final class Fetch extends FetchCore {
 
             @Override
             public void onError(final long id,@NonNull final  Error error,final int progress,final long downloadedBytes,final long totalBytes) {
-                postOnMain(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if(ref.get() != null) {
-                                ref.get().onError(id,error,progress,downloadedBytes,totalBytes);
+                                ref.get().onError(id, error, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
@@ -826,12 +471,12 @@ public final class Fetch extends FetchCore {
 
             @Override
             public void onProgress(final long id,final int progress,final long downloadedBytes,final long totalBytes) {
-                postOnMain(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if(ref.get() != null) {
-                                ref.get().onProgress(id,progress,downloadedBytes,totalBytes);
+                                ref.get().onProgress(id, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
@@ -839,13 +484,13 @@ public final class Fetch extends FetchCore {
             }
 
             @Override
-            public void onPause(final long id,final int progress,final long downloadedBytes,final long totalBytes) {
-                postOnMain(new Runnable() {
+            public void onPaused(final long id, final int progress, final long downloadedBytes, final long totalBytes) {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if(ref.get() != null) {
-                                ref.get().onPause(id,progress,downloadedBytes,totalBytes);
+                                ref.get().onPaused(id, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
@@ -853,13 +498,13 @@ public final class Fetch extends FetchCore {
             }
 
             @Override
-            public void onCancelled(final long id,final int progress,final long downloadedBytes,final long totalBytes) {
-                postOnMain(new Runnable() {
+            public void onCancelled(final long id, final int progress, final long downloadedBytes, final long totalBytes) {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if(ref.get() != null) {
-                                ref.get().onCancelled(id,progress,downloadedBytes,totalBytes);
+                                ref.get().onCancelled(id, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }
@@ -867,13 +512,13 @@ public final class Fetch extends FetchCore {
             }
 
             @Override
-            public void onRemoved(final long id,final int progress,final long downloadedBytes,final long totalBytes) {
-                postOnMain(new Runnable() {
+            public void onRemoved(final long id, final int progress, final long downloadedBytes, final long totalBytes) {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         for (WeakReference<FetchListener> ref : listeners) {
                             if(ref.get() != null) {
-                                ref.get().onRemoved(id,progress,downloadedBytes,totalBytes);
+                                ref.get().onRemoved(id, progress, downloadedBytes, totalBytes);
                             }
                         }
                     }

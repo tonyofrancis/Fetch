@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2;
+package com.tonyodev.fetch2.callback;
 
 import android.support.annotation.Nullable;
 

@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2;
+package com.tonyodev.fetch2.util;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -8,11 +8,11 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 
-final class NetworkUtils {
+public final class NetworkUtils {
 
     private NetworkUtils() {}
 
-    static OkHttpClient okHttpClient() {
+    public static OkHttpClient okHttpClient() {
         return new OkHttpClient.Builder()
                 .followRedirects(true)
                 .followSslRedirects(true)
@@ -23,7 +23,7 @@ final class NetworkUtils {
                 .build();
     }
 
-    static boolean isNetworkAvailable(Context context) {
+    public static boolean isNetworkAvailable(Context context) {
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();

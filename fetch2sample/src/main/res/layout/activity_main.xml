@@ -49,6 +49,13 @@
             android:layout_marginBottom="20dp"
             android:layout_height="wrap_content" />
 
+        <Button
+            android:id="@+id/deleteAllButton"
+            android:text="@string/delete_all"
+            android:layout_width="match_parent"
+            android:layout_marginBottom="20dp"
+            android:layout_height="wrap_content" />
+
     </LinearLayout>
 
 </ScrollView>

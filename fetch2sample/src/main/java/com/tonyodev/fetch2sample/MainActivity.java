@@ -10,6 +10,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
+import com.tonyodev.fetch2.Fetch;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int STORAGE_PERMISSION_CODE = 50;
@@ -67,6 +69,14 @@ public class MainActivity extends AppCompatActivity {
 
                 Intent intent = new Intent(MainActivity.this,FragmentActivity.class);
                 MainActivity.this.startActivity(intent);
+            }
+        });
+
+        findViewById(R.id.deleteAllButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Fetch.getInstance().deleteAll();
+                Toast.makeText(MainActivity.this,R.string.downloaded_files_deleted,Toast.LENGTH_SHORT).show();
             }
         });
     }

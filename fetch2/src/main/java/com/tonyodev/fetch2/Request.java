@@ -4,10 +4,14 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.ArrayMap;
 
+import com.tonyodev.fetch2.util.Assert;
+
 import java.util.Map;
 
 
 public final class Request {
+
+    public static final String DEFAULT_GROUP_ID = "com.tonyodev.fetch2.default_group_id";
 
     private final long id;
     private final String url;
@@ -20,22 +24,18 @@ public final class Request {
     }
 
     public Request(@NonNull String url, @NonNull String absoluteFilePath,@Nullable Map<String,String> headers) {
-        if (url == null || url.isEmpty()) {
-            throw new IllegalArgumentException("Url cannot be null or empty");
-        }
-
-        if(absoluteFilePath == null || absoluteFilePath.isEmpty()) {
-            throw new IllegalArgumentException("AbsoluteFilePath cannot be null or empty");
-        }
+        Assert.urlIsNotNullOrEmpty(url);
+        Assert.validUriSchema(url);
+        Assert.filePathIsNotNull(absoluteFilePath);
 
         if(headers == null) {
             headers = new ArrayMap<>();
         }
 
+        this.groupId = DEFAULT_GROUP_ID;
         this.url = url;
         this.absoluteFilePath = absoluteFilePath;
         this.headers = headers;
-        this.groupId = "";
         this.id = generateId();
     }
 
@@ -55,16 +55,18 @@ public final class Request {
 
     @NonNull
     public Map<String,String> getHeaders() {
-        return headers;
+        Map<String,String> map = new ArrayMap<>(headers.size());
+        for (String key : headers.keySet()) {
+            map.put(key,headers.get(key));
+        }
+        return map;
     }
 
     public void putHeader(@NonNull String key, @Nullable String value) {
-        if (key == null) {
-            throw new IllegalArgumentException("Key cannot be null");
+        Assert.keyIsNotNullOrEmpty(key);
+        if(value == null) {
+            value = "";
         }
-
-        if(value == null) value = "";
-
         headers.put(key,value);
     }
 
@@ -74,10 +76,7 @@ public final class Request {
     }
 
     public void setGroupId(@NonNull String groupId) {
-
-        if (groupId == null) {
-            throw new IllegalArgumentException("groupId cannot be null");
-        }
+        Assert.groupIDIsNotNullOrEmpty(groupId);
         this.groupId = groupId;
     }
 
@@ -99,5 +98,21 @@ public final class Request {
     @Override
     public String toString() {
         return "{\"url\":\"" + url + "\",\"absolutePath\":" + absoluteFilePath +"\"}";
+    }
+
+    @Override
+    public int hashCode() {
+        return (int)id;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Request) {
+            Request request = (Request)obj;
+            if (id == request.getId()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

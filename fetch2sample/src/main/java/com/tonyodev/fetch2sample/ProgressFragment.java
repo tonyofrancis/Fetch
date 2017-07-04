@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2sample;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -11,8 +12,9 @@ import android.widget.TextView;
 
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.FetchListener;
-import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2.callback.Query;
+import com.tonyodev.fetch2.RequestData;
+import com.tonyodev.fetch2.listener.FetchListener;
 
 /**
  * Created by tonyofrancis on 1/31/17.
@@ -20,7 +22,7 @@ import com.tonyodev.fetch2.Request;
 
 public class ProgressFragment extends Fragment implements FetchListener {
 
-    private Request request;
+    private long requestId;
     private ProgressBar progressBar;
     private TextView progressTextView;
 
@@ -44,7 +46,6 @@ public class ProgressFragment extends Fragment implements FetchListener {
     @Override
     public void onResume() {
         super.onResume();
-        updateProgress(0);
     }
 
     private void updateProgress(int progress) {
@@ -53,12 +54,12 @@ public class ProgressFragment extends Fragment implements FetchListener {
         progressTextView.setText(getResources().getString(R.string.percent_progress,progress));
     }
 
-    public Request getRequest() {
-        return request;
+    public long getRequestId() {
+        return requestId;
     }
 
-    public void setRequest(Request request) {
-        this.request = request;
+    public void setRequest (long requestId) {
+        this.requestId = requestId;
     }
 
     @Override
@@ -67,30 +68,36 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     @Override
-    public void onAttach(Fetch fetch) {
+    public void onAttach(@NonNull Fetch fetch) {
+        fetch.query(requestId, new Query<RequestData>() {
+            @Override
+            public void onResult(@Nullable RequestData result) {
+                if (result != null) {
+                    updateProgress(result.getProgress());
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onDetach(@NonNull Fetch fetch) {
 
     }
 
     @Override
-    public void onDetach(Fetch fetch) {
-
-    }
-
-    @Override
-    public void onError(long id, Error reason, int progress, long downloadedBytes, long totalBytes) {
+    public void onError(long id, @NonNull Error reason, int progress, long downloadedBytes, long totalBytes) {
 
     }
 
     @Override
     public void onProgress(long id, int progress, long downloadedBytes, long totalBytes) {
-        if (id == getRequest().getId()) {
-
+        if (id == requestId) {
             updateProgress(progress);
         }
     }
 
     @Override
-    public void onPause(long id, int progress, long downloadedBytes, long totalBytes) {
+    public void onPaused(long id, int progress, long downloadedBytes, long totalBytes) {
 
     }
 

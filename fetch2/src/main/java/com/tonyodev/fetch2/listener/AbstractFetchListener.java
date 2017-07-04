@@ -1,6 +1,9 @@
-package com.tonyodev.fetch2;
+package com.tonyodev.fetch2.listener;
 
 import android.support.annotation.NonNull;
+
+import com.tonyodev.fetch2.Error;
+import com.tonyodev.fetch2.Fetch;
 
 public abstract class AbstractFetchListener implements FetchListener {
 
@@ -20,7 +23,7 @@ public abstract class AbstractFetchListener implements FetchListener {
     }
 
     @Override
-    public void onError(long id,@NonNull Error error, int progress, long downloadedBytes, long totalBytes) {
+    public void onError(long id, @NonNull Error error, int progress, long downloadedBytes, long totalBytes) {
 
     }
 
@@ -30,7 +33,7 @@ public abstract class AbstractFetchListener implements FetchListener {
     }
 
     @Override
-    public void onPause(long id, int progress, long downloadedBytes, long totalBytes) {
+    public void onPaused(long id, int progress, long downloadedBytes, long totalBytes) {
 
     }
 

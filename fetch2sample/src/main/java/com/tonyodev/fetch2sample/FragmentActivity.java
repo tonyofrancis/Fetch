@@ -1,16 +1,17 @@
 package com.tonyodev.fetch2sample;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
 
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.FetchListener;
+import com.tonyodev.fetch2.callback.Query;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2.listener.FetchListener;
 
 /**
  * Created by tonyofrancis on 1/31/17.
@@ -21,7 +22,6 @@ public class FragmentActivity extends AppCompatActivity {
     private Fetch fetch;
     private Request request;
 
-    private View rootView;
     private ProgressFragment progressFragment1;
     private ProgressFragment progressFragment2;
 
@@ -29,9 +29,8 @@ public class FragmentActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fragment_progress);
-        rootView = findViewById(R.id.rootView);
 
-        fetch = Fetch.getDefaultInstance(this);
+        fetch = Fetch.getInstance();
 
         FragmentManager fragmentManager = getSupportFragmentManager();
 
@@ -51,8 +50,6 @@ public class FragmentActivity extends AppCompatActivity {
             progressFragment2 = (ProgressFragment) fragmentManager.findFragmentById(R.id.fragment2);
         }
 
-
-        fetch.removeAll();
         enqueueDownload();
     }
 
@@ -62,11 +59,19 @@ public class FragmentActivity extends AppCompatActivity {
         String filePath = Data.getSaveDir() + "/fragments/smallFile.txt";
 
         request = new Request(url,filePath);
+        progressFragment1.setRequest(request.getId());
+        progressFragment2.setRequest(request.getId());
 
-        progressFragment1.setRequest(request);
-        progressFragment2.setRequest(request);
-
-        fetch.download(request);
+        fetch.contains(request.getId(), new Query<Boolean>() {
+            @Override
+            public void onResult(@Nullable Boolean result) {
+                if (result != null) {
+                    if (!result) {
+                        fetch.enqueue(request);
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -85,12 +90,6 @@ public class FragmentActivity extends AppCompatActivity {
         fetch.removeListener(fetchListener);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        fetch.dispose();
-    }
-
     private FetchListener fetchListener = new FetchListener() {
 
         @Override
@@ -99,17 +98,17 @@ public class FragmentActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onAttach(Fetch fetch) {
+        public void onAttach(@NonNull Fetch fetch) {
 
         }
 
         @Override
-        public void onDetach(Fetch fetch) {
+        public void onDetach(@NonNull Fetch fetch) {
 
         }
 
         @Override
-        public void onError(long id, Error reason, int progress, long downloadedBytes, long totalBytes) {
+        public void onError(long id, @NonNull Error reason, int progress, long downloadedBytes, long totalBytes) {
             if (id == request.getId()) {
                 Log.d("FragmentActivity",",error:" + reason.toString());
             }
@@ -123,7 +122,7 @@ public class FragmentActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onPause(long id, int progress, long downloadedBytes, long totalBytes) {
+        public void onPaused(long id, int progress, long downloadedBytes, long totalBytes) {
 
         }
 

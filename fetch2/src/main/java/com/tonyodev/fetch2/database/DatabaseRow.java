@@ -1,11 +1,13 @@
-package com.tonyodev.fetch2;
+package com.tonyodev.fetch2.database;
 
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
-import android.arch.persistence.room.TypeConverters;
 import android.support.v4.util.ArrayMap;
+
+import com.tonyodev.fetch2.Error;
+import com.tonyodev.fetch2.Status;
 
 import java.util.Map;
 
@@ -15,9 +17,9 @@ import java.util.Map;
  * Created by tonyofrancis on 6/14/17.
  */
 
-@TypeConverters({DatabaseConverters.class})
-@Entity(tableName = "requestInfos",indices = {@Index("url"),@Index("status"),@Index(value = "absoluteFilePath",unique = true)})
-public class RequestInfo {
+@android.arch.persistence.room.TypeConverters({TypeConverters.class})
+@Entity(tableName = "fetch",indices = {@Index("url"),@Index("status"),@Index(value = "absoluteFilePath",unique = true)})
+public class DatabaseRow {
     @PrimaryKey
     private long id;
     private String url;
@@ -29,13 +31,13 @@ public class RequestInfo {
     private Map<String,String> headers;
     private String groupId;
 
-    public RequestInfo() {
+    public DatabaseRow() {
     }
 
     @Ignore
-    public RequestInfo(long id, String url, String absoluteFilePath,
+    public DatabaseRow(long id, String url, String absoluteFilePath,
                        int status, long downloadedBytes, long totalBytes,
-                       int error, Map<String,String> headers,String groupId) {
+                       int error, Map<String,String> headers, String groupId) {
         this.id = id;
         this.url = url;
         this.absoluteFilePath = absoluteFilePath;
@@ -119,26 +121,17 @@ public class RequestInfo {
         this.groupId = groupId;
     }
 
-    @Ignore
-    RequestData toRequestData() {
-
-        return new RequestData(url,absoluteFilePath,status,error,downloadedBytes,totalBytes,headers,groupId);
-    }
-
-    @Ignore
-    static RequestInfo newInstance(long id, String url, String absoluteFilePath,String groupId) {
-
-        RequestInfo requestInfo = new RequestInfo();
-        requestInfo.setId(id);
-        requestInfo.setUrl(url);
-        requestInfo.setAbsoluteFilePath(absoluteFilePath);
-        requestInfo.setStatus(Status.QUEUED.getValue());
-        requestInfo.setTotalBytes(0L);
-        requestInfo.setDownloadedBytes(0L);
-        requestInfo.setError(Error.NONE.getValue());
-        requestInfo.setHeaders(new ArrayMap<String, String>());
-        requestInfo.setGroupId(groupId);
-
-        return requestInfo;
+    public static DatabaseRow newInstance(long id, String url, String absoluteFilePath, String groupId) {
+        DatabaseRow databaseRow = new DatabaseRow();
+        databaseRow.setId(id);
+        databaseRow.setUrl(url);
+        databaseRow.setAbsoluteFilePath(absoluteFilePath);
+        databaseRow.setStatus(Status.QUEUED.getValue());
+        databaseRow.setTotalBytes(0L);
+        databaseRow.setDownloadedBytes(0L);
+        databaseRow.setError(Error.NONE.getValue());
+        databaseRow.setHeaders(new ArrayMap<String, String>());
+        databaseRow.setGroupId(groupId);
+        return databaseRow;
     }
 }

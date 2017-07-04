@@ -1,11 +1,13 @@
-package com.tonyodev.fetch2;
+package com.tonyodev.fetch2.util;
 
 
-final class ErrorUtils {
+import com.tonyodev.fetch2.Error;
+
+public final class ErrorUtils {
 
     private ErrorUtils(){}
 
-    static Error getCode(String message) {
+    public static Error getCode(String message) {
         if (message == null) {
             return Error.UNKNOWN;
         }else if(message.equalsIgnoreCase("FNC") || message.equalsIgnoreCase("open failed: ENOENT (No such file or directory)")) {
@@ -16,7 +18,8 @@ final class ErrorUtils {
             return Error.DOWNLOAD_INTERRUPTED;
         } else if(message.equalsIgnoreCase("recvfrom failed: ETIMEDOUT (Connection timed out)") || message.equalsIgnoreCase("timeout")) {
             return Error.CONNECTION_TIMED_OUT;
-        }else if(message.equalsIgnoreCase("java.io.IOException: 404") || message.contains("No address associated getDefaultInstance hostname")) {
+        }else if(message.equalsIgnoreCase("java.io.IOException: 404") || message.contains("No address associated getDefaultInstance hostname") ||
+                message.contains("Failed to connect to")) {
             return Error.HTTP_NOT_FOUND;
         }else if(message.contains("Unable to resolve host")){
             return Error.UNKNOWN_HOST;
@@ -34,6 +37,9 @@ final class ErrorUtils {
         }
         else if(message.equalsIgnoreCase("invalid server response")){
             return Error.INVALID_SERVER_RESPONSE;
+        }
+        else if (message.equalsIgnoreCase("Request not found in the database")) {
+            return Error.REQUEST_NOT_FOUND_IN_DATABASE;
         }
         else {
             return Error.UNKNOWN;

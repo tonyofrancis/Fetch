@@ -59,7 +59,7 @@ public final class Data {
             String filePath = getSaveDir() + "/gameAssets/" + "asset_" + i + ".asset";
 
             Request request = new Request(url,filePath);
-
+            request.setGroupId("gameFiles");
             requests.add(request);
         }
 
