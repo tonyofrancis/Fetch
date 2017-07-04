@@ -69,7 +69,7 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void enqueue(List<Request> requests, final Callback callback) {
+    public void enqueue(final List<Request> requests, final Callback callback) {
         Error error = Error.NONE;
         try {
             insertAndQueue(requests, callback);
@@ -81,14 +81,14 @@ public final class FetchCore implements Fetchable {
         }
         if(error.getValue() != Error.NONE.getValue()) {
             final Error err = error;
-            for (final Request request : requests) {
-                mainHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onFailure(request, err);
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (Request request : requests) {
+                        callback.onFailure(request,err);
                     }
-                });
-            }
+                }
+            });
         }
     }
 
@@ -216,7 +216,7 @@ public final class FetchCore implements Fetchable {
         if (rows != null) {
             List<DatabaseRow> list = new ArrayList<>(ids.length);
             for (DatabaseRow row : rows) {
-                if (row!= null) {
+                if (row != null) {
                     list.add(row);
                 }
             }
@@ -238,8 +238,8 @@ public final class FetchCore implements Fetchable {
         if (list != null) {
             for (int i = 0; i < list.size(); i++) {
                 DatabaseRow databaseRow = list.get(i);
-                final long id = databaseRow.getId();
                 if (databaseRow != null && canCancel(Status.valueOf(databaseRow.getStatus()))) {
+                    final long id = databaseRow.getId();
                     downloadable.pause(databaseRow.getId());
                     database.setStatusAndError(id,Status.CANCELLED.getValue(),Error.NONE.getValue());
                     databaseRow = database.query(id);
@@ -278,8 +278,8 @@ public final class FetchCore implements Fetchable {
         if (list != null) {
             for (int i = 0; i < list.size(); i++) {
                 DatabaseRow databaseRow = list.get(i);
-                final long id = databaseRow.getId();
                 if (databaseRow != null) {
+                    final long id = databaseRow.getId();
                     downloadable.pause(databaseRow.getId());
                     databaseRow = database.query(id);
                     database.remove(id);
@@ -301,9 +301,7 @@ public final class FetchCore implements Fetchable {
                 }
             }
             remove(list);
-            for (DatabaseRow row : list) {
-                deleteFile(row.getAbsoluteFilePath());
-            }
+            deleteRowFiles(list);
         }
     }
 
@@ -312,9 +310,7 @@ public final class FetchCore implements Fetchable {
         List<DatabaseRow> list = database.queryByGroupId(groupId);
         if (list != null) {
             remove(list);
-            for (DatabaseRow databaseRow : list) {
-                deleteFile(databaseRow.getAbsoluteFilePath());
-            }
+            deleteRowFiles(list);
         }
     }
 
@@ -323,8 +319,15 @@ public final class FetchCore implements Fetchable {
         List<DatabaseRow> list = database.query();
         if (list != null) {
             remove(list);
-            for (DatabaseRow databaseRow : list) {
-                deleteFile(databaseRow.getAbsoluteFilePath());
+            deleteRowFiles(list);
+        }
+    }
+
+    private void deleteRowFiles(List<DatabaseRow> list) {
+        for (DatabaseRow databaseRow : list) {
+            File file = new File(databaseRow.getAbsoluteFilePath());
+            if (file.exists()) {
+                file.delete();
             }
         }
     }
@@ -435,12 +438,5 @@ public final class FetchCore implements Fetchable {
                 return true;
         }
         return false;
-    }
-
-    private void deleteFile(String file) {
-        File file1 = new File(file);
-        if (file1.exists()) {
-            file1.delete();
-        }
     }
 }
