@@ -41,11 +41,6 @@ public final class DownloadManager implements Downloadable {
     }
 
     @Override
-    public void cancel(long id) {
-        interrupt(id);
-    }
-
-    @Override
     public void remove(long id) {
         interrupt(id);
     }

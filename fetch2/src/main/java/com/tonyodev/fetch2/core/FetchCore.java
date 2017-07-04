@@ -51,45 +51,16 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void enqueue(Request request) {
-        insertAndQueue(request,null);
+        List<Request> requests = new ArrayList<>(1);
+        requests.add(request);
+        enqueue(requests);
     }
 
     @Override
     public void enqueue(final Request request, final Callback callback) {
-        Error error = Error.NONE;
-        try {
-            insertAndQueue(request,callback);
-        }catch (DatabaseException e) {
-            error = Error.REQUEST_NOT_FOUND_IN_DATABASE;
-        }
-        catch (SQLiteConstraintException e) {
-            error = Error.REQUEST_ALREADY_EXIST;
-        }
-        if(error.getValue() != Error.NONE.getValue()) {
-            final Error err = error;
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onFailure(request,err);
-                }
-            });
-        }
-    }
-
-    private void insertAndQueue(final Request request, final Callback callback) {
-        long id = request.getId();
-        final DatabaseRow row = DatabaseRow.newInstance(request.getId(),request.getUrl(),request.getAbsoluteFilePath(),request.getGroupId());
-        database.insert(row);
-
-        if (callback != null) {
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onQueued(request);
-                }
-            });
-        }
-        downloadable.resume(id);
+        List<Request> requests = new ArrayList<>(1);
+        requests.add(request);
+        enqueue(requests,callback);
     }
 
     @Override
@@ -308,7 +279,7 @@ public final class FetchCore implements Fetchable {
             for (int i = 0; i < list.size(); i++) {
                 DatabaseRow databaseRow = list.get(i);
                 final long id = databaseRow.getId();
-                if (databaseRow!= null) {
+                if (databaseRow != null) {
                     downloadable.pause(databaseRow.getId());
                     databaseRow = database.query(id);
                     database.remove(id);

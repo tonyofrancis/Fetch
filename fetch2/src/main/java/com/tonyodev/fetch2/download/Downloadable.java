@@ -8,6 +8,5 @@ public interface Downloadable {
     void pause(long id);
     void resume(long id);
     void retry(long id);
-    void cancel(long id);
     void remove(long id);
 }
