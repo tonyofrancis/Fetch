@@ -28,17 +28,17 @@ import okhttp3.OkHttpClient;
 
 public final class Fetch implements Fetchable {
 
-    private static Fetch fetch;
+    private static volatile Fetch fetch;
 
     private final FetchCore fetchCore;
     private final Set<WeakReference<FetchListener>> listeners;
     private final RunnableProcessor runnableProcessor;
 
-    public static void init(@NonNull Context context) {
+    public synchronized static void init(@NonNull Context context) {
         init(context, NetworkUtils.okHttpClient());
     }
 
-    public static void init(@NonNull Context context, @NonNull OkHttpClient client) {
+    public synchronized static void init(@NonNull Context context, @NonNull OkHttpClient client) {
         Assert.contextNotNull(context);
         Assert.clientIsNotNull(client);
         if (fetch != null) {
