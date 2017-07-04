@@ -148,11 +148,15 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void pause(long id) {
-        DatabaseRow databaseRow = database.query(id);
-        if (databaseRow != null) {
-            List<DatabaseRow> list = new ArrayList<>(1);
-            list.add(databaseRow);
+    public void pause(long... ids) {
+        List<DatabaseRow> rows = database.query(ids);
+        if (rows != null) {
+            List<DatabaseRow> list = new ArrayList<>(ids.length);
+            for (DatabaseRow row : rows) {
+                if (row != null) {
+                    list.add(row);
+                }
+            }
             pause(list);
         }
     }
@@ -184,11 +188,15 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void resume(long id) {
-        DatabaseRow databaseRow = database.query(id);
-        if (databaseRow != null) {
-            List<DatabaseRow> list = new ArrayList<>(1);
-            list.add(databaseRow);
+    public void resume(long... ids) {
+        List<DatabaseRow> rows = database.query(ids);
+        if (rows != null) {
+            List<DatabaseRow> list = new ArrayList<>(ids.length);
+            for (DatabaseRow row : rows) {
+                if (row != null) {
+                    list.add(row);
+                }
+            }
             resume(list);
         }
     }
@@ -217,8 +225,8 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void retry(long id) {
-        resume(id);
+    public void retry(long... ids) {
+        resume(ids);
     }
 
     @Override
@@ -232,11 +240,15 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void cancel(long id) {
-        DatabaseRow databaseRow = database.query(id);
-        if (databaseRow != null) {
-            List<DatabaseRow> list = new ArrayList<>(1);
-            list.add(databaseRow);
+    public void cancel(long... ids) {
+        List<DatabaseRow> rows= database.query(ids);
+        if (rows != null) {
+            List<DatabaseRow> list = new ArrayList<>(ids.length);
+            for (DatabaseRow row : rows) {
+                if (row!= null) {
+                    list.add(row);
+                }
+            }
             cancel(list);
         }
     }
@@ -268,11 +280,15 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void remove(long id) {
-        DatabaseRow databaseRow = database.query(id);
-        if (databaseRow != null) {
-            List<DatabaseRow> list = new ArrayList<>(1);
-            list.add(databaseRow);
+    public void remove(long... ids) {
+        List<DatabaseRow> rows = database.query(ids);
+        if (rows != null) {
+            List<DatabaseRow> list = new ArrayList<>(ids.length);
+            for (DatabaseRow row : rows) {
+                if (row != null) {
+                    list.add(row);
+                }
+            }
             remove(list);
         }
     }
@@ -304,13 +320,19 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void delete(long id) {
-        DatabaseRow databaseRow = database.query(id);
-        if (databaseRow != null) {
-            List<DatabaseRow> list = new ArrayList<>(1);
-            list.add(databaseRow);
+    public void delete(long... ids) {
+        List<DatabaseRow> rows = database.query(ids);
+        if (rows != null) {
+            List<DatabaseRow> list = new ArrayList<>(ids.length);
+            for (DatabaseRow row : rows) {
+                if (row != null) {
+                    list.add(row);
+                }
+            }
             remove(list);
-            deleteFile(databaseRow.getAbsoluteFilePath());
+            for (DatabaseRow row : list) {
+                deleteFile(row.getAbsoluteFilePath());
+            }
         }
     }
 

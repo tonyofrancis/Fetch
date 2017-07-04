@@ -19,22 +19,22 @@ public interface Fetchable {
     void enqueue(Request request,Callback callback);
     void enqueue(List<Request> requests);
     void enqueue(List<Request> requests, Callback callback);
-    void pause(long id);
+    void pause(long... ids);
     void pauseGroup(String id);
     void pauseAll();
-    void resume(long id);
+    void resume(long... ids);
     void resumeGroup(String id);
     void resumeAll();
-    void retry(long id);
+    void retry(long... ids);
     void retryGroup(String id);
     void retryAll();
-    void cancel(long id);
+    void cancel(long... ids);
     void cancelGroup(String id);
     void cancelAll();
-    void remove(long id);
+    void remove(long... ids);
     void removeGroup(String id);
     void removeAll();
-    void delete(long id);
+    void delete(long... ids);
     void deleteGroup(String id);
     void deleteAll();
 

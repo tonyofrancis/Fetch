@@ -53,7 +53,7 @@ public final class Fetch implements Fetchable {
 
     @NonNull
     public static Fetch getInstance() {
-        if (fetch == null) {
+        if (!isInitialized()) {
             throw new RuntimeException("Fetch was not initialized.");
         }
         return fetch;
@@ -112,11 +112,11 @@ public final class Fetch implements Fetchable {
     }
 
     @Override
-    public void pause(final long id) {
+    public void pause(final long... ids) {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.pause(id);
+                fetchCore.pause(ids);
             }
         });
     }
@@ -143,11 +143,11 @@ public final class Fetch implements Fetchable {
     }
 
     @Override
-    public void resume(final long id) {
+    public void resume(final long... ids) {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.resume(id);
+                fetchCore.resume(ids);
             }
         });
     }
@@ -174,11 +174,11 @@ public final class Fetch implements Fetchable {
     }
 
     @Override
-    public void retry(final long id) {
+    public void retry(final long... ids) {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.retry(id);
+                fetchCore.retry(ids);
             }
         });
     }
@@ -205,11 +205,11 @@ public final class Fetch implements Fetchable {
     }
 
     @Override
-    public void cancel(final long id) {
+    public void cancel(final long... ids) {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.cancel(id);
+                fetchCore.cancel(ids);
             }
         });
     }
@@ -236,11 +236,11 @@ public final class Fetch implements Fetchable {
     }
 
     @Override
-    public void remove(final long id) {
+    public void remove(final long... ids) {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.remove(id);
+                fetchCore.remove(ids);
             }
         });
     }
@@ -267,11 +267,11 @@ public final class Fetch implements Fetchable {
     }
 
     @Override
-    public void delete(final long id) {
+    public void delete(final long... ids) {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.delete(id);
+                fetchCore.delete(ids);
             }
         });
     }
