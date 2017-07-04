@@ -1,6 +1,10 @@
 package com.tonyodev.fetch2.database;
 
+import com.tonyodev.fetch2.Error;
+import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.RequestData;
+import com.tonyodev.fetch2.Status;
+import com.tonyodev.fetch2.util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,19 +18,25 @@ public final class DatabaseRowConverter {
     private DatabaseRowConverter() {}
 
     public static RequestData toRequestData(DatabaseRow row) {
-        RequestData requestData  = null;
+        RequestData requestData = null;
         if (row != null) {
-            requestData = new RequestData(row.getUrl(),row.getAbsoluteFilePath(),row.getStatus()
-                    ,row.getError(),row.getDownloadedBytes(),row.getTotalBytes(),
-                    row.getHeaders(),row.getGroupId());
+            Request request = new Request(row.getUrl(),row.getAbsoluteFilePath(),row.getHeaders());
+            request.setGroupId(row.getGroupId());
+            int progress = Utils.calculateProgress(row.getDownloadedBytes(),row.getTotalBytes());
+
+            requestData = new RequestData(request,Status.valueOf(row.getStatus()),Error.valueOf(row.getError()),
+                    row.getDownloadedBytes(),row.getTotalBytes(),progress);
         }
         return requestData;
     }
 
     public static List<RequestData> toRequestDataList(List<DatabaseRow> rows) {
-        List<RequestData> list = new ArrayList<>(rows.size());
+        List<RequestData> list = new ArrayList<>();
         for (DatabaseRow row : rows) {
-            list.add(toRequestData(row));
+            RequestData requestData = toRequestData(row);
+            if (requestData != null) {
+                list.add(requestData);
+            }
         }
         return list;
     }

@@ -2,6 +2,8 @@ package com.tonyodev.fetch2;
 
 import android.support.test.runner.AndroidJUnit4;
 
+import com.tonyodev.fetch2.util.Utils;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,8 +25,10 @@ public class RequestDataTest {
 
     @Before
     public void setUp() throws Exception {
-        requestData = new RequestData(TEST_URL,TEST_FILE_PATH,Status.QUEUED.getValue(),
-                Error.NONE.getValue(),0L,0L,new HashMap<String, String>(),TEST_GROUP_ID);
+        Request request = new Request(TEST_URL,TEST_FILE_PATH,new HashMap<String, String>());
+        request.setGroupId(TEST_GROUP_ID);
+        int progress = Utils.calculateProgress(0L,0L);
+        requestData = new RequestData(request,Status.QUEUED,Error.NONE,0L,0L,progress);
     }
 
     @Test

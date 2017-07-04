@@ -3,8 +3,8 @@ package com.tonyodev.fetch2.util;
 import android.content.Context;
 import android.net.Uri;
 
-import com.tonyodev.fetch2.Callback;
-import com.tonyodev.fetch2.Query;
+import com.tonyodev.fetch2.callback.Callback;
+import com.tonyodev.fetch2.callback.Query;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.Status;
 
@@ -23,10 +23,10 @@ public final class Assert {
         }
     }
 
-    public static void groupIDIsNotNull(String groupId) {
+    public static void groupIDIsNotNullOrEmpty(String groupId) {
 
-        if (groupId == null) {
-            throw new IllegalArgumentException("groupId cannot be null");
+        if (groupId == null || groupId.isEmpty()) {
+            throw new IllegalArgumentException("groupId cannot be null or Empty");
         }
     }
 

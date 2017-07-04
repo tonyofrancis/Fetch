@@ -12,7 +12,7 @@ import android.widget.TextView;
 
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.Query;
+import com.tonyodev.fetch2.callback.Query;
 import com.tonyodev.fetch2.RequestData;
 import com.tonyodev.fetch2.listener.FetchListener;
 

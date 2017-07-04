@@ -6,6 +6,8 @@ import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.tonyodev.fetch2.callback.Callback;
+import com.tonyodev.fetch2.callback.Query;
 import com.tonyodev.fetch2.core.FetchCore;
 import com.tonyodev.fetch2.download.DownloadListener;
 import com.tonyodev.fetch2.util.NetworkUtils;

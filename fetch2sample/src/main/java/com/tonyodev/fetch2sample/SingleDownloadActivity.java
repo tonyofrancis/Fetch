@@ -9,10 +9,10 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.tonyodev.fetch2.Callback;
+import com.tonyodev.fetch2.callback.Callback;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.Query;
+import com.tonyodev.fetch2.callback.Query;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.RequestData;
 import com.tonyodev.fetch2.listener.AbstractFetchListener;

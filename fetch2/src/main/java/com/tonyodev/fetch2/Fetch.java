@@ -4,12 +4,14 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.util.ArraySet;
 
+import com.tonyodev.fetch2.callback.Callback;
+import com.tonyodev.fetch2.callback.Query;
 import com.tonyodev.fetch2.core.ExecutorRunnableProcessor;
 import com.tonyodev.fetch2.core.FetchCore;
 import com.tonyodev.fetch2.core.Fetchable;
+import com.tonyodev.fetch2.core.RunnableProcessor;
 import com.tonyodev.fetch2.download.DownloadListener;
 import com.tonyodev.fetch2.listener.FetchListener;
 import com.tonyodev.fetch2.util.Assert;
@@ -30,8 +32,7 @@ public final class Fetch implements Fetchable {
 
     private final FetchCore fetchCore;
     private final Set<WeakReference<FetchListener>> listeners;
-    private final ExecutorRunnableProcessor runnableProcessor;
-    private final Handler handler;
+    private final RunnableProcessor runnableProcessor;
 
     public static void init(@NonNull Context context) {
         init(context, NetworkUtils.okHttpClient());
@@ -61,7 +62,6 @@ public final class Fetch implements Fetchable {
     private Fetch(Context context, OkHttpClient okHttpClient) {
         this.listeners = new ArraySet<>();
         this.runnableProcessor = new ExecutorRunnableProcessor();
-        this.handler = new Handler(Looper.getMainLooper());
         this.fetchCore = new FetchCore(context, okHttpClient, getDownloadListener());
     }
 
@@ -83,26 +83,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.enqueue(request, new Callback() {
-                    @Override
-                    public void onQueued(final @NonNull Request request) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onQueued(request);
-                            }
-                        });
-                    }
-                    @Override
-                    public void onFailure(final @NonNull Request request, final @NonNull Error error) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onFailure(request, error);
-                            }
-                        });
-                    }
-                });
+                fetchCore.enqueue(request, callback);
             }
         });
     }
@@ -125,26 +106,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.enqueue(requests, new Callback() {
-                    @Override
-                    public void onQueued(final @NonNull Request request) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onQueued(request);
-                            }
-                        });
-                    }
-                    @Override
-                    public void onFailure(final @NonNull Request request, final @NonNull Error error) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onFailure(request, error);
-                            }
-                        });
-                    }
-                });
+                fetchCore.enqueue(requests, callback);
             }
         });
     }
@@ -161,7 +123,7 @@ public final class Fetch implements Fetchable {
 
     @Override
     public void pauseGroup(final @NonNull String id) {
-        Assert.groupIDIsNotNull(id);
+        Assert.groupIDIsNotNullOrEmpty(id);
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
@@ -192,7 +154,7 @@ public final class Fetch implements Fetchable {
 
     @Override
     public void resumeGroup(final @NonNull String id) {
-        Assert.groupIDIsNotNull(id);
+        Assert.groupIDIsNotNullOrEmpty(id);
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
@@ -223,7 +185,7 @@ public final class Fetch implements Fetchable {
 
     @Override
     public void retryGroup(final @NonNull String id) {
-        Assert.groupIDIsNotNull(id);
+        Assert.groupIDIsNotNullOrEmpty(id);
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
@@ -254,7 +216,7 @@ public final class Fetch implements Fetchable {
 
     @Override
     public void cancelGroup(final @NonNull String id) {
-        Assert.groupIDIsNotNull(id);
+        Assert.groupIDIsNotNullOrEmpty(id);
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
@@ -285,7 +247,7 @@ public final class Fetch implements Fetchable {
 
     @Override
     public void removeGroup(final @NonNull String id) {
-        Assert.groupIDIsNotNull(id);
+        Assert.groupIDIsNotNullOrEmpty(id);
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
@@ -316,7 +278,7 @@ public final class Fetch implements Fetchable {
 
     @Override
     public void deleteGroup(final @NonNull String id) {
-        Assert.groupIDIsNotNull(id);
+        Assert.groupIDIsNotNullOrEmpty(id);
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
@@ -341,17 +303,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.query(id, new Query<RequestData>() {
-                    @Override
-                    public void onResult(final @Nullable RequestData result) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(result);
-                            }
-                        });
-                    }
-                });
+                fetchCore.query(id,query);
             }
         });
     }
@@ -363,17 +315,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.query(ids, new Query<List<RequestData>>() {
-                    @Override
-                    public void onResult(final @Nullable List<RequestData> result) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(result);
-                            }
-                        });
-                    }
-                });
+                fetchCore.query(ids,query);
             }
         });
     }
@@ -384,17 +326,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.queryAll(new Query<List<RequestData>>() {
-                    @Override
-                    public void onResult(final @Nullable List<RequestData> result) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(result);
-                            }
-                        });
-                    }
-                });
+                fetchCore.queryAll(query);
             }
         });
     }
@@ -406,17 +338,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.queryByStatus(status, new Query<List<RequestData>>() {
-                    @Override
-                    public void onResult(final @Nullable List<RequestData> result) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(result);
-                            }
-                        });
-                    }
-                });
+                fetchCore.queryByStatus(status,query);
             }
         });
     }
@@ -424,44 +346,24 @@ public final class Fetch implements Fetchable {
     @Override
     public void queryByGroupId(final @NonNull String groupId, final @NonNull Query<List<RequestData>> query) {
         Assert.queryIsNotNull(query);
-        Assert.groupIDIsNotNull(groupId);
+        Assert.groupIDIsNotNullOrEmpty(groupId);
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.queryByGroupId(groupId, new Query<List<RequestData>>() {
-                    @Override
-                    public void onResult(final @Nullable List<RequestData> result) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(result);
-                            }
-                        });
-                    }
-                });
+                fetchCore.queryByGroupId(groupId,query);
             }
         });
     }
 
     @Override
     public void queryGroupByStatusId(final @NonNull String groupId, final @NonNull Status status, final @NonNull Query<List<RequestData>> query) {
-        Assert.groupIDIsNotNull(groupId);
+        Assert.groupIDIsNotNullOrEmpty(groupId);
         Assert.statusIsNotNull(status);
         Assert.queryIsNotNull(query);
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.queryGroupByStatusId(groupId, status, new Query<List<RequestData>>() {
-                    @Override
-                    public void onResult(final @Nullable List<RequestData> result) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(result);
-                            }
-                        });
-                    }
-                });
+                fetchCore.queryGroupByStatusId(groupId, status, query);
             }
         });
     }
@@ -472,17 +374,7 @@ public final class Fetch implements Fetchable {
         runnableProcessor.queue(new Runnable() {
             @Override
             public void run() {
-                fetchCore.contains(id, new Query<Boolean>() {
-                    @Override
-                    public void onResult(final @Nullable Boolean result) {
-                        postOnMain(new Runnable() {
-                            @Override
-                            public void run() {
-                                query.onResult(result);
-                            }
-                        });
-                    }
-                });
+                fetchCore.contains(id, query);
             }
         });
     }
@@ -500,7 +392,6 @@ public final class Fetch implements Fetchable {
 
         while (iterator.hasNext()) {
             ref = iterator.next();
-
             if (ref.get() != null && ref.get() == fetchListener){
                 return true;
             }
@@ -515,7 +406,6 @@ public final class Fetch implements Fetchable {
 
             while (iterator.hasNext()) {
                 ref = iterator.next();
-
                 if (ref.get() != null && ref.get() == fetchListener){
                     iterator.remove();
                     fetchListener.onDetach(this);
@@ -532,7 +422,6 @@ public final class Fetch implements Fetchable {
         while(iterator.hasNext()) {
             ref = iterator.next();
             iterator.remove();
-
             if (ref.get() != null) {
                 ref.get().onDetach(this);
             }
@@ -541,7 +430,6 @@ public final class Fetch implements Fetchable {
 
     public synchronized List<FetchListener> getListeners() {
         List<FetchListener> listeners = new ArrayList<>();
-
         for (WeakReference<FetchListener> listener : this.listeners) {
             if (listener.get() != null) {
                 listeners.add(listener.get());
@@ -552,6 +440,7 @@ public final class Fetch implements Fetchable {
 
     private DownloadListener getDownloadListener() {
         return new DownloadListener() {
+            private final Handler handler = new Handler(Looper.getMainLooper());
             @Override
             public void onComplete(final long id,final int progress,final long downloadedBytes,final long totalBytes) {
                 handler.post(new Runnable() {
@@ -636,9 +525,5 @@ public final class Fetch implements Fetchable {
                 });
             }
         };
-    }
-
-    private void postOnMain(Runnable runnable) {
-        handler.post(runnable);
     }
 }

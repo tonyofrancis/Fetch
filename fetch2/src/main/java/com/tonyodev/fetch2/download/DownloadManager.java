@@ -1,8 +1,9 @@
 package com.tonyodev.fetch2.download;
 
 import android.content.Context;
+import android.support.v4.util.Pair;
 
-import com.tonyodev.fetch2.database.DatabaseManager;
+import com.tonyodev.fetch2.database.Database;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,14 +13,14 @@ public final class DownloadManager implements Downloadable {
 
     private final Context context;
     private final OkHttpClient okHttpClient;
-    private final DatabaseManager databaseManager;
+    private final Database database;
     private final DownloadListener downloadListener;
-    private final ConcurrentHashMap<Long,ThreadRunnablePair> downloadsMap;
+    private final ConcurrentHashMap<Long,Pair<Thread,Runnable>> downloadsMap;
 
-    public DownloadManager(Context context, OkHttpClient client, DownloadListener downloadListener, DatabaseManager databaseManager ) {
+    public DownloadManager(Context context, OkHttpClient client, DownloadListener downloadListener, Database database) {
         this.context = context;
         this.okHttpClient = client;
-        this.databaseManager = databaseManager;
+        this.database = database;
         this.downloadListener = downloadListener;
         this.downloadsMap = new ConcurrentHashMap<>();
     }
@@ -49,15 +50,14 @@ public final class DownloadManager implements Downloadable {
         interrupt(id);
     }
 
-    private void interrupt(long id) {
+    private synchronized void interrupt(long id) {
         if(downloadsMap.containsKey(id)) {
-            ThreadRunnablePair threadRunnablePair = downloadsMap.get(id);
+            Pair<Thread,Runnable> threadRunnablePair = downloadsMap.get(id);
 
             if (threadRunnablePair != null) {
-                threadRunnablePair.downloadRunnable.interrupt();
-
+                ((DownloadRunnable)threadRunnablePair.second).interrupt();
                 try {
-                    threadRunnablePair.thread.join(100);
+                    threadRunnablePair.first.join(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }finally {
@@ -71,10 +71,10 @@ public final class DownloadManager implements Downloadable {
         if(downloadsMap.containsKey(id)) {
             return;
         }
-        DownloadRunnable downloadRunnable = new DownloadRunnable(id,okHttpClient,databaseManager,downloadListener,context);
+        Runnable downloadRunnable = new DownloadRunnable(id,context,okHttpClient,database,downloadListener);
         Thread thread = new Thread(downloadRunnable);
-        ThreadRunnablePair ThreadRunnablePair = new ThreadRunnablePair(thread, downloadRunnable);
-        downloadsMap.put(id, ThreadRunnablePair);
+        Pair<Thread,Runnable> threadRunnablePair = Pair.create(thread,downloadRunnable);
+        downloadsMap.put(id, threadRunnablePair);
         thread.start();
     }
 }

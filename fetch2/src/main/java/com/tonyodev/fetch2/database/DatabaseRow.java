@@ -122,7 +122,6 @@ public class DatabaseRow {
     }
 
     public static DatabaseRow newInstance(long id, String url, String absoluteFilePath, String groupId) {
-
         DatabaseRow databaseRow = new DatabaseRow();
         databaseRow.setId(id);
         databaseRow.setUrl(url);
@@ -133,7 +132,6 @@ public class DatabaseRow {
         databaseRow.setError(Error.NONE.getValue());
         databaseRow.setHeaders(new ArrayMap<String, String>());
         databaseRow.setGroupId(groupId);
-
         return databaseRow;
     }
 }

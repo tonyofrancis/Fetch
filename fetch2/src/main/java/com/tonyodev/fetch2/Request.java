@@ -11,7 +11,7 @@ import java.util.Map;
 
 public final class Request {
 
-    public static final String DEFAULT_GROUP_ID = "fetch_group";
+    public static final String DEFAULT_GROUP_ID = "com.tonyodev.fetch2.default_group_id";
 
     private final long id;
     private final String url;
@@ -55,16 +55,18 @@ public final class Request {
 
     @NonNull
     public Map<String,String> getHeaders() {
-        return headers;
+        Map<String,String> map = new ArrayMap<>(headers.size());
+        for (String key : headers.keySet()) {
+            map.put(key,headers.get(key));
+        }
+        return map;
     }
 
     public void putHeader(@NonNull String key, @Nullable String value) {
         Assert.keyIsNotNullOrEmpty(key);
-
         if(value == null) {
             value = "";
         }
-
         headers.put(key,value);
     }
 
@@ -74,7 +76,7 @@ public final class Request {
     }
 
     public void setGroupId(@NonNull String groupId) {
-        Assert.groupIDIsNotNull(groupId);
+        Assert.groupIDIsNotNullOrEmpty(groupId);
         this.groupId = groupId;
     }
 
@@ -111,7 +113,6 @@ public final class Request {
                 return true;
             }
         }
-
         return false;
     }
 }

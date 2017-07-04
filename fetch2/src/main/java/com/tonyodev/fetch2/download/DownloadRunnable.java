@@ -6,9 +6,7 @@ import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Status;
 import com.tonyodev.fetch2.database.Database;
 import com.tonyodev.fetch2.database.DatabaseException;
-import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.DatabaseRow;
-import com.tonyodev.fetch2.database.Transaction;
 import com.tonyodev.fetch2.util.ErrorUtils;
 import com.tonyodev.fetch2.util.NetworkUtils;
 import com.tonyodev.fetch2.util.Utils;
@@ -20,7 +18,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -35,7 +32,7 @@ public final class DownloadRunnable implements Runnable, Closeable {
 
     private final long requestId;
     private final OkHttpClient okHttpClient;
-    private final DatabaseManager databaseManager;
+    private final Database database;
     private final DownloadListener downloadListener;
     private final Context context;
 
@@ -49,21 +46,17 @@ public final class DownloadRunnable implements Runnable, Closeable {
     private long downloadedBytes = 0L;
     private long totalBytes = 0L;
     private int progress = 0;
-    private volatile boolean isInterrupted;
+    private volatile boolean isInterrupted = false;
 
-    public DownloadRunnable(long requestId, OkHttpClient okHttpClient, DatabaseManager databaseManager, DownloadListener downloadListener,Context context) {
+    public DownloadRunnable(long requestId, Context context, OkHttpClient okHttpClient, Database database, DownloadListener downloadListener) {
         this.requestId = requestId;
-        this.isInterrupted = false;
-        this.okHttpClient = okHttpClient;
-        this.databaseManager = databaseManager;
-        this.downloadListener = downloadListener;
         this.context = context;
+        this.okHttpClient = okHttpClient;
+        this.database = database;
+        this.downloadListener = downloadListener;
     }
 
-    public synchronized void interrupt() {
-        if(isInterrupted) {
-            return;
-        }
+    public void interrupt() {
         isInterrupted = true;
     }
 
@@ -76,10 +69,10 @@ public final class DownloadRunnable implements Runnable, Closeable {
         //Rename thread for debugging
         final Thread thread = Thread.currentThread();
         final String oldThreadName = thread.getName();
-        thread.setName("DownloadRunnable -"+ url);
 
         try {
             init();
+            thread.setName("DownloadRunnable -"+ url);
             if (!isInterrupted) {
                 executeRequest();
                 if(response.isSuccessful() && body != null && !isInterrupted) {
@@ -112,59 +105,33 @@ public final class DownloadRunnable implements Runnable, Closeable {
     }
 
     private void init() throws IOException, DatabaseException {
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                DatabaseRow row = database.query(requestId);
-                if (row == null) {
-                    throw new DatabaseException("Request not found in the database");
-                }
-
-                url = row.getUrl();
-                filePath = row.getAbsoluteFilePath();
-                totalBytes = row.getTotalBytes();
-                headers = row.getHeaders();
-            }
-        });
+        DatabaseRow row = database.query(requestId);
+        if (row == null) {
+            throw new DatabaseException("Request not found in the database");
+        }
+        url = row.getUrl();
+        filePath = row.getAbsoluteFilePath();
+        totalBytes = row.getTotalBytes();
+        headers = row.getHeaders();
         File file = Utils.createFileOrThrow(filePath);
         downloadedBytes = file.length();
         progress = Utils.calculateProgress(downloadedBytes, totalBytes);
     }
 
     private void updateDatabase() {
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.setDownloadedBytesAndTotalBytes(requestId, downloadedBytes, totalBytes);
-            }
-        });
+        database.setDownloadedBytesAndTotalBytes(requestId, downloadedBytes, totalBytes);
     }
 
     private void updateDatabaseWithCompleteStatus() {
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.setStatusAndError(requestId, Status.COMPLETED.getValue(),Error.NONE.getValue());
-            }
-        });
+        database.setStatusAndError(requestId, Status.COMPLETED.getValue(),Error.NONE.getValue());
     }
 
     private void updateDatabaseWithDownloadingStatus() {
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.setStatusAndError(requestId,Status.DOWNLOADING.getValue(),Error.NONE.getValue());
-            }
-        });
+        database.setStatusAndError(requestId,Status.DOWNLOADING.getValue(),Error.NONE.getValue());
     }
 
     private void updateDatabaseBaseWithDownloadedBytes() {
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.updateDownloadedBytes(requestId, downloadedBytes);
-            }
-        });
+        database.updateDownloadedBytes(requestId, downloadedBytes);
     }
 
     private void postProgress() {
@@ -182,10 +149,6 @@ public final class DownloadRunnable implements Runnable, Closeable {
         body = response.body();
     }
 
-    private void setTotalBytesFromContentLength() {
-        totalBytes = downloadedBytes + Long.valueOf(response.header("Content-Length"));
-    }
-
     private okhttp3.Request getHttpRequest() {
         okhttp3.Request.Builder builder = new okhttp3.Request.Builder().url(url);
 
@@ -197,8 +160,8 @@ public final class DownloadRunnable implements Runnable, Closeable {
         return builder.build();
     }
 
-    private boolean hasTwoSecondsPassed(long startTime, long stopTime) {
-        return TimeUnit.NANOSECONDS.toSeconds(stopTime - startTime) >= 2;
+    private void setTotalBytesFromContentLength() {
+        totalBytes = downloadedBytes + Long.valueOf(response.header("Content-Length"));
     }
 
     private void writeToFile() throws IOException {
@@ -213,19 +176,12 @@ public final class DownloadRunnable implements Runnable, Closeable {
 
         byte[] buffer = new byte[1024];
         int read;
-        long startTime;
-        long stopTime;
 
-        startTime = System.nanoTime();
         while ((read = input.read(buffer, 0, 1024)) != -1 && !isInterrupted) {
             output.write(buffer, 0, read);
             downloadedBytes += read;
             updateDatabaseBaseWithDownloadedBytes();
-            stopTime = System.nanoTime();
-            if (hasTwoSecondsPassed(startTime, stopTime)) {
-                postProgress();
-                startTime = System.nanoTime();
-            }
+            postProgress();
         }
     }
 
@@ -255,20 +211,10 @@ public final class DownloadRunnable implements Runnable, Closeable {
 
     private void handleException(final Error reason) {
         if(!NetworkUtils.isNetworkAvailable(context) && reason == Error.HTTP_NOT_FOUND) {
-            databaseManager.executeTransaction(new Transaction() {
-                @Override
-                public void onExecute(Database database) {
-                    database.setStatusAndError(requestId, Status.ERROR.getValue(), Error.NO_NETWORK_CONNECTION.getValue());
-                }
-            });
+            database.setStatusAndError(requestId, Status.ERROR.getValue(), Error.NO_NETWORK_CONNECTION.getValue());
             downloadListener.onError(requestId,Error.NO_NETWORK_CONNECTION,progress,downloadedBytes,totalBytes);
         }else{
-            databaseManager.executeTransaction(new Transaction() {
-                @Override
-                public void onExecute(Database database) {
-                    database.setStatusAndError(requestId, Status.ERROR.getValue(), reason.getValue());
-                }
-            });
+            database.setStatusAndError(requestId, Status.ERROR.getValue(), reason.getValue());
             downloadListener.onError(requestId,reason,progress,downloadedBytes,totalBytes);
         }
     }

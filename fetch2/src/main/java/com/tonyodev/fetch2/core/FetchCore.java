@@ -2,23 +2,24 @@ package com.tonyodev.fetch2.core;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteConstraintException;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 
-import com.tonyodev.fetch2.Callback;
 import com.tonyodev.fetch2.Error;
-import com.tonyodev.fetch2.Query;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.RequestData;
 import com.tonyodev.fetch2.Status;
+import com.tonyodev.fetch2.callback.Callback;
+import com.tonyodev.fetch2.callback.Query;
 import com.tonyodev.fetch2.database.Database;
 import com.tonyodev.fetch2.database.DatabaseException;
 import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.DatabaseRow;
 import com.tonyodev.fetch2.database.DatabaseRowConverter;
-import com.tonyodev.fetch2.database.ReadDatabase;
-import com.tonyodev.fetch2.database.Transaction;
-import com.tonyodev.fetch2.download.DownloadManager;
 import com.tonyodev.fetch2.download.DownloadListener;
+import com.tonyodev.fetch2.download.DownloadManager;
+import com.tonyodev.fetch2.download.Downloadable;
 import com.tonyodev.fetch2.util.Utils;
 
 import java.io.File;
@@ -36,16 +37,16 @@ import static com.tonyodev.fetch2.Status.QUEUED;
 
 public final class FetchCore implements Fetchable {
 
-    private final DownloadManager downloadManager;
-    private final DatabaseManager databaseManager;
+    private final Downloadable downloadable;
+    private final Database database;
     private final DownloadListener downloadListener;
-    private final ReadDatabase readDatabase;
+    private final Handler mainHandler;
 
     public FetchCore(Context context, OkHttpClient client, DownloadListener downloadListener) {
-        this.databaseManager = new DatabaseManager(context);
-        this.downloadManager = new DownloadManager(context,client,downloadListener,databaseManager);
+        this.database = new DatabaseManager(context);
+        this.downloadable = new DownloadManager(context,client,downloadListener,database);
         this.downloadListener = downloadListener;
-        this.readDatabase = databaseManager.getReadDatabase();
+        this.mainHandler = new Handler(Looper.getMainLooper());
     }
 
     @Override
@@ -54,7 +55,7 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void enqueue(Request request, Callback callback) {
+    public void enqueue(final Request request, final Callback callback) {
         Error error = Error.NONE;
         try {
             insertAndQueue(request,callback);
@@ -65,24 +66,30 @@ public final class FetchCore implements Fetchable {
             error = Error.REQUEST_ALREADY_EXIST;
         }
         if(error.getValue() != Error.NONE.getValue()) {
-            callback.onFailure(request,error);
+            final Error err = error;
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onFailure(request,err);
+                }
+            });
         }
     }
 
-    private void insertAndQueue(Request request, Callback callback) {
+    private void insertAndQueue(final Request request, final Callback callback) {
         long id = request.getId();
         final DatabaseRow row = DatabaseRow.newInstance(request.getId(),request.getUrl(),request.getAbsoluteFilePath(),request.getGroupId());
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.insert(row);
-            }
-        });
+        database.insert(row);
 
         if (callback != null) {
-            callback.onQueued(request);
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onQueued(request);
+                }
+            });
         }
-        downloadManager.resume(id);
+        downloadable.resume(id);
     }
 
     @Override
@@ -91,7 +98,7 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void enqueue(List<Request> requests, Callback callback) {
+    public void enqueue(List<Request> requests, final Callback callback) {
         Error error = Error.NONE;
         try {
             insertAndQueue(requests, callback);
@@ -102,13 +109,19 @@ public final class FetchCore implements Fetchable {
             error = Error.REQUEST_ALREADY_EXIST;
         }
         if(error.getValue() != Error.NONE.getValue()) {
+            final Error err = error;
             for (final Request request : requests) {
-                callback.onFailure(request, error);
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onFailure(request, err);
+                    }
+                });
             }
         }
     }
 
-    private void insertAndQueue(List<Request> requests, Callback callback) {
+    private void insertAndQueue(final List<Request> requests, final Callback callback) {
         final List<DatabaseRow> rows = new ArrayList<>(requests.size());
 
         for (Request request : requests) {
@@ -116,27 +129,27 @@ public final class FetchCore implements Fetchable {
             rows.add(row);
         }
 
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.insert(rows);
-            }
-        });
+        database.insert(rows);
 
         if (callback != null) {
-            for (Request request : requests) {
-                callback.onQueued(request);
-            }
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (Request request : requests) {
+                        callback.onQueued(request);
+                    }
+                }
+            });
         }
 
         for (DatabaseRow row : rows) {
-            downloadManager.resume(row.getId());
+            downloadable.resume(row.getId());
         }
     }
 
     @Override
     public void pause(long id) {
-        DatabaseRow databaseRow = readDatabase.query(id);
+        DatabaseRow databaseRow = database.query(id);
         if (databaseRow != null) {
             List<DatabaseRow> list = new ArrayList<>(1);
             list.add(databaseRow);
@@ -146,12 +159,12 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void pauseGroup(String groupId) {
-        pause(readDatabase.queryByGroupId(groupId));
+        pause(database.queryByGroupId(groupId));
     }
 
     @Override
     public void pauseAll() {
-        pause(readDatabase.query());
+        pause(database.query());
     }
 
     private void pause(List<DatabaseRow> list) {
@@ -160,14 +173,9 @@ public final class FetchCore implements Fetchable {
                 DatabaseRow databaseRow = list.get(i);
                 if (databaseRow != null && canPause(Status.valueOf(databaseRow.getStatus()))) {
                     final long id = databaseRow.getId();
-                    downloadManager.pause(databaseRow.getId());
-                    databaseManager.executeTransaction(new Transaction() {
-                        @Override
-                        public void onExecute(Database database) {
-                            database.setStatusAndError(id, Status.PAUSED.getValue(), Error.NONE.getValue());
-                        }
-                    });
-                    databaseRow = readDatabase.query(id);
+                    downloadable.pause(databaseRow.getId());
+                    database.setStatusAndError(id, Status.PAUSED.getValue(), Error.NONE.getValue());
+                    databaseRow = database.query(id);
                     int progress = Utils.calculateProgress(databaseRow.getDownloadedBytes(),databaseRow.getTotalBytes());
                     downloadListener.onPaused(databaseRow.getId(),progress,databaseRow.getDownloadedBytes(),databaseRow.getTotalBytes());
                 }
@@ -177,7 +185,7 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void resume(long id) {
-        DatabaseRow databaseRow = readDatabase.query(id);
+        DatabaseRow databaseRow = database.query(id);
         if (databaseRow != null) {
             List<DatabaseRow> list = new ArrayList<>(1);
             list.add(databaseRow);
@@ -187,12 +195,12 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void resumeGroup(String groupId) {
-        resume(readDatabase.queryByGroupId(groupId));
+        resume(database.queryByGroupId(groupId));
     }
 
     @Override
     public void resumeAll() {
-        resume(readDatabase.query());
+        resume(database.query());
     }
 
     private void resume(List<DatabaseRow> list) {
@@ -201,13 +209,8 @@ public final class FetchCore implements Fetchable {
                 DatabaseRow databaseRow = list.get(i);
                 if (databaseRow != null && canResume(Status.valueOf(databaseRow.getStatus()))) {
                     final long id = databaseRow.getId();
-                    databaseManager.executeTransaction(new Transaction() {
-                        @Override
-                        public void onExecute(Database database) {
-                            database.setStatusAndError(id, QUEUED.getValue(),Error.NONE.getValue());
-                        }
-                    });
-                    downloadManager.resume(id);
+                    database.setStatusAndError(id, QUEUED.getValue(),Error.NONE.getValue());
+                    downloadable.resume(id);
                 }
             }
         }
@@ -230,7 +233,7 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void cancel(long id) {
-        DatabaseRow databaseRow = readDatabase.query(id);
+        DatabaseRow databaseRow = database.query(id);
         if (databaseRow != null) {
             List<DatabaseRow> list = new ArrayList<>(1);
             list.add(databaseRow);
@@ -240,12 +243,12 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void cancelGroup(String groupId) {
-        cancel(readDatabase.queryByGroupId(groupId));
+        cancel(database.queryByGroupId(groupId));
     }
 
     @Override
     public void cancelAll() {
-        cancel(readDatabase.query());
+        cancel(database.query());
     }
 
     private void cancel(List<DatabaseRow> list) {
@@ -254,14 +257,9 @@ public final class FetchCore implements Fetchable {
                 DatabaseRow databaseRow = list.get(i);
                 final long id = databaseRow.getId();
                 if (databaseRow != null && canCancel(Status.valueOf(databaseRow.getStatus()))) {
-                    downloadManager.pause(databaseRow.getId());
-                    databaseManager.executeTransaction(new Transaction() {
-                        @Override
-                        public void onExecute(Database database) {
-                            database.setStatusAndError(id,Status.CANCELLED.getValue(),Error.NONE.getValue());
-                        }
-                    });
-                    databaseRow = readDatabase.query(id);
+                    downloadable.pause(databaseRow.getId());
+                    database.setStatusAndError(id,Status.CANCELLED.getValue(),Error.NONE.getValue());
+                    databaseRow = database.query(id);
                     int progress = Utils.calculateProgress(databaseRow.getDownloadedBytes(),databaseRow.getTotalBytes());
                     downloadListener.onCancelled(id,progress,databaseRow.getDownloadedBytes(),databaseRow.getTotalBytes());
                 }
@@ -271,7 +269,7 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void remove(long id) {
-        DatabaseRow databaseRow = readDatabase.query(id);
+        DatabaseRow databaseRow = database.query(id);
         if (databaseRow != null) {
             List<DatabaseRow> list = new ArrayList<>(1);
             list.add(databaseRow);
@@ -281,12 +279,12 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void removeGroup(String groupId) {
-        remove(readDatabase.queryByGroupId(groupId));
+        remove(database.queryByGroupId(groupId));
     }
 
     @Override
     public void removeAll() {
-        remove(readDatabase.query());
+        remove(database.query());
     }
 
     private void remove(List<DatabaseRow> list) {
@@ -295,14 +293,9 @@ public final class FetchCore implements Fetchable {
                 DatabaseRow databaseRow = list.get(i);
                 final long id = databaseRow.getId();
                 if (databaseRow!= null) {
-                    downloadManager.pause(databaseRow.getId());
-                    databaseRow = readDatabase.query(id);
-                    databaseManager.executeTransaction(new Transaction() {
-                        @Override
-                        public void onExecute(Database database) {
-                            database.remove(id);
-                        }
-                    });
+                    downloadable.pause(databaseRow.getId());
+                    databaseRow = database.query(id);
+                    database.remove(id);
                     int progress = Utils.calculateProgress(databaseRow.getDownloadedBytes(),databaseRow.getTotalBytes());
                     downloadListener.onRemoved(id,progress,databaseRow.getDownloadedBytes(),databaseRow.getTotalBytes());
                 }
@@ -312,7 +305,7 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void delete(long id) {
-        DatabaseRow databaseRow = readDatabase.query(id);
+        DatabaseRow databaseRow = database.query(id);
         if (databaseRow != null) {
             List<DatabaseRow> list = new ArrayList<>(1);
             list.add(databaseRow);
@@ -323,7 +316,7 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void deleteGroup(final String groupId) {
-        List<DatabaseRow> list = readDatabase.queryByGroupId(groupId);
+        List<DatabaseRow> list = database.queryByGroupId(groupId);
         if (list != null) {
             remove(list);
             for (DatabaseRow databaseRow : list) {
@@ -334,7 +327,7 @@ public final class FetchCore implements Fetchable {
 
     @Override
     public void deleteAll() {
-        List<DatabaseRow> list = readDatabase.query();
+        List<DatabaseRow> list = database.query();
         if (list != null) {
             remove(list);
             for (DatabaseRow databaseRow : list) {
@@ -344,45 +337,80 @@ public final class FetchCore implements Fetchable {
     }
 
     @Override
-    public void query(long id, Query<RequestData> query) {
-        final RequestData requestData = DatabaseRowConverter.toRequestData(readDatabase.query(id));
-        query.onResult(requestData);
+    public void query(long id, final Query<RequestData> query) {
+        final RequestData requestData = DatabaseRowConverter.toRequestData(database.query(id));
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                query.onResult(requestData);
+            }
+        });
     }
 
     @Override
-    public void query(List<Long> ids, Query<List<RequestData>> query) {
-        final List<RequestData> results = DatabaseRowConverter.toRequestDataList(readDatabase.query(Utils.createIdArray(ids)));
-        query.onResult(results);
+    public void query(List<Long> ids, final Query<List<RequestData>> query) {
+        final List<RequestData> results = DatabaseRowConverter.toRequestDataList(database.query(Utils.createIdArray(ids)));
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                query.onResult(results);
+            }
+        });
     }
 
     @Override
-    public void queryAll(Query<List<RequestData>> query) {
-        final List<RequestData> result = DatabaseRowConverter.toRequestDataList(readDatabase.query());
-        query.onResult(result);
+    public void queryAll(final Query<List<RequestData>> query) {
+        final List<RequestData> result = DatabaseRowConverter.toRequestDataList(database.query());
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                query.onResult(result);
+            }
+        });
     }
 
     @Override
-    public void queryByStatus(Status status, Query<List<RequestData>> query) {
-        final List<RequestData> result = DatabaseRowConverter.toRequestDataList(readDatabase.queryByStatus(status.getValue()));
-        query.onResult(result);
+    public void queryByStatus(Status status, final Query<List<RequestData>> query) {
+        final List<RequestData> result = DatabaseRowConverter.toRequestDataList(database.queryByStatus(status.getValue()));
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                query.onResult(result);
+            }
+        });
     }
 
     @Override
-    public void queryByGroupId(String groupId, Query<List<RequestData>> query) {
-        final List<RequestData> result = DatabaseRowConverter.toRequestDataList(readDatabase.queryByGroupId(groupId));
-        query.onResult(result);
+    public void queryByGroupId(String groupId, final Query<List<RequestData>> query) {
+        final List<RequestData> result = DatabaseRowConverter.toRequestDataList(database.queryByGroupId(groupId));
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                query.onResult(result);
+            }
+        });
     }
 
     @Override
-    public void queryGroupByStatusId(String groupId, Status status, Query<List<RequestData>> query) {
-        final List<RequestData> result = DatabaseRowConverter.toRequestDataList(readDatabase.queryGroupByStatusId(groupId,status.getValue()));
-        query.onResult(result);
+    public void queryGroupByStatusId(String groupId, Status status, final Query<List<RequestData>> query) {
+        final List<RequestData> result = DatabaseRowConverter.toRequestDataList(database.queryGroupByStatusId(groupId,status.getValue()));
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                query.onResult(result);
+            }
+        });
     }
 
     @Override
-    public void contains(long id, @NonNull Query<Boolean> query) {
-        final boolean found = readDatabase.contains(id);
-        query.onResult(found);
+    public void contains(long id, final @NonNull Query<Boolean> query) {
+        final boolean found = database.contains(id);
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                query.onResult(found);
+            }
+        });
     }
 
     private boolean canPause(Status currentStatus) {

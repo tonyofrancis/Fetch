@@ -7,7 +7,6 @@ import android.support.test.runner.AndroidJUnit4;
 import com.tonyodev.fetch2.database.Database;
 import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.DatabaseRow;
-import com.tonyodev.fetch2.database.Transaction;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,75 +28,50 @@ public class DatabaseManagerTest {
     public static final String TEST_URL = "http://www.tonyofrancis.com/tonyodev/fetchCore/bunny.m4v";
     public static final String TEST_FILE_PATH = "/storage/fetch/bunny.m4v";
 
-    private DatabaseManager databaseManager;
+    private Database database;
 
     @Before
     public void setUp() throws Exception {
         Context context = InstrumentationRegistry.getTargetContext();
-        databaseManager = new DatabaseManager(context);
+        database = new DatabaseManager(context);
     }
 
     @Test
     public void databaseNotNull() throws Exception {
-        Assert.assertNotNull(databaseManager);
+        Assert.assertNotNull(database);
     }
 
     @Test
     public void getWriteDatabase() throws Exception {
-        Assert.assertNotNull(databaseManager.getWriteDatabase());
+        Assert.assertNotNull(database.getWriteOnlyDatabase());
     }
 
     @Test
     public void getReadDatabase() throws Exception {
-        Assert.assertNotNull(databaseManager.getReadDatabase());
-    }
-
-    @Test
-    public void executeEmptyTransaction() throws Exception {
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                Assert.assertNotNull(database);
-            }
-        });
+        Assert.assertNotNull(database.getReadOnlyDatabase());
     }
 
     @Test
     public void insertSingle() throws Exception {
         clearDatabase();
         final DatabaseRow databaseRow = getRow();
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.insert(databaseRow);
-            }
-        });
+        database.insert(databaseRow);
     }
 
     @Test
     public void insertList() throws Exception {
         clearDatabase();
         final List<DatabaseRow> list = getRowList();
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.insert(list);
-            }
-        });
+        database.insert(list);
     }
 
     @Test
     public void removeSingle() throws Exception {
         clearDatabase();
         final DatabaseRow databaseRow = getRow();
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.insert(databaseRow);
-            }
-        });
-        databaseManager.getWriteDatabase().remove(databaseRow.getId());
-        DatabaseRow row = databaseManager.getReadDatabase().query(databaseRow.getId());
+        database.insert(databaseRow);
+        database.remove(databaseRow.getId());
+        DatabaseRow row = database.query(databaseRow.getId());
         Assert.assertNull(row);
     }
 
@@ -111,9 +85,9 @@ public class DatabaseManagerTest {
             ids[i] = rows.get(i).getId();
         }
 
-        databaseManager.getWriteDatabase().insert(rows);
-        databaseManager.getWriteDatabase().remove(ids);
-        List<DatabaseRow> list = databaseManager.getReadDatabase().query(ids);
+        database.insert(rows);
+        database.remove(ids);
+        List<DatabaseRow> list = database.query(ids);
         Assert.assertTrue(list.size() == 0);
     }
 
@@ -121,9 +95,9 @@ public class DatabaseManagerTest {
     public void removeAll() throws Exception {
         clearDatabase();
         List<DatabaseRow> rows = getRowList();
-        databaseManager.getWriteDatabase().insert(rows);
-        databaseManager.getWriteDatabase().removeAll();
-        List<DatabaseRow> list = databaseManager.getReadDatabase().query();
+        database.insert(rows);
+        database.removeAll();
+        List<DatabaseRow> list = database.query();
         Assert.assertTrue(list.size() == 0);
     }
 
@@ -131,14 +105,8 @@ public class DatabaseManagerTest {
     public void contains() throws Exception {
         clearDatabase();
         final DatabaseRow row = getRow();
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.insert(row);
-            }
-        });
-
-        boolean contains = databaseManager.getReadDatabase().contains(row.getId());
+        database.insert(row);
+        boolean contains = database.contains(row.getId());
         Assert.assertTrue(contains);
     }
 
@@ -146,7 +114,7 @@ public class DatabaseManagerTest {
     public void containsNot() throws Exception {
         clearDatabase();
         DatabaseRow row = getRow();
-        boolean contains = databaseManager.getReadDatabase().contains(row.getId());
+        boolean contains = database.contains(row.getId());
         Assert.assertFalse(contains);
     }
 
@@ -158,8 +126,8 @@ public class DatabaseManagerTest {
         for (DatabaseRow row : rows) {
             row.setStatus(Status.CANCELLED.getValue());
         }
-        databaseManager.getWriteDatabase().insert(rows);
-        List<DatabaseRow> list = databaseManager.getReadDatabase().queryByStatus(Status.CANCELLED.getValue());
+        database.insert(rows);
+        List<DatabaseRow> list = database.queryByStatus(Status.CANCELLED.getValue());
         Assert.assertNotNull(list);
         Assert.assertEquals(rows.size(),list.size());
     }
@@ -168,8 +136,8 @@ public class DatabaseManagerTest {
     public void query() {
         clearDatabase();
         List<DatabaseRow> rows = getRowList();
-        databaseManager.getWriteDatabase().insert(rows);
-        List<DatabaseRow> list = databaseManager.getReadDatabase().query();
+        database.insert(rows);
+        List<DatabaseRow> list = database.query();
         Assert.assertNotNull(list);
         Assert.assertEquals(rows.size(),list.size());
     }
@@ -184,8 +152,8 @@ public class DatabaseManagerTest {
             ids[i] = rows.get(i).getId();
         }
 
-        databaseManager.getWriteDatabase().insert(rows);
-        List<DatabaseRow> list = databaseManager.getReadDatabase().query(ids);
+        database.insert(rows);
+        List<DatabaseRow> list = database.query(ids);
         Assert.assertNotNull(list);
         Assert.assertEquals(rows.size(),list.size());
     }
@@ -195,8 +163,8 @@ public class DatabaseManagerTest {
         clearDatabase();
         DatabaseRow row = getRow();
 
-        databaseManager.getWriteDatabase().insert(row);
-        List<DatabaseRow> list = databaseManager.getReadDatabase().queryByGroupId(TEST_GROUP_ID);
+        database.insert(row);
+        List<DatabaseRow> list = database.queryByGroupId(TEST_GROUP_ID);
         Assert.assertNotNull(list);
         Assert.assertEquals(1,list.size());
     }
@@ -210,8 +178,8 @@ public class DatabaseManagerTest {
             row.setStatus(Status.CANCELLED.getValue());
         }
 
-        databaseManager.getWriteDatabase().insert(rows);
-        List<DatabaseRow> list = databaseManager.getReadDatabase().queryGroupByStatusId(TEST_GROUP_ID,Status.CANCELLED.getValue());
+        database.insert(rows);
+        List<DatabaseRow> list = database.queryGroupByStatusId(TEST_GROUP_ID,Status.CANCELLED.getValue());
         Assert.assertNotNull(list);
         Assert.assertEquals(rows.size(),list.size());
     }
@@ -220,8 +188,8 @@ public class DatabaseManagerTest {
     public void querySingle() {
         clearDatabase();
         DatabaseRow row = getRow();
-        databaseManager.getWriteDatabase().insert(row);
-        DatabaseRow databaseRow = databaseManager.getReadDatabase().query(row.getId());
+        database.insert(row);
+        DatabaseRow databaseRow = database.query(row.getId());
         Assert.assertNotNull(databaseRow);
     }
 
@@ -229,15 +197,9 @@ public class DatabaseManagerTest {
     public void updateDownloadedBytes() throws Exception {
         clearDatabase();
         final DatabaseRow row = getRow();
-        databaseManager.getWriteDatabase().insert(row);
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.updateDownloadedBytes(row.getId(),100L);
-            }
-        });
-
-        DatabaseRow databaseRow = databaseManager.getReadDatabase().query(row.getId());
+        database.insert(row);
+        database.updateDownloadedBytes(row.getId(),100L);
+        DatabaseRow databaseRow = database.query(row.getId());
         Assert.assertNotNull(databaseRow);
         Assert.assertEquals(100L,databaseRow.getDownloadedBytes());
     }
@@ -246,15 +208,9 @@ public class DatabaseManagerTest {
     public void setDownloadedBytesAndTotalBytes() throws Exception {
         clearDatabase();
         final DatabaseRow row = getRow();
-        databaseManager.getWriteDatabase().insert(row);
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.setDownloadedBytesAndTotalBytes(row.getId(),50L,100L);
-            }
-        });
-
-        DatabaseRow databaseRow = databaseManager.getReadDatabase().query(row.getId());
+        database.insert(row);
+        database.setDownloadedBytesAndTotalBytes(row.getId(),50L,100L);
+        DatabaseRow databaseRow = database.query(row.getId());
         Assert.assertNotNull(databaseRow);
         Assert.assertEquals(50L,databaseRow.getDownloadedBytes());
         Assert.assertEquals(100L,databaseRow.getTotalBytes());
@@ -264,35 +220,29 @@ public class DatabaseManagerTest {
     public void setStatusAndError() throws Exception {
         clearDatabase();
         final DatabaseRow row = getRow();
-        databaseManager.getWriteDatabase().insert(row);
-        databaseManager.executeTransaction(new Transaction() {
-            @Override
-            public void onExecute(Database database) {
-                database.setStatusAndError(row.getId(),Status.REMOVED.getValue(),Error.SERVER_ERROR.getValue());
-            }
-        });
-
-        DatabaseRow databaseRow = databaseManager.getReadDatabase().query(row.getId());
+        database.insert(row);
+        database.setStatusAndError(row.getId(),Status.REMOVED.getValue(),Error.SERVER_ERROR.getValue());
+        DatabaseRow databaseRow = database.query(row.getId());
         Assert.assertNotNull(databaseRow);
         Assert.assertEquals(Status.REMOVED.getValue(),databaseRow.getStatus());
         Assert.assertEquals(Error.SERVER_ERROR.getValue(),databaseRow.getError());
     }
 
     private void clearDatabase() {
-        databaseManager.getWriteDatabase().removeAll();
+        database.removeAll();
     }
 
-    private com.tonyodev.fetch2.database.DatabaseRow getRow() {
-        return new com.tonyodev.fetch2.database.DatabaseRow(1,TEST_URL,TEST_FILE_PATH,Status.QUEUED.getValue(),
+    private DatabaseRow getRow() {
+        return new DatabaseRow(1,TEST_URL,TEST_FILE_PATH,Status.QUEUED.getValue(),
                 0L,0L,Error.NONE.getValue(),new HashMap<String,String>(),TEST_GROUP_ID);
     }
 
-    private List<com.tonyodev.fetch2.database.DatabaseRow> getRowList() {
-        List<com.tonyodev.fetch2.database.DatabaseRow> list = new ArrayList<>();
+    private List<DatabaseRow> getRowList() {
+        List<DatabaseRow> list = new ArrayList<>();
         int size = 20;
 
         for (int i = 0; i < size; i++) {
-            list.add(new com.tonyodev.fetch2.database.DatabaseRow(i, TEST_URL, TEST_FILE_PATH + i, Status.QUEUED.getValue(),
+            list.add(new DatabaseRow(i, TEST_URL, TEST_FILE_PATH + i, Status.QUEUED.getValue(),
                     0L, 0L, Error.NONE.getValue(), new HashMap<String, String>(), TEST_GROUP_ID));
         }
 

@@ -9,7 +9,7 @@ import android.util.Log;
 
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.Query;
+import com.tonyodev.fetch2.callback.Query;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.listener.FetchListener;
 

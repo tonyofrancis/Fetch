@@ -2,36 +2,24 @@ package com.tonyodev.fetch2;
 
 import android.support.annotation.NonNull;
 
-import com.tonyodev.fetch2.util.Utils;
-
 import java.util.Map;
 
 public final class RequestData {
 
-    private final String url;
-    private final String absoluteFilePath;
     private final Status status;
     private final Error error;
     private final long downloadedBytes;
     private final long totalBytes;
     private final int progress;
-    private final Map<String,String> headers;
     private final Request request;
-    private final String groupId;
 
-    public RequestData(String url,String absoluteFilePath, int status, int error,
-                long downloadedBytes, long totalBytes,Map<String,String> headers,String groupId) {
-
-        this.url = url;
-        this.absoluteFilePath = absoluteFilePath;
+    public RequestData(Request request, Status status, Error error,long downloadedBytes, long totalBytes, int progress) {
+        this.request = request;
+        this.status = status;
+        this.error = error;
         this.downloadedBytes = downloadedBytes;
         this.totalBytes = totalBytes;
-        this.error = Error.valueOf(error);
-        this.status = Status.valueOf(status);
-        this.progress = Utils.calculateProgress(downloadedBytes,totalBytes);
-        this.headers = headers;
-        this.request = new Request(url,absoluteFilePath,headers);
-        this.groupId = groupId;
+        this.progress = progress;
     }
 
     public long getId() {
@@ -40,17 +28,17 @@ public final class RequestData {
 
     @NonNull
     public String getUrl() {
-        return url;
+        return request.getUrl();
     }
 
     @NonNull
     public String getAbsoluteFilePath() {
-        return absoluteFilePath;
+        return request.getAbsoluteFilePath();
     }
 
     @NonNull
     public Map<String, String> getHeaders() {
-        return headers;
+        return request.getHeaders();
     }
 
     @NonNull
@@ -82,7 +70,7 @@ public final class RequestData {
 
     @NonNull
     public String getGroupId() {
-        return groupId;
+        return request.getGroupId();
     }
 
     @Override

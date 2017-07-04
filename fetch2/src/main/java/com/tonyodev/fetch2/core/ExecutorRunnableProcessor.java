@@ -16,13 +16,13 @@ public final class ExecutorRunnableProcessor implements RunnableProcessor {
     private final ExecutorService executor;
 
     public ExecutorRunnableProcessor() {
-        queue = new ConcurrentLinkedQueue<>();
-        executor = Executors.newSingleThreadExecutor();
+        this.queue = new ConcurrentLinkedQueue<>();
+        this.executor = Executors.newSingleThreadExecutor();
     }
 
     @Override
     public synchronized void queue(@NonNull Runnable action) {
-        boolean wasEmpty = queue.isEmpty();
+        boolean wasEmpty = isEmpty();
         queue.add(action);
         if (wasEmpty) {
             next();
@@ -32,16 +32,7 @@ public final class ExecutorRunnableProcessor implements RunnableProcessor {
     @Override
     public synchronized void next() {
         if(!isEmpty()) {
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    Runnable runnable = queue.poll();
-                    if (runnable != null) {
-                        runnable.run();
-                        next();
-                    }
-                }
-            });
+            executor.execute(nextRunnable);
         }
     }
 
@@ -54,4 +45,15 @@ public final class ExecutorRunnableProcessor implements RunnableProcessor {
     public synchronized boolean isEmpty() {
         return queue.isEmpty();
     }
+
+    private final Runnable nextRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Runnable runnable = queue.poll();
+            if (runnable != null) {
+                runnable.run();
+                next();
+            }
+        }
+    };
 }
