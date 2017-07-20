@@ -90,8 +90,9 @@ public final class FetchService extends Service implements FetchConst {
     public static final int ACTION_REMOVE_ALL = 319;
     public static final int ACTION_LOGGING = 320;
     public static final int ACTION_CONCURRENT_DOWNLOADS_LIMIT = 321;
-    public static final int ACTION_ON_UPDATE_INTERVAL = 322;
-    public static final int ACTION_UPDATE_REQUEST_URL = 323;
+    public static final int ACTION_UPDATE_REQUEST_URL = 322;
+    public static final int ACTION_ON_UPDATE_INTERVAL = 323;
+
 
     public static final int QUERY_SINGLE = 480;
     public static final int QUERY_ALL = 481;
