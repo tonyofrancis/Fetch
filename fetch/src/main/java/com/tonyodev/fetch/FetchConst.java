@@ -173,6 +173,11 @@ interface FetchConst {
     int DEFAULT_DOWNLOADS_LIMIT = 1;
 
     /**
+     * Default ms interval for the call to "onUpdate".
+     * */
+    long DEFAULT_ON_UPDATE_INTERVAL = 2000;
+
+    /**
      * Max concurrent downloads limit.
      * @deprecated Use your best judgement
      * */

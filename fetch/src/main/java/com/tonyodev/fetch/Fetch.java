@@ -1023,6 +1023,19 @@ public final class Fetch implements FetchConst {
     }
 
     /**
+     * Sets the desired interval for the desired "onUpdate" calls during file download.
+     *
+     * @param intervalMs the milliseconds interval
+     *
+     * @throws NotUsableException if the release method has been called on Fetch.
+     */
+    public void setOnUpdateInterval(long intervalMs) {
+
+        Utils.throwIfNotUsable(this);
+        new Settings(context).setOnUpdateInterval(intervalMs).apply();
+    }
+
+    /**
      * Updates the url for an existing request
      *
      * @param id request id
@@ -1122,6 +1135,23 @@ public final class Fetch implements FetchConst {
             Bundle extras = new Bundle();
             extras.putInt(FetchService.ACTION_TYPE,FetchService.ACTION_CONCURRENT_DOWNLOADS_LIMIT);
             extras.putInt(FetchService.EXTRA_CONCURRENT_DOWNLOADS_LIMIT,limit);
+            settings.add(extras);
+
+            return this;
+        }
+
+        /**
+         * Sets the desired interval for the desired "onUpdate" calls during file download.
+         *
+         * @param intervalMs the milliseconds interval
+         *
+         * @return the settings instance
+         */
+        public Settings setOnUpdateInterval(long intervalMs) {
+
+            Bundle extras = new Bundle();
+            extras.putInt(FetchService.ACTION_TYPE,FetchService.ACTION_ON_UPDATE_INTERVAL);
+            extras.putLong(FetchService.EXTRA_ON_UPDATE_INTERVAL,intervalMs);
             settings.add(extras);
 
             return this;

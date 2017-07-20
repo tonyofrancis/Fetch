@@ -74,6 +74,7 @@ public final class FetchService extends Service implements FetchConst {
     public static final String EXTRA_QUERY_TYPE = "com.tonyodev.fetch.extra_query_type";
     public static final String EXTRA_LOGGING_ID = "com.tonyodev.fetch.extra_logging_id";
     public static final String EXTRA_CONCURRENT_DOWNLOADS_LIMIT = "com.tonyodev.fetch.extra_concurrent_download_limit";
+    public static final String EXTRA_ON_UPDATE_INTERVAL = "com.tonyodev.fetch.extra_on_update_interval";
 
     public static final String ACTION_TYPE = "com.tonyodev.fetch.action_type";
 
@@ -89,7 +90,8 @@ public final class FetchService extends Service implements FetchConst {
     public static final int ACTION_REMOVE_ALL = 319;
     public static final int ACTION_LOGGING = 320;
     public static final int ACTION_CONCURRENT_DOWNLOADS_LIMIT = 321;
-    public static final int ACTION_UPDATE_REQUEST_URL = 322;
+    public static final int ACTION_ON_UPDATE_INTERVAL = 322;
+    public static final int ACTION_UPDATE_REQUEST_URL = 323;
 
     public static final int QUERY_SINGLE = 480;
     public static final int QUERY_ALL = 481;
@@ -106,6 +108,7 @@ public final class FetchService extends Service implements FetchConst {
     private volatile boolean shuttingDown = false;
     private int downloadsLimit = DEFAULT_DOWNLOADS_LIMIT;
     private boolean loggingEnabled = true;
+    private long onUpdateInterval = DEFAULT_ON_UPDATE_INTERVAL;
     private int preferredNetwork = NETWORK_ALL;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final List<BroadcastReceiver> registeredReceivers = new ArrayList<>();
@@ -170,6 +173,7 @@ public final class FetchService extends Service implements FetchConst {
         downloadsLimit = getDownloadsLimit();
         preferredNetwork = getAllowedNetwork();
         loggingEnabled = isLoggingEnabled();
+        onUpdateInterval = getOnUpdateInterval();
         databaseHelper.setLoggingEnabled(loggingEnabled);
 
         if(!executor.isShutdown()) {
@@ -298,6 +302,11 @@ public final class FetchService extends Service implements FetchConst {
                             setDownloadsLimit(limit);
                             break;
                         }
+                        case ACTION_ON_UPDATE_INTERVAL: {
+                            long interval = intent.getLongExtra(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_ON_UPDATE_INTERVAL);
+                            setOnUpdateInterval(interval);
+                            break;
+                        }
                         case ACTION_UPDATE_REQUEST_URL: {
                             String url = intent.getStringExtra(EXTRA_URL);
                             updateRequestUrl(id,url);
@@ -343,7 +352,7 @@ public final class FetchService extends Service implements FetchConst {
 
                     FetchRunnable fetchRunnable = new FetchRunnable(context,requestInfo.getId(),
                             requestInfo.getUrl(), requestInfo.getFilePath()
-                            ,requestInfo.getHeaders(),requestInfo.getFileSize(),loggingEnabled);
+                            ,requestInfo.getHeaders(),requestInfo.getFileSize(),loggingEnabled, onUpdateInterval);
 
                     databaseHelper.updateStatus(requestInfo.getId(),FetchService.STATUS_DOWNLOADING,DEFAULT_EMPTY_VALUE);
                     activeDownloads.put(fetchRunnable.getId(),fetchRunnable);
@@ -794,5 +803,16 @@ public final class FetchService extends Service implements FetchConst {
     static boolean isLoggingEnabled(Context context) {
         return  context.getSharedPreferences(SHARED_PREFERENCES,Context.MODE_PRIVATE)
                 .getBoolean(EXTRA_LOGGING_ID,true);
+    }
+
+    private void setOnUpdateInterval(long intervalMs) {
+        onUpdateInterval = intervalMs;
+        sharedPreferences.edit().putLong(EXTRA_ON_UPDATE_INTERVAL, intervalMs).apply();
+        startDownload();
+    }
+
+    private long getOnUpdateInterval() {
+        onUpdateInterval = sharedPreferences.getLong(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_ON_UPDATE_INTERVAL);
+        return onUpdateInterval;
     }
 }

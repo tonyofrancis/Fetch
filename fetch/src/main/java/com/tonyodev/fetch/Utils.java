@@ -74,10 +74,10 @@ final class Utils {
                         ,ErrorUtils.INVALID_STATUS);
         }
     }
+    
+    static boolean hasIntervalElapsed(long startTime, long stopTime, long onUpdateInterval) {
 
-    static boolean hasTwoSecondsPassed(long startTime, long stopTime) {
-
-        if(TimeUnit.NANOSECONDS.toSeconds(stopTime - startTime) >= 2) {
+        if(TimeUnit.NANOSECONDS.toMillis(stopTime - startTime) >= onUpdateInterval) {
             return true;
         }
 
