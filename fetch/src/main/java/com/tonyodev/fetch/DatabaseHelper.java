@@ -144,7 +144,7 @@ final class DatabaseHelper extends SQLiteOpenHelper {
 
         if(containsFilePath(filePath)) {
 
-            throw new EnqueueException("DatabaseHelper already containsFilePath a request with the filePath:"
+            throw new EnqueueException("DatabaseHelper already contains a request with the filePath:"
                     + filePath,FetchConst.ERROR_REQUEST_ALREADY_EXIST);
         }
 

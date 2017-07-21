@@ -31,6 +31,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.tonyodev.fetch.exception.EnqueueException;
 import com.tonyodev.fetch.request.RequestInfo;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -92,6 +93,8 @@ public final class FetchService extends Service implements FetchConst {
     public static final int ACTION_CONCURRENT_DOWNLOADS_LIMIT = 321;
     public static final int ACTION_UPDATE_REQUEST_URL = 322;
     public static final int ACTION_ON_UPDATE_INTERVAL = 323;
+    public static final int ACTION_REMOVE_REQUEST = 324;
+    public static final int ACTION_REMOVE_REQUEST_ALL = 325;
 
 
     public static final int QUERY_SINGLE = 480;
@@ -313,6 +316,14 @@ public final class FetchService extends Service implements FetchConst {
                             updateRequestUrl(id,url);
                             break;
                         }
+                        case ACTION_REMOVE_REQUEST: {
+                            removeRequest(id);
+                            break;
+                        }
+                        case ACTION_REMOVE_REQUEST_ALL: {
+                            removeRequestAll();
+                            break;
+                        }
                         default: {
                             startDownload();
                             break;
@@ -411,11 +422,6 @@ public final class FetchService extends Service implements FetchConst {
                         + url + ", filePath:" + filePath,ERROR_BAD_REQUEST);
             }
 
-            if(Utils.fileExist(filePath)) {
-                throw new EnqueueException("File already located at filePath: " + filePath
-                        + ". The requested will not be enqueued.",ERROR_REQUEST_ALREADY_EXIST);
-            }
-
             if(headers == null) {
                 headers = new ArrayList<>();
             }
@@ -424,6 +430,12 @@ public final class FetchService extends Service implements FetchConst {
             String headerString = Utils.bundleListToHeaderString(headers,loggingEnabled);
             long fileSize = 0L;
             long downloadedBytes = 0L;
+
+            File file = Utils.getFile(filePath);
+
+            if (file.exists()) {
+                downloadedBytes = file.length();
+            }
 
             boolean enqueued = databaseHelper.insert(id,url,filePath,STATUS_QUEUED,headerString,
                     downloadedBytes,fileSize,priority, DEFAULT_EMPTY_VALUE);
@@ -618,6 +630,99 @@ public final class FetchService extends Service implements FetchConst {
         }
     }
 
+    private void removeRequestAll() {
+
+        if (activeDownloads.size() > 0) {
+
+            runningTask = true;
+
+            BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+
+                    if(intent != null) {
+                        long id = FetchRunnable.getIdFromIntent(intent);
+                        removeRequestAction(id);
+                    }
+
+                    if(activeDownloads.size() == 0) {
+                        removeRequestAllAction();
+                        broadcastManager.unregisterReceiver(this);
+                        registeredReceivers.remove(this);
+                        runningTask = false;
+                        startDownload();
+                    }
+                }
+            };
+
+            registeredReceivers.add(broadcastReceiver);
+            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
+            interruptActiveDownloads();
+        }else {
+            removeRequestAllAction();
+            startDownload();
+        }
+    }
+
+    private void removeRequestAllAction() {
+
+        Cursor cursor = databaseHelper.get();
+        List<RequestInfo> requests = Utils.cursorToRequestInfoList(cursor,true,loggingEnabled);
+
+        if(requests != null && databaseHelper.deleteAll()) {
+
+            for (RequestInfo request : requests) {
+
+                Utils.sendEventUpdate(broadcastManager,request.getId(),
+                        STATUS_REMOVED,request.getProgress(),request.getDownloadedBytes(),
+                        request.getFileSize(),DEFAULT_EMPTY_VALUE);
+            }
+        }
+    }
+
+    private void removeRequest(final long id) {
+
+        if (activeDownloads.containsKey(id)) {
+
+            runningTask = true;
+
+            BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+
+                    if(FetchRunnable.getIdFromIntent(intent) == id) {
+                        removeRequestAction(id);
+
+                        broadcastManager.unregisterReceiver(this);
+                        registeredReceivers.remove(this);
+                        runningTask = false;
+                        startDownload();
+                    }
+                }
+            };
+
+            registeredReceivers.add(broadcastReceiver);
+            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
+            interruptActiveDownload(id);
+        }else {
+            removeRequestAction(id);
+            startDownload();
+        }
+    }
+
+    private void removeRequestAction(long id) {
+
+        Cursor cursor = databaseHelper.get(id);
+        RequestInfo request = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
+
+        if(request != null && databaseHelper.delete(id)) {
+
+            Utils.sendEventUpdate(broadcastManager,id,
+                    STATUS_REMOVED,request.getProgress(),request.getDownloadedBytes(),
+                    request.getFileSize(),DEFAULT_EMPTY_VALUE);
+        }
+    }
+
     private void query(int queryType,long queryId,long requestId,int status) {
 
         Cursor cursor;
@@ -809,6 +914,11 @@ public final class FetchService extends Service implements FetchConst {
     private void setOnUpdateInterval(long intervalMs) {
         onUpdateInterval = intervalMs;
         sharedPreferences.edit().putLong(EXTRA_ON_UPDATE_INTERVAL, intervalMs).apply();
+
+        if(activeDownloads.size() > 0) {
+            interruptActiveDownloads();
+        }
+
         startDownload();
     }
 

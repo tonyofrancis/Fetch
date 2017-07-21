@@ -285,17 +285,18 @@ public final class Fetch implements FetchConst {
 
         try {
 
-            if(Utils.fileExist(request.getFilePath())) {
-                throw new EnqueueException("File already located at filePath: " + request.getFilePath()
-                        + ". The requested will not be enqueued.",ERROR_REQUEST_ALREADY_EXIST);
-            }
-
             String url = request.getUrl();
             String filePath = request.getFilePath();
             int priority = request.getPriority();
             String headers = Utils.headerListToString(request.getHeaders(),isLoggingEnabled());
             long fileSize = 0L;
             long downloadedBytes = 0L;
+
+            File file = Utils.getFile(filePath);
+
+            if (file.exists()) {
+                downloadedBytes = file.length();
+            }
 
             boolean enqueued = dbHelper.insert(id,url,filePath, Fetch.STATUS_QUEUED,headers,downloadedBytes,
                     fileSize,priority, DEFAULT_EMPTY_VALUE);
@@ -358,7 +359,7 @@ public final class Fetch implements FetchConst {
 
                 id = DEFAULT_EMPTY_VALUE;
 
-                if(request != null && !Utils.fileExist(request.getFilePath())) {
+                if(request != null) {
 
                     id = Utils.generateRequestId();
                     url = request.getUrl();
@@ -368,6 +369,13 @@ public final class Fetch implements FetchConst {
                     priority = request.getPriority();
                     downloadedBytes = 0L;
                     fileSize = 0L;
+
+                    File file = Utils.getFile(filePath);
+
+                    if (file.exists()) {
+                        downloadedBytes = file.length();
+                    }
+
                     error = DEFAULT_EMPTY_VALUE;
 
                     String statement = dbHelper.getInsertStatement(id,url,filePath,status,headers,
@@ -439,6 +447,36 @@ public final class Fetch implements FetchConst {
 
         Bundle extras = new Bundle();
         extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_REMOVE_ALL);
+
+        FetchService.sendToService(context,extras);
+    }
+
+    /**
+     * Remove a request from Fetch. The file is not deleted.
+     * @param id request Id
+     * */
+    public void removeRequest(long id) {
+
+        Utils.throwIfNotUsable(this);
+
+        Bundle extras = new Bundle();
+        extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_REMOVE_REQUEST);
+        extras.putLong(FetchService.EXTRA_ID,id);
+
+        FetchService.sendToService(context,extras);
+
+    }
+
+    /**
+     * Remove a requests from Fetch. The files are not deleted.
+     * */
+    public void removeRequests() {
+
+        Utils.throwIfNotUsable(this);
+
+
+        Bundle extras = new Bundle();
+        extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_REMOVE_REQUEST_ALL);
 
         FetchService.sendToService(context,extras);
     }
