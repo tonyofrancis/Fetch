@@ -252,15 +252,14 @@ final class Utils {
 
            cursor.moveToFirst();
            requestInfo = createRequestInfo(cursor,loggingEnabled);
-
-           if(closeCursor) {
-               cursor.close();
-           }
-
        }catch (Exception e) {
 
            if(loggingEnabled) {
                e.printStackTrace();
+           }
+       }finally {
+           if(cursor != null && closeCursor) {
+               cursor.close();
            }
        }
 
@@ -284,14 +283,14 @@ final class Utils {
                 cursor.moveToNext();
             }
 
-            if(closeCursor) {
-                cursor.close();
-            }
-
         }catch (Exception e) {
 
             if(loggingEnabled) {
                 e.printStackTrace();
+            }
+        }finally {
+            if(cursor != null && closeCursor) {
+                cursor.close();
             }
         }
 
@@ -367,15 +366,14 @@ final class Utils {
 
                 cursor.moveToNext();
             }
-
-            if(closeCursor) {
-                cursor.close();
-            }
-
         }catch (Exception e) {
 
             if(loggingEnabled) {
                 e.printStackTrace();
+            }
+        }finally {
+            if(cursor != null && closeCursor) {
+                cursor.close();
             }
         }
 

@@ -112,17 +112,16 @@ final class DatabaseHelper extends SQLiteOpenHelper {
     private synchronized boolean containsFilePath(String filePath) {
 
         boolean found = false;
-
+        Cursor cursor = null;
         try {
 
-            Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID
+            cursor = db.rawQuery("SELECT " + COLUMN_ID
                     + " FROM " + TABLE_NAME + " WHERE " + COLUMN_FILEPATH + " = "
                     + DatabaseUtils.sqlEscapeString(filePath),null);
 
 
             if(cursor != null && cursor.getCount() > 0) {
                 found = true;
-                cursor.close();
             }
 
         }catch (SQLiteException e) {
@@ -132,6 +131,10 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             }
 
             found = true;
+        }finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
 
         return found;
@@ -233,23 +236,27 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             }
         }
 
+        Cursor cursor = null;
         try {
 
             db.endTransaction();
 
-            Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID
+            cursor = db.rawQuery("SELECT " + COLUMN_ID
                     + " FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = " + id
                     + " AND " + COLUMN_STATUS + " = " + FetchConst.STATUS_PAUSED,null);
 
             if(cursor != null && cursor.getCount() > 0) {
                 paused = true;
-                cursor.close();
             }
 
         }catch (SQLiteException e) {
 
             if(loggingEnabled) {
                 e.printStackTrace();
+            }
+        }finally {
+            if (cursor != null) {
+                cursor.close();
             }
         }
 
@@ -275,22 +282,26 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             }
         }
 
+        Cursor cursor = null;
         try {
             db.endTransaction();
 
-            Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID
+            cursor = db.rawQuery("SELECT " + COLUMN_ID
                     + " FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = " + id
                     + " AND " + COLUMN_STATUS + " = " + FetchConst.STATUS_QUEUED,null);
 
             if(cursor != null && cursor.getCount() > 0) {
                 resumed = true;
-                cursor.close();
             }
 
         }catch (SQLiteException e) {
 
             if(loggingEnabled) {
                 e.printStackTrace();
+            }
+        }finally {
+            if (cursor != null) {
+                cursor.close();
             }
         }
 
@@ -468,22 +479,26 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             }
         }
 
+        Cursor cursor = null;
         try {
             db.endTransaction();
 
-            Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID
+            cursor = db.rawQuery("SELECT " + COLUMN_ID
                     + " FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = " + id
                     + " AND " + COLUMN_STATUS + " = " + FetchConst.STATUS_QUEUED,null);
 
             if(cursor != null && cursor.getCount() > 0) {
                 updated = true;
-                cursor.close();
             }
 
         }catch (SQLiteException e) {
 
             if(loggingEnabled) {
                 e.printStackTrace();
+            }
+        }finally {
+            if (cursor != null) {
+                cursor.close();
             }
         }
 
@@ -507,22 +522,26 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             }
         }
 
+        Cursor cursor = null;
         try {
             db.endTransaction();
 
-            Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID
+            cursor = db.rawQuery("SELECT " + COLUMN_ID
                     + " FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = " + id
                     + " AND " + COLUMN_URL + " = " + DatabaseUtils.sqlEscapeString(url),null);
 
             if(cursor != null && cursor.getCount() > 0) {
                 updated = true;
-                cursor.close();
             }
 
         }catch (SQLiteException e) {
 
             if(loggingEnabled) {
                 e.printStackTrace();
+            }
+        }finally {
+            if (cursor != null) {
+                cursor.close();
             }
         }
 
