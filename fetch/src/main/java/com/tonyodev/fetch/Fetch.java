@@ -787,7 +787,7 @@ public final class Fetch implements FetchConst {
 
             if (!Utils.fileExist(filePath)) {
                 throw new EnqueueException("File does not exist at filePath: " + filePath,
-                        ErrorUtils.REQUEST_ALREADY_EXIST);
+                        ErrorUtils.FILE_NOT_CREATED);
             }
 
             id = Utils.generateRequestId();
