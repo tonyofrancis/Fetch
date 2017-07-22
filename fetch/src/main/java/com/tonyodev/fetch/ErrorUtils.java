@@ -71,6 +71,9 @@ final class ErrorUtils {
         }else if(message.contains("SSRV:")) {
             return SERVER_ERROR;
         }
+        else if(message.contains("column _file_path is not unique")) {
+            return REQUEST_ALREADY_EXIST;
+        }
         else {
             return UNKNOWN;
         }

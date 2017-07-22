@@ -24,9 +24,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.tonyodev.fetch.exception.EnqueueException;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Database Helper used by Fetch and the FetchService
  * to store and manage download requests into the SQL database.
@@ -35,7 +32,7 @@ import java.util.List;
  */
 final class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     private static final String DB_NAME = "com_tonyodev_fetch.db";
     private static final String TABLE_NAME = "requests";
 
@@ -86,12 +83,21 @@ final class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_DOWNLOADED_BYTES + " INTEGER NOT NULL, "
                 + COLUMN_FILE_SIZE + " INTEGER NOT NULL, "
                 + COLUMN_ERROR + " INTEGER NOT NULL, "
-                + COLUMN_PRIORITY + " INTEGER NOT NULL )");
+                + COLUMN_PRIORITY + " INTEGER NOT NULL, "
+                + "unique( " + COLUMN_FILEPATH + " ) )");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
+        switch (oldVersion) {
+            case 1: {
+                db.execSQL("CREATE UNIQUE INDEX table_unique ON "
+                        + TABLE_NAME + " ( " + COLUMN_FILEPATH + ")");
+                break;
+            }
+            default:{
+            }
+        }
     }
 
     static synchronized DatabaseHelper getInstance(Context context) {
@@ -109,49 +115,31 @@ final class DatabaseHelper extends SQLiteOpenHelper {
         return databaseHelper;
     }
 
-    private synchronized boolean containsFilePath(String filePath) {
+    synchronized boolean insert(long id, String url, String filePath, int status,
+                                String headers,long downloadedBytes,long fileSize,
+                                int priority, int error) {
 
-        boolean found = false;
-        Cursor cursor = null;
-        try {
+        String statement = getInsertStatementOpen()
+                 + getRowInsertStatement(id,url,filePath,status,headers, downloadedBytes,fileSize,priority,error)
+                 + getInsertStatementClose();
 
-            cursor = db.rawQuery("SELECT " + COLUMN_ID
-                    + " FROM " + TABLE_NAME + " WHERE " + COLUMN_FILEPATH + " = "
-                    + DatabaseUtils.sqlEscapeString(filePath),null);
-
-
-            if(cursor != null && cursor.getCount() > 0) {
-                found = true;
-            }
-
-        }catch (SQLiteException e) {
-
-            if(loggingEnabled) {
-                e.printStackTrace();
-            }
-
-            found = true;
-        }finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-
-        return found;
+        return insert(statement);
     }
 
-    String getInsertStatement(long id, String url, String filePath, int status,
-                                      String headers,long downloadedBytes,long fileSize,
-                                      int priority, int error) throws EnqueueException {
+    String getInsertStatementOpen() {
+        return "INSERT INTO " + TABLE_NAME
+                + " ( " +COLUMN_ID + ", " + COLUMN_URL
+                + ", " + COLUMN_FILEPATH + ", " + COLUMN_STATUS
+                + ", " + COLUMN_HEADERS + ", " + COLUMN_DOWNLOADED_BYTES
+                + ", " + COLUMN_FILE_SIZE + ", " + COLUMN_ERROR
+                + ", " + COLUMN_PRIORITY + " ) VALUES ";
+    }
 
-
-        if(containsFilePath(filePath)) {
-
-            throw new EnqueueException("DatabaseHelper already contains a request with the filePath:"
-                    + filePath,FetchConst.ERROR_REQUEST_ALREADY_EXIST);
-        }
-
-        return "INSERT INTO " + TABLE_NAME + " VALUES ( " + id
+    String getRowInsertStatement(long id, String url, String filePath, int status,
+                                 String headers, long downloadedBytes, long fileSize,
+                                 int priority, int error) {
+        return "( "
+                + id
                 + ", " + DatabaseUtils.sqlEscapeString(url)
                 + ", " + DatabaseUtils.sqlEscapeString(filePath)
                 + ", " + status
@@ -162,35 +150,22 @@ final class DatabaseHelper extends SQLiteOpenHelper {
                 + ", " + priority +" )";
     }
 
-    synchronized boolean insert(long id, String url, String filePath, int status,
-                                String headers,long downloadedBytes,long fileSize,
-                                int priority, int error) {
-
-        String statement = getInsertStatement(id,url,filePath,status,headers,
-                downloadedBytes,fileSize,priority,error);
-
-        List<String> insertStatements = new ArrayList<>(1);
-        insertStatements.add(statement);
-
-        return insert(insertStatements);
+    String getInsertStatementClose() {
+        return ";";
     }
 
-    synchronized boolean insert(List<String> statements) {
+    synchronized boolean insert(String insertStatement) {
 
         boolean inserted = false;
 
-        if(statements == null) {
+        if(insertStatement == null) {
             return inserted;
         }
 
         try {
 
             db.beginTransaction();
-
-            for (String statement : statements) {
-                db.execSQL(statement);
-            }
-
+            db.execSQL(insertStatement);
             db.setTransactionSuccessful();
         }catch (Exception e) {
 

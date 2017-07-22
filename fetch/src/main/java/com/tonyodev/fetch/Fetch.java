@@ -340,6 +340,10 @@ public final class Fetch implements FetchConst {
             throw new NullPointerException("Request list cannot be null");
         }
 
+        if (requests.size() < 1) {
+            return new ArrayList<>(0);
+        }
+
         List<Long> ids = new ArrayList<>(requests.size());
         List<String> statements = new ArrayList<>();
 
@@ -354,6 +358,9 @@ public final class Fetch implements FetchConst {
         int error;
 
         try {
+
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(dbHelper.getInsertStatementOpen());
 
             for (Request request : requests) {
 
@@ -378,20 +385,17 @@ public final class Fetch implements FetchConst {
 
                     error = DEFAULT_EMPTY_VALUE;
 
-                    String statement = dbHelper.getInsertStatement(id,url,filePath,status,headers,
-                            downloadedBytes,fileSize,priority,error);
-
-                    if(statement != null) {
-                        statements.add(statement);
-                    }else {
-                        id = DEFAULT_EMPTY_VALUE;
-                    }
+                    String statement = dbHelper.getRowInsertStatement(id,url,filePath,status,headers, downloadedBytes,fileSize,priority,error);
+                    stringBuilder.append(statement)
+                                 .append(", ");
                 }
 
                 ids.add(id);
             }
 
-            boolean inserted = dbHelper.insert(statements);
+            stringBuilder.delete(stringBuilder.length()-2,stringBuilder.length())
+                         .append(dbHelper.getInsertStatementClose());
+            boolean inserted = dbHelper.insert(stringBuilder.toString());
 
             if(!inserted) {
                 throw new EnqueueException("could not insert requests",ERROR_ENQUEUE_ERROR);
@@ -833,6 +837,10 @@ public final class Fetch implements FetchConst {
             throw new NullPointerException("Request list cannot be null");
         }
 
+        if (filePaths.size() < 1) {
+            return new ArrayList<>(0);
+        }
+
         List<Long> ids = new ArrayList<>(filePaths.size());
         List<String> statements = new ArrayList<>();
 
@@ -848,6 +856,8 @@ public final class Fetch implements FetchConst {
 
         try {
 
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(dbHelper.getInsertStatementOpen());
             for (String path : filePaths) {
 
                 id = DEFAULT_EMPTY_VALUE;
@@ -870,20 +880,17 @@ public final class Fetch implements FetchConst {
                     fileSize = downloadedBytes;
                     error = DEFAULT_EMPTY_VALUE;
 
-                    String statement = dbHelper.getInsertStatement(id,url,filePath,status,headers,
-                            downloadedBytes,fileSize,priority,error);
-
-                    if(statement != null) {
-                        statements.add(statement);
-                    }else {
-                        id = DEFAULT_EMPTY_VALUE;
-                    }
+                    String statement = dbHelper.getRowInsertStatement(id,url,filePath,status,headers, downloadedBytes,fileSize,priority,error);
+                    stringBuilder.append(statement)
+                            .append(",");
                 }
 
                 ids.add(id);
             }
 
-            boolean inserted = dbHelper.insert(statements);
+            stringBuilder.delete(stringBuilder.length()-2,stringBuilder.length())
+                         .append(dbHelper.getInsertStatementClose());
+            boolean inserted = dbHelper.insert(stringBuilder.toString());
 
             if(!inserted) {
                 throw new EnqueueException("could not insert requests",ERROR_ENQUEUE_ERROR);
