@@ -174,18 +174,18 @@ final class DatabaseHelper extends SQLiteOpenHelper {
             }
 
             throw new EnqueueException(e.getMessage(),ErrorUtils.getCode(e.getMessage()));
-        }
+        }finally {
+            try {
+                db.endTransaction();
+                inserted = true;
+            }catch (SQLiteException e) {
 
-        try {
-            db.endTransaction();
-            inserted = true;
-        }catch (SQLiteException e) {
+                if(loggingEnabled) {
+                    e.printStackTrace();
+                }
 
-            if(loggingEnabled) {
-                e.printStackTrace();
+                throw new EnqueueException(e.getMessage(),ErrorUtils.getCode(e.getMessage()));
             }
-
-            throw new EnqueueException(e.getMessage(),ErrorUtils.getCode(e.getMessage()));
         }
 
         return inserted;
