@@ -1,1 +1,1 @@
-include ':app', ':fetch', ':fetch2', ':fetch2sample'
+include ':app', ':fetch'
