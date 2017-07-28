@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Fetch fetch = Fetch.getInstance(this);
+        Fetch fetch = Fetch.newInstance(this);
         
         ...
         
