@@ -41,6 +41,7 @@ import com.tonyodev.fetch.request.RequestInfo;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -973,8 +974,16 @@ public final class Fetch implements FetchConst {
             fileSize = intent.getLongExtra(FetchService.EXTRA_FILE_SIZE, DEFAULT_EMPTY_VALUE);
             error = intent.getIntExtra(FetchService.EXTRA_ERROR, DEFAULT_EMPTY_VALUE);
 
-            for (FetchListener listener : listeners) {
-                listener.onUpdate(id, status, progress, downloadedBytes, fileSize, error);
+            try {
+                final Iterator<FetchListener> listenerIterator = getListenerIterator();
+                while (listenerIterator.hasNext()) {
+                    final FetchListener listener = listenerIterator.next();
+                    listener.onUpdate(id, status, progress, downloadedBytes, fileSize, error);
+                }
+            } catch (Exception e) {
+                if (isLoggingEnabled()) {
+                    e.printStackTrace();
+                }
             }
         }
     };
@@ -1059,6 +1068,10 @@ public final class Fetch implements FetchConst {
         extras.putString(FetchService.EXTRA_URL, url);
 
         FetchService.sendToService(context, extras);
+    }
+
+    private Iterator<FetchListener> getListenerIterator() {
+        return listeners.iterator();
     }
 
     /**
