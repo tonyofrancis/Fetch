@@ -43,14 +43,14 @@ import java.util.concurrent.Executors;
  * pausing and resuming of downloads. The FetchService
  * ensures that all downloads are downloaded successfully
  * and reports failed downloads.
- *
+ * <p>
  * Status and progress updates for each download request
  * is broadcast. The FetchService can also be queried for request information.
  *
  * @author Tonyo Francis
  */
 
-public final class FetchService extends Service implements FetchConst {
+public final class FetchService implements FetchConst {
 
     public static final String EVENT_ACTION_UPDATE = "com.tonyodev.fetch.event_action_update";
     public static final String EVENT_ACTION_ENQUEUED = "com.tonyodev.fetch.event_action_enqueued";
@@ -103,10 +103,15 @@ public final class FetchService extends Service implements FetchConst {
 
     private static final String SHARED_PREFERENCES = "com.tonyodev.fetch.shared_preferences";
 
-    private Context context;
-    private DatabaseHelper databaseHelper;
-    private LocalBroadcastManager broadcastManager;
-    private SharedPreferences sharedPreferences;
+    private static FetchService fetchService;
+
+    private final Context context;
+    private final DatabaseHelper databaseHelper;
+    private final LocalBroadcastManager broadcastManager;
+    private final SharedPreferences sharedPreferences;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final List<BroadcastReceiver> registeredReceivers = new ArrayList<>();
+    private final ConcurrentHashMap<Long, FetchRunnable> activeDownloads = new ConcurrentHashMap<>();
 
     private volatile boolean runningTask = false;
     private volatile boolean shuttingDown = false;
@@ -114,34 +119,39 @@ public final class FetchService extends Service implements FetchConst {
     private boolean loggingEnabled = true;
     private long onUpdateInterval = DEFAULT_ON_UPDATE_INTERVAL;
     private int preferredNetwork = NETWORK_ALL;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final List<BroadcastReceiver> registeredReceivers = new ArrayList<>();
-    private final ConcurrentHashMap<Long,FetchRunnable> activeDownloads = new ConcurrentHashMap<>();
 
-    public static void sendToService(@NonNull Context context,@Nullable Bundle extras) {
+    public static void sendToService(@NonNull Context context, @Nullable Bundle extras) {
 
-        if(context == null) {
+        if (context == null) {
             throw new NullPointerException("Context cannot be null");
         }
 
-        if(extras == null) {
+        if (extras == null) {
             extras = new Bundle();
         }
 
-        Intent intent = new Intent(context,FetchService.class);
-        intent.putExtras(extras);
-        context.startService(intent);
+        FetchService.getInstance(context).runAction(extras);
     }
 
     public static void processPendingRequests(@NonNull Context context) {
 
-        if(context == null) {
+        if (context == null) {
             throw new NullPointerException("Context cannot be null");
         }
 
-        Intent intent = new Intent(context,FetchService.class);
-        intent.putExtra(FetchService.ACTION_TYPE, FetchService.ACTION_PROCESS_PENDING);
-        context.startService(intent);
+        final Bundle bundle = new Bundle();
+        bundle.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_PROCESS_PENDING);
+        FetchService.getInstance(context).runAction(bundle);
+    }
+
+    public static FetchService getInstance(@NonNull Context context) {
+        if (context == null) {
+            throw new IllegalArgumentException("context cannot be null");
+        }
+        if (fetchService == null || fetchService.shuttingDown) {
+            fetchService = new FetchService(context);
+        }
+        return fetchService;
     }
 
     @NonNull
@@ -164,15 +174,13 @@ public final class FetchService extends Service implements FetchConst {
         return new IntentFilter(EVENT_ACTION_QUERY);
     }
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
 
-        context = getApplicationContext();
+    private FetchService(@NonNull Context context) {
+        this.context = context.getApplicationContext();
         broadcastManager = LocalBroadcastManager.getInstance(context);
-        sharedPreferences = getSharedPreferences(SHARED_PREFERENCES,Context.MODE_PRIVATE);
+        sharedPreferences = this.context.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE);
         databaseHelper = DatabaseHelper.getInstance(context);
-        broadcastManager.registerReceiver(doneReceiver,FetchRunnable.getDoneFilter());
+        broadcastManager.registerReceiver(doneReceiver, FetchRunnable.getDoneFilter());
         registeredReceivers.add(doneReceiver);
         downloadsLimit = getDownloadsLimit();
         preferredNetwork = getAllowedNetwork();
@@ -180,7 +188,7 @@ public final class FetchService extends Service implements FetchConst {
         onUpdateInterval = getOnUpdateInterval();
         databaseHelper.setLoggingEnabled(loggingEnabled);
 
-        if(!executor.isShutdown()) {
+        if (!executor.isShutdown()) {
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -191,31 +199,18 @@ public final class FetchService extends Service implements FetchConst {
         }
     }
 
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-
-        if(intent == null) {
-            return super.onStartCommand(intent,flags,startId);
+    public void runAction(@NonNull Bundle bundle) {
+        if (bundle == null) {
+            throw new IllegalArgumentException("Bundle cannot be null");
         }
-
-        processAction(intent);
-
-        return START_STICKY_COMPATIBILITY;
+        processAction(bundle);
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
 
+    public void shutdown() {
         shuttingDown = true;
 
-        if(!executor.isShutdown()){
+        if (!executor.isShutdown()) {
             executor.shutdown();
         }
 
@@ -228,23 +223,18 @@ public final class FetchService extends Service implements FetchConst {
         registeredReceivers.clear();
     }
 
-    private void processAction(final Intent intent) {
-
-        if(intent == null) {
-            return;
-        }
-
-        if(!executor.isShutdown()) {
+    private void processAction(final Bundle bundle) {
+        if (!executor.isShutdown()) {
 
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
 
                     databaseHelper.clean();
-                    
-                    final long id = intent.getLongExtra(EXTRA_ID, DEFAULT_EMPTY_VALUE);
 
-                    switch (intent.getIntExtra(ACTION_TYPE, DEFAULT_EMPTY_VALUE)) {
+                    final long id = bundle.getLong(EXTRA_ID, DEFAULT_EMPTY_VALUE);
+
+                    switch (bundle.getInt(ACTION_TYPE, DEFAULT_EMPTY_VALUE)) {
 
                         case ACTION_PAUSE: {
                             pause(id);
@@ -254,43 +244,43 @@ public final class FetchService extends Service implements FetchConst {
                             remove(id);
                             break;
                         }
-                        case ACTION_RESUME : {
+                        case ACTION_RESUME: {
                             resume(id);
                             break;
                         }
-                        case ACTION_ENQUEUE : {
-                            String url = intent.getStringExtra(EXTRA_URL);
-                            String filePath = intent.getStringExtra(EXTRA_FILE_PATH);
-                            ArrayList<Bundle> headers = intent.getParcelableArrayListExtra(EXTRA_HEADERS);
-                            int priority = intent.getIntExtra(EXTRA_PRIORITY,PRIORITY_NORMAL);
+                        case ACTION_ENQUEUE: {
+                            String url = bundle.getString(EXTRA_URL);
+                            String filePath = bundle.getString(EXTRA_FILE_PATH);
+                            ArrayList<Bundle> headers = bundle.getParcelableArrayList(EXTRA_HEADERS);
+                            int priority = bundle.getInt(EXTRA_PRIORITY, PRIORITY_NORMAL);
 
-                            enqueue(url,filePath,headers,priority);
+                            enqueue(url, filePath, headers, priority);
                             break;
                         }
-                        case ACTION_NETWORK : {
-                            int network = intent.getIntExtra(EXTRA_NETWORK_ID,NETWORK_ALL);
+                        case ACTION_NETWORK: {
+                            int network = bundle.getInt(EXTRA_NETWORK_ID, NETWORK_ALL);
                             setAllowedNetwork(network);
                             break;
                         }
-                        case ACTION_LOGGING : {
-                            boolean enabled = intent.getBooleanExtra(EXTRA_LOGGING_ID,true);
+                        case ACTION_LOGGING: {
+                            boolean enabled = bundle.getBoolean(EXTRA_LOGGING_ID, true);
                             setLoggingEnabled(enabled);
                             break;
                         }
-                        case ACTION_PROCESS_PENDING : {
+                        case ACTION_PROCESS_PENDING: {
                             startDownload();
                             break;
                         }
-                        case ACTION_QUERY : {
-                            long queryId = intent.getLongExtra(EXTRA_QUERY_ID,DEFAULT_EMPTY_VALUE);
-                            int queryType = intent.getIntExtra(EXTRA_QUERY_TYPE,QUERY_ALL);
-                            int status = intent.getIntExtra(EXTRA_STATUS,DEFAULT_EMPTY_VALUE);
-                            query(queryType,queryId,id,status);
+                        case ACTION_QUERY: {
+                            long queryId = bundle.getLong(EXTRA_QUERY_ID, DEFAULT_EMPTY_VALUE);
+                            int queryType = bundle.getInt(EXTRA_QUERY_TYPE, QUERY_ALL);
+                            int status = bundle.getInt(EXTRA_STATUS, DEFAULT_EMPTY_VALUE);
+                            query(queryType, queryId, id, status);
                             break;
                         }
                         case ACTION_PRIORITY: {
-                            int priority = intent.getIntExtra(EXTRA_PRIORITY,PRIORITY_NORMAL);
-                            setRequestPriority(id,priority);
+                            int priority = bundle.getInt(EXTRA_PRIORITY, PRIORITY_NORMAL);
+                            setRequestPriority(id, priority);
                             break;
                         }
                         case ACTION_RETRY: {
@@ -302,18 +292,18 @@ public final class FetchService extends Service implements FetchConst {
                             break;
                         }
                         case ACTION_CONCURRENT_DOWNLOADS_LIMIT: {
-                            int limit = intent.getIntExtra(EXTRA_CONCURRENT_DOWNLOADS_LIMIT,DEFAULT_DOWNLOADS_LIMIT);
+                            int limit = bundle.getInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT, DEFAULT_DOWNLOADS_LIMIT);
                             setDownloadsLimit(limit);
                             break;
                         }
                         case ACTION_ON_UPDATE_INTERVAL: {
-                            long interval = intent.getLongExtra(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_ON_UPDATE_INTERVAL);
+                            long interval = bundle.getLong(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_ON_UPDATE_INTERVAL);
                             setOnUpdateInterval(interval);
                             break;
                         }
                         case ACTION_UPDATE_REQUEST_URL: {
-                            String url = intent.getStringExtra(EXTRA_URL);
-                            updateRequestUrl(id,url);
+                            String url = bundle.getString(EXTRA_URL);
+                            updateRequestUrl(id, url);
                             break;
                         }
                         case ACTION_REMOVE_REQUEST: {
@@ -336,20 +326,20 @@ public final class FetchService extends Service implements FetchConst {
 
     private synchronized void startDownload() {
 
-        if(shuttingDown || runningTask) {
+        if (shuttingDown || runningTask) {
             return;
         }
 
         boolean networkAvailable = Utils.isNetworkAvailable(context);
         boolean onWiFi = Utils.isOnWiFi(context);
 
-        if((!networkAvailable || (preferredNetwork == NETWORK_WIFI && !onWiFi)) && activeDownloads.size() > 0) {
+        if ((!networkAvailable || (preferredNetwork == NETWORK_WIFI && !onWiFi)) && activeDownloads.size() > 0) {
 
             runningTask = true;
             interruptActiveDownloads();
             runningTask = false;
 
-        }else if(networkAvailable && !runningTask && activeDownloads.size() < downloadsLimit
+        } else if (networkAvailable && !runningTask && activeDownloads.size() < downloadsLimit
                 && databaseHelper.hasPendingRequests()) {
 
             runningTask = true;
@@ -358,35 +348,35 @@ public final class FetchService extends Service implements FetchConst {
 
                 Cursor cursor = databaseHelper.getNextPendingRequest();
 
-                if(cursor != null && !cursor.isClosed() && cursor.getCount() > 0) {
+                if (cursor != null && !cursor.isClosed() && cursor.getCount() > 0) {
 
-                    RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
+                    RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor, true, loggingEnabled);
 
-                    FetchRunnable fetchRunnable = new FetchRunnable(context,requestInfo.getId(),
+                    FetchRunnable fetchRunnable = new FetchRunnable(context, requestInfo.getId(),
                             requestInfo.getUrl(), requestInfo.getFilePath()
-                            ,requestInfo.getHeaders(),requestInfo.getFileSize(),loggingEnabled, onUpdateInterval);
+                            , requestInfo.getHeaders(), requestInfo.getFileSize(), loggingEnabled, onUpdateInterval);
 
-                    databaseHelper.updateStatus(requestInfo.getId(),FetchService.STATUS_DOWNLOADING,DEFAULT_EMPTY_VALUE);
-                    activeDownloads.put(fetchRunnable.getId(),fetchRunnable);
+                    databaseHelper.updateStatus(requestInfo.getId(), FetchService.STATUS_DOWNLOADING, DEFAULT_EMPTY_VALUE);
+                    activeDownloads.put(fetchRunnable.getId(), fetchRunnable);
 
                     new Thread(fetchRunnable).start();
                 }
 
-            }catch (Exception e) {
+            } catch (Exception e) {
 
-                if(loggingEnabled) {
+                if (loggingEnabled) {
                     e.printStackTrace();
                 }
             }
 
             runningTask = false;
 
-            if(activeDownloads.size() < downloadsLimit && databaseHelper.hasPendingRequests()) {
+            if (activeDownloads.size() < downloadsLimit && databaseHelper.hasPendingRequests()) {
                 startDownload();
             }
-        }else if(!runningTask && activeDownloads.size() == 0 && !databaseHelper.hasPendingRequests()) {
+        } else if (!runningTask && activeDownloads.size() == 0 && !databaseHelper.hasPendingRequests()) {
             shuttingDown = true;
-            stopSelf();
+            shutdown();
         }
     }
 
@@ -396,7 +386,7 @@ public final class FetchService extends Service implements FetchConst {
 
             FetchRunnable fetchRunnable = activeDownloads.get(id);
 
-            if(fetchRunnable != null) {
+            if (fetchRunnable != null) {
                 fetchRunnable.interrupt();
             }
         }
@@ -404,30 +394,30 @@ public final class FetchService extends Service implements FetchConst {
 
     private void interruptActiveDownload(long id) {
 
-        if(activeDownloads.containsKey(id)) {
+        if (activeDownloads.containsKey(id)) {
             FetchRunnable fetchRunnable = activeDownloads.get(id);
 
-            if(fetchRunnable != null) {
+            if (fetchRunnable != null) {
                 fetchRunnable.interrupt();
             }
         }
     }
 
-    private void enqueue(String url,String filePath,ArrayList<Bundle> headers,int priority) {
+    private void enqueue(String url, String filePath, ArrayList<Bundle> headers, int priority) {
 
         try {
 
-            if(url == null || filePath == null) {
+            if (url == null || filePath == null) {
                 throw new EnqueueException("Request was not properly formatted. url:"
-                        + url + ", filePath:" + filePath,ERROR_BAD_REQUEST);
+                        + url + ", filePath:" + filePath, ERROR_BAD_REQUEST);
             }
 
-            if(headers == null) {
+            if (headers == null) {
                 headers = new ArrayList<>();
             }
 
             long id = Utils.generateRequestId();
-            String headerString = Utils.bundleListToHeaderString(headers,loggingEnabled);
+            String headerString = Utils.bundleListToHeaderString(headers, loggingEnabled);
             long fileSize = 0L;
             long downloadedBytes = 0L;
 
@@ -437,48 +427,48 @@ public final class FetchService extends Service implements FetchConst {
                 downloadedBytes = file.length();
             }
 
-            boolean enqueued = databaseHelper.insert(id,url,filePath,STATUS_QUEUED,headerString,
-                    downloadedBytes,fileSize,priority, DEFAULT_EMPTY_VALUE);
+            boolean enqueued = databaseHelper.insert(id, url, filePath, STATUS_QUEUED, headerString,
+                    downloadedBytes, fileSize, priority, DEFAULT_EMPTY_VALUE);
 
-            if(!enqueued) {
-                throw new EnqueueException("could not enqueue request",ERROR_ENQUEUE_ERROR);
+            if (!enqueued) {
+                throw new EnqueueException("could not enqueue request", ERROR_ENQUEUE_ERROR);
             }
 
-            sendEnqueueEvent(EVENT_ACTION_ENQUEUED,id,url,filePath,
-                    STATUS_QUEUED,headers,priority,DEFAULT_EMPTY_VALUE);
+            sendEnqueueEvent(EVENT_ACTION_ENQUEUED, id, url, filePath,
+                    STATUS_QUEUED, headers, priority, DEFAULT_EMPTY_VALUE);
 
-        }catch (EnqueueException e) {
+        } catch (EnqueueException e) {
 
-            if(loggingEnabled) {
+            if (loggingEnabled) {
                 e.printStackTrace();
             }
 
-            sendEnqueueEvent(EVENT_ACTION_ENQUEUE_FAILED,DEFAULT_EMPTY_VALUE,
-                    url,filePath,STATUS_NOT_QUEUED,headers,priority,e.getErrorCode());
+            sendEnqueueEvent(EVENT_ACTION_ENQUEUE_FAILED, DEFAULT_EMPTY_VALUE,
+                    url, filePath, STATUS_NOT_QUEUED, headers, priority, e.getErrorCode());
 
-        }finally {
+        } finally {
             startDownload();
         }
     }
 
     private void resume(final long id) {
 
-        if(activeDownloads.containsKey(id)) {
+        if (activeDownloads.containsKey(id)) {
             return;
         }
 
         boolean resumed = databaseHelper.resume(id);
 
-        if(resumed) {
+        if (resumed) {
 
             Cursor cursor = databaseHelper.get(id);
-            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
+            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor, true, loggingEnabled);
 
-            if(requestInfo != null) {
+            if (requestInfo != null) {
 
                 Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
                         requestInfo.getStatus(), requestInfo.getProgress(),
-                        requestInfo.getDownloadedBytes(),requestInfo.getFileSize(),
+                        requestInfo.getDownloadedBytes(), requestInfo.getFileSize(),
                         requestInfo.getError());
             }
         }
@@ -488,7 +478,7 @@ public final class FetchService extends Service implements FetchConst {
 
     private void pause(final long id) {
 
-        if(activeDownloads.containsKey(id)) {
+        if (activeDownloads.containsKey(id)) {
 
             runningTask = true;
 
@@ -496,7 +486,7 @@ public final class FetchService extends Service implements FetchConst {
                 @Override
                 public void onReceive(Context context, Intent intent) {
 
-                    if(FetchRunnable.getIdFromIntent(intent) == id) {
+                    if (FetchRunnable.getIdFromIntent(intent) == id) {
                         pauseAction(id);
 
                         broadcastManager.unregisterReceiver(this);
@@ -508,9 +498,9 @@ public final class FetchService extends Service implements FetchConst {
             };
 
             registeredReceivers.add(broadcastReceiver);
-            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
+            broadcastManager.registerReceiver(broadcastReceiver, FetchRunnable.getDoneFilter());
             interruptActiveDownload(id);
-        }else {
+        } else {
 
             pauseAction(id);
             startDownload();
@@ -519,16 +509,16 @@ public final class FetchService extends Service implements FetchConst {
 
     private void pauseAction(long id) {
 
-        if(databaseHelper.pause(id)) {
+        if (databaseHelper.pause(id)) {
 
             Cursor cursor = databaseHelper.get(id);
-            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
+            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor, true, loggingEnabled);
 
-            if(requestInfo != null) {
+            if (requestInfo != null) {
 
                 Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
                         requestInfo.getStatus(), requestInfo.getProgress(),
-                        requestInfo.getDownloadedBytes(),requestInfo.getFileSize(),
+                        requestInfo.getDownloadedBytes(), requestInfo.getFileSize(),
                         requestInfo.getError());
             }
 
@@ -545,7 +535,7 @@ public final class FetchService extends Service implements FetchConst {
                 @Override
                 public void onReceive(Context context, Intent intent) {
 
-                    if(FetchRunnable.getIdFromIntent(intent) == id) {
+                    if (FetchRunnable.getIdFromIntent(intent) == id) {
                         removeAction(id);
 
                         broadcastManager.unregisterReceiver(this);
@@ -557,9 +547,9 @@ public final class FetchService extends Service implements FetchConst {
             };
 
             registeredReceivers.add(broadcastReceiver);
-            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
+            broadcastManager.registerReceiver(broadcastReceiver, FetchRunnable.getDoneFilter());
             interruptActiveDownload(id);
-        }else {
+        } else {
             removeAction(id);
             startDownload();
         }
@@ -568,14 +558,14 @@ public final class FetchService extends Service implements FetchConst {
     private void removeAction(long id) {
 
         Cursor cursor = databaseHelper.get(id);
-        RequestInfo request = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
+        RequestInfo request = Utils.cursorToRequestInfo(cursor, true, loggingEnabled);
 
-        if(request != null && databaseHelper.delete(id)) {
+        if (request != null && databaseHelper.delete(id)) {
 
             Utils.deleteFile(request.getFilePath());
 
-            Utils.sendEventUpdate(broadcastManager,id,
-                    STATUS_REMOVED,0,0,0,DEFAULT_EMPTY_VALUE);
+            Utils.sendEventUpdate(broadcastManager, id,
+                    STATUS_REMOVED, 0, 0, 0, DEFAULT_EMPTY_VALUE);
         }
     }
 
@@ -589,12 +579,12 @@ public final class FetchService extends Service implements FetchConst {
                 @Override
                 public void onReceive(Context context, Intent intent) {
 
-                    if(intent != null) {
+                    if (intent != null) {
                         long id = FetchRunnable.getIdFromIntent(intent);
                         removeAction(id);
                     }
 
-                    if(activeDownloads.size() == 0) {
+                    if (activeDownloads.size() == 0) {
                         removeAllAction();
                         broadcastManager.unregisterReceiver(this);
                         registeredReceivers.remove(this);
@@ -605,9 +595,9 @@ public final class FetchService extends Service implements FetchConst {
             };
 
             registeredReceivers.add(broadcastReceiver);
-            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
+            broadcastManager.registerReceiver(broadcastReceiver, FetchRunnable.getDoneFilter());
             interruptActiveDownloads();
-        }else {
+        } else {
             removeAllAction();
             startDownload();
         }
@@ -616,16 +606,16 @@ public final class FetchService extends Service implements FetchConst {
     private void removeAllAction() {
 
         Cursor cursor = databaseHelper.get();
-        List<RequestInfo> requests = Utils.cursorToRequestInfoList(cursor,true,loggingEnabled);
+        List<RequestInfo> requests = Utils.cursorToRequestInfoList(cursor, true, loggingEnabled);
 
-        if(requests != null && databaseHelper.deleteAll()) {
+        if (requests != null && databaseHelper.deleteAll()) {
 
             for (RequestInfo request : requests) {
 
                 Utils.deleteFile(request.getFilePath());
 
-                Utils.sendEventUpdate(broadcastManager,request.getId(),
-                        STATUS_REMOVED,0,0,0,DEFAULT_EMPTY_VALUE);
+                Utils.sendEventUpdate(broadcastManager, request.getId(),
+                        STATUS_REMOVED, 0, 0, 0, DEFAULT_EMPTY_VALUE);
             }
         }
     }
@@ -640,12 +630,12 @@ public final class FetchService extends Service implements FetchConst {
                 @Override
                 public void onReceive(Context context, Intent intent) {
 
-                    if(intent != null) {
+                    if (intent != null) {
                         long id = FetchRunnable.getIdFromIntent(intent);
                         removeRequestAction(id);
                     }
 
-                    if(activeDownloads.size() == 0) {
+                    if (activeDownloads.size() == 0) {
                         removeRequestAllAction();
                         broadcastManager.unregisterReceiver(this);
                         registeredReceivers.remove(this);
@@ -656,9 +646,9 @@ public final class FetchService extends Service implements FetchConst {
             };
 
             registeredReceivers.add(broadcastReceiver);
-            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
+            broadcastManager.registerReceiver(broadcastReceiver, FetchRunnable.getDoneFilter());
             interruptActiveDownloads();
-        }else {
+        } else {
             removeRequestAllAction();
             startDownload();
         }
@@ -667,15 +657,15 @@ public final class FetchService extends Service implements FetchConst {
     private void removeRequestAllAction() {
 
         Cursor cursor = databaseHelper.get();
-        List<RequestInfo> requests = Utils.cursorToRequestInfoList(cursor,true,loggingEnabled);
+        List<RequestInfo> requests = Utils.cursorToRequestInfoList(cursor, true, loggingEnabled);
 
-        if(requests != null && databaseHelper.deleteAll()) {
+        if (requests != null && databaseHelper.deleteAll()) {
 
             for (RequestInfo request : requests) {
 
-                Utils.sendEventUpdate(broadcastManager,request.getId(),
-                        STATUS_REMOVED,request.getProgress(),request.getDownloadedBytes(),
-                        request.getFileSize(),DEFAULT_EMPTY_VALUE);
+                Utils.sendEventUpdate(broadcastManager, request.getId(),
+                        STATUS_REMOVED, request.getProgress(), request.getDownloadedBytes(),
+                        request.getFileSize(), DEFAULT_EMPTY_VALUE);
             }
         }
     }
@@ -690,7 +680,7 @@ public final class FetchService extends Service implements FetchConst {
                 @Override
                 public void onReceive(Context context, Intent intent) {
 
-                    if(FetchRunnable.getIdFromIntent(intent) == id) {
+                    if (FetchRunnable.getIdFromIntent(intent) == id) {
                         removeRequestAction(id);
 
                         broadcastManager.unregisterReceiver(this);
@@ -702,9 +692,9 @@ public final class FetchService extends Service implements FetchConst {
             };
 
             registeredReceivers.add(broadcastReceiver);
-            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
+            broadcastManager.registerReceiver(broadcastReceiver, FetchRunnable.getDoneFilter());
             interruptActiveDownload(id);
-        }else {
+        } else {
             removeRequestAction(id);
             startDownload();
         }
@@ -713,26 +703,26 @@ public final class FetchService extends Service implements FetchConst {
     private void removeRequestAction(long id) {
 
         Cursor cursor = databaseHelper.get(id);
-        RequestInfo request = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
+        RequestInfo request = Utils.cursorToRequestInfo(cursor, true, loggingEnabled);
 
-        if(request != null && databaseHelper.delete(id)) {
+        if (request != null && databaseHelper.delete(id)) {
 
-            Utils.sendEventUpdate(broadcastManager,id,
-                    STATUS_REMOVED,request.getProgress(),request.getDownloadedBytes(),
-                    request.getFileSize(),DEFAULT_EMPTY_VALUE);
+            Utils.sendEventUpdate(broadcastManager, id,
+                    STATUS_REMOVED, request.getProgress(), request.getDownloadedBytes(),
+                    request.getFileSize(), DEFAULT_EMPTY_VALUE);
         }
     }
 
-    private void query(int queryType,long queryId,long requestId,int status) {
+    private void query(int queryType, long queryId, long requestId, int status) {
 
         Cursor cursor;
 
         switch (queryType) {
-            case QUERY_SINGLE : {
+            case QUERY_SINGLE: {
                 cursor = databaseHelper.get(requestId);
                 break;
             }
-            case QUERY_BY_STATUS : {
+            case QUERY_BY_STATUS: {
                 cursor = databaseHelper.getByStatus(status);
                 break;
             }
@@ -742,14 +732,14 @@ public final class FetchService extends Service implements FetchConst {
             }
         }
 
-        ArrayList<Bundle> queryResults = Utils.cursorToQueryResultList(cursor,true,loggingEnabled);
-        sendEventQuery(queryId,queryResults);
+        ArrayList<Bundle> queryResults = Utils.cursorToQueryResultList(cursor, true, loggingEnabled);
+        sendEventQuery(queryId, queryResults);
         startDownload();
     }
 
     private void setRequestPriority(long id, int priority) {
 
-        if(databaseHelper.setPriority(id,priority) && activeDownloads.size() > 0) {
+        if (databaseHelper.setPriority(id, priority) && activeDownloads.size() > 0) {
             interruptActiveDownloads();
         }
 
@@ -759,9 +749,9 @@ public final class FetchService extends Service implements FetchConst {
     private void setAllowedNetwork(final int networkType) {
 
         preferredNetwork = networkType;
-        sharedPreferences.edit().putInt(EXTRA_NETWORK_ID,networkType).apply();
+        sharedPreferences.edit().putInt(EXTRA_NETWORK_ID, networkType).apply();
 
-        if(activeDownloads.size() > 0) {
+        if (activeDownloads.size() > 0) {
             interruptActiveDownloads();
         }
 
@@ -770,19 +760,19 @@ public final class FetchService extends Service implements FetchConst {
 
     private void retry(long id) {
 
-        if(activeDownloads.containsKey(id)) {
+        if (activeDownloads.containsKey(id)) {
             return;
         }
 
-        if(databaseHelper.retry(id)) {
+        if (databaseHelper.retry(id)) {
 
             Cursor cursor = databaseHelper.get(id);
-            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,loggingEnabled);
+            RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor, true, loggingEnabled);
 
-            if(requestInfo != null) {
+            if (requestInfo != null) {
                 Utils.sendEventUpdate(broadcastManager, requestInfo.getId(),
                         requestInfo.getStatus(), requestInfo.getProgress(),
-                        requestInfo.getDownloadedBytes(),requestInfo.getFileSize(),
+                        requestInfo.getDownloadedBytes(), requestInfo.getFileSize(),
                         requestInfo.getError());
             }
         }
@@ -790,7 +780,7 @@ public final class FetchService extends Service implements FetchConst {
         startDownload();
     }
 
-    private void updateRequestUrl(final long id,final String url) {
+    private void updateRequestUrl(final long id, final String url) {
 
         if (activeDownloads.containsKey(id)) {
 
@@ -800,8 +790,8 @@ public final class FetchService extends Service implements FetchConst {
                 @Override
                 public void onReceive(Context context, Intent intent) {
 
-                    if(FetchRunnable.getIdFromIntent(intent) == id) {
-                        updateRequestUrlAction(id,url);
+                    if (FetchRunnable.getIdFromIntent(intent) == id) {
+                        updateRequestUrlAction(id, url);
 
                         broadcastManager.unregisterReceiver(this);
                         registeredReceivers.remove(this);
@@ -812,17 +802,17 @@ public final class FetchService extends Service implements FetchConst {
             };
 
             registeredReceivers.add(broadcastReceiver);
-            broadcastManager.registerReceiver(broadcastReceiver,FetchRunnable.getDoneFilter());
+            broadcastManager.registerReceiver(broadcastReceiver, FetchRunnable.getDoneFilter());
             interruptActiveDownload(id);
-        }else {
-            updateRequestUrlAction(id,url);
+        } else {
+            updateRequestUrlAction(id, url);
             startDownload();
         }
     }
 
-    private void updateRequestUrlAction(long id,String url) {
+    private void updateRequestUrlAction(long id, String url) {
 
-        databaseHelper.updateUrl(id,url);
+        databaseHelper.updateUrl(id, url);
         databaseHelper.retry(id);
     }
 
@@ -834,11 +824,11 @@ public final class FetchService extends Service implements FetchConst {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            if(intent != null) {
+            if (intent != null) {
 
                 long id = FetchRunnable.getIdFromIntent(intent);
 
-                if(activeDownloads.containsKey(id)) {
+                if (activeDownloads.containsKey(id)) {
                     activeDownloads.remove(id);
                 }
 
@@ -847,47 +837,47 @@ public final class FetchService extends Service implements FetchConst {
         }
     };
 
-    private void sendEnqueueEvent(String action,long id, String url, String filePath,
+    private void sendEnqueueEvent(String action, long id, String url, String filePath,
                                   int status, ArrayList<Bundle> headers, int priority,
                                   int error) {
 
         Intent intent = new Intent(action);
-        intent.putExtra(EXTRA_ID,id);
-        intent.putExtra(EXTRA_STATUS,status);
-        intent.putExtra(EXTRA_URL,url);
-        intent.putExtra(EXTRA_FILE_PATH,filePath);
-        intent.putExtra(EXTRA_HEADERS,headers);
-        intent.putExtra(EXTRA_PROGRESS,0);
-        intent.putExtra(EXTRA_FILE_SIZE,0L);
-        intent.putExtra(EXTRA_ERROR,error);
-        intent.putExtra(EXTRA_PRIORITY,priority);
+        intent.putExtra(EXTRA_ID, id);
+        intent.putExtra(EXTRA_STATUS, status);
+        intent.putExtra(EXTRA_URL, url);
+        intent.putExtra(EXTRA_FILE_PATH, filePath);
+        intent.putExtra(EXTRA_HEADERS, headers);
+        intent.putExtra(EXTRA_PROGRESS, 0);
+        intent.putExtra(EXTRA_FILE_SIZE, 0L);
+        intent.putExtra(EXTRA_ERROR, error);
+        intent.putExtra(EXTRA_PRIORITY, priority);
 
         broadcastManager.sendBroadcast(intent);
     }
 
-    private void sendEventQuery(long queryId,ArrayList<Bundle> results) {
+    private void sendEventQuery(long queryId, ArrayList<Bundle> results) {
 
         Intent intent = new Intent(FetchService.EVENT_ACTION_QUERY);
-        intent.putExtra(FetchService.EXTRA_QUERY_ID,queryId);
-        intent.putExtra(FetchService.EXTRA_QUERY_RESULT,results);
+        intent.putExtra(FetchService.EXTRA_QUERY_ID, queryId);
+        intent.putExtra(FetchService.EXTRA_QUERY_RESULT, results);
 
         broadcastManager.sendBroadcast(intent);
     }
 
     private int getDownloadsLimit() {
-        return sharedPreferences.getInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT,DEFAULT_DOWNLOADS_LIMIT);
+        return sharedPreferences.getInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT, DEFAULT_DOWNLOADS_LIMIT);
     }
 
     private void setDownloadsLimit(int limit) {
 
-        if(limit < DEFAULT_DOWNLOADS_LIMIT) {
+        if (limit < DEFAULT_DOWNLOADS_LIMIT) {
             limit = DEFAULT_DOWNLOADS_LIMIT;
         }
 
         downloadsLimit = limit;
-        sharedPreferences.edit().putInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT,limit).apply();
+        sharedPreferences.edit().putInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT, limit).apply();
 
-        if(activeDownloads.size() > 0) {
+        if (activeDownloads.size() > 0) {
             interruptActiveDownloads();
         }
 
@@ -897,25 +887,25 @@ public final class FetchService extends Service implements FetchConst {
     private void setLoggingEnabled(boolean enabled) {
 
         loggingEnabled = enabled;
-        sharedPreferences.edit().putBoolean(EXTRA_LOGGING_ID,enabled).apply();
+        sharedPreferences.edit().putBoolean(EXTRA_LOGGING_ID, enabled).apply();
         databaseHelper.setLoggingEnabled(loggingEnabled);
         startDownload();
     }
 
     private boolean isLoggingEnabled() {
-        return sharedPreferences.getBoolean(EXTRA_LOGGING_ID,true);
+        return sharedPreferences.getBoolean(EXTRA_LOGGING_ID, true);
     }
 
     static boolean isLoggingEnabled(Context context) {
-        return  context.getSharedPreferences(SHARED_PREFERENCES,Context.MODE_PRIVATE)
-                .getBoolean(EXTRA_LOGGING_ID,true);
+        return context.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE)
+                .getBoolean(EXTRA_LOGGING_ID, true);
     }
 
     private void setOnUpdateInterval(long intervalMs) {
         onUpdateInterval = intervalMs;
         sharedPreferences.edit().putLong(EXTRA_ON_UPDATE_INTERVAL, intervalMs).apply();
 
-        if(activeDownloads.size() > 0) {
+        if (activeDownloads.size() > 0) {
             interruptActiveDownloads();
         }
 

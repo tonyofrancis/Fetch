@@ -49,7 +49,7 @@ import java.util.concurrent.ConcurrentMap;
  * Fetch is a download manager for the FetchService.
  * Instances of this class listen for status and progress updates from
  * the FetchService and notifies attached FetchListeners of these changes.
- *
+ * <p>
  * Instances of this class are obtained by calling the Fetch.newInstance(Context) method.
  *
  * @author Tonyo Francis
@@ -57,7 +57,7 @@ import java.util.concurrent.ConcurrentMap;
 public final class Fetch implements FetchConst {
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private static final ConcurrentMap<Request,FetchCallRunnable> callsMap = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Request, FetchCallRunnable> callsMap = new ConcurrentHashMap<>();
 
     private final Context context;
     private final LocalBroadcastManager broadcastManager;
@@ -85,15 +85,14 @@ public final class Fetch implements FetchConst {
     /**
      * Starts the FetchService and begins processing/downloading any
      * Fetch.STATUS_QUEUED Requests in the background.
-     *
+     * <p>
      * <p>Call this method if you need queued downloads to start
      * on application launch, or in a JobService without getting
      * an instance of Fetch.
      *
      * @param context context used to start the service.
-     *
      * @throws NullPointerException if the passed in context is null.
-     * */
+     */
     public static void startService(@NonNull Context context) {
 
         FetchService.processPendingRequests(context);
@@ -101,7 +100,7 @@ public final class Fetch implements FetchConst {
 
     /**
      * @deprecated <p>See {@link Fetch#newInstance(Context)}
-     * */
+     */
     public static Fetch getInstance(@NonNull Context context) {
 
         return newInstance(context);
@@ -111,14 +110,12 @@ public final class Fetch implements FetchConst {
      * Gets a new instance of Fetch.
      *
      * @param context Context
-     *
      * @return a new instance of Fetch
-     *
      * @throws NullPointerException if context is null
-     * */
+     */
     public static Fetch newInstance(@NonNull Context context) {
 
-        if(context == null) {
+        if (context == null) {
             throw new NullPointerException("Context cannot be null");
         }
 
@@ -130,30 +127,29 @@ public final class Fetch implements FetchConst {
      * Experimental Feature. The implementation of Fetch.Call() may change in
      * the future.
      *
-     * @param request a download request. Cannot be null.
+     * @param request   a download request. Cannot be null.
      * @param fetchCall Callback used to return the GET response/data back to the caller.
      *                  Cannot be null.
-     *
      * @throws NullPointerException if request is null.
      * @throws NullPointerException if the callback is null.
-     * */
-    public static void call(@NonNull Request request,@NonNull FetchCall<String> fetchCall) {
+     */
+    public static void call(@NonNull Request request, @NonNull FetchCall<String> fetchCall) {
 
-        if(request == null) {
+        if (request == null) {
             throw new NullPointerException("Request cannot be null");
         }
 
-        if(fetchCall == null) {
+        if (fetchCall == null) {
             throw new NullPointerException("FetchCall cannot be null");
         }
 
-        if(callsMap.containsKey(request)) {
+        if (callsMap.containsKey(request)) {
             return;
         }
 
-        FetchCallRunnable callRunnable = new FetchCallRunnable(request,fetchCall,callsCallback);
+        FetchCallRunnable callRunnable = new FetchCallRunnable(request, fetchCall, callsCallback);
 
-        callsMap.put(request,callRunnable);
+        callsMap.put(request, callRunnable);
 
         new Thread(callRunnable).start();
     }
@@ -169,18 +165,18 @@ public final class Fetch implements FetchConst {
      * Cancels a currently running FetchCall.
      *
      * @param request Request used to start the FetchCall.
-     * */
+     */
     public static void cancelCall(@NonNull Request request) {
 
-        if(request == null) {
+        if (request == null) {
             return;
         }
 
-        if(callsMap.containsKey(request)) {
+        if (callsMap.containsKey(request)) {
 
             FetchCallRunnable fetchCallRunnable = callsMap.get(request);
 
-            if(fetchCallRunnable != null) {
+            if (fetchCallRunnable != null) {
                 fetchCallRunnable.interrupt();
             }
         }
@@ -189,15 +185,14 @@ public final class Fetch implements FetchConst {
     /**
      * Performs cleanup on this Fetch. Call this method only after you
      * are completely done with this instance.
-     *
+     * <p>
      * <p>Method calls on this Fetch instance will throw a NotUsableException,
      * after this method is called. If needed, get a new instance of Fetch by calling
      * Fetch.newInstance().
-     *
-     * */
+     */
     public void release() {
 
-        if(!isReleased()) {
+        if (!isReleased()) {
 
             setReleased(true);
             listeners.clear();
@@ -212,19 +207,18 @@ public final class Fetch implements FetchConst {
      *
      * @param fetchListener a FetchListener instance that will be notified of status and progress
      *                      updates.
-     *
      * @throws NullPointerException if the passed in FetchListener is null.
-     * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     * @throws NotUsableException   if the release method has been called on Fetch.
+     */
     public void addFetchListener(@NonNull FetchListener fetchListener) {
 
         Utils.throwIfNotUsable(this);
 
-        if(fetchListener == null) {
+        if (fetchListener == null) {
             throw new NullPointerException("fetchListener cannot be null");
         }
 
-        if(listeners.contains(fetchListener)) {
+        if (listeners.contains(fetchListener)) {
             return;
         }
 
@@ -236,14 +230,13 @@ public final class Fetch implements FetchConst {
      * of status and progress updates.
      *
      * @param fetchListener the FetchListener to delete.
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     public void removeFetchListener(@NonNull FetchListener fetchListener) {
 
         Utils.throwIfNotUsable(this);
 
-        if(fetchListener == null) {
+        if (fetchListener == null) {
             return;
         }
 
@@ -255,7 +248,7 @@ public final class Fetch implements FetchConst {
      * of status and progress updates.
      *
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     public void removeFetchListeners() {
 
         Utils.throwIfNotUsable(this);
@@ -266,18 +259,16 @@ public final class Fetch implements FetchConst {
      * Enqueues the new download request for downloading.
      *
      * @param request a download request.
-     *
      * @return a unique ID used by Fetch and the FetchService to identify a download
-     *         request. If the request could not be enqueued -1 is returned.
-     *
+     * request. If the request could not be enqueued -1 is returned.
      * @throws NullPointerException if the passed in request is null.
-     * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     * @throws NotUsableException   if the release method has been called on Fetch.
+     */
     public long enqueue(@NonNull Request request) {
 
         Utils.throwIfNotUsable(this);
 
-        if(request == null) {
+        if (request == null) {
             throw new NullPointerException("Request cannot be null");
         }
 
@@ -288,7 +279,7 @@ public final class Fetch implements FetchConst {
             String url = request.getUrl();
             String filePath = request.getFilePath();
             int priority = request.getPriority();
-            String headers = Utils.headerListToString(request.getHeaders(),isLoggingEnabled());
+            String headers = Utils.headerListToString(request.getHeaders(), isLoggingEnabled());
             long fileSize = 0L;
             long downloadedBytes = 0L;
 
@@ -298,18 +289,18 @@ public final class Fetch implements FetchConst {
                 downloadedBytes = file.length();
             }
 
-            boolean enqueued = dbHelper.insert(id,url,filePath, Fetch.STATUS_QUEUED,headers,downloadedBytes,
-                    fileSize,priority, DEFAULT_EMPTY_VALUE);
+            boolean enqueued = dbHelper.insert(id, url, filePath, Fetch.STATUS_QUEUED, headers, downloadedBytes,
+                    fileSize, priority, DEFAULT_EMPTY_VALUE);
 
-            if(!enqueued) {
-                throw new EnqueueException("could not insert request",ERROR_ENQUEUE_ERROR);
+            if (!enqueued) {
+                throw new EnqueueException("could not insert request", ERROR_ENQUEUE_ERROR);
             }
 
             startService(context);
 
-        }catch (EnqueueException e) {
+        } catch (EnqueueException e) {
 
-            if(isLoggingEnabled()) {
+            if (isLoggingEnabled()) {
                 e.printStackTrace();
             }
 
@@ -323,20 +314,18 @@ public final class Fetch implements FetchConst {
      * Enqueues a list of new download requests for downloading.
      *
      * @param requests a list of download requests.
-     *
      * @return a list with unique IDs used by Fetch and the FetchService to identify
-     *         the download requests. If a request could not be enqueued an ID of -1
-     *         is returned for that request.
-     *
+     * the download requests. If a request could not be enqueued an ID of -1
+     * is returned for that request.
      * @throws NullPointerException if the passed in list is null.
-     * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     * @throws NotUsableException   if the release method has been called on Fetch.
+     */
     @NonNull
     public List<Long> enqueue(@NonNull List<Request> requests) {
 
         Utils.throwIfNotUsable(this);
 
-        if(requests == null) {
+        if (requests == null) {
             throw new NullPointerException("Request list cannot be null");
         }
 
@@ -366,12 +355,12 @@ public final class Fetch implements FetchConst {
 
                 id = DEFAULT_EMPTY_VALUE;
 
-                if(request != null) {
+                if (request != null) {
 
                     id = Utils.generateRequestId();
                     url = request.getUrl();
                     filePath = request.getFilePath();
-                    headers = Utils.headerListToString(request.getHeaders(),isLoggingEnabled());
+                    headers = Utils.headerListToString(request.getHeaders(), isLoggingEnabled());
                     status = Fetch.STATUS_QUEUED;
                     priority = request.getPriority();
                     downloadedBytes = 0L;
@@ -385,26 +374,26 @@ public final class Fetch implements FetchConst {
 
                     error = DEFAULT_EMPTY_VALUE;
 
-                    String statement = dbHelper.getRowInsertStatement(id,url,filePath,status,headers, downloadedBytes,fileSize,priority,error);
+                    String statement = dbHelper.getRowInsertStatement(id, url, filePath, status, headers, downloadedBytes, fileSize, priority, error);
                     stringBuilder.append(statement)
-                                 .append(", ");
+                            .append(", ");
                 }
 
                 ids.add(id);
             }
 
-            stringBuilder.delete(stringBuilder.length()-2,stringBuilder.length())
-                         .append(dbHelper.getInsertStatementClose());
+            stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length())
+                    .append(dbHelper.getInsertStatementClose());
             boolean inserted = dbHelper.insert(stringBuilder.toString());
 
-            if(!inserted) {
-                throw new EnqueueException("could not insert requests",ERROR_ENQUEUE_ERROR);
+            if (!inserted) {
+                throw new EnqueueException("could not insert requests", ERROR_ENQUEUE_ERROR);
             }
 
             startService(context);
-        }catch (EnqueueException e) {
+        } catch (EnqueueException e) {
 
-            if(isLoggingEnabled()) {
+            if (isLoggingEnabled()) {
                 e.printStackTrace();
             }
 
@@ -424,18 +413,17 @@ public final class Fetch implements FetchConst {
      *
      * @param id a unique ID used by Fetch and the FetchService to identify a download
      *           request.
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     public void remove(long id) {
 
         Utils.throwIfNotUsable(this);
 
         Bundle extras = new Bundle();
         extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_REMOVE);
-        extras.putLong(FetchService.EXTRA_ID,id);
+        extras.putLong(FetchService.EXTRA_ID, id);
 
-        FetchService.sendToService(context,extras);
+        FetchService.sendToService(context, extras);
     }
 
     /**
@@ -444,7 +432,7 @@ public final class Fetch implements FetchConst {
      * partial or fully downloaded files on the device or SD Card.
      *
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     public void removeAll() {
 
         Utils.throwIfNotUsable(this);
@@ -452,28 +440,29 @@ public final class Fetch implements FetchConst {
         Bundle extras = new Bundle();
         extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_REMOVE_ALL);
 
-        FetchService.sendToService(context,extras);
+        FetchService.sendToService(context, extras);
     }
 
     /**
      * Remove a request from Fetch. The file is not deleted.
+     *
      * @param id request Id
-     * */
+     */
     public void removeRequest(long id) {
 
         Utils.throwIfNotUsable(this);
 
         Bundle extras = new Bundle();
         extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_REMOVE_REQUEST);
-        extras.putLong(FetchService.EXTRA_ID,id);
+        extras.putLong(FetchService.EXTRA_ID, id);
 
-        FetchService.sendToService(context,extras);
+        FetchService.sendToService(context, extras);
 
     }
 
     /**
      * Remove a requests from Fetch. The files are not deleted.
-     * */
+     */
     public void removeRequests() {
 
         Utils.throwIfNotUsable(this);
@@ -482,29 +471,28 @@ public final class Fetch implements FetchConst {
         Bundle extras = new Bundle();
         extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_REMOVE_REQUEST_ALL);
 
-        FetchService.sendToService(context,extras);
+        FetchService.sendToService(context, extras);
     }
 
     /**
      * Sets the status of a download request to STATUS_PAUSED.
-     *
+     * <p>
      * <p>The Fetch.STATUS_PAUSED status will only be set for the download request if its current status
      * is Fetch.STATUS_QUEUED or Fetch.STATUS_DOWNLOADING.
      *
      * @param id a unique ID used by Fetch and the FetchService to identify a download
      *           request.
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     public void pause(long id) {
 
         Utils.throwIfNotUsable(this);
 
         Bundle extras = new Bundle();
         extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_PAUSE);
-        extras.putLong(FetchService.EXTRA_ID,id);
+        extras.putLong(FetchService.EXTRA_ID, id);
 
-        FetchService.sendToService(context,extras);
+        FetchService.sendToService(context, extras);
     }
 
     /**
@@ -513,30 +501,28 @@ public final class Fetch implements FetchConst {
      *
      * @param id a unique ID used by Fetch and the FetchService to identify a download
      *           request.
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     public void resume(long id) {
 
         Utils.throwIfNotUsable(this);
 
         Bundle extras = new Bundle();
         extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_RESUME);
-        extras.putLong(FetchService.EXTRA_ID,id);
+        extras.putLong(FetchService.EXTRA_ID, id);
 
-        FetchService.sendToService(context,extras);
+        FetchService.sendToService(context, extras);
     }
 
     /**
      * Sets the allowed network connection type the FetchService can use to download requests.
-     *
+     * <p>
      * <p>This method only accepts two values: Fetch.NETWORK_WIFI or Fetch.NETWORK_ALL. The default is
      * Fetch.NETWORK_ALL.
      *
      * @param networkType allowed network type
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     public void setAllowedNetwork(int networkType) {
 
         Utils.throwIfNotUsable(this);
@@ -546,29 +532,27 @@ public final class Fetch implements FetchConst {
     /**
      * Sets the download priority of a download request
      *
-     * @param id a unique ID used by Fetch and the FetchService to identify a download
-     *           request.
-     *
+     * @param id       a unique ID used by Fetch and the FetchService to identify a download
+     *                 request.
      * @param priority download priority. Fetch.PRIORITY_HIGH or Fetch.PRIORITY_NORMAL
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
-    public void setPriority(long id,int priority) {
+     */
+    public void setPriority(long id, int priority) {
 
         Utils.throwIfNotUsable(this);
 
         int priorityType = Fetch.PRIORITY_NORMAL;
 
-        if(priority == Fetch.PRIORITY_HIGH) {
+        if (priority == Fetch.PRIORITY_HIGH) {
             priorityType = Fetch.PRIORITY_HIGH;
         }
 
         Bundle extras = new Bundle();
         extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_PRIORITY);
-        extras.putLong(FetchService.EXTRA_ID,id);
-        extras.putInt(FetchService.EXTRA_PRIORITY,priorityType);
+        extras.putLong(FetchService.EXTRA_ID, id);
+        extras.putInt(FetchService.EXTRA_PRIORITY, priorityType);
 
-        FetchService.sendToService(context,extras);
+        FetchService.sendToService(context, extras);
     }
 
     /**
@@ -576,18 +560,17 @@ public final class Fetch implements FetchConst {
      *
      * @param id a unique ID used by Fetch and the FetchService to identify a download
      *           request.
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     public void retry(long id) {
 
         Utils.throwIfNotUsable(this);
 
         Bundle extras = new Bundle();
         extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_RETRY);
-        extras.putLong(FetchService.EXTRA_ID,id);
+        extras.putLong(FetchService.EXTRA_ID, id);
 
-        FetchService.sendToService(context,extras);
+        FetchService.sendToService(context, extras);
     }
 
     /**
@@ -595,12 +578,10 @@ public final class Fetch implements FetchConst {
      *
      * @param id a unique ID used by Fetch and the FetchService to identify a download
      *           request.
-     *
      * @return a RequestInfo object that contains the status and progress of a request.
-     *         If the request could not be found null will be returned.
-     *
+     * If the request could not be found null will be returned.
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     @Nullable
     public synchronized RequestInfo get(long id) {
 
@@ -608,17 +589,16 @@ public final class Fetch implements FetchConst {
 
         Cursor cursor = dbHelper.get(id);
 
-        return Utils.cursorToRequestInfo(cursor,true,isLoggingEnabled());
+        return Utils.cursorToRequestInfo(cursor, true, isLoggingEnabled());
     }
 
     /**
      * Query the FetchService database for all download requests.
      *
      * @return a List of RequestInfo object that contains the status and progress of a request.
-     *         If no requests are found, an empty list will be returned.
-     *
+     * If no requests are found, an empty list will be returned.
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     @NonNull
     public synchronized List<RequestInfo> get() {
 
@@ -626,44 +606,40 @@ public final class Fetch implements FetchConst {
 
         Cursor cursor = dbHelper.get();
 
-        return Utils.cursorToRequestInfoList(cursor,true,isLoggingEnabled());
+        return Utils.cursorToRequestInfoList(cursor, true, isLoggingEnabled());
     }
 
     /**
      * Query the FetchService database for download requests that matches a list of ids.
      *
      * @param ids IDs of requests
-     *
      * @return a List of RequestInfo object that contains the status and progress of a request.
-     *         If no requests are found, an empty list will be returned.
-     *
+     * If no requests are found, an empty list will be returned.
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     @NonNull
     public synchronized List<RequestInfo> get(long... ids) {
 
         Utils.throwIfNotUsable(this);
 
-        if(ids == null) {
+        if (ids == null) {
             return new ArrayList<>();
         }
 
         Cursor cursor = dbHelper.get(ids);
 
-        return Utils.cursorToRequestInfoList(cursor,true,isLoggingEnabled());
+        return Utils.cursorToRequestInfoList(cursor, true, isLoggingEnabled());
     }
 
     /**
      * Query the FetchService database for all download requests with the passed in status.
      *
      * @param status eg. Fetch.STATUS_DONE, Fetch.STATUS_QUEUED
-     *
      * @return a List of RequestInfo object that contains the status and progress of a request.
-     *         If no requests are found, an empty list will be returned.
-     *
+     * If no requests are found, an empty list will be returned.
      * @throws InvalidStatusException if the passed in status is not a valid status.
-     * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     * @throws NotUsableException     if the release method has been called on Fetch.
+     */
     @NonNull
     public synchronized List<RequestInfo> getByStatus(int status) {
 
@@ -672,32 +648,30 @@ public final class Fetch implements FetchConst {
 
         Cursor cursor = dbHelper.getByStatus(status);
 
-        return Utils.cursorToRequestInfoList(cursor,true,isLoggingEnabled());
+        return Utils.cursorToRequestInfoList(cursor, true, isLoggingEnabled());
     }
 
     /**
      * Query the FetchService database for a download request.
      *
      * @param request the request to check. This parameter cannot be null.
-     *
-     * @throws NullPointerException if the passed in request is null.
-     * @throws NotUsableException if the release method has been called on Fetch.
-     *
      * @return a RequestInfo object that contains the status and progress of a request.
-     *         If the request could not be found null will be returned.
-     * */
+     * If the request could not be found null will be returned.
+     * @throws NullPointerException if the passed in request is null.
+     * @throws NotUsableException   if the release method has been called on Fetch.
+     */
     @Nullable
     public synchronized RequestInfo get(@NonNull Request request) {
 
         Utils.throwIfNotUsable(this);
 
-        if(request == null) {
+        if (request == null) {
             throw new NullPointerException("Request cannot be null.");
         }
 
-        Cursor cursor = dbHelper.getByUrlAndFilePath(request.getUrl(),request.getFilePath());
+        Cursor cursor = dbHelper.getByUrlAndFilePath(request.getUrl(), request.getFilePath());
 
-        return Utils.cursorToRequestInfo(cursor,true,isLoggingEnabled());
+        return Utils.cursorToRequestInfo(cursor, true, isLoggingEnabled());
     }
 
     /**
@@ -706,26 +680,24 @@ public final class Fetch implements FetchConst {
      *
      * @param id a unique ID used by Fetch and the FetchService to identify a download
      *           request.
-     *
      * @return a downloaded file or null if the file has not been successfully downloaded.
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     @Nullable
     public synchronized File getDownloadedFile(long id) {
 
         Utils.throwIfNotUsable(this);
 
         Cursor cursor = dbHelper.get(id);
-        RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,isLoggingEnabled());
+        RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor, true, isLoggingEnabled());
 
-        if(requestInfo == null || requestInfo.getStatus() != STATUS_DONE) {
+        if (requestInfo == null || requestInfo.getStatus() != STATUS_DONE) {
             return null;
         } else {
 
             File file = Utils.getFile(requestInfo.getFilePath());
 
-            if(file.exists()) {
+            if (file.exists()) {
                 return file;
             } else {
                 return null;
@@ -740,23 +712,21 @@ public final class Fetch implements FetchConst {
      *
      * @param id a unique ID used by Fetch and the FetchService to identify a download
      *           request.
-     *
      * @return the absolute file path of a request download or null if the request
-     *          does not exist.
-     *
+     * does not exist.
      * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     */
     @Nullable
     public synchronized String getFilePath(long id) {
 
         Utils.throwIfNotUsable(this);
 
         Cursor cursor = dbHelper.get(id);
-        RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor,true,isLoggingEnabled());
+        RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor, true, isLoggingEnabled());
 
-        if(requestInfo == null) {
+        if (requestInfo == null) {
             return null;
-        }else {
+        } else {
             return requestInfo.getFilePath();
         }
     }
@@ -765,14 +735,11 @@ public final class Fetch implements FetchConst {
      * Adds a file to Fetch and the FetchService for management.
      *
      * @param filePath the absolute path of the file that will be managed by the FetchService.
-     *
      * @return a unique ID used by Fetch and the FetchService to identify a download
-     *           request.
-     *
+     * request.
      * @throws NullPointerException if the passed in file path is null.
-     * @throws NotUsableException if the release method has been called on Fetch.
-     *
-     * */
+     * @throws NotUsableException   if the release method has been called on Fetch.
+     */
     public long addCompletedDownload(@NonNull String filePath) {
 
         Utils.throwIfNotUsable(this);
@@ -793,19 +760,19 @@ public final class Fetch implements FetchConst {
             id = Utils.generateRequestId();
             File file = Utils.getFile(filePath);
             String url = Uri.fromFile(file).toString();
-            String headers = Utils.headerListToString(null,isLoggingEnabled());
+            String headers = Utils.headerListToString(null, isLoggingEnabled());
             long fileSize = file.length();
 
             boolean inserted = dbHelper.insert(id, url, filePath, Fetch.STATUS_DONE, headers,
-                    fileSize,fileSize, Fetch.PRIORITY_NORMAL, DEFAULT_EMPTY_VALUE);
+                    fileSize, fileSize, Fetch.PRIORITY_NORMAL, DEFAULT_EMPTY_VALUE);
 
-            if(!inserted) {
-                throw new EnqueueException("could not insert request:" + filePath,ERROR_ENQUEUE_ERROR);
+            if (!inserted) {
+                throw new EnqueueException("could not insert request:" + filePath, ERROR_ENQUEUE_ERROR);
             }
 
-        }catch (EnqueueException e) {
+        } catch (EnqueueException e) {
 
-            if(isLoggingEnabled()) {
+            if (isLoggingEnabled()) {
                 e.printStackTrace();
             }
 
@@ -819,21 +786,18 @@ public final class Fetch implements FetchConst {
      * Adds a list of files to Fetch and the FetchService for management.
      *
      * @param filePaths a list of absolute paths of files that will be managed by the FetchService.
-     *
      * @return a list with unique IDs used by Fetch and the FetchService to identify
-     *         the download requests. If a request could not be enqueued an ID of -1
-     *         is returned for that request.
-     *
+     * the download requests. If a request could not be enqueued an ID of -1
+     * is returned for that request.
      * @throws NullPointerException if the passed in file path is null.
-     * @throws NotUsableException if the release method has been called on Fetch.
-     *
-     * */
+     * @throws NotUsableException   if the release method has been called on Fetch.
+     */
     @NonNull
     public List<Long> addCompletedDownloads(@NonNull List<String> filePaths) {
 
         Utils.throwIfNotUsable(this);
 
-        if(filePaths == null) {
+        if (filePaths == null) {
             throw new NullPointerException("Request list cannot be null");
         }
 
@@ -862,7 +826,7 @@ public final class Fetch implements FetchConst {
 
                 id = DEFAULT_EMPTY_VALUE;
 
-                if(path != null) {
+                if (path != null) {
 
                     File file = Utils.getFile(path);
 
@@ -873,14 +837,14 @@ public final class Fetch implements FetchConst {
                     id = Utils.generateRequestId();
                     url = Uri.fromFile(file).toString();
                     filePath = path;
-                    headers = Utils.headerListToString(null,isLoggingEnabled());
+                    headers = Utils.headerListToString(null, isLoggingEnabled());
                     status = Fetch.STATUS_DONE;
                     priority = Fetch.PRIORITY_NORMAL;
                     downloadedBytes = file.length();
                     fileSize = downloadedBytes;
                     error = DEFAULT_EMPTY_VALUE;
 
-                    String statement = dbHelper.getRowInsertStatement(id,url,filePath,status,headers, downloadedBytes,fileSize,priority,error);
+                    String statement = dbHelper.getRowInsertStatement(id, url, filePath, status, headers, downloadedBytes, fileSize, priority, error);
                     stringBuilder.append(statement)
                             .append(",");
                 }
@@ -888,17 +852,17 @@ public final class Fetch implements FetchConst {
                 ids.add(id);
             }
 
-            stringBuilder.delete(stringBuilder.length()-2,stringBuilder.length())
-                         .append(dbHelper.getInsertStatementClose());
+            stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length())
+                    .append(dbHelper.getInsertStatementClose());
             boolean inserted = dbHelper.insert(stringBuilder.toString());
 
-            if(!inserted) {
-                throw new EnqueueException("could not insert requests",ERROR_ENQUEUE_ERROR);
+            if (!inserted) {
+                throw new EnqueueException("could not insert requests", ERROR_ENQUEUE_ERROR);
             }
 
-        }catch (EnqueueException e) {
+        } catch (EnqueueException e) {
 
-            if(isLoggingEnabled()) {
+            if (isLoggingEnabled()) {
                 e.printStackTrace();
             }
 
@@ -916,10 +880,9 @@ public final class Fetch implements FetchConst {
      * off the main thread.
      *
      * @param fetchTask a FetchTask that will be executed on a background thread.
-     *
      * @throws NullPointerException if the passed in FetchTask is null.
-     * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     * @throws NotUsableException   if the release method has been called on Fetch.
+     */
     public void runOnBackgroundThread(@NonNull final FetchTask fetchTask) {
 
         Utils.throwIfNotUsable(this);
@@ -939,10 +902,9 @@ public final class Fetch implements FetchConst {
      * Runs a short Task on the Main Thread. Use this method to update views etc.
      *
      * @param fetchTask a FetchTask that will be executed on the Main Thread.
-     *
      * @throws NullPointerException if the passed in FetchTask is null.
-     * @throws NotUsableException if the release method has been called on Fetch.
-     * */
+     * @throws NotUsableException   if the release method has been called on Fetch.
+     */
     public void runOnMainThread(@NonNull final FetchTask fetchTask) {
 
         Utils.throwIfNotUsable(this);
@@ -962,30 +924,28 @@ public final class Fetch implements FetchConst {
      * Checks if a request is already being managed by the Fetch Service.
      *
      * @param request the request to check. This parameter cannot be null.
-     *
-     * @throws NullPointerException if the passed in request is null.
-     * @throws NotUsableException if the release method has been called on Fetch.
-     *
      * @return returns true if the request is being managed by the Fetch Service
-     *         or false if it is not.
-     * */
+     * or false if it is not.
+     * @throws NullPointerException if the passed in request is null.
+     * @throws NotUsableException   if the release method has been called on Fetch.
+     */
     public synchronized boolean contains(@NonNull Request request) {
 
         Utils.throwIfNotUsable(this);
 
-        if(request == null) {
+        if (request == null) {
             throw new NullPointerException("Request cannot be null.");
         }
 
-        Cursor cursor = dbHelper.getByUrlAndFilePath(request.getUrl(),request.getFilePath());
+        Cursor cursor = dbHelper.getByUrlAndFilePath(request.getUrl(), request.getFilePath());
 
-        return Utils.containsRequest(cursor,true);
+        return Utils.containsRequest(cursor, true);
     }
 
     /**
      * @return returns true if this instance of Fetch is still
      * valid for use.
-     * */
+     */
     public boolean isValid() {
         return !isReleased();
     }
@@ -1002,19 +962,19 @@ public final class Fetch implements FetchConst {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            if(intent == null) {
+            if (intent == null) {
                 return;
             }
 
             id = intent.getLongExtra(FetchService.EXTRA_ID, DEFAULT_EMPTY_VALUE);
-            status = intent.getIntExtra(FetchService.EXTRA_STATUS,DEFAULT_EMPTY_VALUE);
-            progress = intent.getIntExtra(FetchService.EXTRA_PROGRESS,DEFAULT_EMPTY_VALUE);
-            downloadedBytes = intent.getLongExtra(FetchService.EXTRA_DOWNLOADED_BYTES,DEFAULT_EMPTY_VALUE);
-            fileSize = intent.getLongExtra(FetchService.EXTRA_FILE_SIZE,DEFAULT_EMPTY_VALUE);
-            error = intent.getIntExtra(FetchService.EXTRA_ERROR,DEFAULT_EMPTY_VALUE);
+            status = intent.getIntExtra(FetchService.EXTRA_STATUS, DEFAULT_EMPTY_VALUE);
+            progress = intent.getIntExtra(FetchService.EXTRA_PROGRESS, DEFAULT_EMPTY_VALUE);
+            downloadedBytes = intent.getLongExtra(FetchService.EXTRA_DOWNLOADED_BYTES, DEFAULT_EMPTY_VALUE);
+            fileSize = intent.getLongExtra(FetchService.EXTRA_FILE_SIZE, DEFAULT_EMPTY_VALUE);
+            error = intent.getIntExtra(FetchService.EXTRA_ERROR, DEFAULT_EMPTY_VALUE);
 
             for (FetchListener listener : listeners) {
-                listener.onUpdate(id,status,progress,downloadedBytes,fileSize,error);
+                listener.onUpdate(id, status, progress, downloadedBytes, fileSize, error);
             }
         }
     };
@@ -1044,7 +1004,6 @@ public final class Fetch implements FetchConst {
      * is ON by default.
      *
      * @param enabled enable or disable console logging
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
      */
     public void enableLogging(boolean enabled) {
@@ -1057,10 +1016,8 @@ public final class Fetch implements FetchConst {
      * Sets the allowed concurrent downloads. Default 1.
      *
      * @param limit concurrent downloads limit
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
-     *
-     * */
+     */
     public void setConcurrentDownloadsLimit(int limit) {
 
         Utils.throwIfNotUsable(this);
@@ -1071,7 +1028,6 @@ public final class Fetch implements FetchConst {
      * Sets the desired interval for the desired "onUpdate" calls during file download.
      *
      * @param intervalMs the milliseconds interval
-     *
      * @throws NotUsableException if the release method has been called on Fetch.
      */
     public void setOnUpdateInterval(long intervalMs) {
@@ -1083,16 +1039,15 @@ public final class Fetch implements FetchConst {
     /**
      * Updates the url for an existing request
      *
-     * @param id request id
+     * @param id  request id
      * @param url new url
-     *
      * @throws NotUsableException if the release method has been called on Fetch
-     * */
-    public void updateUrlForRequest(long id,@Nullable String url) {
+     */
+    public void updateUrlForRequest(long id, @Nullable String url) {
 
         Utils.throwIfNotUsable(this);
 
-        if(url == null) {
+        if (url == null) {
             throw new NullPointerException("Url cannot be null");
         }
 
@@ -1100,16 +1055,16 @@ public final class Fetch implements FetchConst {
 
         Bundle extras = new Bundle();
         extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_UPDATE_REQUEST_URL);
-        extras.putLong(FetchService.EXTRA_ID,id);
-        extras.putString(FetchService.EXTRA_URL,url);
+        extras.putLong(FetchService.EXTRA_ID, id);
+        extras.putString(FetchService.EXTRA_URL, url);
 
-        FetchService.sendToService(context,extras);
+        FetchService.sendToService(context, extras);
     }
 
     /**
      * The Settings class is used to apply
      * settings to Fetch and the FetchService.
-     * */
+     */
     public static class Settings {
 
         private final Context context;
@@ -1117,10 +1072,10 @@ public final class Fetch implements FetchConst {
 
         public Settings(@NonNull Context context) {
 
-            if(context == null) {
+            if (context == null) {
                 throw new NullPointerException("Context cannot be null");
             }
-           this.context = context;
+            this.context = context;
         }
 
         /**
@@ -1129,14 +1084,13 @@ public final class Fetch implements FetchConst {
          * is ON by default.
          *
          * @param enabled enable or disable console logging
-         *
          * @return the settings instance
          */
         public Settings enableLogging(boolean enabled) {
 
             Bundle extras = new Bundle();
-            extras.putInt(FetchService.ACTION_TYPE,FetchService.ACTION_LOGGING);
-            extras.putBoolean(FetchService.EXTRA_LOGGING_ID,enabled);
+            extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_LOGGING);
+            extras.putBoolean(FetchService.EXTRA_LOGGING_ID, enabled);
             settings.add(extras);
 
             return this;
@@ -1144,14 +1098,13 @@ public final class Fetch implements FetchConst {
 
         /**
          * Sets the allowed network connection type the FetchService can use to download requests.
-         *
+         * <p>
          * <p>This method only accepts two values: {@link FetchConst#NETWORK_WIFI} or {@link FetchConst#NETWORK_ALL}.
          * The default is {@link FetchConst#NETWORK_ALL}.
          *
          * @param networkType allowed network type
-         *
          * @return the settings instance
-         * */
+         */
         public Settings setAllowedNetwork(int networkType) {
 
             int type = NETWORK_ALL;
@@ -1161,8 +1114,8 @@ public final class Fetch implements FetchConst {
             }
 
             Bundle extras = new Bundle();
-            extras.putInt(FetchService.ACTION_TYPE,FetchService.ACTION_NETWORK);
-            extras.putInt(FetchService.EXTRA_NETWORK_ID,type);
+            extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_NETWORK);
+            extras.putInt(FetchService.EXTRA_NETWORK_ID, type);
             settings.add(extras);
 
             return this;
@@ -1172,14 +1125,13 @@ public final class Fetch implements FetchConst {
          * Sets the allowed concurrent downloads. Default is 1
          *
          * @param limit concurrent downloads limit
-         *
          * @return the settings instance
-         * */
+         */
         public Settings setConcurrentDownloadsLimit(int limit) {
 
             Bundle extras = new Bundle();
-            extras.putInt(FetchService.ACTION_TYPE,FetchService.ACTION_CONCURRENT_DOWNLOADS_LIMIT);
-            extras.putInt(FetchService.EXTRA_CONCURRENT_DOWNLOADS_LIMIT,limit);
+            extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_CONCURRENT_DOWNLOADS_LIMIT);
+            extras.putInt(FetchService.EXTRA_CONCURRENT_DOWNLOADS_LIMIT, limit);
             settings.add(extras);
 
             return this;
@@ -1189,14 +1141,13 @@ public final class Fetch implements FetchConst {
          * Sets the desired interval for the desired "onUpdate" calls during file download.
          *
          * @param intervalMs the milliseconds interval
-         *
          * @return the settings instance
          */
         public Settings setOnUpdateInterval(long intervalMs) {
 
             Bundle extras = new Bundle();
-            extras.putInt(FetchService.ACTION_TYPE,FetchService.ACTION_ON_UPDATE_INTERVAL);
-            extras.putLong(FetchService.EXTRA_ON_UPDATE_INTERVAL,intervalMs);
+            extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_ON_UPDATE_INTERVAL);
+            extras.putLong(FetchService.EXTRA_ON_UPDATE_INTERVAL, intervalMs);
             settings.add(extras);
 
             return this;
@@ -1204,11 +1155,11 @@ public final class Fetch implements FetchConst {
 
         /**
          * Apply the new settings to Fetch and the FetchService
-         * */
-        public void apply(){
+         */
+        public void apply() {
 
             for (Bundle setting : settings) {
-                FetchService.sendToService(context,setting);
+                FetchService.sendToService(context, setting);
             }
         }
     }
