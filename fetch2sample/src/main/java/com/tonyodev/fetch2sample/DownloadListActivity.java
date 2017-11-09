@@ -30,10 +30,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         setContentView(R.layout.activity_download_list);
         setViews();
 
-        fetch = new Fetch.Builder(this)
-                .name("DownloadListActivity")
-                .build();
-
+        fetch = Fetch.Factory.create("DownloadListActivity", this);
 
         fetch.queryAll(new Query<List<RequestData>>() {
             @Override
@@ -57,7 +54,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     }
 
     private void setViews() {
-        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         fileAdapter = new FileAdapter(this);
         recyclerView.setAdapter(fileAdapter);

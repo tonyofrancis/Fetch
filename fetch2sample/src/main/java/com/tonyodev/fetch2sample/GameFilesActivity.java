@@ -43,10 +43,7 @@ public class GameFilesActivity extends AppCompatActivity {
         setViews();
 
         requestList = Data.getGameUpdates();
-        fetch = new Fetch.Builder(this)
-                .name("GameFiles")
-                .client(new OkHttpClient())
-                .build();
+        fetch = Fetch.Factory.create("GameFiles", this, new OkHttpClient());
 
         fetch.addListener(fetchListener);
 
@@ -55,10 +52,10 @@ public class GameFilesActivity extends AppCompatActivity {
 
     private void setViews() {
 
-        progressTextView = (TextView) findViewById(R.id.progressTextView);
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        startButton = (Button) findViewById(R.id.startButton);
-        labelTextView = (TextView) findViewById(R.id.labelTextView);
+        progressTextView = findViewById(R.id.progressTextView);
+        progressBar = findViewById(R.id.progressBar);
+        startButton = findViewById(R.id.startButton);
+        labelTextView = findViewById(R.id.labelTextView);
 
         //Start downloads
         startButton.setOnClickListener(new View.OnClickListener() {

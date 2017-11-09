@@ -31,7 +31,7 @@ public class FragmentActivity extends AppCompatActivity {
         setContentView(R.layout.activity_fragment_progress);
         rootView = findViewById(R.id.rootView);
 
-        fetch = Fetch.getDefaultInstance(this);
+        fetch = Fetch.Factory.getDefaultInstance(this);
 
         FragmentManager fragmentManager = getSupportFragmentManager();
 

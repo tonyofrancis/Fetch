@@ -31,7 +31,7 @@ public class SingleDownloadActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setUpViews();
 
-        fetch = Fetch.getDefaultInstance(this);
+        fetch = Fetch.Factory.getDefaultInstance(this);
         request = createRequest();
         deleteFileIfExist();
 

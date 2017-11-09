@@ -16,7 +16,7 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        fetch = Fetch.getDefaultInstance(this);
+        fetch = Fetch.Factory.getDefaultInstance(this);
     }
 
     public Fetch getFetch() {
