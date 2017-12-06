@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +51,7 @@ final class FetchRunnable implements Runnable {
     private final List<Header> headers;
     private final boolean loggingEnabled;
     private final long onUpdateInterval;
+    private final boolean followSslRedirects;
 
     private final Context context;
     private final LocalBroadcastManager broadcastManager;
@@ -72,7 +74,7 @@ final class FetchRunnable implements Runnable {
 
     FetchRunnable(@NonNull Context context, long id,@NonNull String url,@NonNull String filePath,
                   @NonNull List<Header> headers,long fileSize,boolean loggingEnabled,
-                  long onUpdateInterval) {
+                  long onUpdateInterval, boolean followSslRedirects) {
 
         if(context == null) {
             throw new NullPointerException("Context cannot be null");
@@ -102,6 +104,7 @@ final class FetchRunnable implements Runnable {
         this.loggingEnabled = loggingEnabled;
         this.onUpdateInterval = onUpdateInterval;
         this.databaseHelper.setLoggingEnabled(loggingEnabled);
+        this.followSslRedirects = followSslRedirects;
     }
 
     @Override
@@ -109,21 +112,40 @@ final class FetchRunnable implements Runnable {
 
         try {
 
-            setHttpConnectionPrefs();
-            Utils.createFileOrThrow(filePath);
+            String urlToFetch = url;
+            int responseCode = 0;
+            int redirectCount = 0;
 
-            downloadedBytes = Utils.getFileSize(filePath);
-            progress = Utils.getProgress(downloadedBytes,fileSize);
-            databaseHelper.updateFileBytes(id,downloadedBytes,fileSize);
+            while (urlToFetch != null && redirectCount < FetchConst.MAX_SSL_REDIRECTS) {
 
-            httpURLConnection.setRequestProperty("Range", "bytes=" + downloadedBytes + "-");
+                setHttpConnectionPrefs(urlToFetch);
+                Utils.createFileOrThrow(filePath);
 
-            if (isInterrupted()) {
-                throw new DownloadInterruptedException("DIE",ErrorUtils.DOWNLOAD_INTERRUPTED);
+                downloadedBytes = Utils.getFileSize(filePath);
+                progress = Utils.getProgress(downloadedBytes, fileSize);
+                databaseHelper.updateFileBytes(id, downloadedBytes, fileSize);
+
+                httpURLConnection.setRequestProperty("Range", "bytes=" + downloadedBytes + "-");
+
+                if (isInterrupted()) {
+                    throw new DownloadInterruptedException("DIE", ErrorUtils.DOWNLOAD_INTERRUPTED);
+                }
+
+                httpURLConnection.connect();
+                responseCode = httpURLConnection.getResponseCode();
+
+                if (followSslRedirects && isResponseRedirect(responseCode)) {
+                    redirectCount += 1;
+                    String location = httpURLConnection.getHeaderField("Location");
+                    location = URLDecoder.decode(location, "UTF-8");
+                    URL nextUrl = new URL(httpURLConnection.getURL(), location);
+                    httpURLConnection.disconnect();
+
+                    urlToFetch = nextUrl.toExternalForm();
+                } else {
+                    urlToFetch = null;
+                }
             }
-
-            httpURLConnection.connect();
-            int responseCode = httpURLConnection.getResponseCode();
 
             if (isResponseOk(responseCode)) {
 
@@ -210,7 +232,7 @@ final class FetchRunnable implements Runnable {
         }
     }
 
-    private void setHttpConnectionPrefs() throws IOException {
+    private void setHttpConnectionPrefs(String url) throws IOException {
 
         URL httpUrl = new URL(url);
         httpURLConnection = (HttpURLConnection) httpUrl.openConnection();
@@ -224,6 +246,17 @@ final class FetchRunnable implements Runnable {
 
         for (Header header : headers) {
             httpURLConnection.addRequestProperty(header.getHeader(),header.getValue());
+        }
+    }
+
+    private boolean isResponseRedirect(int responseCode) {
+
+        switch (responseCode) {
+            case HttpURLConnection.HTTP_MOVED_PERM:
+            case HttpURLConnection.HTTP_MOVED_TEMP:
+                return true;
+            default:
+                return false;
         }
     }
 

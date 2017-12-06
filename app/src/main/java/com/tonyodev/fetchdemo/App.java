@@ -23,6 +23,7 @@ public class App extends Application {
                 .setAllowedNetwork(Fetch.NETWORK_ALL)
                 .enableLogging(true)
                 .setConcurrentDownloadsLimit(1)
+                .setFollowSslRedirects(true)
                 .apply();
 
         fetch = Fetch.getInstance(this);
