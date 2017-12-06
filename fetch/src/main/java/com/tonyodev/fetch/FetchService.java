@@ -15,7 +15,6 @@
  */
 package com.tonyodev.fetch;
 
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -23,7 +22,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
@@ -76,6 +74,7 @@ public final class FetchService implements FetchConst {
     public static final String EXTRA_LOGGING_ID = "com.tonyodev.fetch.extra_logging_id";
     public static final String EXTRA_CONCURRENT_DOWNLOADS_LIMIT = "com.tonyodev.fetch.extra_concurrent_download_limit";
     public static final String EXTRA_ON_UPDATE_INTERVAL = "com.tonyodev.fetch.extra_on_update_interval";
+    public static final String EXTRA_FOLLOW_SSL_REDIRECTS = "com.tonyodev.fetch.extra_follow_ssl_redirects";
 
     public static final String ACTION_TYPE = "com.tonyodev.fetch.action_type";
 
@@ -95,6 +94,7 @@ public final class FetchService implements FetchConst {
     public static final int ACTION_ON_UPDATE_INTERVAL = 323;
     public static final int ACTION_REMOVE_REQUEST = 324;
     public static final int ACTION_REMOVE_REQUEST_ALL = 325;
+    public static final int ACTION_FOLLOW_SSL_REDIRECTS = 326;
 
 
     public static final int QUERY_SINGLE = 480;
@@ -119,6 +119,7 @@ public final class FetchService implements FetchConst {
     private boolean loggingEnabled = true;
     private long onUpdateInterval = DEFAULT_ON_UPDATE_INTERVAL;
     private int preferredNetwork = NETWORK_ALL;
+    private boolean followSslRedirects = false;
 
     public static void sendToService(@NonNull Context context, @Nullable Bundle extras) {
 
@@ -187,6 +188,7 @@ public final class FetchService implements FetchConst {
         loggingEnabled = isLoggingEnabled();
         onUpdateInterval = getOnUpdateInterval();
         databaseHelper.setLoggingEnabled(loggingEnabled);
+        followSslRedirects = shouldFollowSslRedirects();
 
         if (!executor.isShutdown()) {
             executor.execute(new Runnable() {
@@ -301,6 +303,13 @@ public final class FetchService implements FetchConst {
                             setOnUpdateInterval(interval);
                             break;
                         }
+
+                        case ACTION_FOLLOW_SSL_REDIRECTS: {
+                            boolean enabled = bundle.getBoolean(EXTRA_FOLLOW_SSL_REDIRECTS, false);
+                            setFollowSslRedirects(enabled);
+                            break;
+                        }
+
                         case ACTION_UPDATE_REQUEST_URL: {
                             String url = bundle.getString(EXTRA_URL);
                             updateRequestUrl(id, url);
@@ -353,8 +362,9 @@ public final class FetchService implements FetchConst {
                     RequestInfo requestInfo = Utils.cursorToRequestInfo(cursor, true, loggingEnabled);
 
                     FetchRunnable fetchRunnable = new FetchRunnable(context, requestInfo.getId(),
-                            requestInfo.getUrl(), requestInfo.getFilePath()
-                            , requestInfo.getHeaders(), requestInfo.getFileSize(), loggingEnabled, onUpdateInterval);
+                            requestInfo.getUrl(), requestInfo.getFilePath(),
+                            requestInfo.getHeaders(), requestInfo.getFileSize(), loggingEnabled,
+                            onUpdateInterval, followSslRedirects);
 
                     databaseHelper.updateStatus(requestInfo.getId(), FetchService.STATUS_DOWNLOADING, DEFAULT_EMPTY_VALUE);
                     activeDownloads.put(fetchRunnable.getId(), fetchRunnable);
@@ -915,5 +925,21 @@ public final class FetchService implements FetchConst {
     private long getOnUpdateInterval() {
         onUpdateInterval = sharedPreferences.getLong(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_ON_UPDATE_INTERVAL);
         return onUpdateInterval;
+    }
+
+    private void setFollowSslRedirects(boolean enabled) {
+
+        followSslRedirects = enabled;
+        sharedPreferences.edit().putBoolean(EXTRA_FOLLOW_SSL_REDIRECTS, enabled).apply();
+
+        if (activeDownloads.size() > 0) {
+            interruptActiveDownloads();
+        }
+
+        startDownload();
+    }
+
+    private boolean shouldFollowSslRedirects() {
+        return sharedPreferences.getBoolean(EXTRA_FOLLOW_SSL_REDIRECTS, false);
     }
 }

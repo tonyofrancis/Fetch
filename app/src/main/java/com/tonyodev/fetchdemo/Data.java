@@ -20,7 +20,8 @@ public final class Data {
             "http://media.mongodb.org/zips.json",
             "http://www.example/some/unknown/123/Errorlink.txt",
             "http://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v",
-            "http://storage.googleapis.com/ix_choosemuse/uploads/2016/02/android-logo.png"};
+            "http://storage.googleapis.com/ix_choosemuse/uploads/2016/02/android-logo.png",
+            "http://mail.google.com/mail"};
 
     private Data() {
     }

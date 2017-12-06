@@ -188,4 +188,10 @@ interface FetchConst {
 
     /** The ID value that is returned when a request was not enqueued*/
     int ENQUEUE_ERROR_ID = -1;
+
+    /**
+     * Number of redirects between protocols that will be followed before failing the request.
+     * This does not affect automatic redirects within the same protocol.
+     * */
+    int MAX_SSL_REDIRECTS = 2;
 }

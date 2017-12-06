@@ -1166,6 +1166,22 @@ public final class Fetch implements FetchConst {
             return this;
         }
 
+
+        /**
+         * Set whether or not Fetch should follow redirects from http -> https or vice versa
+         *
+         * @param followSslRedirects boolean indicating if cross-protocol redirects are allowed
+         */
+        public Settings setFollowSslRedirects(boolean followSslRedirects) {
+
+            Bundle extras = new Bundle();
+            extras.putInt(FetchService.ACTION_TYPE, FetchService.ACTION_FOLLOW_SSL_REDIRECTS);
+            extras.putBoolean(FetchService.EXTRA_FOLLOW_SSL_REDIRECTS, followSslRedirects);
+            settings.add(extras);
+
+            return this;
+        }
+
         /**
          * Apply the new settings to Fetch and the FetchService
          */
