@@ -224,103 +224,109 @@ public final class FetchService implements FetchConst {
     }
 
     private void processAction(final Bundle bundle) {
-        if (!executor.isShutdown()) {
+        try {
+            if (!executor.isShutdown()) {
 
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
 
-                    databaseHelper.clean();
+                        databaseHelper.clean();
 
-                    final long id = bundle.getLong(EXTRA_ID, DEFAULT_EMPTY_VALUE);
+                        final long id = bundle.getLong(EXTRA_ID, DEFAULT_EMPTY_VALUE);
 
-                    switch (bundle.getInt(ACTION_TYPE, DEFAULT_EMPTY_VALUE)) {
+                        switch (bundle.getInt(ACTION_TYPE, DEFAULT_EMPTY_VALUE)) {
 
-                        case ACTION_PAUSE: {
-                            pause(id);
-                            break;
-                        }
-                        case ACTION_REMOVE: {
-                            remove(id);
-                            break;
-                        }
-                        case ACTION_RESUME: {
-                            resume(id);
-                            break;
-                        }
-                        case ACTION_ENQUEUE: {
-                            String url = bundle.getString(EXTRA_URL);
-                            String filePath = bundle.getString(EXTRA_FILE_PATH);
-                            ArrayList<Bundle> headers = bundle.getParcelableArrayList(EXTRA_HEADERS);
-                            int priority = bundle.getInt(EXTRA_PRIORITY, PRIORITY_NORMAL);
+                            case ACTION_PAUSE: {
+                                pause(id);
+                                break;
+                            }
+                            case ACTION_REMOVE: {
+                                remove(id);
+                                break;
+                            }
+                            case ACTION_RESUME: {
+                                resume(id);
+                                break;
+                            }
+                            case ACTION_ENQUEUE: {
+                                String url = bundle.getString(EXTRA_URL);
+                                String filePath = bundle.getString(EXTRA_FILE_PATH);
+                                ArrayList<Bundle> headers = bundle.getParcelableArrayList(EXTRA_HEADERS);
+                                int priority = bundle.getInt(EXTRA_PRIORITY, PRIORITY_NORMAL);
 
-                            enqueue(url, filePath, headers, priority);
-                            break;
-                        }
-                        case ACTION_NETWORK: {
-                            int network = bundle.getInt(EXTRA_NETWORK_ID, NETWORK_ALL);
-                            setAllowedNetwork(network);
-                            break;
-                        }
-                        case ACTION_LOGGING: {
-                            boolean enabled = bundle.getBoolean(EXTRA_LOGGING_ID, true);
-                            setLoggingEnabled(enabled);
-                            break;
-                        }
-                        case ACTION_PROCESS_PENDING: {
-                            startDownload();
-                            break;
-                        }
-                        case ACTION_QUERY: {
-                            long queryId = bundle.getLong(EXTRA_QUERY_ID, DEFAULT_EMPTY_VALUE);
-                            int queryType = bundle.getInt(EXTRA_QUERY_TYPE, QUERY_ALL);
-                            int status = bundle.getInt(EXTRA_STATUS, DEFAULT_EMPTY_VALUE);
-                            query(queryType, queryId, id, status);
-                            break;
-                        }
-                        case ACTION_PRIORITY: {
-                            int priority = bundle.getInt(EXTRA_PRIORITY, PRIORITY_NORMAL);
-                            setRequestPriority(id, priority);
-                            break;
-                        }
-                        case ACTION_RETRY: {
-                            retry(id);
-                            break;
-                        }
-                        case ACTION_REMOVE_ALL: {
-                            removeAll();
-                            break;
-                        }
-                        case ACTION_CONCURRENT_DOWNLOADS_LIMIT: {
-                            int limit = bundle.getInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT, DEFAULT_DOWNLOADS_LIMIT);
-                            setDownloadsLimit(limit);
-                            break;
-                        }
-                        case ACTION_ON_UPDATE_INTERVAL: {
-                            long interval = bundle.getLong(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_ON_UPDATE_INTERVAL);
-                            setOnUpdateInterval(interval);
-                            break;
-                        }
-                        case ACTION_UPDATE_REQUEST_URL: {
-                            String url = bundle.getString(EXTRA_URL);
-                            updateRequestUrl(id, url);
-                            break;
-                        }
-                        case ACTION_REMOVE_REQUEST: {
-                            removeRequest(id);
-                            break;
-                        }
-                        case ACTION_REMOVE_REQUEST_ALL: {
-                            removeRequestAll();
-                            break;
-                        }
-                        default: {
-                            startDownload();
-                            break;
+                                enqueue(url, filePath, headers, priority);
+                                break;
+                            }
+                            case ACTION_NETWORK: {
+                                int network = bundle.getInt(EXTRA_NETWORK_ID, NETWORK_ALL);
+                                setAllowedNetwork(network);
+                                break;
+                            }
+                            case ACTION_LOGGING: {
+                                boolean enabled = bundle.getBoolean(EXTRA_LOGGING_ID, true);
+                                setLoggingEnabled(enabled);
+                                break;
+                            }
+                            case ACTION_PROCESS_PENDING: {
+                                startDownload();
+                                break;
+                            }
+                            case ACTION_QUERY: {
+                                long queryId = bundle.getLong(EXTRA_QUERY_ID, DEFAULT_EMPTY_VALUE);
+                                int queryType = bundle.getInt(EXTRA_QUERY_TYPE, QUERY_ALL);
+                                int status = bundle.getInt(EXTRA_STATUS, DEFAULT_EMPTY_VALUE);
+                                query(queryType, queryId, id, status);
+                                break;
+                            }
+                            case ACTION_PRIORITY: {
+                                int priority = bundle.getInt(EXTRA_PRIORITY, PRIORITY_NORMAL);
+                                setRequestPriority(id, priority);
+                                break;
+                            }
+                            case ACTION_RETRY: {
+                                retry(id);
+                                break;
+                            }
+                            case ACTION_REMOVE_ALL: {
+                                removeAll();
+                                break;
+                            }
+                            case ACTION_CONCURRENT_DOWNLOADS_LIMIT: {
+                                int limit = bundle.getInt(EXTRA_CONCURRENT_DOWNLOADS_LIMIT, DEFAULT_DOWNLOADS_LIMIT);
+                                setDownloadsLimit(limit);
+                                break;
+                            }
+                            case ACTION_ON_UPDATE_INTERVAL: {
+                                long interval = bundle.getLong(EXTRA_ON_UPDATE_INTERVAL, DEFAULT_ON_UPDATE_INTERVAL);
+                                setOnUpdateInterval(interval);
+                                break;
+                            }
+                            case ACTION_UPDATE_REQUEST_URL: {
+                                String url = bundle.getString(EXTRA_URL);
+                                updateRequestUrl(id, url);
+                                break;
+                            }
+                            case ACTION_REMOVE_REQUEST: {
+                                removeRequest(id);
+                                break;
+                            }
+                            case ACTION_REMOVE_REQUEST_ALL: {
+                                removeRequestAll();
+                                break;
+                            }
+                            default: {
+                                startDownload();
+                                break;
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
+        } catch (Exception e) {
+            if (loggingEnabled) {
+                e.printStackTrace();
+            }
         }
     }
 
