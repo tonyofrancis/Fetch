@@ -18,14 +18,14 @@ dependencies:
     pre:
         - chmod +x gradlew
         - echo y | android update sdk --no-ui --all --filter "platform-tools, tools"
-        - echo y | android update sdk --no-ui --all --filter "android-27, build-tools-27.0.2"
-        - echo y | android update sdk --no-ui --all --filter "android-27, build-tools-27.0.2"
+        - echo y | android update sdk --no-ui --all --filter "android-27, build-tools-27.0.0"
+        - echo y | android update sdk --no-ui --all --filter "android-27, build-tools-26.0.0"
         - echo y | android update sdk --no-ui --all --filter "extra-android-m2repository"
         - echo y | android update sdk --no-ui --all --filter "extra-android-support"
     
     cache_directories:
         - /usr/local/android-sdk-linux/tools
-        - /usr/local/android-sdk-linux/build-tools/27.0.2
+        - /usr/local/android-sdk-linux/build-tools/27.0.0
 
 # Comment the test stuff out (or remove it) if you don't need it.
 test:
