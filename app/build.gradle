@@ -1,14 +1,18 @@
 apply plugin: 'com.android.application'
 
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
 android {
-    compileSdkVersion 27
-    buildToolsVersion '27.0.2'
+    compileSdkVersion library_compile_version
+    buildToolsVersion library_build_tools_version
     defaultConfig {
-        applicationId "com.tonyodev.fetchdemo"
-        minSdkVersion 16
-        targetSdkVersion 27
-        versionCode 3
-        versionName "3.0"
+        applicationId "com.tonyodev.fetchapp"
+        minSdkVersion library_min_version
+        targetSdkVersion library_target_version
+        versionCode 2
+        versionName "2.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -16,18 +20,36 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+
+        debug {
+
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    testCompile 'junit:junit:4.12'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation "com.android.support:appcompat-v7:$android_support_version"
+    implementation "com.android.support.constraint:constraint-layout:$constraint_layout_version"
+    implementation "com.android.support:design:$android_support_version"
+    implementation "com.android.support:recyclerview-v7:$android_support_version"
+    implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
+    implementation "io.reactivex.rxjava2:rxandroid:$rxAndroid2_version"
+    implementation "io.reactivex.rxjava2:rxjava:$rxJava2_version"
+    implementation "com.jakewharton.timber:timber:$timber_version"
 
-    compile 'com.android.support:appcompat-v7:27.0.2'
-    compile 'com.android.support:recyclerview-v7:27.0.2'
-    compile 'com.android.support:design:27.0.2'
-    compile project(':fetch')
+    implementation project(':fetch2downloaders')
+    implementation project(':fetch2rx')
+    implementation project(':fetch2')
+    implementation project(':fetchmigrator')
+
+    testImplementation "junit:junit:$junit_version"
+    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
 }
