@@ -17,7 +17,6 @@ machine:
 dependencies:
     pre:
         - chmod +x gradlew
-        - echo y | android update sdk --no-ui --all --filter "platform-tools, tools"
         - if [ ! -d "/usr/local/android-sdk-linux/platforms/android-26" ]; then echo y | android update sdk --no-ui --all --filter "android-26"; fi
         - if [ ! -d "/usr/local/android-sdk-linux/platforms/android-27" ]; then echo y | android update sdk --no-ui --all --filter "android-27"; fi
         - if [ ! -d "/usr/local/android-sdk-linux/build-tools/26.0.0" ]; then echo y | android update sdk --no-ui --all --filter "build-tools-26.0.0"; fi
@@ -30,8 +29,6 @@ dependencies:
         - if [ ! -d "/usr/local/android-sdk-linux/build-tools/27.0.3" ]; then echo y | android update sdk --no-ui --all --filter "build-tools-27.0.3"; fi
         - if [ ! -d "/usr/local/android_sdk/extras/android/m2repository/com/android/support/support-core-utils/25.1.0" ]; then echo y | android update sdk --no-ui --all --filter "extra-android-m2repository"; fi
         - echo y | android update sdk --no-ui --all --filter "extra-android-support"
-       - echo y | android update sdk --no-ui --all --filter "extra-android-m2repository"
-
     
     cache_directories:
         - /usr/local/android-sdk-linux/tools
