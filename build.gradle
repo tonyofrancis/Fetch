@@ -13,7 +13,7 @@ buildscript {
     ext.library_min_version = '16'
     ext.library_compile_version = 27
     ext.library_target_version = 27
-    ext.library_build_tools_version = "27.0.2"
+    ext.library_build_tools_version = "27.0.0"
     ext.gradle_tools_version = "3.0.1"
     ext.rxJava2_version = "2.1.8"
     ext.rxAndroid2_version = "2.0.1"
