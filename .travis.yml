@@ -16,13 +16,14 @@ android:
     # The SDK version used to compile your project
     - android-27
     - android-26
+    - android-24
     # Additional components
     - extra-android-m2repository
     - add-on
     - extra
     # Specify at least one system image,
     # if you need to run emulator(s) during your tests
-    - sys-img-armeabi-v7a-android-25
+    - sys-img-armeabi-v7a-android-24
   licenses:
     - 'android-sdk-preview-license-52d11cd2'
     - 'android-sdk-preview-license-.+'
@@ -38,7 +39,7 @@ install: ./gradlew clean assemble test assembleAndroidTest --stacktrace
 
 # Emulator Management: Create, Start and Wait
 before_script:
-  - echo no | android create avd --force -n test -t android-26 --abi armeabi-v7a
+  - echo no | android create avd --force -n test -t android-24 --abi armeabi-v7a
   - emulator -avd test -no-skin -no-audio -no-window &
   - android-wait-for-emulator
   - adb shell input keyevent 82 &
