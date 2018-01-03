@@ -36,7 +36,7 @@ before_install:
   - mkdir "$ANDROID_HOME/licenses" || true
   - echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
 
-install: ./gradlew clean assemble test assembleAndroidTest --stacktrace
+install: ./gradlew clean assemble test connectedDebugAndroidTest --stacktrace
 
 # Emulator Management: Create, Start and Wait
 before_script:
