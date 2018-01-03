@@ -14,6 +14,7 @@ android:
     - build-tools-27.0.3
     # The SDK version used to compile your project
     - android-27
+    - android-26
     # Additional components
     - extra-android-m2repository
     - add-on
@@ -23,14 +24,16 @@ android:
     - sys-img-armeabi-v7a-android-25
   licenses:
     - 'android-sdk-preview-license-52d11cd2'
+    - 'android-sdk-preview-license-.+'
     - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
 
 before_install:
   # Install SDK license so Android Gradle plugin can install deps.
   - mkdir "$ANDROID_HOME/licenses" || true
   - echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
 
-install: ./gradlew assemble test connectedDebugAndroidTest -PdisablePreDex --console=plain --info
+install: ./gradlew clean assemble test assembleAndroidTest --stacktrace
 
 # Emulator Management: Create, Start and Wait
 before_script:
