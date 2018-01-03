@@ -44,7 +44,7 @@ dependencies:
 # Comment the test stuff out (or remove it) if you don't need it.
 test:
     pre:
-        - emulator -avd circleci-android26 -no-audio -no-window:
+        - emulator -avd circleci-android24 -no-audio -no-window:
             background: true
             parallel: true
         - circle-android wait-for-boot
