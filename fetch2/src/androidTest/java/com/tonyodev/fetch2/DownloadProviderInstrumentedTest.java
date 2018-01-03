@@ -17,7 +17,6 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -60,9 +59,11 @@ public class DownloadProviderInstrumentedTest {
             final Request request = new Request(url, file);
             requestList.add(request);
         }
-        final List<DownloadInfo> downloadInfoList =
-                requestList.stream().map(FetchTypeConverterExtensions::toDownloadInfo)
-                        .collect(Collectors.toList());
+        final List<DownloadInfo> downloadInfoList = new ArrayList<>();
+        for (Request request : requestList) {
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            downloadInfoList.add(downloadInfo);
+        }
         databaseManager.insert(downloadInfoList);
         final List<Download> queryList = downloadProvider.getDownloads();
         assertNotNull(queryList);
@@ -92,13 +93,16 @@ public class DownloadProviderInstrumentedTest {
             final Request request = new Request(url, file);
             requestList.add(request);
         }
-        final List<DownloadInfo> downloadInfoList =
-                requestList.stream().map(FetchTypeConverterExtensions::toDownloadInfo)
-                        .collect(Collectors.toList());
+        final List<DownloadInfo> downloadInfoList = new ArrayList<>();
+        for (Request request : requestList) {
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            downloadInfoList.add(downloadInfo);
+        }
         databaseManager.insert(downloadInfoList);
-        final List<Integer> ids = downloadInfoList.stream()
-                .mapToInt(Download::getId)
-                .boxed().collect(Collectors.toList());
+        final List<Integer> ids = new ArrayList<>();
+        for(DownloadInfo downloadInfo : downloadInfoList) {
+            ids.add(downloadInfo.getId());
+        }
         final List<Download> queryList = downloadProvider.getDownloads(ids);
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
@@ -120,10 +124,14 @@ public class DownloadProviderInstrumentedTest {
             final Request request = new Request(url, file);
             requestList.add(request);
         }
-        final List<DownloadInfo> downloadInfoList =
-                requestList.stream().map(FetchTypeConverterExtensions::toDownloadInfo)
-                        .collect(Collectors.toList());
-        downloadInfoList.forEach(download -> download.setStatus(status));
+        final List<DownloadInfo> downloadInfoList = new ArrayList<>();
+        for (Request request : requestList) {
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            downloadInfoList.add(downloadInfo);
+        }
+        for (DownloadInfo downloadInfo : downloadInfoList) {
+            downloadInfo.setStatus(status);
+        }
         databaseManager.insert(downloadInfoList);
         final List<Download> queryList = downloadProvider.getByStatus(status);
         assertNotNull(queryList);
@@ -146,10 +154,14 @@ public class DownloadProviderInstrumentedTest {
             final Request request = new Request(url, file);
             requestList.add(request);
         }
-        final List<DownloadInfo> downloadInfoList =
-                requestList.stream().map(FetchTypeConverterExtensions::toDownloadInfo)
-                        .collect(Collectors.toList());
-        downloadInfoList.forEach(download -> download.setGroup(group));
+        final List<DownloadInfo> downloadInfoList = new ArrayList<>();
+        for (Request request : requestList) {
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            downloadInfoList.add(downloadInfo);
+        }
+        for (DownloadInfo downloadInfo : downloadInfoList) {
+            downloadInfo.setGroup(group);
+        }
         databaseManager.insert(downloadInfoList);
         final List<Download> queryList = downloadProvider.getByGroup(group);
         assertNotNull(queryList);

@@ -28,7 +28,6 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -472,9 +471,10 @@ public class FetchHandlerInstrumentedTest {
             requestList.add(request);
         }
         final List<Download> downloadInfoList = fetchHandler.enqueue(requestList);
-        final List<Integer> ids = downloadInfoList.stream()
-                .mapToInt(Download::getId)
-                .boxed().collect(Collectors.toList());
+        final List<Integer> ids = new ArrayList<>();
+        for(Request request : requestList) {
+            ids.add(request.getId());
+        }
         final List<Download> queryList = fetchHandler.getDownloads(ids);
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
