@@ -53,10 +53,11 @@ test:
         - adb shell input keyevent 82
 
     override:
-        - ./gradlew clean assemble
+        - ./gradlew clean assembleDebug
         # This will run the tests:
+        - ./gradlew test
         - ./gradlew connectedDebugAndroidTest -PdisablePreDex --console=plain --info
-
-    post:
-        - cp -r app/build/outputs $CIRCLE_ARTIFACTS
-        - cp -r app/build/outputs/androidTest-results/connected/ $CIRCLE_TEST_REPORTS
+        # copy the build outputs to artifacts
+        - cp -r my-project/build/outputs $CIRCLE_ARTIFACTS
+        # copy the test results to the test results directory.
+        - cp -r my-project/build/outputs/androidTest-results/* $CIRCLE_TEST_REPORTS
