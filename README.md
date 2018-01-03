@@ -233,7 +233,7 @@ if necessary. See the Java docs for details.
 ```java
 implementation "com.tonyodev.fetch2downloaders:fetch2downloaders:2.0.0-RC1"
 ```
-Set the OkHttp Downloader for fetch to use.
+Set the OkHttp Downloader for Fetch to use.
 ```java
 final OkHttpClient okHttpClient = new OkHttpClient.Builder()
           .build();
