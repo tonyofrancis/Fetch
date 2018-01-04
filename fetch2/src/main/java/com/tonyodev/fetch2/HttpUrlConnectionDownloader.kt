@@ -11,19 +11,26 @@ import kotlin.collections.HashMap
  * This downloader uses a HttpUrlConnection to perform http requests
  * @see {@link com.tonyodev.fetch2.Downloader}
  * */
-open class HttpUrlConnectionDownloader : Downloader {
+open class HttpUrlConnectionDownloader @JvmOverloads constructor(
+        /**
+         * HttpUrlConnectionPreferences to set preference settings for the
+         * HttpUrlConnectionDownloader HttpUrlConnection client.
+         * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader.HttpUrlConnectionPreferences
+         * */
+        httpUrlConnectionPreferences: HttpUrlConnectionPreferences? = null) : Downloader {
 
+    val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
     val connections = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
 
     override fun execute(request: Downloader.Request): Downloader.Response? {
         val httpUrl = URL(request.url)
         val client = httpUrl.openConnection() as HttpURLConnection
         client.requestMethod = "GET"
-        client.readTimeout = 20_000
-        client.connectTimeout = 15_000
-        client.useCaches = false
-        client.defaultUseCaches = false
-        client.instanceFollowRedirects = true
+        client.readTimeout = connectionPrefs.readTimeout
+        client.connectTimeout = connectionPrefs.connectTimeout
+        client.useCaches = connectionPrefs.usesCache
+        client.defaultUseCaches = connectionPrefs.usesDefaultCache
+        client.instanceFollowRedirects = connectionPrefs.followsRedirect
         client.doInput = true
 
         request.headers.entries.forEach {
@@ -75,6 +82,18 @@ open class HttpUrlConnectionDownloader : Downloader {
             it.value.disconnect()
         }
         connections.clear()
+    }
+
+    /**
+     * Use this class to set preference settings for the
+     * HttpUrlConnectionDownloader HttpUrlConnection client.
+     * */
+    open class HttpUrlConnectionPreferences {
+        var readTimeout = 20_000
+        var connectTimeout = 15_000
+        var usesCache = false
+        var usesDefaultCache = false
+        var followsRedirect = true
     }
 
 }
