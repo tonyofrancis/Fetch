@@ -1,3 +1,10 @@
+Version 2.0.0-RC2
+- Added new inner class HttpUrlConnectionPreferences to HttpUrlConnectionDownloader. See java docs.
+- travis config update.
+- remove circleci config file.
+- updated unit tests.
+- Change source and target comparability from version 1_8 to 1_7 for better project comparability.
+
 Version 2.0.0-RC1
 *Fetch has been completely rebuilt in version 2 and is not compatible with Fetch version 1.
 
