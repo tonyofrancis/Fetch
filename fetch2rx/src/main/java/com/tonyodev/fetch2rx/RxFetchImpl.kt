@@ -68,7 +68,8 @@ open class RxFetchImpl(namespace: String,
     override fun updateRequest(id: Int, requestInfo: RequestInfo): Convertible<Download> {
         synchronized(lock) {
             fetchHandler.throwExceptionIfClosed()
-            val flowable = Flowable.timer(0, TimeUnit.MILLISECONDS)
+
+            val flowable = Flowable.just(Object())
                     .subscribeOn(scheduler)
                     .flatMap {
                         fetchHandler.throwExceptionIfClosed()
@@ -91,7 +92,7 @@ open class RxFetchImpl(namespace: String,
     override fun getDownloads(): Convertible<List<Download>> {
         synchronized(lock) {
             fetchHandler.throwExceptionIfClosed()
-            val flowable = Flowable.timer(0, TimeUnit.NANOSECONDS)
+            val flowable = Flowable.just(Object())
                     .subscribeOn(scheduler)
                     .flatMap {
                         fetchHandler.throwExceptionIfClosed()
