@@ -4,6 +4,18 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-kapt'
 
+apply plugin: 'com.novoda.bintray-release'
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 android {
     compileSdkVersion library_compile_version
     buildToolsVersion library_build_tools_version
@@ -11,8 +23,8 @@ android {
     defaultConfig {
         minSdkVersion library_min_version
         targetSdkVersion library_target_version
-        versionCode 3
-        versionName "2.0.0-RC2"
+        versionCode 4
+        versionName "2.0.0-RC3"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -30,21 +42,41 @@ android {
         }
     }
 
+    lintOptions {
+        abortOnError false
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_7
         targetCompatibility JavaVersion.VERSION_1_7
     }
 
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        androidTest.java.srcDirs += 'src/androidTest/kotlin'
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     implementation "com.android.support:appcompat-v7:$android_support_version"
-    implementation "android.arch.persistence.room:runtime:$room_version"
+    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     kapt "android.arch.persistence.room:compiler:$room_version"
+    api "android.arch.persistence.room:runtime:$room_version"
 
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "com.android.support.test:runner:$test_runner_version"
     androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
+}
+
+publish {
+    userOrg = 'tonyofrancis'
+    groupId = 'com.tonyodev.fetch2'
+    artifactId = 'fetch2'
+    publishVersion = '2.0.0-RC3'
+    desc = 'Fetch is a simple, powerful, customizable file download manager library for Android.'
+    website = 'https://github.com/tonyofrancis/fetch'
+}
+
+tasks.withType(Javadoc).all {
+    enabled = false
 }
