@@ -8,6 +8,8 @@ Overview
 
 Fetch is a simple, powerful, customizable file download manager library for Android.
 
+![ScreenShot](https://github.com/tonyofrancis/Fetch/blob/v2/screenshot.png)
+
 Features
 --------
 
