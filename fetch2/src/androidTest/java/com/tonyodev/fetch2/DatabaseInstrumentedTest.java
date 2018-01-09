@@ -133,7 +133,7 @@ public class DatabaseInstrumentedTest {
         databaseManager.insert(downloadInfoList);
         databaseManager.delete(downloadInfoList);
         final List<Integer> ids = new ArrayList<>();
-        for(DownloadInfo downloadInfo : downloadInfoList) {
+        for (DownloadInfo downloadInfo : downloadInfoList) {
             ids.add(downloadInfo.getId());
         }
         final List<DownloadInfo> queryList = databaseManager.get(ids);
@@ -188,7 +188,7 @@ public class DatabaseInstrumentedTest {
         }
         databaseManager.update(downloadInfoList);
         final List<Integer> ids = new ArrayList<>();
-        for(DownloadInfo downloadInfo : downloadInfoList) {
+        for (DownloadInfo downloadInfo : downloadInfoList) {
             ids.add(downloadInfo.getId());
         }
         final List<DownloadInfo> queryList = databaseManager.get(ids);
@@ -254,7 +254,7 @@ public class DatabaseInstrumentedTest {
         }
         databaseManager.insert(downloadInfoList);
         final List<Integer> ids = new ArrayList<>();
-        for(DownloadInfo downloadInfo : downloadInfoList) {
+        for (DownloadInfo downloadInfo : downloadInfoList) {
             ids.add(downloadInfo.getId());
         }
         final List<DownloadInfo> queryList = databaseManager.get(ids);
@@ -378,6 +378,27 @@ public class DatabaseInstrumentedTest {
             assertTrue(downloadInfoList.contains(download));
             assertEquals(status, download.getStatus());
         }
+    }
+
+    @Test
+    public void fileUpdate() throws Exception {
+        databaseManager.deleteAll();
+        final Request request = getTestRequest();
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final Pair<DownloadInfo, Boolean> pair = databaseManager.insert(downloadInfo);
+        assertTrue(pair.getSecond());
+        final long downloaded = 2000;
+        final long total = Long.MAX_VALUE;
+        final Status status = Status.DOWNLOADING;
+        downloadInfo.setDownloaded(downloaded);
+        downloadInfo.setTotal(total);
+        downloadInfo.setStatus(status);
+        databaseManager.updateFileBytesInfoAndStatusOnly(downloadInfo);
+        final DownloadInfo downloadInfo1 = databaseManager.get(downloadInfo.getId());
+        assertNotNull(downloadInfo1);
+        assertEquals(downloaded, downloadInfo1.getDownloaded());
+        assertEquals(total, downloadInfo1.getTotal());
+        assertEquals(status, downloadInfo1.getStatus());
     }
 
     @Test

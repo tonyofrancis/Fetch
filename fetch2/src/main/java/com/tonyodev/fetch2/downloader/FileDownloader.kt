@@ -16,8 +16,7 @@ interface FileDownloader : Runnable {
                       etaInMilliseconds: Long)
 
         fun onProgress(download: Download,
-                       etaInMilliSeconds: Long,
-                       reportProgress: Boolean = false)
+                       etaInMilliSeconds: Long)
 
         fun onError(download: Download)
 

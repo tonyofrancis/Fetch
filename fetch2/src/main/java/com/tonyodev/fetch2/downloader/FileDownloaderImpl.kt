@@ -61,7 +61,7 @@ open class FileDownloaderImpl(val initialDownload: Download,
                         logger.d("FileDownloader starting Download $download")
                     }
                     if (!interrupted) {
-                        input = BufferedInputStream(response.byteStream)
+                        input = BufferedInputStream(response.byteStream, downloadBufferSizeBytes)
                         downloadInfoInternal.downloaded = downloadedInternal
                         downloadInfoInternal.total = totalInternal
                         delegate?.onStarted(
@@ -131,10 +131,6 @@ open class FileDownloaderImpl(val initialDownload: Download,
             output.write(buffer, 0, read)
             downloadedInternal += read
 
-            reportingStopTime = System.nanoTime()
-            val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
-                    reportingStopTime, progressReportingIntervalMillis)
-
             downloadSpeedStopTime = System.nanoTime()
             val downloadSpeedCheckTimeElapsed = hasIntervalTimeElapsed(downloadSpeedStartTime,
                     downloadSpeedStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
@@ -147,20 +143,24 @@ open class FileDownloaderImpl(val initialDownload: Download,
                         downloadedBytesPerSecond = downloadedBytesPerSecond)
 
                 downloadedBytesPerSecond = downloadedInternal
-                downloadSpeedStartTime = System.nanoTime()
             }
 
+            reportingStopTime = System.nanoTime()
+            val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
+                    reportingStopTime, progressReportingIntervalMillis)
+
             if (hasReportingTimeElapsed) {
+                downloadInfoInternal.downloaded = downloadedInternal
+                downloadInfoInternal.total = totalInternal
+                delegate?.onProgress(
+                        download = downloadInfoInternal,
+                        etaInMilliSeconds = estimatedTimeRemainingInMillisecondsInternal)
                 reportingStartTime = System.nanoTime()
             }
 
-            downloadInfoInternal.downloaded = downloadedInternal
-            downloadInfoInternal.total = totalInternal
-            delegate?.onProgress(
-                    download = downloadInfoInternal,
-                    etaInMilliSeconds = estimatedTimeRemainingInMillisecondsInternal,
-                    reportProgress = hasReportingTimeElapsed)
-
+            if (downloadSpeedCheckTimeElapsed) {
+                downloadSpeedStartTime = System.nanoTime()
+            }
             read = input.read(buffer, 0, downloadBufferSizeBytes)
         }
         if (read == -1 && !interrupted) {

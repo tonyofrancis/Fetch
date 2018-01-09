@@ -15,48 +15,48 @@ import java.util.Date
 
 
 @Entity(tableName = DownloadDatabase.TABLE_NAME,
-        indices = [(Index(value = ["_file"], unique = true)),
-            (Index(value = ["_group", "_status"], unique = false))])
+        indices = [(Index(value = [DownloadDatabase.COLUMN_FILE], unique = true)),
+            (Index(value = [DownloadDatabase.COLUMN_GROUP, DownloadDatabase.COLUMN_STATUS], unique = false))])
 class DownloadInfo : Download {
 
     @PrimaryKey
-    @ColumnInfo(name = "_id")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_ID)
     override var id: Int = 0
 
-    @ColumnInfo(name = "_namespace")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_NAMESPACE)
     override var namespace: String = ""
 
-    @ColumnInfo(name = "_url")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_URL)
     override var url: String = ""
 
-    @ColumnInfo(name = "_file")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_FILE)
     override var file: String = ""
 
-    @ColumnInfo(name = "_group")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_GROUP)
     override var group: Int = 0
 
-    @ColumnInfo(name = "_priority")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_PRIORITY)
     override var priority: Priority = defaultPriority
 
-    @ColumnInfo(name = "_headers")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_HEADERS)
     override var headers: Map<String, String> = defaultEmptyHeaderMap
 
-    @ColumnInfo(name = "_written_bytes")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_DOWNLOADED)
     override var downloaded: Long = 0L
 
-    @ColumnInfo(name = "_total_bytes")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_TOTAL)
     override var total: Long = -1L
 
-    @ColumnInfo(name = "_status")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_STATUS)
     override var status: Status = defaultStatus
 
-    @ColumnInfo(name = "_error")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_ERROR)
     override var error: Error = defaultNoError
 
-    @ColumnInfo(name = "_network_type")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_NETWORK_TYPE)
     override var networkType: NetworkType = defaultNetworkType
 
-    @ColumnInfo(name = "_created")
+    @ColumnInfo(name = DownloadDatabase.COLUMN_CREATED)
     override var created: Long = Date().time
 
     override val progress: Int
