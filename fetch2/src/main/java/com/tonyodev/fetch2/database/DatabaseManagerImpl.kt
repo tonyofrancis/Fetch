@@ -2,9 +2,12 @@ package com.tonyodev.fetch2.database
 
 import android.arch.persistence.room.Room
 import android.content.Context
+import android.database.sqlite.SQLiteException
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.exception.FetchImplementationException
+import android.arch.persistence.room.RoomMasterTable.TABLE_NAME
+
 
 open class DatabaseManagerImpl constructor(context: Context,
                                            val namespace: String,
@@ -84,6 +87,29 @@ open class DatabaseManagerImpl constructor(context: Context,
         synchronized(lock) {
             throwExceptionIfClosed()
             requestDatabaseInternal.requestDao().update(downloadInfoList)
+        }
+    }
+
+    override fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo) {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            val database = requestDatabaseInternal.openHelper.writableDatabase
+            try {
+                database.beginTransaction()
+                database.execSQL("UPDATE ${DownloadDatabase.TABLE_NAME} SET "
+                        + "${DownloadDatabase.COLUMN_DOWNLOADED} = ${downloadInfo.downloaded}, "
+                        + "${DownloadDatabase.COLUMN_TOTAL} = ${downloadInfo.total}, "
+                        + "${DownloadDatabase.COLUMN_STATUS} = ${downloadInfo.status.value} "
+                        + "WHERE ${DownloadDatabase.COLUMN_ID} = ${downloadInfo.id}")
+                database.setTransactionSuccessful()
+            } catch (e: SQLiteException) {
+                logger.e("DatabaseManager exception", e)
+            }
+            try {
+                database.endTransaction()
+            } catch (e: SQLiteException) {
+                logger.e("DatabaseManager exception", e)
+            }
         }
     }
 

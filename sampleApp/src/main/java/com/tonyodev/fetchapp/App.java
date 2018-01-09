@@ -35,7 +35,6 @@ public class App extends Application {
             final boolean enableLogging = true;
             fetch = new Fetch.Builder(this, "DefaultFetch")
                     .setLogger(logger)
-                    .setDownloadConcurrentLimit(4) //
                     .setDownloader(okHttpDownloader)
                     .setDownloadConcurrentLimit(concurrentLimit)
                     .enableLogging(enableLogging)

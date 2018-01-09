@@ -18,6 +18,7 @@ buildscript {
     ext.rxJava2_version = "2.1.8"
     ext.rxAndroid2_version = "2.0.1"
     ext.timber_version = "4.6.0"
+    ext.novoda_bintray_version = "0.8.0"
 
     repositories {
         google()
@@ -26,6 +27,7 @@ buildscript {
     dependencies {
         classpath "com.android.tools.build:gradle:$gradle_tools_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.novoda:bintray-release:$novoda_bintray_version"
     }
 }
 
