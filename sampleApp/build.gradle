@@ -1,0 +1,55 @@
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    compileSdkVersion library_compile_version
+    buildToolsVersion library_build_tools_version
+    defaultConfig {
+        applicationId "com.tonyodev.fetchapp"
+        minSdkVersion library_min_version
+        targetSdkVersion library_target_version
+        versionCode 4
+        versionName "2.2"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation "com.android.support:appcompat-v7:$android_support_version"
+    implementation "com.android.support.constraint:constraint-layout:$constraint_layout_version"
+    implementation "com.android.support:design:$android_support_version"
+    implementation "com.android.support:recyclerview-v7:$android_support_version"
+    implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
+    implementation "io.reactivex.rxjava2:rxandroid:$rxAndroid2_version"
+    implementation "io.reactivex.rxjava2:rxjava:$rxJava2_version"
+    implementation "com.jakewharton.timber:timber:$timber_version"
+
+    implementation project(':fetch2downloaders')
+    implementation project(':fetch2rx')
+    implementation project(':fetch2')
+    implementation project(':fetchmigrator')
+
+    testImplementation "junit:junit:$junit_version"
+    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
+}

@@ -1,37 +1,82 @@
 apply plugin: 'com.android.library'
 
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-kapt'
+
+apply plugin: 'com.novoda.bintray-release'
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "26.0.0"
-
+    compileSdkVersion library_compile_version
+    buildToolsVersion library_build_tools_version
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 25
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion library_min_version
+        targetSdkVersion library_target_version
+        versionCode 5
+        versionName "2.0.0-RC4"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
+
     buildTypes {
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+
+        debug {
+
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        androidTest.java.srcDirs += 'src/androidTest/kotlin'
     }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
+    implementation "com.android.support:appcompat-v7:$android_support_version"
+    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    kapt "android.arch.persistence.room:compiler:$room_version"
+    api "android.arch.persistence.room:runtime:$room_version"
 
-    compile 'com.android.support:appcompat-v7:25.4.0'
-    testCompile 'junit:junit:4.12'
-    compile 'com.squareup.okhttp3:okhttp:3.8.0'
-    compile 'android.arch.persistence.room:runtime:1.0.0-alpha2'
-    annotationProcessor 'android.arch.persistence.room:compiler:1.0.0-alpha2'
+    testImplementation "junit:junit:$junit_version"
+    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
+}
+
+publish {
+    userOrg = 'tonyofrancis'
+    groupId = 'com.tonyodev.fetch2'
+    artifactId = 'fetch2'
+    publishVersion = '2.0.0-RC4'
+    desc = 'Fetch is a simple, powerful, customizable file download manager library for Android.'
+    website = 'https://github.com/tonyofrancis/fetch'
+}
+
+tasks.withType(Javadoc).all {
+    enabled = false
 }

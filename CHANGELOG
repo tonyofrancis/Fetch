@@ -1,9 +1,47 @@
+Version 2.0.0-RC4
+- Fixed slow downloading speeds on some devices.
+
+Version 2.0.0-RC3
+- Fix compile and build issue for non Kotlin projects.
+- Minor changes for rxFetch.
+
+Version 2.0.0-RC2
+- Added new inner class HttpUrlConnectionPreferences to HttpUrlConnectionDownloader. See java docs.
+- travis config update.
+- remove circleci config file.
+- updated unit tests.
+- Change source and target comparability from version 1_8 to 1_7 for better project comparability.
+
+Version 2.0.0-RC1
+*Fetch has been completely rebuilt in version 2 and is not compatible with Fetch version 1.
+
+What's new?
+
+- Fetch is now faster, more accurate, customizable and developer friendly.
+- Fetch instances are thread safe.
+- Fetch uses less system resources.
+- More status reporting methods have been added to the FetchListener.
+- Better download status reporting.
+- Better error reporting.
+- Grouped download support added.
+- Download time remaining is now reported in the FetchListener onProgress method.
+- Support for HttpUrlConnection and OkHttp client downloader. You can also provide Fetch
+  your own custom Downloader. See the Java Docs for the Downloader class and check out the README.
+- Better logging. You can also provide Fetch with your own custom logger. See the update samples.
+- Network specific downloading support.
+- Set priority on downloads.
+- Built entirely in Kotlin.
+- Updated Samples.
+
+Version 1.1.5
+- bug fixes
+
 Version 1.1.4
 - bug fixes
-- Android Oreo compatability
+- Android Oreo compatibility
 
 Version 1.1.3
-- Enqueuing is now faster 
+- Enqueuing is now faster
 - New RemoveRequest(id) and RemoveRequestsAll() methods that removes a request from the database but does not delete the file
 - Error log fixes
 - Database Bug fixes.

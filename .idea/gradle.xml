@@ -8,8 +8,11 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/fetch" />
+            <option value="$PROJECT_DIR$/fetch2" />
+            <option value="$PROJECT_DIR$/fetch2downloaders" />
+            <option value="$PROJECT_DIR$/fetch2rx" />
+            <option value="$PROJECT_DIR$/fetchmigrator" />
+            <option value="$PROJECT_DIR$/sampleApp" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
