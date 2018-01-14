@@ -14,26 +14,26 @@ open class DownloadInfoManagerDelegate(val downloadInfoUpdater: DownloadInfoUpda
                                        val fetchListener: FetchListener,
                                        val logger: Logger) : DownloadManager.Delegate {
 
-    override fun onStarted(download: Download, etaInMilliseconds: Long) {
+    override fun onStarted(download: Download, etaInMilliseconds: Long, downloadedBytesPerSecond: Long) {
         val downloadInfo = download as DownloadInfo
         downloadInfo.status = Status.DOWNLOADING
         try {
             downloadInfoUpdater.update(downloadInfo)
             uiHandler.post {
-                fetchListener.onProgress(downloadInfo, etaInMilliseconds)
+                fetchListener.onProgress(downloadInfo, etaInMilliseconds, downloadedBytesPerSecond)
             }
         } catch (e: Exception) {
             logger.e("DownloadManagerDelegate", e)
         }
     }
 
-    override fun onProgress(download: Download, etaInMilliSeconds: Long) {
+    override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
         try {
             val downloadInfo = download as DownloadInfo
             downloadInfo.status = Status.DOWNLOADING
             downloadInfoUpdater.updateFileBytesInfoAndStatusOnly(downloadInfo)
             uiHandler.post {
-                fetchListener.onProgress(download, etaInMilliSeconds)
+                fetchListener.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
             }
         } catch (e: Exception) {
             logger.e("DownloadManagerDelegate", e)

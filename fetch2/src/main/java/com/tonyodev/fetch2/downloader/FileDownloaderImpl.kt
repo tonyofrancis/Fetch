@@ -10,6 +10,7 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.RandomAccessFile
 import java.net.HttpURLConnection
+import kotlin.math.ceil
 
 open class FileDownloaderImpl(val initialDownload: Download,
                               val downloader: Downloader,
@@ -28,6 +29,8 @@ open class FileDownloaderImpl(val initialDownload: Download,
     var downloadedInternal: Long = 0
     var estimatedTimeRemainingInMillisecondsInternal: Long = -1
     var downloadInfoInternal = initialDownload.toDownloadInfo()
+    var averageDownloadedBytesPerSecondInternal = 0.0
+    val movingAverageCalculatorInternal = AverageCalculator(5)
 
     override val download: Download
         get () {
@@ -66,7 +69,8 @@ open class FileDownloaderImpl(val initialDownload: Download,
                         downloadInfoInternal.total = totalInternal
                         delegate?.onStarted(
                                 download = downloadInfoInternal,
-                                etaInMilliseconds = estimatedTimeRemainingInMillisecondsInternal)
+                                etaInMilliseconds = estimatedTimeRemainingInMillisecondsInternal,
+                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                         writeToOutputInternal(input, output)
                     }
                 } else if (response == null) {
@@ -85,7 +89,8 @@ open class FileDownloaderImpl(val initialDownload: Download,
                 downloadInfoInternal.total = totalInternal
                 delegate?.onProgress(
                         download = downloadInfoInternal,
-                        etaInMilliSeconds = estimatedTimeRemainingInMillisecondsInternal)
+                        etaInMilliSeconds = estimatedTimeRemainingInMillisecondsInternal,
+                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
             }
         } catch (e: Exception) {
             if (!interrupted) {
@@ -137,11 +142,13 @@ open class FileDownloaderImpl(val initialDownload: Download,
 
             if (downloadSpeedCheckTimeElapsed) {
                 downloadedBytesPerSecond = downloadedInternal - downloadedBytesPerSecond
+                movingAverageCalculatorInternal.add(downloadedBytesPerSecond.toDouble())
+                averageDownloadedBytesPerSecondInternal =
+                        movingAverageCalculatorInternal.getMovingAverageWithWeightOnRecentValues()
                 estimatedTimeRemainingInMillisecondsInternal = calculateEstimatedTimeRemainingInMilliseconds(
                         downloadedBytes = downloadedInternal,
                         totalBytes = totalInternal,
-                        downloadedBytesPerSecond = downloadedBytesPerSecond)
-
+                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                 downloadedBytesPerSecond = downloadedInternal
             }
 
@@ -154,7 +161,8 @@ open class FileDownloaderImpl(val initialDownload: Download,
                 downloadInfoInternal.total = totalInternal
                 delegate?.onProgress(
                         download = downloadInfoInternal,
-                        etaInMilliSeconds = estimatedTimeRemainingInMillisecondsInternal)
+                        etaInMilliSeconds = estimatedTimeRemainingInMillisecondsInternal,
+                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                 reportingStartTime = System.nanoTime()
             }
 
@@ -193,6 +201,13 @@ open class FileDownloaderImpl(val initialDownload: Download,
         val headers = initialDownload.headers.toMutableMap()
         headers.put("Range", "bytes=$downloadedInternal-")
         return Downloader.Request(initialDownload.url, headers)
+    }
+
+    fun getAverageDownloadedBytesPerSecond(): Long {
+        if (averageDownloadedBytesPerSecondInternal < 1) {
+            return 0L
+        }
+        return ceil(averageDownloadedBytesPerSecondInternal).toLong()
     }
 
 }

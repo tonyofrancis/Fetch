@@ -241,8 +241,8 @@ public class GameFilesActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onProgress(@NotNull Download download, long etaInMilliseconds) {
-            super.onProgress(download, etaInMilliseconds);
+        public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
+            super.onProgress(download, etaInMilliseconds, downloadedBytesPerSecond);
             fileProgressMap.put(download.getId(), download.getProgress());
             updateUIWithProgress();
         }

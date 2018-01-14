@@ -31,6 +31,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
 
     private static final int STORAGE_PERMISSION_CODE = 200;
     private static final long UNKNOWN_REMAINING_TIME = -1;
+    private static final long UNKNOWN_DOWNLOADED_BYTES_PER_SECOND = 0;
 
     private View mainView;
     private FileAdapter fileAdapter;
@@ -73,7 +74,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
             @Override
             public void call(List<? extends Download> downloads) {
                 for (Download download : downloads) {
-                    fileAdapter.update(download, UNKNOWN_REMAINING_TIME);
+                    fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
                 }
             }
         });
@@ -95,47 +96,47 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     private final FetchListener fetchListener = new FetchListener() {
         @Override
         public void onQueued(@NotNull Download download) {
-            fileAdapter.update(download, UNKNOWN_REMAINING_TIME);
+            fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }
 
         @Override
         public void onCompleted(@NotNull Download download) {
-            fileAdapter.update(download, UNKNOWN_REMAINING_TIME);
+            fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }
 
         @Override
         public void onError(@NotNull Download download) {
-            fileAdapter.update(download, UNKNOWN_REMAINING_TIME);
+            fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }
 
         @Override
-        public void onProgress(@NotNull Download download, long etaInMilliseconds) {
-            fileAdapter.update(download, etaInMilliseconds);
+        public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
+            fileAdapter.update(download, etaInMilliseconds, downloadedBytesPerSecond);
         }
 
         @Override
         public void onPaused(@NotNull Download download) {
-            fileAdapter.update(download, UNKNOWN_REMAINING_TIME);
+            fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }
 
         @Override
         public void onResumed(@NotNull Download download) {
-            fileAdapter.update(download, UNKNOWN_REMAINING_TIME);
+            fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }
 
         @Override
         public void onCancelled(@NotNull Download download) {
-            fileAdapter.update(download, UNKNOWN_REMAINING_TIME);
+            fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }
 
         @Override
         public void onRemoved(@NotNull Download download) {
-            fileAdapter.update(download, UNKNOWN_REMAINING_TIME);
+            fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }
 
         @Override
         public void onDeleted(@NotNull Download download) {
-            fileAdapter.update(download, UNKNOWN_REMAINING_TIME);
+            fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }
     };
 

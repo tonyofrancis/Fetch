@@ -66,6 +66,13 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
                     downloadData.eta));
         }
 
+        if (downloadData.downloadedBytesPerSecond == 0) {
+            holder.downloadedBytesPerSecondTextView.setText("");
+        } else {
+            holder.downloadedBytesPerSecondTextView.setText(Utils.getDownloadSpeedString(context,
+                    downloadData.downloadedBytesPerSecond));
+        }
+
         switch (status) {
             case COMPLETED: {
                 holder.actionButton.setText(R.string.view);
@@ -173,7 +180,7 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
     }
 
 
-    public void update(final Download download, long eta) {
+    public void update(final Download download, long eta, long downloadedBytesPerSecond) {
         if (download != null) {
             for (int position = 0; position < downloads.size(); position++) {
                 final DownloadData downloadData = downloads.get(position);
@@ -188,6 +195,7 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
                         default: {
                             downloadData.download = download;
                             downloadData.eta = eta;
+                            downloadData.downloadedBytesPerSecond = downloadedBytesPerSecond;
                             notifyItemChanged(position);
                         }
                     }
@@ -226,6 +234,7 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
         public final TextView progressTextView;
         public final Button actionButton;
         public final TextView timeRemainingTextView;
+        public final TextView downloadedBytesPerSecondTextView;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -235,6 +244,7 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
             actionButton = (Button) itemView.findViewById(R.id.actionButton);
             progressTextView = (TextView) itemView.findViewById(R.id.progress_TextView);
             timeRemainingTextView = (TextView) itemView.findViewById(R.id.remaining_TextView);
+            downloadedBytesPerSecondTextView = (TextView) itemView.findViewById(R.id.downloadSpeedTextView);
         }
 
     }
@@ -243,6 +253,7 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
         public int id;
         public Download download;
         public long eta = -1;
+        public long downloadedBytesPerSecond = 0;
 
         @Override
         public int hashCode() {

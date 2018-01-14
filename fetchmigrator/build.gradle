@@ -20,8 +20,8 @@ android {
     defaultConfig {
         minSdkVersion library_min_version
         targetSdkVersion library_target_version
-        versionCode 5
-        versionName "2.0.0-RC4"
+        versionCode 6
+        versionName "2.0.0-RC5"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -67,7 +67,7 @@ publish {
     userOrg = 'tonyofrancis'
     groupId = 'com.tonyodev.fetchmigrator'
     artifactId = 'fetchmigrator'
-    publishVersion = '2.0.0-RC4'
+    publishVersion = '2.0.0-RC5'
     desc = 'Migration Assistant for Fetch'
     website = 'https://github.com/tonyofrancis/fetch'
 }

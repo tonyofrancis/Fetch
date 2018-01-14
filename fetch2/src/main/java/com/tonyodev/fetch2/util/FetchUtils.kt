@@ -8,6 +8,8 @@ import java.io.File
 import java.io.IOException
 
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
+import kotlin.math.ceil
 
 
 fun canPauseDownload(download: Download): Boolean {
@@ -68,7 +70,7 @@ fun calculateEstimatedTimeRemainingInMilliseconds(downloadedBytes: Long,
         downloadedBytesPerSecond < 1 -> -1
         else -> {
             val seconds = (totalBytes - downloadedBytes).toDouble() / downloadedBytesPerSecond.toDouble()
-            return Math.abs(Math.ceil(seconds)).toLong() * 1000
+            return abs(ceil(seconds)).toLong() * 1000
         }
     }
 }
