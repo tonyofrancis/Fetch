@@ -126,7 +126,7 @@ fetch.addListener(new FetchListener() {
     }
 
     @Override
-    public void onProgress(@NotNull Download download, long etaInMilliSeconds) {
+    public void onProgress(@NotNull Download download, long etaInMilliSeconds, long downloadedBytesPerSecond) {
       if (request.getId() == download.getId()) {
           updateDownload(download, etaInMilliSeconds);
       }
