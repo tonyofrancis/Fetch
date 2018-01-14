@@ -4,6 +4,19 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+buildscript {
+    apply from: '../versions.gradle'
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:$gradle_tools_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.novoda:bintray-release:$novoda_bintray_version"
+    }
+}
+
 android {
     compileSdkVersion library_compile_version
     buildToolsVersion library_build_tools_version
