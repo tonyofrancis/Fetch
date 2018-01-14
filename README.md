@@ -106,8 +106,7 @@ Tracking a download's progress and status is very easy with Fetch. Simply add a 
 status or progress changes.
 
 ```java
-
-fetch.addListener(new FetchListener() {
+final FetchListener fetchListener = new FetchListener() {
     @Override
     public void onQueued(@NotNull Download download) {
         if (request.getId() == download.getId()) {
@@ -127,11 +126,11 @@ fetch.addListener(new FetchListener() {
 
     @Override
     public void onProgress(@NotNull Download download, long etaInMilliSeconds, long downloadedBytesPerSecond) {
-      if (request.getId() == download.getId()) {
-          updateDownload(download, etaInMilliSeconds);
-      }
-      final int progress = download.getProgress();
-      Log.d("Fetch", "Progress Completed :" + progress);
+        if (request.getId() == download.getId()) {
+            updateDownload(download, etaInMilliSeconds);
+        }
+        final int progress = download.getProgress();
+        Log.d("Fetch", "Progress Completed :" + progress);
     }
 
     @Override
@@ -158,7 +157,12 @@ fetch.addListener(new FetchListener() {
     public void onDeleted(@NotNull Download download) {
 
     }
-});
+};
+
+fetch.addListener(fetchListener);
+
+//Note: Remove listener when done.
+fetch.removeListener(fetchListener);
 ```
 
 Fetch supports pausing and resuming downloads using the request's id.
