@@ -125,8 +125,8 @@ public class FragmentActivity extends AppCompatActivity {
     private FetchListener fetchListener = new AbstractFetchListener() {
 
         @Override
-        public void onProgress(@NotNull Download download, long etaInMilliseconds) {
-            super.onProgress(download, etaInMilliseconds);
+        public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
+            super.onProgress(download, etaInMilliseconds, downloadedBytesPerSecond);
             if (request != null && request.getId() == download.getId()) {
                 Log.d("FragmentActivity", "id:" + download.getId() +
                         ",status:" + download.getStatus() + ",progress:" + download.getProgress()

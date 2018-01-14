@@ -1,3 +1,7 @@
+Version 2.0.0-RC5
+- Behavior Change: Added download speed reporting in Fetch Listener onProgress method.
+- Fixed ETA reporting. Reports are more accurate using weighted moving average.
+
 Version 2.0.0-RC4
 - Fixed slow downloading speeds on some devices.
 

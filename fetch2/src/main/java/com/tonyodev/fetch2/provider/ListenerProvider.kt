@@ -30,9 +30,9 @@ open class ListenerProvider {
             }
         }
 
-        override fun onProgress(download: Download, etaInMilliSeconds: Long) {
+        override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
             listeners.iterator().forEach {
-                it.onProgress(download, etaInMilliSeconds)
+                it.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
             }
         }
 

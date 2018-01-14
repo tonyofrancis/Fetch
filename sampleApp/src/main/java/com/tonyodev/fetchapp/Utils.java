@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
+import java.text.DecimalFormat;
 
 public final class Utils {
 
@@ -56,6 +57,22 @@ public final class Utils {
             return context.getString(R.string.download_eta_min, minutes, seconds);
         } else {
             return context.getString(R.string.download_eta_sec, seconds);
+        }
+    }
+
+    public static String getDownloadSpeedString(Context context, long downloadedBytesPerSecond) {
+        if (downloadedBytesPerSecond < 0) {
+            return "";
+        }
+        double kb = (double) downloadedBytesPerSecond / (double) 1000;
+        double mb = kb / (double) 1000;
+        final DecimalFormat decimalFormat = new DecimalFormat(".##");
+        if (mb >= 1) {
+            return context.getString(R.string.download_speed_mb, decimalFormat.format(mb));
+        } else if (kb >= 1) {
+            return context.getString(R.string.download_speed_kb, decimalFormat.format(kb));
+        } else {
+            return context.getString(R.string.download_speed_bytes, downloadedBytesPerSecond);
         }
     }
 }

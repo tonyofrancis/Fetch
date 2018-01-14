@@ -33,6 +33,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     private TextView progressTextView;
     private TextView titleTextView;
     private TextView etaTextView;
+    private TextView downloadSpeedTextView;
 
     private Request request;
     private Fetch fetch;
@@ -45,6 +46,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         progressTextView = (TextView) findViewById(R.id.progressTextView);
         titleTextView = (TextView) findViewById(R.id.titleTextView);
         etaTextView = (TextView) findViewById(R.id.etaTextView);
+        downloadSpeedTextView = (TextView) findViewById(R.id.downloadSpeedTextView);
         fetch = ((App) getApplication()).getFetch();
         fetch.deleteAll();
         checkStoragePermission();
@@ -173,6 +175,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
             setProgressView(download.getStatus(), download.getProgress());
             etaTextView.setText(Utils
                     .getETAString(SingleDownloadActivity.this, 0));
+            downloadSpeedTextView.setText(Utils.getDownloadSpeedString(SingleDownloadActivity.this, 0));
         }
     }
 
@@ -182,6 +185,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
             setProgressView(download.getStatus(), download.getProgress());
             etaTextView.setText(Utils
                     .getETAString(SingleDownloadActivity.this, 0));
+            downloadSpeedTextView.setText(Utils.getDownloadSpeedString(SingleDownloadActivity.this, 0));
         }
     }
 
@@ -191,15 +195,17 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
             showDownloadErrorSnackBar(download.getError());
             etaTextView.setText(Utils
                     .getETAString(SingleDownloadActivity.this, 0));
+            downloadSpeedTextView.setText(Utils.getDownloadSpeedString(SingleDownloadActivity.this, 0));
         }
     }
 
     @Override
-    public void onProgress(@NotNull Download download, long etaInMilliseconds) {
+    public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
         if (request != null && request.getId() == download.getId()) {
             setProgressView(download.getStatus(), download.getProgress());
             etaTextView.setText(Utils
                     .getETAString(SingleDownloadActivity.this, etaInMilliseconds));
+            downloadSpeedTextView.setText(Utils.getDownloadSpeedString(SingleDownloadActivity.this, downloadedBytesPerSecond));
         }
     }
 
@@ -209,6 +215,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
             setProgressView(download.getStatus(), download.getProgress());
             etaTextView.setText(Utils
                     .getETAString(SingleDownloadActivity.this, 0));
+            downloadSpeedTextView.setText(Utils.getDownloadSpeedString(SingleDownloadActivity.this, 0));
         }
     }
 
@@ -218,6 +225,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
             setProgressView(download.getStatus(), download.getProgress());
             etaTextView.setText(Utils
                     .getETAString(SingleDownloadActivity.this, 0));
+            downloadSpeedTextView.setText(Utils.getDownloadSpeedString(SingleDownloadActivity.this, 0));
         }
     }
 
@@ -227,6 +235,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
             setProgressView(download.getStatus(), download.getProgress());
             etaTextView.setText(Utils
                     .getETAString(SingleDownloadActivity.this, 0));
+            downloadSpeedTextView.setText(Utils.getDownloadSpeedString(SingleDownloadActivity.this, 0));
         }
     }
 
@@ -236,6 +245,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
             setProgressView(download.getStatus(), download.getProgress());
             etaTextView.setText(Utils
                     .getETAString(SingleDownloadActivity.this, 0));
+            downloadSpeedTextView.setText(Utils.getDownloadSpeedString(SingleDownloadActivity.this, 0));
         }
     }
 
@@ -245,6 +255,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
             setProgressView(download.getStatus(), download.getProgress());
             etaTextView.setText(Utils
                     .getETAString(SingleDownloadActivity.this, 0));
+            downloadSpeedTextView.setText(Utils.getDownloadSpeedString(SingleDownloadActivity.this, 0));
         }
     }
 

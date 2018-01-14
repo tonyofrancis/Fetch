@@ -33,9 +33,10 @@ interface FetchListener {
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
      * @param etaInMilliSeconds Estimated time remaining in milliseconds for the download to complete.
+     * @param downloadedBytesPerSecond Average downloaded bytes per second.
      * Can return -1 to indicate that the estimated time remaining is unknown.
      * */
-    fun onProgress(download: Download, etaInMilliSeconds: Long)
+    fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long)
 
     /** Called when a download is paused. The status of the download will be Status.PAUSED.
      * @param download An immutable object which contains a current snapshot of all the information
