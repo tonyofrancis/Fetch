@@ -76,7 +76,7 @@ public class FailedMultiEnqueueActivity extends AppCompatActivity implements Fet
     }
 
     @Override
-    public void onProgress(@NotNull Download download, long etaInMilliseconds) {
+    public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
 
     }
 

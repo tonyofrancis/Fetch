@@ -13,10 +13,12 @@ interface FileDownloader : Runnable {
     interface Delegate {
 
         fun onStarted(download: Download,
-                      etaInMilliseconds: Long)
+                      etaInMilliseconds: Long,
+                      downloadedBytesPerSecond: Long)
 
         fun onProgress(download: Download,
-                       etaInMilliSeconds: Long)
+                       etaInMilliSeconds: Long,
+                       downloadedBytesPerSecond: Long)
 
         fun onError(download: Download)
 

@@ -74,7 +74,7 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     @Override
-    public void onProgress(@NotNull Download download, long etaInMilliseconds) {
+    public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
         if (download.getId() == getDownloadId()) {
             updateProgress(download.getProgress());
         }
