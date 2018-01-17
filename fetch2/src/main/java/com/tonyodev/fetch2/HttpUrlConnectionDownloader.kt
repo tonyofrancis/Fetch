@@ -61,12 +61,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     }
 
     fun isResponseOk(responseCode: Int): Boolean {
-        return when (responseCode) {
-            HttpURLConnection.HTTP_OK,
-            HttpURLConnection.HTTP_PARTIAL,
-            HttpURLConnection.HTTP_ACCEPTED -> true
-            else -> false
-        }
+        return responseCode in 200..299
     }
 
     override fun disconnect(response: Downloader.Response) {
