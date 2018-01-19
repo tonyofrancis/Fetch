@@ -26,8 +26,8 @@ android {
     defaultConfig {
         minSdkVersion library_min_version
         targetSdkVersion library_target_version
-        versionCode 6
-        versionName "2.0.0-RC5"
+        versionCode library_version_code
+        versionName library_version
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -75,7 +75,7 @@ publish {
     userOrg = 'tonyofrancis'
     groupId = 'com.tonyodev.fetch2'
     artifactId = 'fetch2'
-    publishVersion = '2.0.0-RC5'
+    publishVersion = library_version
     desc = 'Fetch is a simple, powerful, customizable file download manager library for Android.'
     website = 'https://github.com/tonyofrancis/fetch'
 }

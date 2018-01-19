@@ -16,4 +16,6 @@ ext {
     rxAndroid2_version = "2.0.1"
     timber_version = "4.6.0"
     novoda_bintray_version = "0.8.0"
+    library_version = "2.0.0-RC6"
+    library_version_code = 7
 }

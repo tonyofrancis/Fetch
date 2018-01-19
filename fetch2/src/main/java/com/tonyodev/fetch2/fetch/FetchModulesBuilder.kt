@@ -69,7 +69,7 @@ object FetchModulesBuilder {
                     logger = prefs.logger)
 
             downloadManager = DownloadManagerImpl(
-                    downloader = defaultDownloader,
+                    downloader = prefs.downloader,
                     concurrentLimit = prefs.concurrentLimit,
                     progressReportingIntervalMillis = prefs.progressReportingIntervalMillis,
                     downloadBufferSizeBytes = prefs.downloadBufferSizeBytes,
