@@ -17,7 +17,7 @@ import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.provider.NetworkProvider
 import com.tonyodev.fetch2.util.FETCH_ALREADY_EXIST
-import com.tonyodev.fetch2.util.defaultDownloader
+
 import java.lang.ref.WeakReference
 
 object FetchModulesBuilder {
