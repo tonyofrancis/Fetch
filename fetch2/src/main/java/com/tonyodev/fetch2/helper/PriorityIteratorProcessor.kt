@@ -3,7 +3,7 @@ package com.tonyodev.fetch2.helper
 import com.tonyodev.fetch2.NetworkType
 import java.util.*
 
-interface PriorityQueueProcessor<T> {
+interface PriorityIteratorProcessor<out T> {
 
     var globalNetworkType: NetworkType
     val isPaused: Boolean
@@ -13,6 +13,6 @@ interface PriorityQueueProcessor<T> {
     fun stop()
     fun pause()
     fun resume()
-    fun getPriorityQueue(): Queue<T>
+    fun getPriorityIterator(): Iterator<T>
 
 }

@@ -7,7 +7,7 @@ import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.provider.ListenerProvider
-import com.tonyodev.fetch2.helper.PriorityQueueProcessor
+import com.tonyodev.fetch2.helper.PriorityIteratorProcessor
 import com.tonyodev.fetch2.util.*
 import java.io.File
 
@@ -17,7 +17,7 @@ import java.io.File
 open class FetchHandlerImpl(val namespace: String,
                             val databaseManager: DatabaseManager,
                             val downloadManager: DownloadManager,
-                            val priorityQueueProcessor: PriorityQueueProcessor<Download>,
+                            val priorityIteratorProcessor: PriorityIteratorProcessor<Download>,
                             override val fetchListenerProvider: ListenerProvider,
                             val handler: Handler,
                             val logger: Logger) : FetchHandler {
@@ -29,7 +29,7 @@ open class FetchHandlerImpl(val namespace: String,
 
     override fun init() {
         databaseManager.verifyDatabase()
-        priorityQueueProcessor.start()
+        priorityIteratorProcessor.start()
     }
 
     override fun enqueue(request: Request): Download {
@@ -108,14 +108,14 @@ open class FetchHandlerImpl(val namespace: String,
     override fun freeze() {
         throwExceptionIfClosed()
         downloadManager.cancelAll()
-        priorityQueueProcessor.pause()
+        priorityIteratorProcessor.pause()
         databaseManager.verifyDatabase()
     }
 
     override fun unfreeze() {
         throwExceptionIfClosed()
         databaseManager.verifyDatabase()
-        priorityQueueProcessor.resume()
+        priorityIteratorProcessor.resume()
     }
 
     override fun resume(ids: IntArray): List<Download> {
@@ -420,7 +420,7 @@ open class FetchHandlerImpl(val namespace: String,
         }
         closed = true
         fetchListenerProvider.listeners.clear()
-        priorityQueueProcessor.stop()
+        priorityIteratorProcessor.stop()
         downloadManager.close()
         databaseManager.close()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -433,7 +433,7 @@ open class FetchHandlerImpl(val namespace: String,
 
     override fun setGlobalNetworkType(networkType: NetworkType) {
         throwExceptionIfClosed()
-        priorityQueueProcessor.globalNetworkType = networkType
+        priorityIteratorProcessor.globalNetworkType = networkType
         downloadManager.cancelAll()
         databaseManager.verifyDatabase()
     }

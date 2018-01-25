@@ -11,8 +11,8 @@ import com.tonyodev.fetch2.downloader.DownloadManagerImpl
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.helper.DownloadInfoManagerDelegate
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater
-import com.tonyodev.fetch2.helper.PriorityQueueProcessor
-import com.tonyodev.fetch2.helper.PriorityQueueProcessorImpl
+import com.tonyodev.fetch2.helper.PriorityIteratorProcessor
+import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.provider.NetworkProvider
@@ -52,7 +52,7 @@ object FetchModulesBuilder {
         val downloadManager: DownloadManager
         val databaseManager: DatabaseManager
         val downloadInfoManagerDelegate: DownloadInfoManagerDelegate
-        val priorityQueueProcessor: PriorityQueueProcessor<Download>
+        val priorityIteratorProcessor: PriorityIteratorProcessor<Download>
         val fetchHandler: FetchHandler
 
         init {
@@ -83,20 +83,20 @@ object FetchModulesBuilder {
 
             downloadManager.delegate = downloadInfoManagerDelegate
 
-            priorityQueueProcessor = PriorityQueueProcessorImpl(
+            priorityIteratorProcessor = PriorityIteratorProcessorImpl(
                     handler = handler,
                     downloadProvider = DownloadProvider(databaseManager),
                     downloadManager = downloadManager,
                     networkProvider = NetworkProvider(prefs.appContext),
                     logger = prefs.logger)
 
-            priorityQueueProcessor.globalNetworkType = prefs.globalNetworkType
+            priorityIteratorProcessor.globalNetworkType = prefs.globalNetworkType
 
             fetchHandler = FetchHandlerImpl(
                     namespace = prefs.namespace,
                     databaseManager = databaseManager,
                     downloadManager = downloadManager,
-                    priorityQueueProcessor = priorityQueueProcessor,
+                    priorityIteratorProcessor = priorityIteratorProcessor,
                     fetchListenerProvider = fetchListenerProvider,
                     handler = handler,
                     logger = prefs.logger)

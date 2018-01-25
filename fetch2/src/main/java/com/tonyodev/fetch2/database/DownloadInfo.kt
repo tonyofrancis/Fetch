@@ -11,7 +11,6 @@ import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.NetworkType
 import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2.util.*
-import java.util.Date
 
 
 @Entity(tableName = DownloadDatabase.TABLE_NAME,
@@ -57,7 +56,7 @@ class DownloadInfo : Download {
     override var networkType: NetworkType = defaultNetworkType
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_CREATED)
-    override var created: Long = Date().time
+    override var created: Long = System.nanoTime()
 
     override val progress: Int
         get() {
