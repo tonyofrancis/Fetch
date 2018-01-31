@@ -11,6 +11,10 @@ fun getErrorFromThrowable(throwable: Throwable): Error {
 fun getErrorFromMessage(message: String?): Error {
     return if (message == null) {
         Error.UNKNOWN
+    } else if (message.contains(UNIQUE_ID_DATABASE)) {
+        Error.REQUEST_WITH_ID_ALREADY_EXIST
+    } else if (message.contains(UNIQUE_FILE_PATH_DATABASE)) {
+        Error.REQUEST_WITH_FILE_PATH_ALREADY_EXIST
     } else if (message.equals(EMPTY_RESPONSE_BODY, true)) {
         Error.EMPTY_RESPONSE_FROM_SERVER
     } else if (message.equals(FNC, ignoreCase = true) || message.equals(ENOENT, ignoreCase = true)) {

@@ -24,9 +24,11 @@ interface FetchHandler : Closeable {
     fun remove(ids: IntArray): List<Download>
     fun removeGroup(id: Int): List<Download>
     fun removeAll(): List<Download>
+    fun removeAllWithStatus(status: Status): List<Download>
     fun delete(ids: IntArray): List<Download>
     fun deleteGroup(id: Int): List<Download>
     fun deleteAll(): List<Download>
+    fun deleteAllWithStatus(status: Status): List<Download>
     fun cancel(ids: IntArray): List<Download>
     fun cancelGroup(id: Int): List<Download>
     fun cancelAll(): List<Download>

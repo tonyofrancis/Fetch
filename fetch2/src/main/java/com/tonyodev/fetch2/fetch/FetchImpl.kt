@@ -244,6 +244,25 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun removeAllWithStatus(status: Status) {
+        synchronized(lock) {
+            fetchHandler.throwExceptionIfClosed()
+            handler.post {
+                try {
+                    val downloads = fetchHandler.removeAllWithStatus(status)
+                    uiHandler.post {
+                        downloads.forEach {
+                            logger.d("Removed download $it")
+                            fetchListenerProvider.mainListener.onRemoved(it)
+                        }
+                    }
+                } catch (e: FetchException) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                }
+            }
+        }
+    }
+
     override fun delete(vararg ids: Int) {
         synchronized(lock) {
             fetchHandler.throwExceptionIfClosed()
@@ -288,6 +307,25 @@ open class FetchImpl constructor(override val namespace: String,
             handler.post {
                 try {
                     val downloads = fetchHandler.deleteAll()
+                    uiHandler.post {
+                        downloads.forEach {
+                            logger.d("Deleted download $it")
+                            fetchListenerProvider.mainListener.onDeleted(it)
+                        }
+                    }
+                } catch (e: FetchException) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                }
+            }
+        }
+    }
+
+    override fun deleteAllWithStatus(status: Status) {
+        synchronized(lock) {
+            fetchHandler.throwExceptionIfClosed()
+            handler.post {
+                try {
+                    val downloads = fetchHandler.deleteAllWithStatus(status)
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Deleted download $it")

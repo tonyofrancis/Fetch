@@ -5,6 +5,9 @@ package com.tonyodev.fetch2
  * begin the download process.
  * */
 open class Request constructor(
+        /** Used to identify a download. Must be UNIQUE.*/
+        val id: Int,
+
         /** The url where the file will be downloaded from.*/
         val url: String,
 
@@ -12,8 +15,13 @@ open class Request constructor(
          * downloaded to and saved on disk.*/
         val file: String) : RequestInfo() {
 
-    /** Used to identify a download.*/
-    val id: Int = (url.hashCode() * 31) + file.hashCode()
+    constructor(
+            /** The url where the file will be downloaded from.*/
+            url: String,
+
+            /** The file eg(/files/download.txt) where the file will be
+             * downloaded to and saved on disk.*/
+            file: String) : this((url.hashCode() * 31) + file.hashCode(), url, file)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

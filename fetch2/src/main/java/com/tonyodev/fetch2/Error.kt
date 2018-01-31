@@ -53,7 +53,17 @@ enum class Error constructor(val value: Int) {
      * This error is thrown by the FetchBuilder.
      * @see com.tonyodev.fetch2.Fetch.Builder
      * */
-    FETCH_ALREADY_EXIST(12);
+    FETCH_ALREADY_EXIST(12),
+
+    /** Indicates that a request in the Fetch database already has this unique id.
+     * Ids must be unique.*/
+    REQUEST_WITH_ID_ALREADY_EXIST(13),
+
+    /** Indicates that a request in the Fetch database already has this file path. File Paths
+     * have to be unique for each request. This limitation maintains consistency and prevents data lose.
+     * Fetch cannot write data to two different downloads with the same file path.
+     * */
+    REQUEST_WITH_FILE_PATH_ALREADY_EXIST(14);
 
     companion object {
 
@@ -74,6 +84,8 @@ enum class Error constructor(val value: Int) {
                 10 -> DOWNLOAD_NOT_FOUND
                 11 -> FETCH_DATABASE_ERROR
                 12 -> FETCH_ALREADY_EXIST
+                13 -> REQUEST_WITH_ID_ALREADY_EXIST
+                14 -> REQUEST_WITH_FILE_PATH_ALREADY_EXIST
                 else -> UNKNOWN
             }
         }

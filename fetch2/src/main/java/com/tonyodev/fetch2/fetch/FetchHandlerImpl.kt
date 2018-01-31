@@ -202,6 +202,22 @@ open class FetchHandlerImpl(val namespace: String,
         return downloadInfoList
     }
 
+    override fun removeAllWithStatus(status: Status): List<Download> {
+        throwExceptionIfClosed()
+        val downloadInfoList = databaseManager.getByStatus(status)
+        downloadInfoList.forEach {
+            if (isDownloading(it.id)) {
+                cancelDownload(it.id)
+            }
+        }
+        databaseManager.delete(downloadInfoList)
+        val removedStatus = Status.REMOVED
+        downloadInfoList.forEach {
+            it.status = removedStatus
+        }
+        return downloadInfoList
+    }
+
     override fun delete(ids: IntArray): List<Download> {
         throwExceptionIfClosed()
         ids.forEach {
@@ -255,6 +271,30 @@ open class FetchHandlerImpl(val namespace: String,
         downloadManager.cancelAll()
         val downloadInfoList = databaseManager.get()
         databaseManager.deleteAll()
+        val deletedStatus = Status.DELETED
+        downloadInfoList.forEach {
+            it.status = deletedStatus
+            try {
+                val file = File(it.file)
+                if (file.exists()) {
+                    file.delete()
+                }
+            } catch (e: Exception) {
+                logger.d("Failed to delete file ${it.file}", e)
+            }
+        }
+        return downloadInfoList
+    }
+
+    override fun deleteAllWithStatus(status: Status): List<Download> {
+        throwExceptionIfClosed()
+        val downloadInfoList = databaseManager.getByStatus(status)
+        downloadInfoList.forEach {
+            if (isDownloading(it.id)) {
+                cancelDownload(it.id)
+            }
+        }
+        databaseManager.delete(downloadInfoList)
         val deletedStatus = Status.DELETED
         downloadInfoList.forEach {
             it.status = deletedStatus

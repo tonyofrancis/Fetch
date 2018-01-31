@@ -118,6 +118,14 @@ interface Fetch {
     fun removeAll()
 
     /**
+     * Remove all downloads with the specified status in this instance of Fetch.
+     * The downloaded files for removed downloads are not deleted.
+     * @param status status
+     * @throws FetchException if this instance of Fetch has been closed.
+     * */
+    fun removeAllWithStatus(status: Status)
+
+    /**
      * Delete a download managed by this instance of Fetch.
      * The downloaded file is deleted.
      * @param ids ids of downloads to be deleted.
@@ -139,6 +147,14 @@ interface Fetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * */
     fun deleteAll()
+
+    /**
+     * Deletes all downloads with the specified status in this instance of Fetch.
+     * The downloaded files are also deleted.
+     * @param status status
+     * @throws FetchException if this instance of Fetch has been closed.
+     * */
+    fun deleteAllWithStatus(status: Status)
 
     /**
      * Cancel a non completed download managed by this instance of Fetch.
