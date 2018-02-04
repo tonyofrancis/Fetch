@@ -73,6 +73,10 @@ class DownloadInfo : Download {
             return request
         }
 
+    override fun copy(): Download {
+        return this.toDownloadInfo()
+    }
+
     override fun toString(): String {
         return "DownloadInfo(id:$id,namespace:$namespace, url:$url, file:$file, " +
                 "group:$group, priority:$priority, headers:$headers, downloaded:$downloaded, " +
