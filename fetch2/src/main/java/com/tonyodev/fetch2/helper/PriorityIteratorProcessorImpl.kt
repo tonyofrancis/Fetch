@@ -23,24 +23,34 @@ open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
     override val isPaused: Boolean
         get() = paused
     @Volatile
-    private var stopped = false
+    private var stopped = true
     override val isStopped: Boolean
         get() = stopped
 
     val priorityIteratorRunnableInternal = Runnable {
         val iterator = getPriorityIterator()
-        while (iterator.hasNext() && downloadManager.canAccommodateNewDownload()) {
-            val download = iterator.next()
-            val networkType = when {
-                globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
-                download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
-                else -> download.networkType
+        if (iterator.hasNext()) {
+            var hasStartedADownload = false
+            while (iterator.hasNext() && downloadManager.canAccommodateNewDownload()) {
+                val download = iterator.next()
+                val networkType = when {
+                    globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
+                    download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
+                    else -> download.networkType
+                }
+                if (networkProvider.isOnAllowedNetwork(networkType)) {
+                    downloadManager.start(download)
+                    hasStartedADownload = true
+                }
             }
-            if (networkProvider.isOnAllowedNetwork(networkType)) {
-                downloadManager.start(download)
+            if (hasStartedADownload) {
+                registerPriorityIteratorInternal()
+            } else {
+                stop()
             }
+        } else {
+            stop()
         }
-        registerPriorityIteratorInternal()
     }
 
     override fun start() {

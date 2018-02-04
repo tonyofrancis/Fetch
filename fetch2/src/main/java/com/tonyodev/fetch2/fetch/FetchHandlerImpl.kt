@@ -20,7 +20,8 @@ open class FetchHandlerImpl(val namespace: String,
                             val priorityIteratorProcessor: PriorityIteratorProcessor<Download>,
                             override val fetchListenerProvider: ListenerProvider,
                             val handler: Handler,
-                            val logger: Logger) : FetchHandler {
+                            val logger: Logger,
+                            val autoStartProcessing: Boolean) : FetchHandler {
 
     @Volatile
     private var closed = false
@@ -29,7 +30,9 @@ open class FetchHandlerImpl(val namespace: String,
 
     override fun init() {
         databaseManager.verifyDatabase()
-        priorityIteratorProcessor.start()
+        if (autoStartProcessing) {
+            startPriorityIteratorProcessorIfStopped()
+        }
     }
 
     override fun enqueue(request: Request): Download {
@@ -38,6 +41,7 @@ open class FetchHandlerImpl(val namespace: String,
         downloadInfo.namespace = namespace
         downloadInfo.status = Status.QUEUED
         databaseManager.insert(downloadInfo)
+        startPriorityIteratorProcessorIfStopped()
         return downloadInfo
     }
 
@@ -57,6 +61,7 @@ open class FetchHandlerImpl(val namespace: String,
                 results.add(it.first)
             }
         }
+        startPriorityIteratorProcessorIfStopped()
         return results
     }
 
@@ -133,6 +138,7 @@ open class FetchHandlerImpl(val namespace: String,
         }
         return try {
             databaseManager.update(downloadsInfoList)
+            startPriorityIteratorProcessorIfStopped()
             downloadsInfoList
         } catch (e: Exception) {
             logger.e(FETCH_DATABASE_ERROR, e)
@@ -151,6 +157,7 @@ open class FetchHandlerImpl(val namespace: String,
         }
         return try {
             databaseManager.update(downloadsInfoList)
+            startPriorityIteratorProcessorIfStopped()
             downloadsInfoList
         } catch (e: Exception) {
             logger.e(FETCH_DATABASE_ERROR, e)
@@ -392,6 +399,7 @@ open class FetchHandlerImpl(val namespace: String,
         }
         return try {
             databaseManager.update(downloadInfoList)
+            startPriorityIteratorProcessorIfStopped()
             downloadInfoList
         } catch (e: Exception) {
             logger.e(FETCH_DATABASE_ERROR, e)
@@ -413,6 +421,7 @@ open class FetchHandlerImpl(val namespace: String,
                 downloadInfo.priority = requestInfo.priority
                 downloadInfo.networkType = requestInfo.networkType
                 databaseManager.update(downloadInfo)
+                startPriorityIteratorProcessorIfStopped()
                 return downloadInfo
             }
         }
@@ -476,6 +485,7 @@ open class FetchHandlerImpl(val namespace: String,
         priorityIteratorProcessor.globalNetworkType = networkType
         downloadManager.cancelAll()
         databaseManager.verifyDatabase()
+        startPriorityIteratorProcessorIfStopped()
     }
 
     override fun enableLogging(enabled: Boolean) {
@@ -517,6 +527,12 @@ open class FetchHandlerImpl(val namespace: String,
             throw FetchException("This fetch instance has been closed. Create a new " +
                     "instance using the builder.",
                     FetchException.Code.CLOSED)
+        }
+    }
+
+    override fun startPriorityIteratorProcessorIfStopped() {
+        if (priorityIteratorProcessor.isStopped) {
+            priorityIteratorProcessor.start()
         }
     }
 

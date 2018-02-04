@@ -16,6 +16,7 @@ import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.provider.NetworkProvider
+import com.tonyodev.fetch2.provider.NetworkProviderImpl
 import com.tonyodev.fetch2.util.FETCH_ALREADY_EXIST
 
 import java.lang.ref.WeakReference
@@ -54,6 +55,7 @@ object FetchModulesBuilder {
         val downloadInfoManagerDelegate: DownloadInfoManagerDelegate
         val priorityIteratorProcessor: PriorityIteratorProcessor<Download>
         val fetchHandler: FetchHandler
+        val networkProvider: NetworkProvider
 
         init {
             val handlerThread = HandlerThread("fetch_${prefs.namespace}")
@@ -61,6 +63,8 @@ object FetchModulesBuilder {
             handler = Handler(handlerThread.looper)
 
             fetchListenerProvider = ListenerProvider()
+
+            networkProvider = NetworkProviderImpl(prefs.appContext)
 
             databaseManager = DatabaseManagerImpl(
                     context = prefs.appContext,
@@ -87,7 +91,7 @@ object FetchModulesBuilder {
                     handler = handler,
                     downloadProvider = DownloadProvider(databaseManager),
                     downloadManager = downloadManager,
-                    networkProvider = NetworkProvider(prefs.appContext),
+                    networkProvider = networkProvider,
                     logger = prefs.logger)
 
             priorityIteratorProcessor.globalNetworkType = prefs.globalNetworkType
@@ -99,7 +103,8 @@ object FetchModulesBuilder {
                     priorityIteratorProcessor = priorityIteratorProcessor,
                     fetchListenerProvider = fetchListenerProvider,
                     handler = handler,
-                    logger = prefs.logger)
+                    logger = prefs.logger,
+                    autoStartProcessing = prefs.autoStartProcessing)
         }
 
     }

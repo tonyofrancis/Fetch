@@ -13,7 +13,7 @@ import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
-import com.tonyodev.fetch2.provider.NetworkProvider;
+import com.tonyodev.fetch2.provider.NetworkProviderImpl;
 import com.tonyodev.fetch2.util.FetchDefaults;
 
 import org.junit.After;
@@ -49,7 +49,7 @@ public class DownloadPriorityIteratorProcessorTest {
                 handler,
                 new DownloadProvider(databaseManager),
                 downloadManager,
-                new NetworkProvider(appContext),
+                new NetworkProviderImpl(appContext),
                 fetchLogger);
     }
 

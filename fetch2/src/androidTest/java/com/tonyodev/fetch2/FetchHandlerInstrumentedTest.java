@@ -17,7 +17,7 @@ import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
 import com.tonyodev.fetch2.provider.ListenerProvider;
-import com.tonyodev.fetch2.provider.NetworkProvider;
+import com.tonyodev.fetch2.provider.NetworkProviderImpl;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
 
@@ -50,6 +50,7 @@ public class FetchHandlerInstrumentedTest {
         handlerThread.start();
         final Handler handler = new Handler(handlerThread.getLooper());
         final String namespace = "fetch2DatabaseTest";
+        final boolean autoStartProcessing = true;
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
         databaseManager = new DatabaseManagerImpl(appContext, namespace,
                 true, fetchLogger);
@@ -63,11 +64,12 @@ public class FetchHandlerInstrumentedTest {
                 handler,
                 new DownloadProvider(databaseManager),
                 downloadManager,
-                new NetworkProvider(appContext),
+                new NetworkProviderImpl(appContext),
                 fetchLogger);
         final ListenerProvider listenerProvider = new ListenerProvider();
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
-                priorityIteratorProcessorImpl, listenerProvider, handler, fetchLogger);
+                priorityIteratorProcessorImpl, listenerProvider, handler, fetchLogger,
+                autoStartProcessing);
     }
 
     @Test

@@ -47,5 +47,6 @@ interface FetchHandler : Closeable {
     fun isDownloading(id: Int): Boolean
     fun cancelDownload(id: Int): Boolean
     fun throwExceptionIfClosed()
+    fun startPriorityIteratorProcessorIfStopped()
 
 }

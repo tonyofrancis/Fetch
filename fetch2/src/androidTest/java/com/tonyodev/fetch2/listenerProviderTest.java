@@ -4,7 +4,6 @@ import android.support.test.runner.AndroidJUnit4;
 
 import com.tonyodev.fetch2.provider.ListenerProvider;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
