@@ -52,6 +52,7 @@ public class FetchHandlerInstrumentedTest {
         final Handler handler = new Handler(handlerThread.getLooper());
         final String namespace = "fetch2DatabaseTest";
         final boolean autoStartProcessing = true;
+        final boolean retryOnNetworkGain = false;
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProviderImpl(appContext, fetchLogger);
         databaseManager = new DatabaseManagerImpl(appContext, namespace,
@@ -71,7 +72,7 @@ public class FetchHandlerInstrumentedTest {
         final ListenerProvider listenerProvider = new ListenerProvider();
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
                 priorityIteratorProcessorImpl, listenerProvider, handler, fetchLogger,
-                autoStartProcessing);
+                autoStartProcessing, retryOnNetworkGain, networkInfoProvider);
     }
 
     @Test

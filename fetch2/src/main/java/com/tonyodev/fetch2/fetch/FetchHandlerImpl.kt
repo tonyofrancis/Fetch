@@ -8,6 +8,7 @@ import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessor
+import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.*
 import java.io.File
 
@@ -21,17 +22,38 @@ class FetchHandlerImpl(private val namespace: String,
                        override val fetchListenerProvider: ListenerProvider,
                        private val handler: Handler,
                        private val logger: Logger,
-                       private val autoStartProcessing: Boolean) : FetchHandler {
+                       private val autoStartProcessing: Boolean,
+                       private val retryOnConnectionGain: Boolean,
+                       private val networkInfoProvider: NetworkInfoProvider) : FetchHandler {
 
     @Volatile
     private var closed = false
     override val isClosed: Boolean
         get() = closed
 
+    private val connectivityCallback = object : NetworkInfoProvider.ConnectivityCallback {
+        override fun onConnected() {
+            try {
+                handler.post {
+                    startPriorityIteratorProcessorIfStopped()
+                }
+            } catch (e: Exception) {
+                logger.e("FetchHandler", e)
+            }
+        }
+
+        override fun onDisconnected() {
+
+        }
+    }
+
     override fun init() {
         databaseManager.verifyDatabase()
         if (autoStartProcessing) {
             startPriorityIteratorProcessorIfStopped()
+        }
+        if (retryOnConnectionGain) {
+            networkInfoProvider.registerConnectivityCallback(connectivityCallback)
         }
     }
 
@@ -468,10 +490,14 @@ class FetchHandlerImpl(private val namespace: String,
             return
         }
         closed = true
+        if (retryOnConnectionGain) {
+            networkInfoProvider.unregisterConnectivityCallback(connectivityCallback)
+        }
         fetchListenerProvider.listeners.clear()
         priorityIteratorProcessor.stop()
         downloadManager.close()
         databaseManager.close()
+        networkInfoProvider.close()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             handler.looper.quitSafely()
         } else {

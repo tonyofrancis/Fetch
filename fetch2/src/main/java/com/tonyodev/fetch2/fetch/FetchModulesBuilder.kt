@@ -111,7 +111,9 @@ object FetchModulesBuilder {
                     fetchListenerProvider = fetchListenerProvider,
                     handler = handler,
                     logger = prefs.logger,
-                    autoStartProcessing = prefs.autoStartProcessing)
+                    autoStartProcessing = prefs.autoStartProcessing,
+                    retryOnConnectionGain = prefs.retryOnConnectionGain,
+                    networkInfoProvider = networkInfoProvider)
         }
 
     }

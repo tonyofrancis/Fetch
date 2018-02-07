@@ -155,7 +155,17 @@ abstract class FetchBuilder<out B, out F> constructor(
         return this
     }
 
-    //TODO: ADD enableAutoRetry method
+    /** When enabled and network connection is lost during a request download, Fetch will re-queue
+     * the request and will automatically try downloading the request again when the network
+     * connection becomes available at a later time.
+     * The default is false.
+     * @param enabled enable or disable auto retry.
+     * @return com.tonyodev.fetch2.Fetch.Builder.this
+     * */
+    fun enableAutoRetry(enabled: Boolean): FetchBuilder<B, F> {
+        this.autoRetryOnNetworkGain = enabled
+        return this
+    }
 
     /** Gets this builders current configuration settings.
      * @return Builder configuration settings.
