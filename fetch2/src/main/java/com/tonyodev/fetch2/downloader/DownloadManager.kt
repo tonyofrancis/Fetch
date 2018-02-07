@@ -17,6 +17,8 @@ interface DownloadManager : Closeable {
     fun getDownloads(): List<Download>
     fun getNewFileDownloaderForDownload(download: Download): FileDownloader
 
-    interface Delegate : FileDownloader.Delegate
+    interface Delegate : FileDownloader.Delegate {
+        fun onDownloadRemovedFromManager(download: Download)
+    }
 
 }

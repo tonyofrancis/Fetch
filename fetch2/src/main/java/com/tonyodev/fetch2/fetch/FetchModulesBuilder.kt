@@ -78,7 +78,8 @@ object FetchModulesBuilder {
                     concurrentLimit = prefs.concurrentLimit,
                     progressReportingIntervalMillis = prefs.progressReportingIntervalMillis,
                     downloadBufferSizeBytes = prefs.downloadBufferSizeBytes,
-                    logger = prefs.logger)
+                    logger = prefs.logger,
+                    networkInfoProvider = networkInfoProvider)
 
             downloadInfoManagerDelegate = DownloadInfoManagerDelegate(
                     downloadInfoUpdater = DownloadInfoUpdater(databaseManager),

@@ -5,6 +5,7 @@ import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
+import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.*
 import java.io.BufferedInputStream
 import java.io.File
@@ -16,7 +17,8 @@ open class FileDownloaderImpl(val initialDownload: Download,
                               val downloader: Downloader,
                               val progressReportingIntervalMillis: Long,
                               val downloadBufferSizeBytes: Int,
-                              val logger: Logger) : FileDownloader {
+                              val logger: Logger,
+                              private val networkInfoProvider: NetworkInfoProvider) : FileDownloader {
 
     @Volatile
     override var interrupted = false

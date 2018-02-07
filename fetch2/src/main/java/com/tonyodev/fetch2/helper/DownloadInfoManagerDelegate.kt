@@ -66,4 +66,7 @@ open class DownloadInfoManagerDelegate(val downloadInfoUpdater: DownloadInfoUpda
         }
     }
 
+    override fun onDownloadRemovedFromManager(download: Download) {
+        //TODO: NEED TO IMPLEMENT THIS FOR THE PRIORITY PROCESSOR
+    }
 }
