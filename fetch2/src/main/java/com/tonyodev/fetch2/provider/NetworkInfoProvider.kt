@@ -3,7 +3,7 @@ package com.tonyodev.fetch2.provider
 import com.tonyodev.fetch2.NetworkType
 import java.io.Closeable
 
-interface NetworkProvider : Closeable {
+interface NetworkInfoProvider : Closeable {
 
     val isNetworkConnected: Boolean
 

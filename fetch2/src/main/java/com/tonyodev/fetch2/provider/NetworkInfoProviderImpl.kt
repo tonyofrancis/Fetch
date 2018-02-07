@@ -9,13 +9,13 @@ import com.tonyodev.fetch2.NetworkType
 import com.tonyodev.fetch2.util.isNetworkAvailable
 import com.tonyodev.fetch2.util.isOnWiFi
 
-open class NetworkProviderImpl constructor(private val context: Context) : NetworkProvider {
+open class NetworkInfoProviderImpl constructor(private val context: Context) : NetworkInfoProvider {
 
     private val lock = Object()
-    private val networkConnectivityCallbackSet = mutableSetOf<NetworkProvider.NetworkConnectivityCallback>()
+    private val networkConnectivityCallbackSet = mutableSetOf<NetworkInfoProvider.NetworkConnectivityCallback>()
     private val networkBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (this@NetworkProviderImpl.context.isNetworkAvailable()) {
+            if (this@NetworkInfoProviderImpl.context.isNetworkAvailable()) {
                 networkConnectivityCallbackSet.iterator().forEach { it.onConnected() }
             } else {
                 networkConnectivityCallbackSet.iterator().forEach { it.onDisconnected() }
@@ -44,13 +44,13 @@ open class NetworkProviderImpl constructor(private val context: Context) : Netwo
 
     override val isNetworkConnected: Boolean = context.isNetworkAvailable()
 
-    override fun registerCallbackForNetworkConnection(callback: NetworkProvider.NetworkConnectivityCallback) {
+    override fun registerCallbackForNetworkConnection(callback: NetworkInfoProvider.NetworkConnectivityCallback) {
         synchronized(lock) {
             networkConnectivityCallbackSet.add(callback)
         }
     }
 
-    override fun unregisterCallbackForNetworkConnection(callback: NetworkProvider.NetworkConnectivityCallback) {
+    override fun unregisterCallbackForNetworkConnection(callback: NetworkInfoProvider.NetworkConnectivityCallback) {
         synchronized(lock) {
             val iterator = networkConnectivityCallbackSet.iterator()
             while (iterator.hasNext()) {

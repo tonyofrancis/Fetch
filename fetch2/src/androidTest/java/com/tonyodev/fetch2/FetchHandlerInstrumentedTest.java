@@ -17,7 +17,7 @@ import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
 import com.tonyodev.fetch2.provider.ListenerProvider;
-import com.tonyodev.fetch2.provider.NetworkProviderImpl;
+import com.tonyodev.fetch2.provider.NetworkInfoProviderImpl;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
 
@@ -64,7 +64,7 @@ public class FetchHandlerInstrumentedTest {
                 handler,
                 new DownloadProvider(databaseManager),
                 downloadManager,
-                new NetworkProviderImpl(appContext),
+                new NetworkInfoProviderImpl(appContext),
                 fetchLogger);
         final ListenerProvider listenerProvider = new ListenerProvider();
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
