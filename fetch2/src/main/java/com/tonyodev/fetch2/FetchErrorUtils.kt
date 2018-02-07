@@ -11,6 +11,8 @@ fun getErrorFromThrowable(throwable: Throwable): Error {
 fun getErrorFromMessage(message: String?): Error {
     return if (message == null) {
         Error.UNKNOWN
+    } else if (message.equals(NETWORK_CONNECTION_LOST, true)) {
+        Error.NO_NETWORK_CONNECTION
     } else if (message.contains(UNIQUE_ID_DATABASE)) {
         Error.REQUEST_WITH_ID_ALREADY_EXIST
     } else if (message.contains(UNIQUE_FILE_PATH_DATABASE)) {
