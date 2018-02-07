@@ -34,6 +34,7 @@ abstract class FetchBuilder<out B, out F> constructor(
     private var globalNetworkType = defaultGlobalNetworkType
     private var logger: Logger = defaultLogger
     private var autoStartProcessing = DEFAULT_AUTO_START_PROCESSING
+    private var autoRetryOnNetworkGain = DEFAULT_AUTO_RETRY_ON_CONNECTION_GAIN
 
     /**
      * Sets the downloader client Fetch will use to perform downloads.
@@ -154,6 +155,8 @@ abstract class FetchBuilder<out B, out F> constructor(
         return this
     }
 
+    //TODO: ADD enableAutoRetry method
+
     /** Gets this builders current configuration settings.
      * @return Builder configuration settings.
      * */
@@ -177,7 +180,7 @@ abstract class FetchBuilder<out B, out F> constructor(
                 globalNetworkType = globalNetworkType,
                 logger = prefsLogger,
                 autoStartProcessing = autoStartProcessing,
-                retryOnConnectionGain = DEFAULT_AUTO_RETRY_ON_CONNECTION_GAIN)
+                retryOnConnectionGain = autoRetryOnNetworkGain)
     }
 
     /** Builds a new instance of Fetch with the proper configuration.
