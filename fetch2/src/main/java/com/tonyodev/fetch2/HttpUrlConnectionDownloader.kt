@@ -19,8 +19,8 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
          * */
         httpUrlConnectionPreferences: HttpUrlConnectionPreferences? = null) : Downloader {
 
-    val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
-    val connections = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
+    protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
+    protected val connections = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
 
     override fun execute(request: Downloader.Request): Downloader.Response? {
         val httpUrl = URL(request.url)
