@@ -13,6 +13,7 @@ import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
+import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProviderImpl;
 import com.tonyodev.fetch2.util.FetchDefaults;
 
@@ -37,6 +38,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final Handler handler = new Handler(handlerThread.getLooper());
         final String namespace = "fetch2DatabaseTest";
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
+        final NetworkInfoProvider networkInfoProvider = new NetworkInfoProviderImpl(appContext, fetchLogger);
         final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace,
                 true, fetchLogger);
         final Downloader client = FetchDefaults.getDefaultDownloader();
@@ -44,12 +46,12 @@ public class DownloadPriorityIteratorProcessorTest {
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger);
+                progessInterval, bufferSize, fetchLogger, networkInfoProvider);
         priorityIteratorProcessorImpl = new PriorityIteratorProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),
                 downloadManager,
-                new NetworkInfoProviderImpl(appContext),
+                networkInfoProvider,
                 fetchLogger);
     }
 

@@ -17,6 +17,7 @@ import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
 import com.tonyodev.fetch2.provider.ListenerProvider;
+import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProviderImpl;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
@@ -52,6 +53,7 @@ public class FetchHandlerInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         final boolean autoStartProcessing = true;
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
+        final NetworkInfoProvider networkInfoProvider = new NetworkInfoProviderImpl(appContext, fetchLogger);
         databaseManager = new DatabaseManagerImpl(appContext, namespace,
                 true, fetchLogger);
         final Downloader client = FetchDefaults.getDefaultDownloader();
@@ -59,12 +61,12 @@ public class FetchHandlerInstrumentedTest {
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger);
+                progessInterval, bufferSize, fetchLogger, networkInfoProvider);
         priorityIteratorProcessorImpl = new PriorityIteratorProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),
                 downloadManager,
-                new NetworkInfoProviderImpl(appContext),
+                networkInfoProvider,
                 fetchLogger);
         final ListenerProvider listenerProvider = new ListenerProvider();
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
@@ -474,7 +476,7 @@ public class FetchHandlerInstrumentedTest {
         }
         final List<Download> downloadInfoList = fetchHandler.enqueue(requestList);
         final List<Integer> ids = new ArrayList<>();
-        for(Request request : requestList) {
+        for (Request request : requestList) {
             ids.add(request.getId());
         }
         final List<Download> queryList = fetchHandler.getDownloads(ids);
