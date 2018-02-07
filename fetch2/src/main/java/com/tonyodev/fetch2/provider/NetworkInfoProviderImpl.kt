@@ -42,7 +42,8 @@ open class NetworkInfoProviderImpl constructor(private val context: Context) : N
         return false
     }
 
-    override val isNetworkConnected: Boolean = context.isNetworkAvailable()
+    override val isNetworkConnected: Boolean
+        get() = context.isNetworkAvailable()
 
     override fun registerCallbackForNetworkConnection(callback: NetworkInfoProvider.NetworkConnectivityCallback) {
         synchronized(lock) {
