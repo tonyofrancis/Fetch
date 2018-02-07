@@ -64,7 +64,8 @@ object FetchModulesBuilder {
 
             fetchListenerProvider = ListenerProvider()
 
-            networkInfoProvider = NetworkInfoProviderImpl(prefs.appContext)
+            networkInfoProvider = NetworkInfoProviderImpl(context = prefs.appContext,
+                    logger = prefs.logger)
 
             databaseManager = DatabaseManagerImpl(
                     context = prefs.appContext,

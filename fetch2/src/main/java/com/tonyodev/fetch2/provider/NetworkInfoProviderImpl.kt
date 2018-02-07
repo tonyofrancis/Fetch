@@ -5,20 +5,35 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
+import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.NetworkType
+import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.util.isNetworkAvailable
 import com.tonyodev.fetch2.util.isOnWiFi
 
-open class NetworkInfoProviderImpl constructor(private val context: Context) : NetworkInfoProvider {
+class NetworkInfoProviderImpl constructor(private val context: Context,
+                                          private val logger: Logger) : NetworkInfoProvider {
+
+    @Volatile
+    private var closed = false
+    override val isClosed: Boolean
+        get() = closed
 
     private val lock = Object()
-    private val networkConnectivityCallbackSet = mutableSetOf<NetworkInfoProvider.NetworkConnectivityCallback>()
+    private val networkConnectivityCallbackSet = mutableSetOf<NetworkInfoProvider.ConnectivityCallback>()
     private val networkBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (this@NetworkInfoProviderImpl.context.isNetworkAvailable()) {
-                networkConnectivityCallbackSet.iterator().forEach { it.onConnected() }
-            } else {
-                networkConnectivityCallbackSet.iterator().forEach { it.onDisconnected() }
+            try {
+                val isNetworkAvailable = context?.isNetworkAvailable()
+                if (isNetworkAvailable != null) {
+                    if (isNetworkAvailable) {
+                        networkConnectivityCallbackSet.iterator().forEach { it.onConnected() }
+                    } else {
+                        networkConnectivityCallbackSet.iterator().forEach { it.onDisconnected() }
+                    }
+                }
+            } catch (e: Exception) {
+                logger.e("Error in network broadcast receiver", e)
             }
         }
     }
@@ -29,10 +44,15 @@ open class NetworkInfoProviderImpl constructor(private val context: Context) : N
     }
 
     override fun close() {
+        if (closed) {
+            return
+        }
+        closed = true
         context.unregisterReceiver(networkBroadcastReceiver)
     }
 
     override fun isOnAllowedNetwork(networkType: NetworkType): Boolean {
+        throwExceptionIfClosed()
         if (networkType == NetworkType.WIFI_ONLY && context.isOnWiFi()) {
             return true
         }
@@ -42,17 +62,22 @@ open class NetworkInfoProviderImpl constructor(private val context: Context) : N
         return false
     }
 
-    override val isNetworkConnected: Boolean
-        get() = context.isNetworkAvailable()
+    override val isConnected: Boolean
+        get() {
+            throwExceptionIfClosed()
+            return context.isNetworkAvailable()
+        }
 
-    override fun registerCallbackForNetworkConnection(callback: NetworkInfoProvider.NetworkConnectivityCallback) {
+    override fun registerConnectivityCallback(callback: NetworkInfoProvider.ConnectivityCallback) {
         synchronized(lock) {
+            throwExceptionIfClosed()
             networkConnectivityCallbackSet.add(callback)
         }
     }
 
-    override fun unregisterCallbackForNetworkConnection(callback: NetworkInfoProvider.NetworkConnectivityCallback) {
+    override fun unregisterConnectivityCallback(callback: NetworkInfoProvider.ConnectivityCallback) {
         synchronized(lock) {
+            throwExceptionIfClosed()
             val iterator = networkConnectivityCallbackSet.iterator()
             while (iterator.hasNext()) {
                 if (iterator.next() == callback) {
@@ -60,6 +85,13 @@ open class NetworkInfoProviderImpl constructor(private val context: Context) : N
                     break
                 }
             }
+        }
+    }
+
+    private fun throwExceptionIfClosed() {
+        if (closed) {
+            throw FetchException("This NetworkInfoProvider instance has been closed.",
+                    FetchException.Code.CLOSED)
         }
     }
 }

@@ -5,16 +5,19 @@ import java.io.Closeable
 
 interface NetworkInfoProvider : Closeable {
 
-    val isNetworkConnected: Boolean
+    val isClosed: Boolean
+
+    val isConnected: Boolean
 
     fun isOnAllowedNetwork(networkType: NetworkType): Boolean
 
-    fun registerCallbackForNetworkConnection(callback: NetworkConnectivityCallback)
+    fun registerConnectivityCallback(callback: ConnectivityCallback)
 
-    fun unregisterCallbackForNetworkConnection(callback: NetworkConnectivityCallback)
+    fun unregisterConnectivityCallback(callback: ConnectivityCallback)
 
-    interface NetworkConnectivityCallback {
+    interface ConnectivityCallback {
         fun onConnected()
         fun onDisconnected()
     }
+
 }
