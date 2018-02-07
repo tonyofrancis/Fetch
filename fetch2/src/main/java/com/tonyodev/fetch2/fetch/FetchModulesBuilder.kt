@@ -9,10 +9,7 @@ import com.tonyodev.fetch2.database.DatabaseManagerImpl
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl
 import com.tonyodev.fetch2.exception.FetchException
-import com.tonyodev.fetch2.helper.DownloadInfoManagerDelegate
-import com.tonyodev.fetch2.helper.DownloadInfoUpdater
-import com.tonyodev.fetch2.helper.PriorityIteratorProcessor
-import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl
+import com.tonyodev.fetch2.helper.*
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
@@ -45,17 +42,18 @@ object FetchModulesBuilder {
         }
     }
 
-    open class Modules constructor(val prefs: FetchBuilderPrefs) {
+    class Modules constructor(val prefs: FetchBuilderPrefs) {
 
         val uiHandler = Handler(Looper.getMainLooper())
         val handler: Handler
         val fetchListenerProvider: ListenerProvider
         val downloadManager: DownloadManager
         val databaseManager: DatabaseManager
-        val downloadInfoManagerDelegate: DownloadInfoManagerDelegate
+        val downloadManagerDelegateImpl: DownloadManagerDelegateImpl
         val priorityIteratorProcessor: PriorityIteratorProcessor<Download>
-        val fetchHandler: FetchHandler
+        val priorityIteratorProcessorHandler: PriorityIteratorProcessorHandler
         val networkInfoProvider: NetworkInfoProvider
+        val fetchHandler: FetchHandler
 
         init {
             val handlerThread = HandlerThread("fetch_${prefs.namespace}")
@@ -81,20 +79,27 @@ object FetchModulesBuilder {
                     logger = prefs.logger,
                     networkInfoProvider = networkInfoProvider)
 
-            downloadInfoManagerDelegate = DownloadInfoManagerDelegate(
-                    downloadInfoUpdater = DownloadInfoUpdater(databaseManager),
-                    uiHandler = uiHandler,
-                    fetchListener = fetchListenerProvider.mainListener,
-                    logger = prefs.logger)
-
-            downloadManager.delegate = downloadInfoManagerDelegate
-
             priorityIteratorProcessor = PriorityIteratorProcessorImpl(
                     handler = handler,
                     downloadProvider = DownloadProvider(databaseManager),
                     downloadManager = downloadManager,
                     networkInfoProvider = networkInfoProvider,
                     logger = prefs.logger)
+
+            priorityIteratorProcessorHandler = PriorityIteratorProcessorHandlerImpl(
+                    handler = handler,
+                    priorityIteratorProcessor = priorityIteratorProcessor,
+                    logger = prefs.logger)
+
+            downloadManagerDelegateImpl = DownloadManagerDelegateImpl(
+                    downloadInfoUpdater = DownloadInfoUpdater(databaseManager),
+                    uiHandler = uiHandler,
+                    fetchListener = fetchListenerProvider.mainListener,
+                    logger = prefs.logger,
+                    priorityIteratorProcessorHandler = priorityIteratorProcessorHandler,
+                    retryOnConnectionGain = prefs.retryOnConnectionGain)
+
+            downloadManager.delegate = downloadManagerDelegateImpl
 
             priorityIteratorProcessor.globalNetworkType = prefs.globalNetworkType
 

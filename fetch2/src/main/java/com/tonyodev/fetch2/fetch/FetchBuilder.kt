@@ -176,7 +176,8 @@ abstract class FetchBuilder<out B, out F> constructor(
                 downloader = downloader,
                 globalNetworkType = globalNetworkType,
                 logger = prefsLogger,
-                autoStartProcessing = autoStartProcessing)
+                autoStartProcessing = autoStartProcessing,
+                retryOnConnectionGain = DEFAULT_AUTO_RETRY_ON_CONNECTION_GAIN)
     }
 
     /** Builds a new instance of Fetch with the proper configuration.

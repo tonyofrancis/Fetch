@@ -16,6 +16,7 @@ const val DEFAULT_IN_MEMORY_DATABASE_ENABLED = false
 const val PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS = 500L
 const val DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES = 8192
 const val DEFAULT_AUTO_START_PROCESSING = true
+const val DEFAULT_AUTO_RETRY_ON_CONNECTION_GAIN = false
 val defaultEmptyHeaderMap = mapOf<String, String>()
 val defaultNetworkType = NetworkType.ALL
 val defaultGlobalNetworkType = NetworkType.GLOBAL_OFF
