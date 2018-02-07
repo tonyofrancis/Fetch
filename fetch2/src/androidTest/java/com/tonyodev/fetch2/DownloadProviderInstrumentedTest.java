@@ -100,7 +100,7 @@ public class DownloadProviderInstrumentedTest {
         }
         databaseManager.insert(downloadInfoList);
         final List<Integer> ids = new ArrayList<>();
-        for(DownloadInfo downloadInfo : downloadInfoList) {
+        for (DownloadInfo downloadInfo : downloadInfoList) {
             ids.add(downloadInfo.getId());
         }
         final List<Download> queryList = downloadProvider.getDownloads(ids);
