@@ -7,6 +7,7 @@ import java.io.Closeable
 
 interface DatabaseManager : Closeable {
 
+    val namespace: String
     val isClosed: Boolean
     val isMemoryDatabase: Boolean
     val logger: Logger
