@@ -30,7 +30,7 @@ class FileDownloaderImpl(private val initialDownload: Download,
     private var totalBytes: Long = 0
     private var downloadedBytes: Long = 0
     private var estimatedTimeRemainingInMilliseconds: Long = -1
-    private var downloadInfo = initialDownload.toDownloadInfo()
+    private val downloadInfo = initialDownload.toDownloadInfo()
     private var averageDownloadedBytesPerSecond = 0.0
     private val movingAverageCalculator = AverageCalculator(5)
     private var isResponseSuccessful = false
