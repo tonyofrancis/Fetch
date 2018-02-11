@@ -102,7 +102,7 @@ abstract class FetchBuilder<out B, out F> constructor(
      * @param enabled Enable or disable logging.
      * @return com.tonyodev.fetch2.Fetch.Builder.this
      * */
-    fun enableLogging(enabled: Boolean): FetchBuilder<B, F> {
+    fun setEnableLogging(enabled: Boolean): FetchBuilder<B, F> {
         this.loggingEnabled = enabled
         return this
     }
@@ -115,7 +115,7 @@ abstract class FetchBuilder<out B, out F> constructor(
      * @param enabled Enable in memory database.
      * @return com.tonyodev.fetch2.Fetch.Builder.this
      * */
-    fun enabledInMemoryDatabase(enabled: Boolean): FetchBuilder<B, F> {
+    fun setEnabledInMemoryDatabase(enabled: Boolean): FetchBuilder<B, F> {
         this.inMemoryDatabaseEnabled = enabled
         return this
     }
@@ -150,7 +150,7 @@ abstract class FetchBuilder<out B, out F> constructor(
      * after the builder's build method is called.
      * @return com.tonyodev.fetch2.Fetch.Builder.this
      * */
-    fun enableProcessingOnBuild(enabled: Boolean): FetchBuilder<B, F> {
+    fun setEnableProcessingOnBuild(enabled: Boolean): FetchBuilder<B, F> {
         this.autoStartProcessing = enabled
         return this
     }
@@ -162,7 +162,7 @@ abstract class FetchBuilder<out B, out F> constructor(
      * @param enabled enable or disable auto retry.
      * @return com.tonyodev.fetch2.Fetch.Builder.this
      * */
-    fun enableAutoRetry(enabled: Boolean): FetchBuilder<B, F> {
+    fun setEnableAutoRetry(enabled: Boolean): FetchBuilder<B, F> {
         this.autoRetryOnNetworkGain = enabled
         return this
     }
