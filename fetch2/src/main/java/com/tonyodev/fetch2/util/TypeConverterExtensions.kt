@@ -12,7 +12,7 @@ fun Request.toDownloadInfo(): DownloadInfo {
     downloadInfo.url = url
     downloadInfo.file = file
     downloadInfo.priority = priority
-    downloadInfo.headers = headers
+    downloadInfo.headers = headers.toMap()
     downloadInfo.group = groupId
     downloadInfo.networkType = networkType
     downloadInfo.status = defaultStatus
@@ -29,7 +29,7 @@ fun Download.toDownloadInfo(): DownloadInfo {
     downloadInfo.file = file
     downloadInfo.group = group
     downloadInfo.priority = priority
-    downloadInfo.headers = headers
+    downloadInfo.headers = headers.toMap()
     downloadInfo.downloaded = downloaded
     downloadInfo.total = total
     downloadInfo.status = status
