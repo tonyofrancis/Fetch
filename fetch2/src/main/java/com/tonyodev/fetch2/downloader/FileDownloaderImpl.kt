@@ -218,6 +218,11 @@ class FileDownloaderImpl(private val initialDownload: Download,
     }
 
     private fun networkConnectionWasLost(): Boolean {
+        try {
+            Thread.sleep(4000)
+        } catch (e: InterruptedException) {
+            logger.e("FileDownloader", e)
+        }
         return !networkInfoProvider.isConnected && isResponseSuccessful
     }
 

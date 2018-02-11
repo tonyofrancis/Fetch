@@ -32,23 +32,27 @@ class PriorityIteratorProcessorImpl constructor(private val handler: Handler,
         get() = stopped
 
     private val priorityIteratorRunnable = Runnable {
-        val iterator = getPriorityIterator()
-        if (iterator.hasNext()) {
-            var hasStartedADownload = false
-            while (iterator.hasNext() && downloadManager.canAccommodateNewDownload()) {
-                val download = iterator.next()
-                val networkType = when {
-                    globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
-                    download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
-                    else -> download.networkType
+        if (networkInfoProvider.isConnected) {
+            val iterator = getPriorityIterator()
+            if (iterator.hasNext()) {
+                var hasStartedADownload = false
+                while (iterator.hasNext() && downloadManager.canAccommodateNewDownload()) {
+                    val download = iterator.next()
+                    val networkType = when {
+                        globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
+                        download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
+                        else -> download.networkType
+                    }
+                    if (networkInfoProvider.isOnAllowedNetwork(networkType)) {
+                        downloadManager.start(download)
+                        hasStartedADownload = true
+                    }
                 }
-                if (networkInfoProvider.isOnAllowedNetwork(networkType)) {
-                    downloadManager.start(download)
-                    hasStartedADownload = true
+                if (hasStartedADownload) {
+                    registerPriorityIterator()
+                } else {
+                    stop()
                 }
-            }
-            if (hasStartedADownload) {
-                registerPriorityIterator()
             } else {
                 stop()
             }
