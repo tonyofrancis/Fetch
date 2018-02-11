@@ -65,7 +65,7 @@ class DownloadInfo : Download {
 
     override val request: Request
         get() {
-            val request = Request(url, file)
+            val request = Request(id, url, file)
             request.groupId = group
             request.headers.putAll(headers)
             request.networkType = networkType
