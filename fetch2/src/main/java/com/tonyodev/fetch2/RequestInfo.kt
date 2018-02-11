@@ -27,6 +27,10 @@ open class RequestInfo {
      * @see com.tonyodev.fetch2.NetworkType*/
     var networkType: NetworkType = defaultNetworkType
 
+    /** Can be used to set a tag for this request object. Use this to help
+     * identify or hold some data associated with this request. */
+    var tag: String? = null
+
     /** Adds a header for a download.
      * @param key Header Key
      * @param value Header Value

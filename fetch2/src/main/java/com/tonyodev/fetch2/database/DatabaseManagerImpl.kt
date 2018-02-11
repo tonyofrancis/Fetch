@@ -5,13 +5,15 @@ import android.content.Context
 import android.database.sqlite.SQLiteException
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchImplementationException
 
 
 class DatabaseManagerImpl constructor(context: Context,
                                       override val namespace: String,
                                       override val isMemoryDatabase: Boolean,
-                                      override val logger: Logger) : DatabaseManager {
+                                      override val logger: Logger,
+                                      override val migrations: Array<Migration>) : DatabaseManager {
 
     private val lock = Object()
 
@@ -29,7 +31,9 @@ class DatabaseManagerImpl constructor(context: Context,
             Room.databaseBuilder(context, DownloadDatabase::class.java,
                     "$namespace.db")
         }
-        builder.build()
+        builder
+                .addMigrations(*migrations)
+                .build()
     }()
 
     override fun insert(downloadInfo: DownloadInfo): Pair<DownloadInfo, Boolean> {

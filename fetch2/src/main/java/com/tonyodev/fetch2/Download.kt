@@ -67,6 +67,9 @@ interface Download {
     /** The request information used to create this download.*/
     val request: Request
 
+    /** A tag associated with this download. */
+    val tag: String?
+
     /** Gets a copy of this instance. */
     fun copy(): Download
 

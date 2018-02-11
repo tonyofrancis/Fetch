@@ -70,8 +70,12 @@ class DownloadInfo : Download {
             request.headers.putAll(headers)
             request.networkType = networkType
             request.priority = priority
+            request.tag = tag
             return request
         }
+
+    @ColumnInfo(name = DownloadDatabase.COLUMN_TAG)
+    override var tag: String? = null
 
     override fun copy(): Download {
         return this.toDownloadInfo()

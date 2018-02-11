@@ -2,6 +2,7 @@ package com.tonyodev.fetch2.database
 
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.database.migration.Migration
 import java.io.Closeable
 
 
@@ -11,6 +12,7 @@ interface DatabaseManager : Closeable {
     val isClosed: Boolean
     val isMemoryDatabase: Boolean
     val logger: Logger
+    val migrations: Array<Migration>
 
     fun insert(downloadInfo: DownloadInfo): Pair<DownloadInfo, Boolean>
     fun insert(downloadInfoList: List<DownloadInfo>): List<Pair<DownloadInfo, Boolean>>

@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteConstraintException
 import android.support.annotation.WorkerThread
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManagerImpl
+import com.tonyodev.fetch2.database.DownloadDatabase
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetchmigrator.fetch1.DatabaseHelper
 import com.tonyodev.fetchmigrator.helpers.v1CursorToV2DownloadInfo
@@ -43,7 +44,8 @@ fun migrateFromV1toV2(context: Context, v2Namespace: String): List<Download> {
                 context = context,
                 namespace = v2Namespace,
                 isMemoryDatabase = false,
-                logger = FetchLogger())
+                logger = FetchLogger(),
+                migrations = DownloadDatabase.getMigrations())
 
         fetchTwoDatabaseManager.insert(downloadInfoList)
         fetchTwoDatabaseManager.close()
