@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit
 open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient? = null)
     : Downloader {
 
-    //TODO: CHECK on this lint issue
-    protected val connections = Collections.synchronizedMap(HashMap<Downloader.Response, Response>())
+    protected val connections: MutableMap<Downloader.Response, Response> =
+            Collections.synchronizedMap(hashMapOf<Downloader.Response, Response>())
 
     @Volatile
     var client: OkHttpClient = okHttpClient ?: OkHttpClient.Builder()
