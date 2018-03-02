@@ -41,6 +41,8 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FETCH_DATABASE_ERROR
     } else if (message.contains(FETCH_ALREADY_EXIST, true)) {
         Error.FETCH_ALREADY_EXIST
+    } else if (message.contains(RESPONSE_NOT_SUCCESSFUL, true)) {
+        Error.REQUEST_NOT_SUCCESSFUL
     } else {
         Error.UNKNOWN
     }
