@@ -6,7 +6,7 @@ import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
-import com.tonyodev.fetch2.provider.NetworkProvider
+import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.*
 import java.io.BufferedInputStream
 import java.io.File
@@ -19,7 +19,7 @@ class FileDownloaderImpl(private val initialDownload: Download,
                          private val progressReportingIntervalMillis: Long,
                          private val downloadBufferSizeBytes: Int,
                          private val logger: Logger,
-                         private val networkProvider: NetworkProvider,
+                         private val networkInfoProvider: NetworkInfoProvider,
                          private val retryOnNetworkGain: Boolean) : FileDownloader {
 
     @Volatile
@@ -106,7 +106,7 @@ class FileDownloaderImpl(private val initialDownload: Download,
                     } catch (e: InterruptedException) {
                         logger.e("FileDownloader", e)
                     }
-                    if (!networkProvider.isNetworkAvailable) {
+                    if (!networkInfoProvider.isNetworkAvailable) {
                         error = Error.NO_NETWORK_CONNECTION
                     }
                 }

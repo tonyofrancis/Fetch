@@ -4,7 +4,7 @@ import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.exception.FetchImplementationException
-import com.tonyodev.fetch2.provider.NetworkProvider
+import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import java.util.concurrent.Executors
 
 class DownloadManagerImpl(private val downloader: Downloader,
@@ -12,7 +12,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
                           private val progressReportingIntervalMillis: Long,
                           private val downloadBufferSizeBytes: Int,
                           private val logger: Logger,
-                          private val networkProvider: NetworkProvider,
+                          private val networkInfoProvider: NetworkInfoProvider,
                           private val retryOnNetworkGain: Boolean) : DownloadManager {
 
     private val lock = Object()
@@ -154,7 +154,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
                 progressReportingIntervalMillis = progressReportingIntervalMillis,
                 downloadBufferSizeBytes = downloadBufferSizeBytes,
                 logger = logger,
-                networkProvider = networkProvider,
+                networkInfoProvider = networkInfoProvider,
                 retryOnNetworkGain = retryOnNetworkGain)
     }
 

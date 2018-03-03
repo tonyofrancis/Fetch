@@ -5,13 +5,13 @@ import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.provider.DownloadProvider
-import com.tonyodev.fetch2.provider.NetworkProvider
+import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
 
 open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
                                                      val downloadProvider: DownloadProvider,
                                                      val downloadManager: DownloadManager,
-                                                     val networkProvider: NetworkProvider,
+                                                     val networkInfoProvider: NetworkInfoProvider,
                                                      val logger: Logger)
     : PriorityIteratorProcessor<Download> {
 
@@ -28,7 +28,7 @@ open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
         get() = stopped
 
     val priorityIteratorRunnableInternal = Runnable {
-        if (networkProvider.isNetworkAvailable) {
+        if (networkInfoProvider.isNetworkAvailable) {
             val iterator = getPriorityIterator()
             while (iterator.hasNext() && downloadManager.canAccommodateNewDownload()) {
                 val download = iterator.next()
@@ -37,7 +37,7 @@ open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
                     download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
                     else -> download.networkType
                 }
-                if (networkProvider.isOnAllowedNetwork(networkType)) {
+                if (networkInfoProvider.isOnAllowedNetwork(networkType)) {
                     downloadManager.start(download)
                 }
             }

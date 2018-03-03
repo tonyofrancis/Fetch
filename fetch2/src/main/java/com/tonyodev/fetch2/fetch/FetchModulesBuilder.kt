@@ -16,7 +16,7 @@ import com.tonyodev.fetch2.helper.PriorityIteratorProcessor
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.ListenerProvider
-import com.tonyodev.fetch2.provider.NetworkProvider
+import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.FETCH_ALREADY_EXIST
 
 import java.lang.ref.WeakReference
@@ -55,7 +55,7 @@ object FetchModulesBuilder {
         val downloadInfoManagerDelegate: DownloadInfoManagerDelegate
         val priorityIteratorProcessor: PriorityIteratorProcessor<Download>
         val fetchHandler: FetchHandler
-        val networkProvider: NetworkProvider
+        val networkInfoProvider: NetworkInfoProvider
 
         init {
             val handlerThread = HandlerThread("fetch_${prefs.namespace}")
@@ -63,7 +63,7 @@ object FetchModulesBuilder {
             handler = Handler(handlerThread.looper)
 
             fetchListenerProvider = ListenerProvider()
-            networkProvider = NetworkProvider(prefs.appContext)
+            networkInfoProvider = NetworkInfoProvider(prefs.appContext)
 
             databaseManager = DatabaseManagerImpl(
                     context = prefs.appContext,
@@ -78,7 +78,7 @@ object FetchModulesBuilder {
                     progressReportingIntervalMillis = prefs.progressReportingIntervalMillis,
                     downloadBufferSizeBytes = prefs.downloadBufferSizeBytes,
                     logger = prefs.logger,
-                    networkProvider = networkProvider,
+                    networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = prefs.retryOnNetworkGain)
 
             downloadInfoManagerDelegate = DownloadInfoManagerDelegate(
@@ -94,7 +94,7 @@ object FetchModulesBuilder {
                     handler = handler,
                     downloadProvider = DownloadProvider(databaseManager),
                     downloadManager = downloadManager,
-                    networkProvider = networkProvider,
+                    networkInfoProvider = networkInfoProvider,
                     logger = prefs.logger)
 
             priorityIteratorProcessor.globalNetworkType = prefs.globalNetworkType
