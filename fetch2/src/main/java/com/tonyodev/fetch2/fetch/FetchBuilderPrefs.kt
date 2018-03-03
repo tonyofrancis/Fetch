@@ -16,4 +16,5 @@ open class FetchBuilderPrefs(val appContext: Context,
                              val downloader: Downloader,
                              val globalNetworkType: NetworkType,
                              val logger: Logger,
-                             val autoStart: Boolean)
+                             val autoStart: Boolean,
+                             val retryOnNetworkGain: Boolean)

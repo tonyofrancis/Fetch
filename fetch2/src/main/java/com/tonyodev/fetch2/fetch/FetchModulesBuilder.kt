@@ -54,6 +54,7 @@ object FetchModulesBuilder {
         val downloadInfoManagerDelegate: DownloadInfoManagerDelegate
         val priorityIteratorProcessor: PriorityIteratorProcessor<Download>
         val fetchHandler: FetchHandler
+        val networkProvider: NetworkProvider
 
         init {
             val handlerThread = HandlerThread("fetch_${prefs.namespace}")
@@ -61,6 +62,7 @@ object FetchModulesBuilder {
             handler = Handler(handlerThread.looper)
 
             fetchListenerProvider = ListenerProvider()
+            networkProvider = NetworkProvider(prefs.appContext)
 
             databaseManager = DatabaseManagerImpl(
                     context = prefs.appContext,
@@ -73,13 +75,16 @@ object FetchModulesBuilder {
                     concurrentLimit = prefs.concurrentLimit,
                     progressReportingIntervalMillis = prefs.progressReportingIntervalMillis,
                     downloadBufferSizeBytes = prefs.downloadBufferSizeBytes,
-                    logger = prefs.logger)
+                    logger = prefs.logger,
+                    networkProvider = networkProvider,
+                    retryOnNetworkGain = prefs.retryOnNetworkGain)
 
             downloadInfoManagerDelegate = DownloadInfoManagerDelegate(
                     downloadInfoUpdater = DownloadInfoUpdater(databaseManager),
                     uiHandler = uiHandler,
                     fetchListener = fetchListenerProvider.mainListener,
-                    logger = prefs.logger)
+                    logger = prefs.logger,
+                    retryOnNetworkGain = prefs.retryOnNetworkGain)
 
             downloadManager.delegate = downloadInfoManagerDelegate
 
@@ -87,7 +92,7 @@ object FetchModulesBuilder {
                     handler = handler,
                     downloadProvider = DownloadProvider(databaseManager),
                     downloadManager = downloadManager,
-                    networkProvider = NetworkProvider(prefs.appContext),
+                    networkProvider = networkProvider,
                     logger = prefs.logger)
 
             priorityIteratorProcessor.globalNetworkType = prefs.globalNetworkType

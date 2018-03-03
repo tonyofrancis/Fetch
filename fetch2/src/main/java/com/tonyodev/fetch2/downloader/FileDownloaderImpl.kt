@@ -2,9 +2,11 @@ package com.tonyodev.fetch2.downloader
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Downloader
+import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
+import com.tonyodev.fetch2.provider.NetworkProvider
 import com.tonyodev.fetch2.util.*
 import java.io.BufferedInputStream
 import java.io.File
@@ -16,7 +18,9 @@ open class FileDownloaderImpl(val initialDownload: Download,
                               val downloader: Downloader,
                               val progressReportingIntervalMillis: Long,
                               val downloadBufferSizeBytes: Int,
-                              val logger: Logger) : FileDownloader {
+                              val logger: Logger,
+                              val networkProvider: NetworkProvider,
+                              val retryOnNetworkGain: Boolean) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -93,9 +97,19 @@ open class FileDownloaderImpl(val initialDownload: Download,
                         downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
             }
         } catch (e: Exception) {
+            logger.e("FileDownloader", e)
             if (!interrupted) {
-                logger.e("FileDownloader", e)
-                val error = getErrorFromMessage(e.message)
+                var error = getErrorFromMessage(e.message)
+                if (retryOnNetworkGain) {
+                    try {
+                        Thread.sleep(4000)
+                    } catch (e: InterruptedException) {
+                        logger.e("FileDownloader", e)
+                    }
+                    if (!networkProvider.isNetworkAvailable) {
+                        error = Error.NO_NETWORK_CONNECTION
+                    }
+                }
                 downloadInfoInternal.downloaded = downloadedInternal
                 downloadInfoInternal.total = totalInternal
                 downloadInfoInternal.error = error

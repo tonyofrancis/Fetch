@@ -28,16 +28,18 @@ open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
         get() = stopped
 
     val priorityIteratorRunnableInternal = Runnable {
-        val iterator = getPriorityIterator()
-        while (iterator.hasNext() && downloadManager.canAccommodateNewDownload()) {
-            val download = iterator.next()
-            val networkType = when {
-                globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
-                download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
-                else -> download.networkType
-            }
-            if (networkProvider.isOnAllowedNetwork(networkType)) {
-                downloadManager.start(download)
+        if (networkProvider.isNetworkAvailable) {
+            val iterator = getPriorityIterator()
+            while (iterator.hasNext() && downloadManager.canAccommodateNewDownload()) {
+                val download = iterator.next()
+                val networkType = when {
+                    globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
+                    download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
+                    else -> download.networkType
+                }
+                if (networkProvider.isOnAllowedNetwork(networkType)) {
+                    downloadManager.start(download)
+                }
             }
         }
         registerPriorityIteratorInternal()

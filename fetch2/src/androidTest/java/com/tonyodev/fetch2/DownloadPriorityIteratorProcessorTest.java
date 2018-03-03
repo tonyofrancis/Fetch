@@ -43,8 +43,10 @@ public class DownloadPriorityIteratorProcessorTest {
         final long progessInterval = FetchDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
+        final NetworkProvider networkProvider = new NetworkProvider(appContext);
+        final boolean retryOnNetworkGain = false;
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger);
+                progessInterval, bufferSize, fetchLogger, networkProvider, retryOnNetworkGain);
         priorityIteratorProcessorImpl = new PriorityIteratorProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),

@@ -38,6 +38,7 @@ public class App extends Application {
                     .setDownloader(okHttpDownloader)
                     .setDownloadConcurrentLimit(concurrentLimit)
                     .enableLogging(enableLogging)
+                    .enableRetryOnNetworkGain(true)
                     .build();
         }
         return fetch;

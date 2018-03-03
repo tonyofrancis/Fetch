@@ -18,4 +18,9 @@ open class NetworkProvider constructor(val contextInternal: Context) {
         return false
     }
 
+    val isNetworkAvailable: Boolean
+        get() {
+            return contextInternal.isNetworkAvailable()
+        }
+
 }

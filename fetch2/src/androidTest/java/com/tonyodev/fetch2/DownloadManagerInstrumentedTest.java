@@ -7,6 +7,7 @@ import android.support.test.runner.AndroidJUnit4;
 import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
+import com.tonyodev.fetch2.provider.NetworkProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
 
@@ -37,9 +38,11 @@ public class DownloadManagerInstrumentedTest {
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final String namespace = "fetch2DatabaseTest";
+        final NetworkProvider networkProvider = new NetworkProvider(appContext);
+        final boolean retryOnNetworkGain = false;
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger);
+                progessInterval, bufferSize, fetchLogger, networkProvider, retryOnNetworkGain);
     }
 
     @After

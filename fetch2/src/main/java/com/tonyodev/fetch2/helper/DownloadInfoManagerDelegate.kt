@@ -2,17 +2,20 @@ package com.tonyodev.fetch2.helper
 
 import android.os.Handler
 import com.tonyodev.fetch2.Download
+import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.FetchListener
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
+import com.tonyodev.fetch2.util.defaultNoError
 
 
 open class DownloadInfoManagerDelegate(val downloadInfoUpdater: DownloadInfoUpdater,
                                        val uiHandler: Handler,
                                        val fetchListener: FetchListener,
-                                       val logger: Logger) : DownloadManager.Delegate {
+                                       val logger: Logger,
+                                       val retryOnNetworkGain: Boolean) : DownloadManager.Delegate {
 
     override fun onStarted(download: Download, etaInMilliseconds: Long, downloadedBytesPerSecond: Long) {
         val downloadInfo = download as DownloadInfo
@@ -42,11 +45,20 @@ open class DownloadInfoManagerDelegate(val downloadInfoUpdater: DownloadInfoUpda
 
     override fun onError(download: Download) {
         val downloadInfo = download as DownloadInfo
-        downloadInfo.status = Status.FAILED
         try {
-            downloadInfoUpdater.update(downloadInfo)
-            uiHandler.post {
-                fetchListener.onError(downloadInfo)
+            if (retryOnNetworkGain && downloadInfo.error == Error.NO_NETWORK_CONNECTION) {
+                downloadInfo.status = Status.QUEUED
+                downloadInfo.error = defaultNoError
+                downloadInfoUpdater.update(downloadInfo)
+                uiHandler.post {
+                    fetchListener.onQueued(downloadInfo)
+                }
+            } else {
+                downloadInfo.status = Status.FAILED
+                downloadInfoUpdater.update(downloadInfo)
+                uiHandler.post {
+                    fetchListener.onError(downloadInfo)
+                }
             }
         } catch (e: Exception) {
             logger.e("DownloadManagerDelegate", e)
