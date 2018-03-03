@@ -8,14 +8,14 @@ import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
 
-open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
-                                                     val downloadProvider: DownloadProvider,
-                                                     val downloadManager: DownloadManager,
-                                                     val networkInfoProvider: NetworkInfoProvider,
-                                                     val logger: Logger)
+class PriorityIteratorProcessorImpl constructor(private val handler: Handler,
+                                                private val downloadProvider: DownloadProvider,
+                                                private val downloadManager: DownloadManager,
+                                                private val networkInfoProvider: NetworkInfoProvider,
+                                                private val logger: Logger)
     : PriorityIteratorProcessor<Download> {
 
-    val lock = Object()
+    private val lock = Object()
     @Volatile
     override var globalNetworkType = NetworkType.GLOBAL_OFF
     @Volatile
@@ -27,7 +27,7 @@ open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
     override val isStopped: Boolean
         get() = stopped
 
-    val priorityIteratorRunnableInternal = Runnable {
+    private val priorityIteratorRunnable = Runnable {
         if (networkInfoProvider.isNetworkAvailable) {
             val iterator = getPriorityIterator()
             while (iterator.hasNext() && downloadManager.canAccommodateNewDownload()) {
@@ -42,20 +42,20 @@ open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
                 }
             }
         }
-        registerPriorityIteratorInternal()
+        registerPriorityIterator()
     }
 
     override fun start() {
         synchronized(lock) {
             stopped = false
             paused = false
-            registerPriorityIteratorInternal()
+            registerPriorityIterator()
         }
     }
 
     override fun stop() {
         synchronized(lock) {
-            unregisterPriorityIteratorInternal()
+            unregisterPriorityIterator()
             paused = false
             stopped = true
         }
@@ -63,7 +63,7 @@ open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
 
     override fun pause() {
         synchronized(lock) {
-            unregisterPriorityIteratorInternal()
+            unregisterPriorityIterator()
             paused = true
             stopped = false
             downloadManager.cancelAll()
@@ -75,7 +75,7 @@ open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
         synchronized(lock) {
             paused = false
             stopped = false
-            registerPriorityIteratorInternal()
+            registerPriorityIterator()
             logger.d("PriorityIterator resumed")
         }
     }
@@ -103,12 +103,12 @@ open class PriorityIteratorProcessorImpl constructor(val handler: Handler,
         }
     }
 
-    open fun registerPriorityIteratorInternal() {
-        handler.postDelayed(priorityIteratorRunnableInternal, PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS)
+    private fun registerPriorityIterator() {
+        handler.postDelayed(priorityIteratorRunnable, PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS)
     }
 
-    open fun unregisterPriorityIteratorInternal() {
-        handler.removeCallbacks(priorityIteratorRunnableInternal)
+    private fun unregisterPriorityIterator() {
+        handler.removeCallbacks(priorityIteratorRunnable)
     }
 
 }
