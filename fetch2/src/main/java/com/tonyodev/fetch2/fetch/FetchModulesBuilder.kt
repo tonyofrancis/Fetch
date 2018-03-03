@@ -45,7 +45,7 @@ object FetchModulesBuilder {
         }
     }
 
-    open class Modules constructor(val prefs: FetchBuilderPrefs) {
+    class Modules constructor(val prefs: FetchBuilderPrefs) {
 
         val uiHandler = Handler(Looper.getMainLooper())
         val handler: Handler
@@ -56,6 +56,9 @@ object FetchModulesBuilder {
         val priorityIteratorProcessor: PriorityIteratorProcessor<Download>
         val fetchHandler: FetchHandler
         val networkInfoProvider: NetworkInfoProvider
+        val downloadProvider: DownloadProvider
+        val downloadInfoUpdater: DownloadInfoUpdater
+        val migrations = DownloadDatabase.getMigrations()
 
         init {
             val handlerThread = HandlerThread("fetch_${prefs.namespace}")
@@ -70,7 +73,10 @@ object FetchModulesBuilder {
                     namespace = prefs.namespace,
                     isMemoryDatabase = prefs.inMemoryDatabaseEnabled,
                     logger = prefs.logger,
-                    migrations = DownloadDatabase.getMigrations())
+                    migrations = migrations)
+
+            downloadProvider = DownloadProvider(databaseManager)
+            downloadInfoUpdater = DownloadInfoUpdater(databaseManager)
 
             downloadManager = DownloadManagerImpl(
                     downloader = prefs.downloader,
@@ -82,7 +88,7 @@ object FetchModulesBuilder {
                     retryOnNetworkGain = prefs.retryOnNetworkGain)
 
             downloadInfoManagerDelegate = DownloadInfoManagerDelegate(
-                    downloadInfoUpdater = DownloadInfoUpdater(databaseManager),
+                    downloadInfoUpdater = downloadInfoUpdater,
                     uiHandler = uiHandler,
                     fetchListener = fetchListenerProvider.mainListener,
                     logger = prefs.logger,
@@ -92,7 +98,7 @@ object FetchModulesBuilder {
 
             priorityIteratorProcessor = PriorityIteratorProcessorImpl(
                     handler = handler,
-                    downloadProvider = DownloadProvider(databaseManager),
+                    downloadProvider = downloadProvider,
                     downloadManager = downloadManager,
                     networkInfoProvider = networkInfoProvider,
                     logger = prefs.logger)
