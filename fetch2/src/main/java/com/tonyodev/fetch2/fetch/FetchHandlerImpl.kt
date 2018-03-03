@@ -14,14 +14,14 @@ import java.io.File
 /**
  * This handler class handles all tasks and operations of Fetch.
  * */
-open class FetchHandlerImpl(val namespace: String,
-                            val databaseManager: DatabaseManager,
-                            val downloadManager: DownloadManager,
-                            val priorityIteratorProcessor: PriorityIteratorProcessor<Download>,
-                            override val fetchListenerProvider: ListenerProvider,
-                            val handler: Handler,
-                            val logger: Logger,
-                            val autoStart: Boolean) : FetchHandler {
+class FetchHandlerImpl(private val namespace: String,
+                       private val databaseManager: DatabaseManager,
+                       private val downloadManager: DownloadManager,
+                       private val priorityIteratorProcessor: PriorityIteratorProcessor<Download>,
+                       override val fetchListenerProvider: ListenerProvider,
+                       private val handler: Handler,
+                       private val logger: Logger,
+                       private val autoStart: Boolean) : FetchHandler {
 
     @Volatile
     private var closed = false
