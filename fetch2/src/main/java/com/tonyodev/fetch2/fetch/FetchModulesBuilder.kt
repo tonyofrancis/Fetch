@@ -6,6 +6,7 @@ import android.os.Looper
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DatabaseManagerImpl
+import com.tonyodev.fetch2.database.DownloadDatabase
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl
 import com.tonyodev.fetch2.exception.FetchException
@@ -68,7 +69,8 @@ object FetchModulesBuilder {
                     context = prefs.appContext,
                     namespace = prefs.namespace,
                     isMemoryDatabase = prefs.inMemoryDatabaseEnabled,
-                    logger = prefs.logger)
+                    logger = prefs.logger,
+                    migrations = DownloadDatabase.getMigrations())
 
             downloadManager = DownloadManagerImpl(
                     downloader = prefs.downloader,

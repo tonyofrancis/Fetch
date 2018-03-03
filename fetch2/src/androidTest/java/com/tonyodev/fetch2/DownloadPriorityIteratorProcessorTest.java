@@ -8,6 +8,8 @@ import android.support.test.runner.AndroidJUnit4;
 
 import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.DatabaseManagerImpl;
+import com.tonyodev.fetch2.database.DownloadDatabase;
+import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
@@ -37,8 +39,9 @@ public class DownloadPriorityIteratorProcessorTest {
         final Handler handler = new Handler(handlerThread.getLooper());
         final String namespace = "fetch2DatabaseTest";
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
+        final Migration[] migrations = DownloadDatabase.getMigrations();
         final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace,
-                true, fetchLogger);
+                true, fetchLogger, migrations);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final long progessInterval = FetchDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
