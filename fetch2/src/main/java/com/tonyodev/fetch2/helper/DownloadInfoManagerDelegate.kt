@@ -11,11 +11,11 @@ import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.util.defaultNoError
 
 
-open class DownloadInfoManagerDelegate(val downloadInfoUpdater: DownloadInfoUpdater,
-                                       val uiHandler: Handler,
-                                       val fetchListener: FetchListener,
-                                       val logger: Logger,
-                                       val retryOnNetworkGain: Boolean) : DownloadManager.Delegate {
+class DownloadInfoManagerDelegate(private val downloadInfoUpdater: DownloadInfoUpdater,
+                                  private val uiHandler: Handler,
+                                  private val fetchListener: FetchListener,
+                                  private val logger: Logger,
+                                  private val retryOnNetworkGain: Boolean) : DownloadManager.Delegate {
 
     override fun onStarted(download: Download, etaInMilliseconds: Long, downloadedBytesPerSecond: Long) {
         val downloadInfo = download as DownloadInfo
