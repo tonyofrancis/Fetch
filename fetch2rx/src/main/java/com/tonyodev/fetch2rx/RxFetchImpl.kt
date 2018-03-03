@@ -35,6 +35,10 @@ open class RxFetchImpl(namespace: String,
                         val download: Download
                         try {
                             download = fetchHandler.enqueue(it)
+                            uiHandler.post {
+                                fetchListenerProvider.mainListener.onQueued(download)
+                                logger.d("Queued $download for download")
+                            }
                         } catch (e: Exception) {
                             throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
                         }
@@ -55,6 +59,12 @@ open class RxFetchImpl(namespace: String,
                         val downloads: List<Download>
                         try {
                             downloads = fetchHandler.enqueue(it)
+                            uiHandler.post {
+                                downloads.forEach {
+                                    fetchListenerProvider.mainListener.onQueued(it)
+                                    logger.d("Queued $it for download")
+                                }
+                            }
                         } catch (e: Exception) {
                             throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
                         }
