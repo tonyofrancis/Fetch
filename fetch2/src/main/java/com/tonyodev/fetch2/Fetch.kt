@@ -289,7 +289,7 @@ interface Fetch {
     /**
      * Builder used to configure and create an instance of Fetch.
      * */
-    open class Builder constructor(
+    class Builder constructor(
             /** Context*/
             context: Context,
 

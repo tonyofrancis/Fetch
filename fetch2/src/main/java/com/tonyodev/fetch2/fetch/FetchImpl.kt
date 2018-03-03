@@ -10,13 +10,13 @@ import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
 
 
 open class FetchImpl constructor(override val namespace: String,
-                                 val handler: Handler,
-                                 val uiHandler: Handler,
-                                 val fetchHandler: FetchHandler,
-                                 val fetchListenerProvider: ListenerProvider,
-                                 val logger: Logger) : Fetch {
+                                 protected val handler: Handler,
+                                 protected val uiHandler: Handler,
+                                 protected val fetchHandler: FetchHandler,
+                                 protected val fetchListenerProvider: ListenerProvider,
+                                 protected val logger: Logger) : Fetch {
 
-    val lock = Object()
+    protected val lock = Object()
     override val isClosed: Boolean
         get() = fetchHandler.isClosed
 

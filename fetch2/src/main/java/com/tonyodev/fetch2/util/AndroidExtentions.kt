@@ -16,7 +16,6 @@ fun Context.isOnWiFi(): Boolean {
 }
 
 fun Context.isNetworkAvailable(): Boolean {
-    val manager = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val activeNetworkInfo = manager.activeNetworkInfo
-    return activeNetworkInfo != null && activeNetworkInfo.isConnected
+    val connectivityManager = this.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+    return connectivityManager?.activeNetworkInfo?.isConnected ?: false
 }

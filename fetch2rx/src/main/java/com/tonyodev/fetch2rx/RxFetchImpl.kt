@@ -11,19 +11,18 @@ import com.tonyodev.fetch2.util.FAILED_TO_ENQUEUE_REQUEST
 import com.tonyodev.fetch2.util.DOWNLOAD_NOT_FOUND
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import java.util.concurrent.TimeUnit
 
-open class RxFetchImpl(namespace: String,
-                       handler: Handler,
-                       uiHandler: Handler,
-                       fetchHandler: FetchHandler,
-                       fetchListenerProvider: ListenerProvider,
-                       logger: Logger)
+class RxFetchImpl(namespace: String,
+                  handler: Handler,
+                  uiHandler: Handler,
+                  fetchHandler: FetchHandler,
+                  fetchListenerProvider: ListenerProvider,
+                  logger: Logger)
     : FetchImpl(namespace, handler, uiHandler,
         fetchHandler, fetchListenerProvider, logger), RxFetch {
 
-    val scheduler = AndroidSchedulers.from(handler.looper)
-    val uiSceduler = AndroidSchedulers.mainThread()
+    private val scheduler = AndroidSchedulers.from(handler.looper)
+    private val uiScheduler = AndroidSchedulers.mainThread()
 
     override fun enqueue(request: Request): Convertible<Download> {
         synchronized(lock) {
@@ -40,7 +39,7 @@ open class RxFetchImpl(namespace: String,
                         }
                         Flowable.just(download)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
             return Convertible(flowable)
         }
     }
@@ -60,7 +59,7 @@ open class RxFetchImpl(namespace: String,
                         }
                         Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
             return Convertible(flowable)
         }
     }
@@ -68,7 +67,6 @@ open class RxFetchImpl(namespace: String,
     override fun updateRequest(id: Int, requestInfo: RequestInfo): Convertible<Download> {
         synchronized(lock) {
             fetchHandler.throwExceptionIfClosed()
-
             val flowable = Flowable.just(Object())
                     .subscribeOn(scheduler)
                     .flatMap {
@@ -84,7 +82,7 @@ open class RxFetchImpl(namespace: String,
                         }
                         Flowable.just(download)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
             return Convertible(flowable)
         }
     }
@@ -99,7 +97,7 @@ open class RxFetchImpl(namespace: String,
                         val downloads = fetchHandler.getDownloads()
                         Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
             return Convertible(flowable)
         }
     }
@@ -114,7 +112,7 @@ open class RxFetchImpl(namespace: String,
                         val downloads = fetchHandler.getDownloads(it)
                         Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
             return Convertible(flowable)
         }
     }
@@ -126,11 +124,11 @@ open class RxFetchImpl(namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         fetchHandler.throwExceptionIfClosed()
-                        val download = fetchHandler.getDownload(it) ?:
-                                throw FetchException(DOWNLOAD_NOT_FOUND)
+                        val download = fetchHandler.getDownload(it)
+                                ?: throw FetchException(DOWNLOAD_NOT_FOUND)
                         Flowable.just(download)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
             return Convertible(flowable)
         }
     }
@@ -145,7 +143,7 @@ open class RxFetchImpl(namespace: String,
                         val downloads = fetchHandler.getDownloadsInGroup(it)
                         Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
             return Convertible(flowable)
         }
     }
@@ -160,7 +158,7 @@ open class RxFetchImpl(namespace: String,
                         val downloads = fetchHandler.getDownloadsWithStatus(it)
                         Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
             return Convertible(flowable)
         }
     }
@@ -175,7 +173,7 @@ open class RxFetchImpl(namespace: String,
                         val downloads = fetchHandler.getDownloadsInGroupWithStatus(groupId, status)
                         Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
             return Convertible(flowable)
         }
     }

@@ -8,7 +8,7 @@ import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.util.EMPTY_JSON_OBJECT_STRING
 import org.json.JSONObject
 
-open class Converter {
+class Converter {
 
     @TypeConverter
     fun fromStatusValue(value: Int): Status {

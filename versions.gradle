@@ -2,7 +2,7 @@ ext {
     kotlin_version = '1.2.21'
     okhttp_version = '3.9.1'
     android_support_version = '27.0.2'
-    constraint_layout_version = "1.1.0-beta4"
+    constraint_layout_version = "1.1.0-beta5"
     room_version = '1.0.0'
     junit_version = '4.12'
     espresso_version = '3.0.1'
@@ -18,4 +18,6 @@ ext {
     novoda_bintray_version = "0.8.0"
     library_version = "2.0.0-RC8"
     library_version_code = 9
+    sample_app_version = "2.3"
+    sample_app_version_code = 5
 }

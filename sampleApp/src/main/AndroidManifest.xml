@@ -21,11 +21,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".FragmentActivity" />
-        <activity android:name=".DownloadListActivity" />
-        <activity android:name=".GameFilesActivity" />
-        <activity android:name=".SingleDownloadActivity" />
-        <activity android:name=".FailedMultiEnqueueActivity" />
+        <activity
+            android:name=".FragmentActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".DownloadListActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".GameFilesActivity"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".SingleDownloadActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".FailedMultiEnqueueActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

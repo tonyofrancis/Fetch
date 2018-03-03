@@ -4,7 +4,6 @@ package com.tonyodev.fetch2.util
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Request
-import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.DownloadInfo
 
 fun Request.toDownloadInfo(): DownloadInfo {
@@ -13,12 +12,13 @@ fun Request.toDownloadInfo(): DownloadInfo {
     downloadInfo.url = url
     downloadInfo.file = file
     downloadInfo.priority = priority
-    downloadInfo.headers = headers
+    downloadInfo.headers = headers.toMap()
     downloadInfo.group = groupId
     downloadInfo.networkType = networkType
     downloadInfo.status = defaultStatus
     downloadInfo.error = defaultNoError
     downloadInfo.downloaded = getFileLength(file)
+    downloadInfo.tag = tag
     return downloadInfo
 }
 
@@ -30,12 +30,13 @@ fun Download.toDownloadInfo(): DownloadInfo {
     downloadInfo.file = file
     downloadInfo.group = group
     downloadInfo.priority = priority
-    downloadInfo.headers = headers
+    downloadInfo.headers = headers.toMap()
     downloadInfo.downloaded = downloaded
     downloadInfo.total = total
     downloadInfo.status = status
     downloadInfo.networkType = networkType
     downloadInfo.error = error
     downloadInfo.created = created
+    downloadInfo.tag = tag
     return downloadInfo
 }

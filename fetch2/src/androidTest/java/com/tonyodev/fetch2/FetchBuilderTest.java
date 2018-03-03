@@ -41,11 +41,11 @@ public class FetchBuilderTest {
         final FetchBuilder<Fetch.Builder, Fetch> builder =
                 new Fetch.Builder(appContext, namespace)
                         .setDownloadBufferSize(bufferSize)
-                        .enableLogging(loggingEnabled)
+                        .setEnableLogging(loggingEnabled)
                         .setProgressReportingInterval(progressInterval)
                         .setGlobalNetworkType(networkType)
                         .setDownloadConcurrentLimit(concurrentLimit)
-                        .enabledInMemoryDatabase(enableInMemoryDatabase)
+                        .setEnabledInMemoryDatabase(enableInMemoryDatabase)
                         .setLogger(logger)
                         .setDownloader(downloader);
         final FetchBuilderPrefs prefs = builder.getBuilderPrefs();

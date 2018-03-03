@@ -6,6 +6,7 @@ import android.support.test.runner.AndroidJUnit4;
 
 import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.DatabaseManagerImpl;
+import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.provider.DownloadProvider;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
@@ -38,7 +39,7 @@ public class DownloadProviderInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
         databaseManager = new DatabaseManagerImpl(appContext, namespace,
-                true, fetchLogger);
+                true, fetchLogger, DownloadDatabase.getMigrations());
         downloadProvider = new DownloadProvider(databaseManager);
     }
 
@@ -100,7 +101,7 @@ public class DownloadProviderInstrumentedTest {
         }
         databaseManager.insert(downloadInfoList);
         final List<Integer> ids = new ArrayList<>();
-        for(DownloadInfo downloadInfo : downloadInfoList) {
+        for (DownloadInfo downloadInfo : downloadInfoList) {
             ids.add(downloadInfo.getId());
         }
         final List<Download> queryList = downloadProvider.getDownloads(ids);

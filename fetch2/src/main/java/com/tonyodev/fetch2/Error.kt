@@ -63,7 +63,10 @@ enum class Error constructor(val value: Int) {
      * have to be unique for each request. This limitation maintains consistency and prevents data lose.
      * Fetch cannot write data to two different downloads with the same file path.
      * */
-    REQUEST_WITH_FILE_PATH_ALREADY_EXIST(14);
+    REQUEST_WITH_FILE_PATH_ALREADY_EXIST(14),
+
+    /** Indicates that unsuccessful response was returned by the server. */
+    REQUEST_NOT_SUCCESSFUL(15);
 
     companion object {
 
@@ -86,6 +89,7 @@ enum class Error constructor(val value: Int) {
                 12 -> FETCH_ALREADY_EXIST
                 13 -> REQUEST_WITH_ID_ALREADY_EXIST
                 14 -> REQUEST_WITH_FILE_PATH_ALREADY_EXIST
+                15 -> REQUEST_NOT_SUCCESSFUL
                 else -> UNKNOWN
             }
         }

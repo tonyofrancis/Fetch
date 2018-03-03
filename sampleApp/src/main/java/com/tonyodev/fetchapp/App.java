@@ -37,7 +37,8 @@ public class App extends Application {
                     .setLogger(logger)
                     .setDownloader(okHttpDownloader)
                     .setDownloadConcurrentLimit(concurrentLimit)
-                    .enableLogging(enableLogging)
+                    .setEnableLogging(enableLogging)
+                    .setEnableAutoRetry(true)
                     .build();
         }
         return fetch;
@@ -51,7 +52,7 @@ public class App extends Application {
             rxFetch = new RxFetch.Builder(this, "GameFilesFetch")
                     .setLogger(logger)
                     .setDownloadConcurrentLimit(concurrentLimit)
-                    .enableLogging(enableLogging)
+                    .setEnableLogging(enableLogging)
                     .build();
         }
         return rxFetch;

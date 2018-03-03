@@ -8,6 +8,7 @@ import android.support.test.runner.AndroidJUnit4;
 
 import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.DatabaseManagerImpl;
+import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
@@ -17,7 +18,8 @@ import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
 import com.tonyodev.fetch2.provider.ListenerProvider;
-import com.tonyodev.fetch2.provider.NetworkProvider;
+import com.tonyodev.fetch2.provider.NetworkInfoProvider;
+import com.tonyodev.fetch2.provider.NetworkInfoProviderImpl;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
 
@@ -50,24 +52,28 @@ public class FetchHandlerInstrumentedTest {
         handlerThread.start();
         final Handler handler = new Handler(handlerThread.getLooper());
         final String namespace = "fetch2DatabaseTest";
+        final boolean autoStartProcessing = true;
+        final boolean retryOnNetworkGain = false;
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
+        final NetworkInfoProvider networkInfoProvider = new NetworkInfoProviderImpl(appContext, fetchLogger);
         databaseManager = new DatabaseManagerImpl(appContext, namespace,
-                true, fetchLogger);
+                true, fetchLogger, DownloadDatabase.getMigrations());
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final long progessInterval = FetchDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger);
+                progessInterval, bufferSize, fetchLogger, networkInfoProvider);
         priorityIteratorProcessorImpl = new PriorityIteratorProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),
                 downloadManager,
-                new NetworkProvider(appContext),
+                networkInfoProvider,
                 fetchLogger);
         final ListenerProvider listenerProvider = new ListenerProvider();
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
-                priorityIteratorProcessorImpl, listenerProvider, handler, fetchLogger);
+                priorityIteratorProcessorImpl, listenerProvider, handler, fetchLogger,
+                autoStartProcessing, retryOnNetworkGain, networkInfoProvider);
     }
 
     @Test
@@ -472,7 +478,7 @@ public class FetchHandlerInstrumentedTest {
         }
         final List<Download> downloadInfoList = fetchHandler.enqueue(requestList);
         final List<Integer> ids = new ArrayList<>();
-        for(Request request : requestList) {
+        for (Request request : requestList) {
             ids.add(request.getId());
         }
         final List<Download> queryList = fetchHandler.getDownloads(ids);

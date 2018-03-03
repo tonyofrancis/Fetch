@@ -4,13 +4,13 @@ import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
 
 
-open class DownloadInfoUpdater(val databaseManagerInternal: DatabaseManager) {
+class DownloadInfoUpdater(private val databaseManager: DatabaseManager) {
 
-    open fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo) {
-        databaseManagerInternal.updateFileBytesInfoAndStatusOnly(downloadInfo)
+    fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo) {
+        databaseManager.updateFileBytesInfoAndStatusOnly(downloadInfo)
     }
 
-    open fun update(downloadInfo: DownloadInfo) {
-        databaseManagerInternal.update(downloadInfo)
+    fun update(downloadInfo: DownloadInfo) {
+        databaseManager.update(downloadInfo)
     }
 }

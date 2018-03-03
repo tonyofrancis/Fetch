@@ -7,7 +7,7 @@ import io.reactivex.Observable
  * This class is used as a converter class to access
  * results returned by Fetch as an observable or flowable object.
  * */
-open class Convertible<T>(private val data: Flowable<T>) {
+class Convertible<T>(private val data: Flowable<T>) {
 
     /** Access the results returned by Fetch as a Flowable.*/
     val flowable: Flowable<T>

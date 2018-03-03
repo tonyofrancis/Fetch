@@ -33,6 +33,8 @@ abstract class FetchBuilder<out B, out F> constructor(
     private var downloader = defaultDownloader
     private var globalNetworkType = defaultGlobalNetworkType
     private var logger: Logger = defaultLogger
+    private var autoStartProcessing = DEFAULT_AUTO_START_PROCESSING
+    private var autoRetryOnNetworkGain = DEFAULT_AUTO_RETRY_ON_CONNECTION_GAIN
 
     /**
      * Sets the downloader client Fetch will use to perform downloads.
@@ -100,7 +102,7 @@ abstract class FetchBuilder<out B, out F> constructor(
      * @param enabled Enable or disable logging.
      * @return com.tonyodev.fetch2.Fetch.Builder.this
      * */
-    fun enableLogging(enabled: Boolean): FetchBuilder<B, F> {
+    fun setEnableLogging(enabled: Boolean): FetchBuilder<B, F> {
         this.loggingEnabled = enabled
         return this
     }
@@ -113,7 +115,7 @@ abstract class FetchBuilder<out B, out F> constructor(
      * @param enabled Enable in memory database.
      * @return com.tonyodev.fetch2.Fetch.Builder.this
      * */
-    fun enabledInMemoryDatabase(enabled: Boolean): FetchBuilder<B, F> {
+    fun setEnabledInMemoryDatabase(enabled: Boolean): FetchBuilder<B, F> {
         this.inMemoryDatabaseEnabled = enabled
         return this
     }
@@ -134,9 +136,34 @@ abstract class FetchBuilder<out B, out F> constructor(
 
     /** Sets custom logger.
      * @param logger custom logger.
+     * @return com.tonyodev.fetch2.Fetch.Builder.this
      * */
     fun setLogger(logger: Logger): FetchBuilder<B, F> {
         this.logger = logger
+        return this
+    }
+
+    /**
+     * Configure Fetch to start processing previous requests after calling
+     * the builder's build method. The default value is true.
+     * @param enabled enable or disable processing of previous requests
+     * after the builder's build method is called.
+     * @return com.tonyodev.fetch2.Fetch.Builder.this
+     * */
+    fun setEnableProcessingOnBuild(enabled: Boolean): FetchBuilder<B, F> {
+        this.autoStartProcessing = enabled
+        return this
+    }
+
+    /** When enabled and network connection is lost during a request download, Fetch will re-queue
+     * the request and will automatically try downloading the request again when the network
+     * connection becomes available at a later time.
+     * The default is false.
+     * @param enabled enable or disable auto retry.
+     * @return com.tonyodev.fetch2.Fetch.Builder.this
+     * */
+    fun setEnableAutoRetry(enabled: Boolean): FetchBuilder<B, F> {
+        this.autoRetryOnNetworkGain = enabled
         return this
     }
 
@@ -161,7 +188,9 @@ abstract class FetchBuilder<out B, out F> constructor(
                 inMemoryDatabaseEnabled = inMemoryDatabaseEnabled,
                 downloader = downloader,
                 globalNetworkType = globalNetworkType,
-                logger = prefsLogger)
+                logger = prefsLogger,
+                autoStartProcessing = autoStartProcessing,
+                retryOnConnectionGain = autoRetryOnNetworkGain)
     }
 
     /** Builds a new instance of Fetch with the proper configuration.

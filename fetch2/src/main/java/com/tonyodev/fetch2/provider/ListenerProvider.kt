@@ -5,7 +5,7 @@ import com.tonyodev.fetch2.FetchListener
 import java.util.Collections
 
 
-open class ListenerProvider {
+class ListenerProvider {
 
     val listeners: MutableSet<FetchListener> =
             Collections.synchronizedSet(mutableSetOf<FetchListener>())

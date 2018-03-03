@@ -65,13 +65,21 @@ class DownloadInfo : Download {
 
     override val request: Request
         get() {
-            val request = Request(url, file)
+            val request = Request(id, url, file)
             request.groupId = group
             request.headers.putAll(headers)
             request.networkType = networkType
             request.priority = priority
+            request.tag = tag
             return request
         }
+
+    @ColumnInfo(name = DownloadDatabase.COLUMN_TAG)
+    override var tag: String? = null
+
+    override fun copy(): Download {
+        return this.toDownloadInfo()
+    }
 
     override fun toString(): String {
         return "DownloadInfo(id:$id,namespace:$namespace, url:$url, file:$file, " +

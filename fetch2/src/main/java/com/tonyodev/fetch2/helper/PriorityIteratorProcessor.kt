@@ -1,7 +1,6 @@
 package com.tonyodev.fetch2.helper
 
 import com.tonyodev.fetch2.NetworkType
-import java.util.*
 
 interface PriorityIteratorProcessor<out T> {
 
