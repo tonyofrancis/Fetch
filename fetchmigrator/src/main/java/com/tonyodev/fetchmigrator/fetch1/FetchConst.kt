@@ -7,49 +7,49 @@ internal interface FetchConst {
         /**
          * Status of a download request that could not be enqueued.
          */
-        val STATUS_NOT_QUEUED = -900
+        const val STATUS_NOT_QUEUED = -900
 
         /**
          * Status of a download request if it is queued for downloading.
          */
-        val STATUS_QUEUED = 900
+        const val STATUS_QUEUED = 900
 
         /**
          * Status of a download request if it is currently downloading.
          */
-        val STATUS_DOWNLOADING = 901
+        const val STATUS_DOWNLOADING = 901
 
         /**
          * Status of a download request if it is paused.
          */
-        val STATUS_PAUSED = 902
+        const val STATUS_PAUSED = 902
 
         /**
          * Status of a download request if the file has been downloaded successfully.
          */
-        val STATUS_DONE = 903
+        const val STATUS_DONE = 903
 
         /**
          * Status of a download request if an error occurred during downloading.
          */
-        val STATUS_ERROR = 904
+        const val STATUS_ERROR = 904
 
         /**
          * Status of a download request if it was successfully removed.
          */
-        val STATUS_REMOVED = 905
+        const val STATUS_REMOVED = 905
 
         /**
          * Priority type used to set a download request's download
          * priority to HIGH.
          */
-        val PRIORITY_HIGH = 601
+        const val PRIORITY_HIGH = 601
 
         /**
          * Priority type used to set a download request's download
          * priority to NORMAL.
          */
-        val PRIORITY_NORMAL = 600
+        const val PRIORITY_NORMAL = 600
 
         /**
          * Error ID used when a download request fails because the local file could not be created

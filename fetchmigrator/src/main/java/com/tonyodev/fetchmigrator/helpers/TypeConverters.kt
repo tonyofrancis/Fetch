@@ -72,7 +72,7 @@ fun fromHeaderStringToMap(headerString: String): Map<String, String> {
     val map = mutableMapOf<String, String>()
     val json = JSONObject(headerString)
     json.keys().forEach {
-        map.put(it, json.getString(it))
+        map[it] = json.getString(it)
     }
     return map
 }
