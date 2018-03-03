@@ -58,6 +58,9 @@ class DownloadInfo : Download {
     @ColumnInfo(name = DownloadDatabase.COLUMN_CREATED)
     override var created: Long = System.nanoTime()
 
+    @ColumnInfo(name = DownloadDatabase.COLUMN_TAG)
+    override var tag: String? = null
+
     override val progress: Int
         get() {
             return calculateProgress(downloaded, total)
@@ -76,9 +79,6 @@ class DownloadInfo : Download {
     override fun copy(): Download {
         return this.toDownloadInfo()
     }
-
-    @ColumnInfo(name = DownloadDatabase.COLUMN_TAG)
-    override var tag: String? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

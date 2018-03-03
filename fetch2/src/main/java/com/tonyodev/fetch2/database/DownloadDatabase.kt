@@ -13,7 +13,7 @@ abstract class DownloadDatabase : RoomDatabase() {
 
     abstract fun requestDao(): DownloadDao
 
-    open fun wasRowInserted(row: Long): Boolean {
+    fun wasRowInserted(row: Long): Boolean {
         return row != (-1).toLong()
     }
 
