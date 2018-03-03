@@ -33,6 +33,7 @@ abstract class FetchBuilder<out B, out F> constructor(
     private var downloader = defaultDownloader
     private var globalNetworkType = defaultGlobalNetworkType
     private var logger: Logger = defaultLogger
+    private var autoStart = DEFAULT_AUTO_START
 
     /**
      * Sets the downloader client Fetch will use to perform downloads.
@@ -140,6 +141,16 @@ abstract class FetchBuilder<out B, out F> constructor(
         return this
     }
 
+    /** Allows Fetch to start processing old requests after the build method is called
+     * on the builder. Default is true.
+     * @param enabled enable or disable auto start.
+     * @return com.tonyodev.fetch2.Fetch.Builder.this
+     * */
+    fun enableAutoStart(enabled: Boolean): FetchBuilder<B, F> {
+        this.autoStart = enabled
+        return this
+    }
+
     /** Gets this builders current configuration settings.
      * @return Builder configuration settings.
      * */
@@ -161,7 +172,8 @@ abstract class FetchBuilder<out B, out F> constructor(
                 inMemoryDatabaseEnabled = inMemoryDatabaseEnabled,
                 downloader = downloader,
                 globalNetworkType = globalNetworkType,
-                logger = prefsLogger)
+                logger = prefsLogger,
+                autoStart = autoStart)
     }
 
     /** Builds a new instance of Fetch with the proper configuration.

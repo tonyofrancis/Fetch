@@ -99,7 +99,8 @@ object FetchModulesBuilder {
                     priorityIteratorProcessor = priorityIteratorProcessor,
                     fetchListenerProvider = fetchListenerProvider,
                     handler = handler,
-                    logger = prefs.logger)
+                    logger = prefs.logger,
+                    autoStart = prefs.autoStart)
         }
 
     }

@@ -20,7 +20,8 @@ open class FetchHandlerImpl(val namespace: String,
                             val priorityIteratorProcessor: PriorityIteratorProcessor<Download>,
                             override val fetchListenerProvider: ListenerProvider,
                             val handler: Handler,
-                            val logger: Logger) : FetchHandler {
+                            val logger: Logger,
+                            val autoStart: Boolean) : FetchHandler {
 
     @Volatile
     private var closed = false
@@ -29,7 +30,9 @@ open class FetchHandlerImpl(val namespace: String,
 
     override fun init() {
         databaseManager.verifyDatabase()
-        priorityIteratorProcessor.start()
+        if (autoStart) {
+            priorityIteratorProcessor.start()
+        }
     }
 
     override fun enqueue(request: Request): Download {
@@ -523,6 +526,16 @@ open class FetchHandlerImpl(val namespace: String,
             throw FetchException("This fetch instance has been closed. Create a new " +
                     "instance using the builder.",
                     FetchException.Code.CLOSED)
+        }
+        startPriorityQueueIfNotStarted()
+    }
+
+    private fun startPriorityQueueIfNotStarted() {
+        if (priorityIteratorProcessor.isStopped) {
+            priorityIteratorProcessor.start()
+        }
+        if (priorityIteratorProcessor.isPaused) {
+            priorityIteratorProcessor.resume()
         }
     }
 

@@ -51,6 +51,7 @@ public class FetchHandlerInstrumentedTest {
         final Handler handler = new Handler(handlerThread.getLooper());
         final String namespace = "fetch2DatabaseTest";
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
+        final Boolean autoStart = true;
         databaseManager = new DatabaseManagerImpl(appContext, namespace,
                 true, fetchLogger);
         final Downloader client = FetchDefaults.getDefaultDownloader();
@@ -67,7 +68,7 @@ public class FetchHandlerInstrumentedTest {
                 fetchLogger);
         final ListenerProvider listenerProvider = new ListenerProvider();
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
-                priorityIteratorProcessorImpl, listenerProvider, handler, fetchLogger);
+                priorityIteratorProcessorImpl, listenerProvider, handler, fetchLogger, autoStart);
     }
 
     @Test
