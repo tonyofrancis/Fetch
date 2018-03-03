@@ -459,16 +459,22 @@ open class FetchHandlerImpl(val namespace: String,
             return
         }
         closed = true
-        fetchListenerProvider.listeners.clear()
-        priorityIteratorProcessor.stop()
-        downloadManager.close()
-        databaseManager.close()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            handler.looper.quitSafely()
-        } else {
-            handler.looper.quit()
+        handler.post {
+            fetchListenerProvider.listeners.clear()
+            priorityIteratorProcessor.stop()
+            downloadManager.close()
+            databaseManager.close()
+            FetchModulesBuilder.removeActiveFetchHandlerNamespaceInstance(namespace)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                    handler.looper.quitSafely()
+                } else {
+                    handler.looper.quit()
+                }
+            } catch (e: Exception) {
+                logger.e("FetchHandler", e)
+            }
         }
-        FetchModulesBuilder.removeActiveFetchHandlerNamespaceInstance(namespace)
     }
 
     override fun setGlobalNetworkType(networkType: NetworkType) {
