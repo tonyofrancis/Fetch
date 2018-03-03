@@ -7,17 +7,17 @@ import com.tonyodev.fetch2.exception.FetchImplementationException
 import com.tonyodev.fetch2.provider.NetworkProvider
 import java.util.concurrent.Executors
 
-open class DownloadManagerImpl(val downloader: Downloader,
-                               val concurrentLimit: Int,
-                               val progressReportingIntervalMillis: Long,
-                               val downloadBufferSizeBytes: Int,
-                               val logger: Logger,
-                               val networkProvider: NetworkProvider,
-                               val retryOnNetworkGain: Boolean) : DownloadManager {
+class DownloadManagerImpl(private val downloader: Downloader,
+                          private val concurrentLimit: Int,
+                          private val progressReportingIntervalMillis: Long,
+                          private val downloadBufferSizeBytes: Int,
+                          private val logger: Logger,
+                          private val networkProvider: NetworkProvider,
+                          private val retryOnNetworkGain: Boolean) : DownloadManager {
 
-    val lock = Object()
-    open val executorInternal = Executors.newFixedThreadPool(concurrentLimit)
-    open val currentDownloadsMapInternal = hashMapOf<Int, FileDownloader>()
+    private val lock = Object()
+    private val executor = Executors.newFixedThreadPool(concurrentLimit)
+    private val currentDownloadsMap = hashMapOf<Int, FileDownloader>()
     override var delegate: DownloadManager.Delegate? = null
     @Volatile
     private var downloadCounter = 0
@@ -29,7 +29,7 @@ open class DownloadManagerImpl(val downloader: Downloader,
     override fun start(download: Download): Boolean {
         synchronized(lock) {
             throwExceptionIfClosed()
-            if (currentDownloadsMapInternal.containsKey(download.id)) {
+            if (currentDownloadsMap.containsKey(download.id)) {
                 logger.d("DownloadManager already running download $download")
                 return false
             }
@@ -41,14 +41,14 @@ open class DownloadManagerImpl(val downloader: Downloader,
             val fileDownloader = getNewFileDownloaderForDownload(download)
             fileDownloader.delegate = delegate
             downloadCounter += 1
-            currentDownloadsMapInternal[download.id] = fileDownloader
+            currentDownloadsMap[download.id] = fileDownloader
             return try {
-                executorInternal.execute {
+                executor.execute {
                     logger.d("DownloadManager starting download $download")
                     fileDownloader.run()
                     synchronized(lock) {
-                        if (currentDownloadsMapInternal.containsKey(download.id)) {
-                            currentDownloadsMapInternal.remove(download.id)
+                        if (currentDownloadsMap.containsKey(download.id)) {
+                            currentDownloadsMap.remove(download.id)
                             downloadCounter -= 1
                         }
                     }
@@ -64,13 +64,13 @@ open class DownloadManagerImpl(val downloader: Downloader,
     override fun cancel(id: Int): Boolean {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return if (currentDownloadsMapInternal.containsKey(id)) {
-                val fileDownloader = currentDownloadsMapInternal[id] as FileDownloader
+            return if (currentDownloadsMap.containsKey(id)) {
+                val fileDownloader = currentDownloadsMap[id] as FileDownloader
                 fileDownloader.interrupted = true
                 while (!fileDownloader.terminated) {
                     //Wait until download runnable terminates
                 }
-                currentDownloadsMapInternal.remove(id)
+                currentDownloadsMap.remove(id)
                 downloadCounter -= 1
                 logger.d("DownloadManager cancelled download ${fileDownloader.download}")
                 true
@@ -83,19 +83,19 @@ open class DownloadManagerImpl(val downloader: Downloader,
     override fun cancelAll() {
         synchronized(lock) {
             throwExceptionIfClosed()
-            cancelAllDownloadsInternal()
+            cancelAllDownloads()
         }
     }
 
-    open fun cancelAllDownloadsInternal() {
-        currentDownloadsMapInternal.iterator().forEach {
+    private fun cancelAllDownloads() {
+        currentDownloadsMap.iterator().forEach {
             it.value.interrupted = true
             while (!it.value.terminated) {
                 //Wait until download runnable terminates
             }
             logger.d("DownloadManager cancelled download ${it.value.download}")
         }
-        currentDownloadsMapInternal.clear()
+        currentDownloadsMap.clear()
         downloadCounter = 0
     }
 
@@ -106,8 +106,8 @@ open class DownloadManagerImpl(val downloader: Downloader,
             }
             closed = true
             logger.d("DownloadManager closing download manager")
-            cancelAllDownloadsInternal()
-            executorInternal.shutdown()
+            cancelAllDownloads()
+            executor.shutdown()
             downloader.close()
         }
     }
@@ -115,7 +115,7 @@ open class DownloadManagerImpl(val downloader: Downloader,
     override fun contains(id: Int): Boolean {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return currentDownloadsMapInternal.containsKey(id)
+            return currentDownloadsMap.containsKey(id)
         }
     }
 
@@ -136,11 +136,11 @@ open class DownloadManagerImpl(val downloader: Downloader,
     override fun getDownloads(): List<Download> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return currentDownloadsMapInternal.values.map { it.download }
+            return currentDownloadsMap.values.map { it.download }
         }
     }
 
-    open fun throwExceptionIfClosed() {
+    private fun throwExceptionIfClosed() {
         if (closed) {
             throw FetchImplementationException("DownloadManager is already shutdown.",
                     FetchImplementationException.Code.CLOSED)

@@ -10,7 +10,7 @@ import com.tonyodev.fetch2.exception.FetchImplementationException
 
 
 class DatabaseManagerImpl constructor(context: Context,
-                                      val namespace: String,
+                                      private val namespace: String,
                                       override val isMemoryDatabase: Boolean,
                                       override val logger: Logger,
                                       migrations: Array<Migration>) : DatabaseManager {
