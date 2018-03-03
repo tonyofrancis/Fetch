@@ -116,7 +116,7 @@ interface RxFetch : Fetch {
     /**
      * Builder used to configure and create instances of rxFetch with rxJava goodies.
      * */
-    open class Builder constructor(
+    class Builder constructor(
             /** Context*/
             context: Context,
 
