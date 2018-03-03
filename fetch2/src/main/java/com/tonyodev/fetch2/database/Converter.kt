@@ -8,7 +8,7 @@ import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.util.EMPTY_JSON_OBJECT_STRING
 import org.json.JSONObject
 
-open class Converter {
+class Converter {
 
     @TypeConverter
     fun fromStatusValue(value: Int): Status {
@@ -25,7 +25,7 @@ open class Converter {
         val map = mutableMapOf<String, String>()
         val json = JSONObject(headerString)
         json.keys().forEach {
-            map.put(it, json.getString(it))
+            map[it] = json.getString(it)
         }
         return map
     }
