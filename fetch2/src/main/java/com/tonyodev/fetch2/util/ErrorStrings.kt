@@ -22,3 +22,4 @@ const val FETCH_ALREADY_EXIST = "already exists. You cannot have more than one a
         "instance of Fetch with the same namespace. Did your forget to call close the old instance?"
 const val UNIQUE_ID_DATABASE = "UNIQUE constraint failed: requests._id"
 const val UNIQUE_FILE_PATH_DATABASE = "UNIQUE constraint failed: requests._file"
+const val FAILED_TO_CONNECT = "Failed to connect"
