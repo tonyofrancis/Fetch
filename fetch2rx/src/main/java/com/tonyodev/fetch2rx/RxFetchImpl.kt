@@ -22,8 +22,8 @@ open class RxFetchImpl(namespace: String,
     : FetchImpl(namespace, handler, uiHandler,
         fetchHandler, fetchListenerProvider, logger), RxFetch {
 
-    val scheduler = AndroidSchedulers.from(handler.looper)
-    val uiSceduler = AndroidSchedulers.mainThread()
+    protected val scheduler = AndroidSchedulers.from(handler.looper)
+    protected val uiSceduler = AndroidSchedulers.mainThread()
 
     override fun enqueue(request: Request): Convertible<Download> {
         synchronized(lock) {
@@ -191,6 +191,8 @@ open class RxFetchImpl(namespace: String,
     }
 
     companion object {
+
+        @JvmStatic
         fun newInstance(modules: Modules): RxFetchImpl {
             return RxFetchImpl(
                     namespace = modules.prefs.namespace,
@@ -200,6 +202,7 @@ open class RxFetchImpl(namespace: String,
                     fetchListenerProvider = modules.fetchListenerProvider,
                     logger = modules.prefs.logger)
         }
+
     }
 
 }
