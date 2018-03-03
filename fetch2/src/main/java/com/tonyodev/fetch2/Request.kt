@@ -34,6 +34,7 @@ open class Request constructor(
         if (headers != other.headers) return false
         if (priority != other.priority) return false
         if (networkType != other.networkType) return false
+        if (tag != other.tag) return false
         return true
     }
 
@@ -45,12 +46,13 @@ open class Request constructor(
         result = 31 * result + headers.hashCode()
         result = 31 * result + priority.hashCode()
         result = 31 * result + networkType.hashCode()
+        result = 31 * result + (tag?.hashCode() ?: 0)
         return result
     }
 
     override fun toString(): String {
         return "Request(url='$url', file='$file', id=$id, groupId=$groupId, " +
-                "headers=$headers, priority=$priority, networkType=$networkType)"
+                "headers=$headers, priority=$priority, networkType=$networkType, tag=$tag)"
     }
 
 }

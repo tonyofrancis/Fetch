@@ -70,4 +70,7 @@ interface Download {
     /** Gets a copy of this instance. */
     fun copy(): Download
 
+    /** Gets the tag associated with this download.*/
+    val tag: String?
+
 }

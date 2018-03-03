@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteException
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.exception.FetchImplementationException
-import android.arch.persistence.room.RoomMasterTable.TABLE_NAME
 
 
 open class DatabaseManagerImpl constructor(context: Context,
@@ -31,6 +30,7 @@ open class DatabaseManagerImpl constructor(context: Context,
             Room.databaseBuilder(context, DownloadDatabase::class.java,
                     "$namespace.db")
         }
+        builder.addMigrations(*DownloadDatabase.getMigrations())
         builder.build()
     }()
 

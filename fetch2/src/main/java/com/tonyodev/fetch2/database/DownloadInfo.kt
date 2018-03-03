@@ -77,16 +77,15 @@ class DownloadInfo : Download {
         return this.toDownloadInfo()
     }
 
-    override fun toString(): String {
-        return "DownloadInfo(id:$id,namespace:$namespace, url:$url, file:$file, " +
-                "group:$group, priority:$priority, headers:$headers, downloaded:$downloaded, " +
-                "total:$total, status:$status, error:$error, progress:$progress)"
-    }
+    @ColumnInfo(name = DownloadDatabase.COLUMN_TAG)
+    override var tag: String? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
+
         other as DownloadInfo
+
         if (id != other.id) return false
         if (namespace != other.namespace) return false
         if (url != other.url) return false
@@ -100,6 +99,8 @@ class DownloadInfo : Download {
         if (error != other.error) return false
         if (networkType != other.networkType) return false
         if (created != other.created) return false
+        if (tag != other.tag) return false
+
         return true
     }
 
@@ -117,7 +118,14 @@ class DownloadInfo : Download {
         result = 31 * result + error.hashCode()
         result = 31 * result + networkType.hashCode()
         result = 31 * result + created.hashCode()
+        result = 31 * result + (tag?.hashCode() ?: 0)
         return result
+    }
+
+    override fun toString(): String {
+        return "Download(id=$id, namespace='$namespace', url='$url', file='$file', group=$group," +
+                " priority=$priority, headers=$headers, downloaded=$downloaded, total=$total, status=$status," +
+                " error=$error, networkType=$networkType, created=$created, tag=$tag)"
     }
 
 }

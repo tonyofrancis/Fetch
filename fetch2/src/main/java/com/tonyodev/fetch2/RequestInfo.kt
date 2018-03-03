@@ -35,14 +35,21 @@ open class RequestInfo {
         this.headers[key] = value
     }
 
+    /** Associate a tag for this request*/
+    var tag: String? = null
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
+
         other as RequestInfo
+
         if (groupId != other.groupId) return false
         if (headers != other.headers) return false
         if (priority != other.priority) return false
         if (networkType != other.networkType) return false
+        if (tag != other.tag) return false
+
         return true
     }
 
@@ -51,12 +58,13 @@ open class RequestInfo {
         result = 31 * result + headers.hashCode()
         result = 31 * result + priority.hashCode()
         result = 31 * result + networkType.hashCode()
+        result = 31 * result + (tag?.hashCode() ?: 0)
         return result
     }
 
     override fun toString(): String {
-        return "RequestInfo(groupId=$groupId, headers=$headers, " +
-                "priority=$priority, networkType=$networkType)"
+        return "RequestInfo(groupId=$groupId, headers=$headers, priority=$priority, " +
+                "networkType=$networkType, tag=$tag)"
     }
 
 }
