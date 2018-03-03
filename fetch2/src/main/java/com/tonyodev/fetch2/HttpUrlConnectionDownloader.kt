@@ -19,8 +19,9 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
          * */
         httpUrlConnectionPreferences: HttpUrlConnectionPreferences? = null) : Downloader {
 
-    val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
-    val connections = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
+    protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
+    protected val connections: MutableMap<Downloader.Response, HttpURLConnection>
+            = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
 
     override fun execute(request: Downloader.Request): Downloader.Response? {
         val httpUrl = URL(request.url)
@@ -60,7 +61,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return response
     }
 
-    fun isResponseOk(responseCode: Int): Boolean {
+    protected fun isResponseOk(responseCode: Int): Boolean {
         return responseCode in 200..299
     }
 
