@@ -1,3 +1,17 @@
+Version 2.0.0-RC9
+- Lowered min sdk to 14
+- Updated android support library, Kotlin, rxJava and okHttp library
+- Added copy method on Download Interface
+- Bug fixes on DownloadInfo class
+- Fixed FetchImplementationException crash after calling close method on Fetch.
+- Added missing callbacks on rxFetch enqueue methods
+- Better error handling for non-existing urls - Special thanks to Joshua Park (jclova) for the fix.
+- Added enabledAutoStart method on Fetch Builder
+- Added retry download on network lost feature.
+- Added enableRetryOnNetworkGain method on FetchBuilder
+- Added Tag field to Request and Download classes. Tags are saved to the FetchDatabase. See documentation.
+- Overall improvement and bug fixes
+
 Version 2.0.0-RC8
 - Can now use your own unique id for a request.
 - Added new methods removeAllWithStatus(status: Status) and fun deleteAllWithStatus(status: Status)

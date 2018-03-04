@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/tonyofrancis/Fetch.svg?branch=v2)](https://travis-ci.org/tonyofrancis/Fetch)
-[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch2/images/download.svg?version=2.0.0-RC8) ](https://bintray.com/tonyofrancis/maven/fetch2/2.0.0-RC8/link)
+[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch2/images/download.svg?version=2.0.0-RC9) ](https://bintray.com/tonyofrancis/maven/fetch2/2.0.0-RC9/link)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Networking-blue.svg?style=flat)](https://android-arsenal.com/details/1/5196)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tonyofrancis/Fetch/blob/master/LICENSE)
 
@@ -44,7 +44,7 @@ How to use Fetch
 Using Fetch is easy! Just add the Gradle dependency to your application's build.gradle file.
 
 ```java
-implementation "com.tonyodev.fetch2:fetch2:2.0.0-RC8"
+implementation "com.tonyodev.fetch2:fetch2:2.0.0-RC9"
 ```
 
 Next, get an instance of Fetch using the builder, and request a download.
@@ -239,7 +239,7 @@ to use the OkHttp Downloader instead. You can create your own custom downloaders
 if necessary. See the Java docs for details.
 
 ```java
-implementation "com.tonyodev.fetch2downloaders:fetch2downloaders:2.0.0-RC8"
+implementation "com.tonyodev.fetch2downloaders:fetch2downloaders:2.0.0-RC9"
 ```
 Set the OkHttp Downloader for Fetch to use.
 ```java
@@ -260,7 +260,7 @@ If you would like to take advantage of RxJava2 features when using Fetch,
 add the following gradle dependency to your application's build.gradle file.
 
 ```java
-implementation "com.tonyodev.fetch2rx:fetch2rx:2.0.0-RC8"
+implementation "com.tonyodev.fetch2rx:fetch2rx:2.0.0-RC9"
 ```
 
 RxFetch makes it super easy to enqueue download requests and query downloads using rxJava2 functional methods.
@@ -292,7 +292,7 @@ Fetch1 Migration
 
 Migrate downloads from Fetch1 to Fetch2 using the migration assistant. Add the following gradle dependency to your application's build.gradle file.
 ```java
-implementation "com.tonyodev.fetchmigrator:fetchmigrator:2.0.0-RC8"
+implementation "com.tonyodev.fetchmigrator:fetchmigrator:2.0.0-RC9"
 ```
 
 Then run the Migrator.
