@@ -3,6 +3,7 @@ package com.tonyodev.fetch2.downloader
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.Logger
+import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.exception.FetchImplementationException
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import java.util.concurrent.Executors
@@ -143,7 +144,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
     private fun throwExceptionIfClosed() {
         if (closed) {
             throw FetchImplementationException("DownloadManager is already shutdown.",
-                    FetchImplementationException.Code.CLOSED)
+                    FetchException.Code.CLOSED)
         }
     }
 

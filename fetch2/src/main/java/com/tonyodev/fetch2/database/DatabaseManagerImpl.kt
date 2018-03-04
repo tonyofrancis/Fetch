@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteException
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
+import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.exception.FetchImplementationException
 
 
@@ -170,7 +171,7 @@ class DatabaseManagerImpl constructor(context: Context,
     private fun throwExceptionIfClosed() {
         if (closed) {
             throw FetchImplementationException("database is closed",
-                    FetchImplementationException.Code.CLOSED)
+                    FetchException.Code.CLOSED)
         }
     }
 
