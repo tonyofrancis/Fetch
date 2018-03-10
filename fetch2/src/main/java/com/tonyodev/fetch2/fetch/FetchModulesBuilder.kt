@@ -10,7 +10,6 @@ import com.tonyodev.fetch2.database.DownloadDatabase
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl
 import com.tonyodev.fetch2.exception.FetchException
-import com.tonyodev.fetch2.helper.DownloadInfoManagerDelegate
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessor
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl
@@ -52,7 +51,6 @@ object FetchModulesBuilder {
         val fetchListenerProvider: ListenerProvider
         val downloadManager: DownloadManager
         val databaseManager: DatabaseManager
-        val downloadInfoManagerDelegate: DownloadInfoManagerDelegate
         val priorityIteratorProcessor: PriorityIteratorProcessor<Download>
         val fetchHandler: FetchHandler
         val networkInfoProvider: NetworkInfoProvider
@@ -85,16 +83,10 @@ object FetchModulesBuilder {
                     downloadBufferSizeBytes = prefs.downloadBufferSizeBytes,
                     logger = prefs.logger,
                     networkInfoProvider = networkInfoProvider,
-                    retryOnNetworkGain = prefs.retryOnNetworkGain)
-
-            downloadInfoManagerDelegate = DownloadInfoManagerDelegate(
-                    downloadInfoUpdater = downloadInfoUpdater,
+                    retryOnNetworkGain = prefs.retryOnNetworkGain,
+                    fetchListenerProvider = fetchListenerProvider,
                     uiHandler = uiHandler,
-                    fetchListener = fetchListenerProvider.mainListener,
-                    logger = prefs.logger,
-                    retryOnNetworkGain = prefs.retryOnNetworkGain)
-
-            downloadManager.delegate = downloadInfoManagerDelegate
+                    downloadInfoUpdater = downloadInfoUpdater)
 
             priorityIteratorProcessor = PriorityIteratorProcessorImpl(
                     handler = handler,

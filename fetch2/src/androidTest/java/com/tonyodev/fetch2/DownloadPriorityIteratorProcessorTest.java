@@ -3,6 +3,7 @@ package com.tonyodev.fetch2;
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -12,9 +13,11 @@ import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
+import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
+import com.tonyodev.fetch2.provider.ListenerProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 
@@ -48,8 +51,12 @@ public class DownloadPriorityIteratorProcessorTest {
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
+        final ListenerProvider listenerProvider = new ListenerProvider();
+        final Handler uiHandler = new Handler(Looper.getMainLooper());
+        final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain);
+                progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
+                listenerProvider, uiHandler, downloadInfoUpdater);
         priorityIteratorProcessorImpl = new PriorityIteratorProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),

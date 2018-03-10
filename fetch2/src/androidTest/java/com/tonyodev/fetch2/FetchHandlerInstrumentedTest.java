@@ -3,6 +3,7 @@ package com.tonyodev.fetch2;
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -15,6 +16,7 @@ import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.fetch.FetchHandler;
 import com.tonyodev.fetch2.fetch.FetchHandlerImpl;
+import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
 import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
@@ -63,15 +65,18 @@ public class FetchHandlerInstrumentedTest {
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
+        final ListenerProvider listenerProvider = new ListenerProvider();
+        final Handler uiHandler = new Handler(Looper.getMainLooper());
+        final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain);
+                progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
+                listenerProvider, uiHandler, downloadInfoUpdater);
         priorityIteratorProcessorImpl = new PriorityIteratorProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),
                 downloadManager,
                 new NetworkInfoProvider(appContext),
                 fetchLogger);
-        final ListenerProvider listenerProvider = new ListenerProvider();
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
                 priorityIteratorProcessorImpl, listenerProvider, handler, fetchLogger, autoStart);
     }

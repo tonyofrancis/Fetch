@@ -5,7 +5,6 @@ import java.io.Closeable
 
 interface DownloadManager : Closeable {
 
-    var delegate: Delegate?
     val isClosed: Boolean
 
     fun start(download: Download): Boolean
@@ -16,7 +15,6 @@ interface DownloadManager : Closeable {
     fun getActiveDownloadCount(): Int
     fun getDownloads(): List<Download>
     fun getNewFileDownloaderForDownload(download: Download): FileDownloader
-
-    interface Delegate : FileDownloader.Delegate
+    fun getFileDownloaderDelegate(): FileDownloader.Delegate
 
 }

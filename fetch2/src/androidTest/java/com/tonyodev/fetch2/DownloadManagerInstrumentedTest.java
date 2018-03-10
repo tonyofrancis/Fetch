@@ -1,12 +1,20 @@
 package com.tonyodev.fetch2;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.tonyodev.fetch2.database.DatabaseManager;
+import com.tonyodev.fetch2.database.DatabaseManagerImpl;
+import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
+import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
+import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
+import com.tonyodev.fetch2.provider.ListenerProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
@@ -26,6 +34,7 @@ import static org.junit.Assert.assertTrue;
 public class DownloadManagerInstrumentedTest {
 
     private DownloadManager downloadManager;
+    private DatabaseManager databaseManager;
     private Context appContext;
 
     @Before
@@ -33,22 +42,31 @@ public class DownloadManagerInstrumentedTest {
         // Context of the app under test.
         appContext = InstrumentationRegistry.getTargetContext();
         assertEquals("com.tonyodev.fetch2.test", appContext.getPackageName());
+        final String namespace = "fetch2DatabaseTest";
+        final Migration[] migrations = DownloadDatabase.getMigrations();
+        FetchLogger fetchLogger = new FetchLogger(true, namespace);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace,
+                true, fetchLogger, migrations);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final long progessInterval = FetchDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
-        final String namespace = "fetch2DatabaseTest";
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
-        FetchLogger fetchLogger = new FetchLogger(true, namespace);
+        final ListenerProvider listenerProvider = new ListenerProvider();
+        final Handler uiHandler = new Handler(Looper.getMainLooper());
+        final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain);
+                progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
+                listenerProvider, uiHandler, downloadInfoUpdater);
     }
 
     @After
     public void cleanUp() throws Exception {
         downloadManager.close();
         assertTrue(downloadManager.isClosed());
+        databaseManager.close();
+        assertTrue(databaseManager.isClosed());
     }
 
     @Test

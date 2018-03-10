@@ -7,15 +7,15 @@ import com.tonyodev.fetch2.FetchListener
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.DownloadInfo
-import com.tonyodev.fetch2.downloader.DownloadManager
+import com.tonyodev.fetch2.downloader.FileDownloader
 import com.tonyodev.fetch2.util.defaultNoError
 
 
-class DownloadInfoManagerDelegate(private val downloadInfoUpdater: DownloadInfoUpdater,
-                                  private val uiHandler: Handler,
-                                  private val fetchListener: FetchListener,
-                                  private val logger: Logger,
-                                  private val retryOnNetworkGain: Boolean) : DownloadManager.Delegate {
+class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdater,
+                             private val uiHandler: Handler,
+                             private val fetchListener: FetchListener,
+                             private val logger: Logger,
+                             private val retryOnNetworkGain: Boolean) : FileDownloader.Delegate {
 
     override fun onStarted(download: Download, etaInMilliseconds: Long, downloadedBytesPerSecond: Long) {
         val downloadInfo = download as DownloadInfo
@@ -30,14 +30,21 @@ class DownloadInfoManagerDelegate(private val downloadInfoUpdater: DownloadInfoU
         }
     }
 
+    private val progressRunnable = object: DownloadReportingRunnable() {
+        override fun run() {
+            fetchListener.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
+        }
+    }
+
     override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
         try {
             val downloadInfo = download as DownloadInfo
             downloadInfo.status = Status.DOWNLOADING
             downloadInfoUpdater.updateFileBytesInfoAndStatusOnly(downloadInfo)
-            uiHandler.post {
-                fetchListener.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
-            }
+            progressRunnable.download = download
+            progressRunnable.etaInMilliSeconds = etaInMilliSeconds
+            progressRunnable.downloadedBytesPerSecond = downloadedBytesPerSecond
+            uiHandler.post(progressRunnable)
         } catch (e: Exception) {
             logger.e("DownloadManagerDelegate", e)
         }
