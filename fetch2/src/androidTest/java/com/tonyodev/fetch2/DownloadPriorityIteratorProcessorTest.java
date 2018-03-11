@@ -14,8 +14,8 @@ import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
-import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
-import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl;
+import com.tonyodev.fetch2.helper.PriorityListProcessor;
+import com.tonyodev.fetch2.helper.PriorityListProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
 import com.tonyodev.fetch2.provider.ListenerProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(AndroidJUnit4.class)
 public class DownloadPriorityIteratorProcessorTest {
 
-    private PriorityIteratorProcessor<Download> priorityIteratorProcessorImpl;
+    private PriorityListProcessor<Download> priorityListProcessorImpl;
 
     @Before
     public void useAppContext() throws Exception {
@@ -57,7 +57,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 listenerProvider, uiHandler, downloadInfoUpdater);
-        priorityIteratorProcessorImpl = new PriorityIteratorProcessorImpl(
+        priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),
                 downloadManager,
@@ -67,39 +67,39 @@ public class DownloadPriorityIteratorProcessorTest {
 
     @Test
     public void pause() throws Exception {
-        priorityIteratorProcessorImpl.stop();
-        priorityIteratorProcessorImpl.start();
-        priorityIteratorProcessorImpl.pause();
-        assertTrue(priorityIteratorProcessorImpl.isPaused());
+        priorityListProcessorImpl.stop();
+        priorityListProcessorImpl.start();
+        priorityListProcessorImpl.pause();
+        assertTrue(priorityListProcessorImpl.isPaused());
     }
 
     @Test
     public void resume() throws Exception {
-        priorityIteratorProcessorImpl.stop();
-        priorityIteratorProcessorImpl.start();
-        priorityIteratorProcessorImpl.pause();
-        priorityIteratorProcessorImpl.resume();
-        assertFalse(priorityIteratorProcessorImpl.isPaused());
+        priorityListProcessorImpl.stop();
+        priorityListProcessorImpl.start();
+        priorityListProcessorImpl.pause();
+        priorityListProcessorImpl.resume();
+        assertFalse(priorityListProcessorImpl.isPaused());
     }
 
     @Test
     public void start() throws Exception {
-        priorityIteratorProcessorImpl.stop();
-        priorityIteratorProcessorImpl.start();
-        assertFalse(priorityIteratorProcessorImpl.isStopped());
+        priorityListProcessorImpl.stop();
+        priorityListProcessorImpl.start();
+        assertFalse(priorityListProcessorImpl.isStopped());
     }
 
     @Test
     public void stop() throws Exception {
-        priorityIteratorProcessorImpl.stop();
-        priorityIteratorProcessorImpl.start();
-        priorityIteratorProcessorImpl.stop();
-        assertTrue(priorityIteratorProcessorImpl.isStopped());
+        priorityListProcessorImpl.stop();
+        priorityListProcessorImpl.start();
+        priorityListProcessorImpl.stop();
+        assertTrue(priorityListProcessorImpl.isStopped());
     }
 
     @After
     public void cleanup() throws Exception {
-        priorityIteratorProcessorImpl.stop();
+        priorityListProcessorImpl.stop();
     }
 
 }

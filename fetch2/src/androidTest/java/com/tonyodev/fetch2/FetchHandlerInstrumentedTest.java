@@ -17,8 +17,8 @@ import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.fetch.FetchHandler;
 import com.tonyodev.fetch2.fetch.FetchHandlerImpl;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
-import com.tonyodev.fetch2.helper.PriorityIteratorProcessor;
-import com.tonyodev.fetch2.helper.PriorityIteratorProcessorImpl;
+import com.tonyodev.fetch2.helper.PriorityListProcessor;
+import com.tonyodev.fetch2.helper.PriorityListProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
 import com.tonyodev.fetch2.provider.ListenerProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
@@ -45,7 +45,7 @@ public class FetchHandlerInstrumentedTest {
     private Context appContext;
     private FetchHandler fetchHandler;
     private DatabaseManager databaseManager;
-    private PriorityIteratorProcessor<Download> priorityIteratorProcessorImpl;
+    private PriorityListProcessor<Download> priorityListProcessorImpl;
 
     @Before
     public void useAppContext() throws Exception {
@@ -71,14 +71,14 @@ public class FetchHandlerInstrumentedTest {
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 listenerProvider, uiHandler, downloadInfoUpdater);
-        priorityIteratorProcessorImpl = new PriorityIteratorProcessorImpl(
+        priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),
                 downloadManager,
                 new NetworkInfoProvider(appContext),
                 fetchLogger);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
-                priorityIteratorProcessorImpl, listenerProvider, handler, fetchLogger, autoStart);
+                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart);
     }
 
     @Test
@@ -154,7 +154,7 @@ public class FetchHandlerInstrumentedTest {
         assertNotNull(downloads);
         assertEquals(size, downloads.size());
         fetchHandler.freeze();
-        assertTrue(priorityIteratorProcessorImpl.isPaused());
+        assertTrue(priorityListProcessorImpl.isPaused());
     }
 
     @Test
@@ -196,7 +196,7 @@ public class FetchHandlerInstrumentedTest {
         List<Request> requestList = getTestRequestList(size);
         fetchHandler.enqueue(requestList);
         fetchHandler.unfreeze();
-        assertFalse(priorityIteratorProcessorImpl.isPaused());
+        assertFalse(priorityListProcessorImpl.isPaused());
     }
 
     @Test
@@ -435,7 +435,7 @@ public class FetchHandlerInstrumentedTest {
     public void updateSetGlobalNetworkType() throws Exception {
         final NetworkType networkType = NetworkType.WIFI_ONLY;
         fetchHandler.setGlobalNetworkType(networkType);
-        assertEquals(networkType, priorityIteratorProcessorImpl.getGlobalNetworkType());
+        assertEquals(networkType, priorityListProcessorImpl.getGlobalNetworkType());
 
         fetchHandler.setGlobalNetworkType(NetworkType.GLOBAL_OFF);
     }

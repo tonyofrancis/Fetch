@@ -157,6 +157,12 @@ class DatabaseManagerImpl constructor(context: Context,
         }
     }
 
+    override fun getPendingDownloadsSorted(): List<DownloadInfo> {
+        synchronized(lock) {
+            return requestDatabase.requestDao().getPendingDownloadsSorted(Status.QUEUED)
+        }
+    }
+
     override fun close() {
         synchronized(lock) {
             if (closed) {

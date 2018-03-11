@@ -2,6 +2,11 @@ package com.tonyodev.fetch2.database
 
 import android.arch.persistence.room.*
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_CREATED
+import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_GROUP
+import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_ID
+import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_PRIORITY
+import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_STATUS
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.TABLE_NAME
 
 
@@ -32,19 +37,22 @@ interface DownloadDao {
     @Query("SELECT * FROM $TABLE_NAME")
     fun get(): List<DownloadInfo>
 
-    @Query("SELECT * FROM $TABLE_NAME WHERE _id = :id")
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_ID = :id")
     fun get(id: Int): DownloadInfo?
 
-    @Query("SELECT * FROM $TABLE_NAME WHERE _id IN (:ids)")
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_ID IN (:ids)")
     fun get(ids: List<Int>): List<DownloadInfo>
 
-    @Query("SELECT * FROM $TABLE_NAME WHERE _status = :status")
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_STATUS = :status")
     fun getByStatus(status: Status): List<DownloadInfo>
 
-    @Query("SELECT * FROM $TABLE_NAME WHERE _group = :group")
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_GROUP = :group")
     fun getByGroup(group: Int): List<DownloadInfo>
 
-    @Query("SELECT * FROM $TABLE_NAME WHERE _group = :group AND _status = :status")
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_GROUP = :group AND $COLUMN_STATUS = :status")
     fun getByGroupWithStatus(group: Int, status: Status): List<DownloadInfo>
+
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_STATUS = :status ORDER BY $COLUMN_PRIORITY DESC, $COLUMN_CREATED ASC")
+    fun getPendingDownloadsSorted(status: Status): List<DownloadInfo>
 
 }

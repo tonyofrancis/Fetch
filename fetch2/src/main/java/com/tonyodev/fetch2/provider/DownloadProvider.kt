@@ -27,4 +27,8 @@ class DownloadProvider(private val databaseManager: DatabaseManager) {
         return databaseManager.getByStatus(status)
     }
 
+    fun getPendingDownloadsSorted(): List<Download> {
+        return databaseManager.getPendingDownloadsSorted()
+    }
+
 }
