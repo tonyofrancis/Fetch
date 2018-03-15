@@ -106,13 +106,18 @@ class DownloadManagerImpl(private val downloader: Downloader,
         downloadCounter = 0
     }
 
-    private fun terminateAllDownloads() {
+    override fun terminateAllDownloads() {
         currentDownloadsMap.iterator().forEach {
             it.value.terminated = true
             logger.d("DownloadManager terminated download ${it.value.download}")
         }
         currentDownloadsMap.clear()
         downloadCounter = 0
+        try {
+            downloader.close()
+        } catch (e: Exception) {
+            logger.e("DownloadManager closing downloader", e)
+        }
     }
 
     override fun close() {
@@ -121,14 +126,9 @@ class DownloadManagerImpl(private val downloader: Downloader,
                 return
             }
             closed = true
-            logger.d("DownloadManager closing download manager")
             terminateAllDownloads()
+            logger.d("DownloadManager closing download manager")
             executor.shutdown()
-            try {
-                downloader.close()
-            } catch (e: Exception) {
-                logger.e("DownloadManager closing downloader", e)
-            }
         }
     }
 

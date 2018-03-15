@@ -461,9 +461,10 @@ class FetchHandlerImpl(private val namespace: String,
         isTerminating = true
         fetchListenerProvider.listeners.clear()
         priorityListProcessor.stop()
-        downloadManager.close()
+        downloadManager.terminateAllDownloads()
         handler.post {
             try {
+                downloadManager.close()
                 databaseManager.close()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                     handler.looper.quitSafely()
