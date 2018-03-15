@@ -1,4 +1,9 @@
-Version 2.0.0-RC10(FINAL RC)
+Version 2.0.0-RC11
+- Fixed Fetch close bugs
+- Fixed onResume bugs
+- Bug fixes
+
+Version 2.0.0-RC10
 - Memory usage improvements
 - Performance improvements
 - Bug fixes
