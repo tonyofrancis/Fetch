@@ -69,15 +69,23 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         if (connections.contains(response)) {
             val client = connections[response] as HttpURLConnection
             connections.remove(response)
-            client.disconnect()
+            disconnectClient(client)
         }
     }
 
     override fun close() {
         connections.entries.forEach {
-            it.value.disconnect()
+            disconnectClient(it.value)
         }
         connections.clear()
+    }
+
+    private fun disconnectClient(client: HttpURLConnection?) {
+        try {
+            client?.disconnect()
+        } catch (e: Exception) {
+
+        }
     }
 
     /**

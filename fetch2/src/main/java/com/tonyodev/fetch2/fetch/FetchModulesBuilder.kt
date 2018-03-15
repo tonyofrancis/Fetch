@@ -18,22 +18,20 @@ import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.FETCH_ALREADY_EXIST
 
-import java.lang.ref.WeakReference
-
 object FetchModulesBuilder {
 
     private val lock = Object()
-    private val activeFetchHandlerPool: MutableMap<String, WeakReference<FetchHandler>> = hashMapOf()
+    private val activeFetchHandlerPool: MutableMap<String, Modules> = hashMapOf()
 
     fun buildModulesFromPrefs(prefs: FetchBuilderPrefs): Modules {
         synchronized(lock) {
-            val ref = activeFetchHandlerPool[prefs.namespace]?.get()
-            if (ref != null) {
+            val modulesRef = activeFetchHandlerPool[prefs.namespace]
+            if (modulesRef != null) {
                 throw FetchException("Namespace:${prefs.namespace} $FETCH_ALREADY_EXIST",
                         FetchException.Code.FETCH_INSTANCE_WITH_NAMESPACE_ALREADY_EXIST)
             }
             val modules = Modules(prefs)
-            activeFetchHandlerPool[prefs.namespace] = WeakReference(modules.fetchHandler)
+            activeFetchHandlerPool[prefs.namespace] = modules
             return modules
         }
     }

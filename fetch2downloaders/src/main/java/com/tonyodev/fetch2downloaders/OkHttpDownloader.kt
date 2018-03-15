@@ -58,15 +58,23 @@ open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient
         if (connections.contains(response)) {
             val okHttpResponse = connections[response] as Response
             connections.remove(response)
-            okHttpResponse.close()
+            closeResponse(okHttpResponse)
         }
     }
 
     override fun close() {
         connections.entries.forEach {
-            it.value.close()
+            closeResponse(it.value)
         }
         connections.clear()
+    }
+
+    private fun closeResponse(response: Response?) {
+        try {
+            response?.close()
+        } catch (e: Exception) {
+
+        }
     }
 
 }

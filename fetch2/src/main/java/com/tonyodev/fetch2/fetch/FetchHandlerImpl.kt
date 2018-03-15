@@ -5,7 +5,6 @@ import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.downloader.DownloadManager
-import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
@@ -24,9 +23,7 @@ class FetchHandlerImpl(private val namespace: String,
                        private val autoStart: Boolean) : FetchHandler {
 
     @Volatile
-    private var closed = false
-    override val isClosed: Boolean
-        get() = closed
+    private var isTerminating = false
 
     override fun init() {
         databaseManager.verifyDatabase()
@@ -36,7 +33,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun enqueue(request: Request): Download {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         val downloadInfo = request.toDownloadInfo()
         downloadInfo.namespace = namespace
         downloadInfo.status = Status.QUEUED
@@ -45,7 +42,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun enqueue(requests: List<Request>): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         val downloadInfoList = requests.map {
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
@@ -64,7 +61,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun pause(ids: IntArray): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         ids.forEach {
             if (isDownloading(it)) {
                 cancelDownload(it)
@@ -86,7 +83,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun pausedGroup(id: Int): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         var downloadInfoList = databaseManager.getByGroup(id)
         downloadInfoList.forEach {
             if (isDownloading(it.id)) {
@@ -109,20 +106,20 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun freeze() {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         downloadManager.cancelAll()
         priorityListProcessor.pause()
         databaseManager.verifyDatabase()
     }
 
     override fun unfreeze() {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         databaseManager.verifyDatabase()
         priorityListProcessor.resume()
     }
 
     override fun resume(ids: IntArray): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         ids.forEach {
             if (isDownloading(it)) {
                 cancelDownload(it)
@@ -144,7 +141,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun resumeGroup(id: Int): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         val downloadsInfoList = databaseManager.getByGroup(id)
                 .filter {
                     !isDownloading(it.id) && canResumeDownload(it)
@@ -162,7 +159,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun remove(ids: IntArray): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         ids.forEach {
             if (isDownloading(it)) {
                 cancelDownload(it)
@@ -178,7 +175,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun removeGroup(id: Int): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         val downloadInfoList = databaseManager.getByGroup(id)
         downloadInfoList.forEach {
             if (isDownloading(it.id)) {
@@ -194,7 +191,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun removeAll(): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         downloadManager.cancelAll()
         val downloadInfoList = databaseManager.get()
         databaseManager.deleteAll()
@@ -206,7 +203,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun removeAllWithStatus(status: Status): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         val downloadInfoList = databaseManager.getByStatus(status)
         downloadInfoList.forEach {
             if (isDownloading(it.id)) {
@@ -222,7 +219,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun delete(ids: IntArray): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         ids.forEach {
             if (isDownloading(it)) {
                 cancelDownload(it)
@@ -246,7 +243,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun deleteGroup(id: Int): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         val downloadInfoList = databaseManager.getByGroup(id)
         downloadInfoList.forEach {
             if (isDownloading(it.id)) {
@@ -270,7 +267,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun deleteAll(): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         downloadManager.cancelAll()
         val downloadInfoList = databaseManager.get()
         databaseManager.deleteAll()
@@ -290,7 +287,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun deleteAllWithStatus(status: Status): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         val downloadInfoList = databaseManager.getByStatus(status)
         downloadInfoList.forEach {
             if (isDownloading(it.id)) {
@@ -314,7 +311,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun cancel(ids: IntArray): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         ids.forEach {
             if (isDownloading(it)) {
                 cancelDownload(it)
@@ -337,7 +334,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun cancelGroup(id: Int): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         var downloadInfoList = databaseManager.getByGroup(id)
         downloadInfoList.forEach {
             if (isDownloading(it.id)) {
@@ -361,7 +358,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun cancelAll(): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         var downloadInfoList = databaseManager.get()
         downloadInfoList.forEach {
             if (isDownloading(it.id)) {
@@ -385,7 +382,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun retry(ids: IntArray): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         val downloadInfoList = databaseManager.get(ids.toList()).filterNotNull()
         downloadInfoList.forEach {
             if (canRetryDownload(it)) {
@@ -403,7 +400,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun updateRequest(id: Int, requestInfo: RequestInfo): Download? {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         var downloadInfo = databaseManager.get(id)
         if (downloadInfo != null) {
             if (isDownloading(id)) {
@@ -423,17 +420,17 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun getDownloads(): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         return databaseManager.get()
     }
 
     override fun getDownload(id: Int): Download? {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         return databaseManager.get(id)
     }
 
     override fun getDownloads(idList: List<Int>): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         val downloads = databaseManager.get(idList)
         val results = mutableListOf<Download>()
         downloads.filterNotNull().forEach {
@@ -443,62 +440,64 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun getDownloadsInGroup(id: Int): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         return databaseManager.getByGroup(id)
     }
 
     override fun getDownloadsWithStatus(status: Status): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         return databaseManager.getByStatus(status)
     }
 
     override fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<Download> {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         return databaseManager.getDownloadsInGroupWithStatus(groupId, status)
     }
 
     override fun close() {
-        if (closed) {
+        if (isTerminating) {
             return
         }
-        closed = true
+        isTerminating = true
         fetchListenerProvider.listeners.clear()
         priorityListProcessor.stop()
         downloadManager.close()
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                handler.looper.quitSafely()
-            } else {
-                handler.looper.quit()
+        handler.post {
+            try {
+                databaseManager.close()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                    handler.looper.quitSafely()
+                } else {
+                    handler.looper.quit()
+                }
+            } catch (e: Exception) {
+                logger.e("FetchHandler", e)
             }
-        } catch (e: Exception) {
-            logger.e("FetchHandler", e)
         }
-        databaseManager.close()
         FetchModulesBuilder.removeActiveFetchHandlerNamespaceInstance(namespace)
     }
 
     override fun setGlobalNetworkType(networkType: NetworkType) {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         priorityListProcessor.globalNetworkType = networkType
         downloadManager.cancelAll()
         databaseManager.verifyDatabase()
     }
 
     override fun enableLogging(enabled: Boolean) {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         logger.d("Enable logging - $enabled")
         logger.enabled = enabled
     }
 
     override fun addListener(listener: FetchListener) {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         fetchListenerProvider.listeners.add(listener)
         logger.d("Added listener $listener")
     }
 
     override fun removeListener(listener: FetchListener) {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         val iterator = fetchListenerProvider.listeners.iterator()
         while (iterator.hasNext()) {
             if (iterator.next() == listener) {
@@ -510,29 +509,20 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun isDownloading(id: Int): Boolean {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         return downloadManager.contains(id)
     }
 
     override fun cancelDownload(id: Int): Boolean {
-        throwExceptionIfClosed()
+        startPriorityQueueIfNotStarted()
         return downloadManager.cancel(id)
     }
-
-    override fun throwExceptionIfClosed() {
-        if (closed) {
-            throw FetchException("This fetch instance has been closed. Create a new " +
-                    "instance using the builder.",
-                    FetchException.Code.CLOSED)
-        }
-        startPriorityQueueIfNotStarted()
-    }
-
+    
     private fun startPriorityQueueIfNotStarted() {
-        if (priorityListProcessor.isStopped) {
+        if (priorityListProcessor.isStopped && !isTerminating) {
             priorityListProcessor.start()
         }
-        if (priorityListProcessor.isPaused) {
+        if (priorityListProcessor.isPaused && !isTerminating) {
             priorityListProcessor.resume()
         }
     }

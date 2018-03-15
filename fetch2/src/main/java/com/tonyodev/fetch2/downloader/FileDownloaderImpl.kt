@@ -50,10 +50,10 @@ class FileDownloaderImpl(private val initialDownload: Download,
         try {
             val file = getFile()
             downloaded = file.length()
-            if (!interrupted) {
+            if (!interrupted && !terminated) {
                 response = downloader.execute(getRequest())
                 val isResponseSuccessful = response?.isSuccessful ?: false
-                if (!interrupted && response != null && isResponseSuccessful) {
+                if (!interrupted && !terminated && response != null && isResponseSuccessful) {
                     total = if (response.contentLength == (-1).toLong()) {
                         -1
                     } else {
@@ -67,14 +67,16 @@ class FileDownloaderImpl(private val initialDownload: Download,
                         output.seek(0)
                         logger.d("FileDownloader starting Download $download")
                     }
-                    if (!interrupted) {
+                    if (!interrupted && !terminated) {
                         input = BufferedInputStream(response.byteStream, downloadBufferSizeBytes)
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
-                        delegate?.onStarted(
-                                download = downloadInfo,
-                                etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
-                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                        if (!terminated) {
+                            delegate?.onStarted(
+                                    download = downloadInfo,
+                                    etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
+                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                        }
                         writeToOutput(input, output)
                     }
                 } else if (response == null) {
@@ -91,14 +93,16 @@ class FileDownloaderImpl(private val initialDownload: Download,
             if (!completedDownload) {
                 downloadInfo.downloaded = downloaded
                 downloadInfo.total = total
-                delegate?.onProgress(
-                        download = downloadInfo,
-                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                if (!terminated) {
+                    delegate?.onProgress(
+                            download = downloadInfo,
+                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                }
             }
         } catch (e: Exception) {
-            logger.e("FileDownloader", e)
-            if (!interrupted) {
+            if (!interrupted && !terminated) {
+                logger.e("FileDownloader", e)
                 var error = getErrorFromMessage(e.message)
                 if (retryOnNetworkGain) {
                     try {
@@ -113,7 +117,9 @@ class FileDownloaderImpl(private val initialDownload: Download,
                 downloadInfo.downloaded = downloaded
                 downloadInfo.total = total
                 downloadInfo.error = error
-                delegate?.onError(download = downloadInfo)
+                if (!terminated) {
+                    delegate?.onError(download = downloadInfo)
+                }
             }
         } finally {
             try {
@@ -146,52 +152,57 @@ class FileDownloaderImpl(private val initialDownload: Download,
         var downloadSpeedStartTime = System.nanoTime()
 
         var read = input.read(buffer, 0, downloadBufferSizeBytes)
-        while (!interrupted && read != -1) {
+        while (!interrupted && !terminated && read != -1) {
             output.write(buffer, 0, read)
-            downloaded += read
+            if (!terminated) {
+                downloaded += read
+                downloadSpeedStopTime = System.nanoTime()
+                val downloadSpeedCheckTimeElapsed = hasIntervalTimeElapsed(downloadSpeedStartTime,
+                        downloadSpeedStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
 
-            downloadSpeedStopTime = System.nanoTime()
-            val downloadSpeedCheckTimeElapsed = hasIntervalTimeElapsed(downloadSpeedStartTime,
-                    downloadSpeedStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
+                if (downloadSpeedCheckTimeElapsed) {
+                    downloadedBytesPerSecond = downloaded - downloadedBytesPerSecond
+                    movingAverageCalculator.add(downloadedBytesPerSecond.toDouble())
+                    averageDownloadedBytesPerSecond =
+                            movingAverageCalculator.getMovingAverageWithWeightOnRecentValues()
+                    estimatedTimeRemainingInMilliseconds = calculateEstimatedTimeRemainingInMilliseconds(
+                            downloadedBytes = downloaded,
+                            totalBytes = total,
+                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                    downloadedBytesPerSecond = downloaded
+                }
 
-            if (downloadSpeedCheckTimeElapsed) {
-                downloadedBytesPerSecond = downloaded - downloadedBytesPerSecond
-                movingAverageCalculator.add(downloadedBytesPerSecond.toDouble())
-                averageDownloadedBytesPerSecond =
-                        movingAverageCalculator.getMovingAverageWithWeightOnRecentValues()
-                estimatedTimeRemainingInMilliseconds = calculateEstimatedTimeRemainingInMilliseconds(
-                        downloadedBytes = downloaded,
-                        totalBytes = total,
-                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                downloadedBytesPerSecond = downloaded
+                reportingStopTime = System.nanoTime()
+                val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
+                        reportingStopTime, progressReportingIntervalMillis)
+
+                if (hasReportingTimeElapsed) {
+                    downloadInfo.downloaded = downloaded
+                    downloadInfo.total = total
+                    if (!terminated) {
+                        delegate?.onProgress(
+                                download = downloadInfo,
+                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                    }
+                    reportingStartTime = System.nanoTime()
+                }
+
+                if (downloadSpeedCheckTimeElapsed) {
+                    downloadSpeedStartTime = System.nanoTime()
+                }
+                read = input.read(buffer, 0, downloadBufferSizeBytes)
             }
-
-            reportingStopTime = System.nanoTime()
-            val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
-                    reportingStopTime, progressReportingIntervalMillis)
-
-            if (hasReportingTimeElapsed) {
-                downloadInfo.downloaded = downloaded
-                downloadInfo.total = total
-                delegate?.onProgress(
-                        download = downloadInfo,
-                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                reportingStartTime = System.nanoTime()
-            }
-
-            if (downloadSpeedCheckTimeElapsed) {
-                downloadSpeedStartTime = System.nanoTime()
-            }
-            read = input.read(buffer, 0, downloadBufferSizeBytes)
         }
-        if (read == -1 && !interrupted) {
+        if (read == -1 && !interrupted && !terminated) {
             total = downloaded
             completedDownload = true
             downloadInfo.downloaded = downloaded
             downloadInfo.total = total
-            delegate?.onComplete(
-                    download = downloadInfo)
+            if (!terminated) {
+                delegate?.onComplete(
+                        download = downloadInfo)
+            }
         }
     }
 

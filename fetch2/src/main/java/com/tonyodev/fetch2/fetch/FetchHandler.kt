@@ -9,7 +9,6 @@ import java.io.Closeable
  * */
 interface FetchHandler : Closeable {
 
-    val isClosed: Boolean
     val fetchListenerProvider: ListenerProvider
 
     fun init()
@@ -46,6 +45,5 @@ interface FetchHandler : Closeable {
     fun removeListener(listener: FetchListener)
     fun isDownloading(id: Int): Boolean
     fun cancelDownload(id: Int): Boolean
-    fun throwExceptionIfClosed()
 
 }

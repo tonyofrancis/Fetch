@@ -28,25 +28,33 @@ class PriorityListProcessorImpl constructor(private val handler: Handler,
         get() = stopped
 
     private val priorityIteratorRunnable = Runnable {
-        if (networkInfoProvider.isNetworkAvailable) {
-            val priorityList = getPriorityList()
-            for (index in 0..priorityList.lastIndex) {
-                if (downloadManager.canAccommodateNewDownload()) {
-                    val download = priorityList[index]
-                    val networkType = when {
-                        globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
-                        download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
-                        else -> download.networkType
+        if (canContinueToProcess()) {
+            if (networkInfoProvider.isNetworkAvailable) {
+                val priorityList = getPriorityList()
+                for (index in 0..priorityList.lastIndex) {
+                    if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
+                        val download = priorityList[index]
+                        val networkType = when {
+                            globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
+                            download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
+                            else -> download.networkType
+                        }
+                        if (networkInfoProvider.isOnAllowedNetwork(networkType) && canContinueToProcess()) {
+                            downloadManager.start(download)
+                        }
+                    } else {
+                        break
                     }
-                    if (networkInfoProvider.isOnAllowedNetwork(networkType)) {
-                        downloadManager.start(download)
-                    }
-                } else {
-                    break
                 }
             }
+            if (canContinueToProcess()) {
+                registerPriorityIterator()
+            }
         }
-        registerPriorityIterator()
+    }
+
+    private fun canContinueToProcess(): Boolean {
+        return !stopped && !paused
     }
 
     override fun start() {
@@ -86,7 +94,12 @@ class PriorityListProcessorImpl constructor(private val handler: Handler,
 
     override fun getPriorityList(): List<Download> {
         synchronized(lock) {
-            return downloadProvider.getPendingDownloadsSorted()
+            return try {
+                downloadProvider.getPendingDownloadsSorted()
+            } catch (e: Exception) {
+                logger.d("PriorityIterator failed access database", e)
+                listOf()
+            }
         }
     }
 
