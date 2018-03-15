@@ -35,7 +35,9 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     private TextView etaTextView;
     private TextView downloadSpeedTextView;
 
+    @android.support.annotation.Nullable
     private Request request;
+
     private Fetch fetch;
 
     @Override
@@ -47,10 +49,10 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         titleTextView = (TextView) findViewById(R.id.titleTextView);
         etaTextView = (TextView) findViewById(R.id.etaTextView);
         downloadSpeedTextView = (TextView) findViewById(R.id.downloadSpeedTextView);
-        fetch = ((App) getApplication()).getFetch();
-        fetch.deleteAll();
+        fetch = ((App) getApplication()).getAppFetchInstance();
         checkStoragePermission();
     }
+
 
     @Override
     protected void onResume() {
@@ -72,12 +74,6 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     protected void onPause() {
         super.onPause();
         fetch.removeListener(this);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        fetch.close();
     }
 
     private void checkStoragePermission() {
@@ -106,29 +102,39 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
 
     private void enqueueDownload() {
         final String url = Data.sampleUrls[0];
-        final String filePath = Data.getSaveDir() + "/movies/buckbunny" + System.nanoTime() + ".m4v";
+        final String filePath = Data.getSaveDir() + "/movies/buckbunny_singleDownloadActivity" + ".m4v";
 
         request = new Request(url, filePath);
-        fetch.enqueue(request, new Func<Download>() {
+        fetch.getDownload(request.getId(), new Func2<Download>() {
             @Override
-            public void call(Download download) {
-                setTitleView(download.getFile());
-                setProgressView(download.getStatus(), download.getProgress());
-            }
-        }, new Func<Error>() {
-            @Override
-            public void call(Error error) {
-                Log.d("SingleDownloadActivity", "Error:" + error.toString());
+            public void call(@Nullable Download download) {
+                if (download == null) {
+                    fetch.enqueue(request, new Func<Download>() {
+                        @Override
+                        public void call(@NotNull Download download) {
+                            setTitleView(download.getFile());
+                            setProgressView(download.getStatus(), download.getProgress());
+                        }
+                    }, new Func<Error>() {
+                        @Override
+                        public void call(@NotNull Error error) {
+                            Log.d("SingleDownloadActivity", "Error:" + error.toString());
+                        }
+                    });
+                } else {
+                    request = download.getRequest();
+                    setProgressView(download.getStatus(), download.getProgress());
+                }
             }
         });
     }
 
-    private void setTitleView(String fileName) {
+    private void setTitleView(@NonNull final String fileName) {
         final Uri uri = Uri.parse(fileName);
         titleTextView.setText(uri.getLastPathSegment());
     }
 
-    private void setProgressView(Status status, int progress) {
+    private void setProgressView(@NonNull final Status status, final int progress) {
         switch (status) {
             case QUEUED: {
                 progressTextView.setText(R.string.queued);

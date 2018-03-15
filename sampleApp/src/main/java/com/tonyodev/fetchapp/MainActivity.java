@@ -81,8 +81,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deleteDownloadedFiles() {
-        final Fetch fetch = ((App) getApplication()).getFetch();
-        fetch.deleteAll();
+        final String[] namespaces = new String[] {
+                DownloadListActivity.FETCH_NAMESPACE,
+                FailedMultiEnqueueActivity.FETCH_NAMESPACE
+        };
+        for (String namespace : namespaces) {
+            final Fetch fetch = ((App) getApplication()).getNewFetchInstance(namespace);
+            fetch.deleteAll();
+            fetch.close();
+        }
+        ((App) getApplication()).getAppFetchInstance().deleteAll();
+        ((App) getApplication()).getRxFetch().deleteAll();
         try {
             final File fetchDir = new File(Data.getSaveDir());
             Utils.deleteFileAndContents(fetchDir);

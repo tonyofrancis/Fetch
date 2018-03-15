@@ -1,6 +1,7 @@
 package com.tonyodev.fetchapp;
 
 import android.app.Application;
+import android.support.annotation.NonNull;
 
 import com.tonyodev.fetch2.Downloader;
 import com.tonyodev.fetch2.Fetch;
@@ -15,6 +16,9 @@ import timber.log.Timber;
 
 public class App extends Application {
 
+    public static final String APP_FETCH_NAMESPACE = "DefaultFetch";
+    public static final String GAMES_FETCH_NAMESPACE = "GameFilesFetch";
+
     private Fetch fetch;
     private RxFetch rxFetch;
 
@@ -26,22 +30,28 @@ public class App extends Application {
         }
     }
 
-    public Fetch getFetch() {
+    @NonNull
+    public Fetch getAppFetchInstance() {
         if (fetch == null || fetch.isClosed()) {
-            final OkHttpClient client = new OkHttpClient.Builder().build();
-            final Downloader okHttpDownloader = new OkHttpDownloader(client);
-            final Logger logger = new FetchTimberLogger();
-            final int concurrentLimit = 2;
-            final boolean enableLogging = true;
-            fetch = new Fetch.Builder(this, "DefaultFetch")
-                    .setLogger(logger)
-                    .setDownloader(okHttpDownloader)
-                    .setDownloadConcurrentLimit(concurrentLimit)
-                    .enableLogging(enableLogging)
-                    .enableRetryOnNetworkGain(true)
-                    .build();
+            fetch = getNewFetchInstance(APP_FETCH_NAMESPACE);
         }
         return fetch;
+    }
+
+    @NonNull
+    public Fetch getNewFetchInstance(@NonNull final String namespace) {
+        final OkHttpClient client = new OkHttpClient.Builder().build();
+        final Downloader okHttpDownloader = new OkHttpDownloader(client);
+        final Logger logger = new FetchTimberLogger();
+        final int concurrentLimit = 2;
+        final boolean enableLogging = true;
+        return new Fetch.Builder(this, namespace)
+                .setLogger(logger)
+                .setDownloader(okHttpDownloader)
+                .setDownloadConcurrentLimit(concurrentLimit)
+                .enableLogging(enableLogging)
+                .enableRetryOnNetworkGain(true)
+                .build();
     }
 
     public RxFetch getRxFetch() {
@@ -49,7 +59,7 @@ public class App extends Application {
             final Logger logger = new FetchTimberLogger();
             final int concurrentLimit = 2;
             final boolean enableLogging = true;
-            rxFetch = new RxFetch.Builder(this, "GameFilesFetch")
+            rxFetch = new RxFetch.Builder(this, GAMES_FETCH_NAMESPACE)
                     .setLogger(logger)
                     .setDownloadConcurrentLimit(concurrentLimit)
                     .enableLogging(enableLogging)

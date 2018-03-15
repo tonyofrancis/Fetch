@@ -15,7 +15,8 @@ public final class Utils {
 
     }
 
-    public static String getMimeType(final Context context, @NonNull final Uri uri) {
+    @NonNull
+    public static String getMimeType(@NonNull final Context context, @NonNull final Uri uri) {
         final ContentResolver cR = context.getContentResolver();
         final MimeTypeMap mime = MimeTypeMap.getSingleton();
         String type = mime.getExtensionFromMimeType(cR.getType(uri));
@@ -25,10 +26,7 @@ public final class Utils {
         return type;
     }
 
-    public static void deleteFileAndContents(final File file) throws Exception {
-        if (file == null) {
-            return;
-        }
+    public static void deleteFileAndContents(@NonNull final File file) throws Exception {
         if (file.exists()) {
             if (file.isDirectory()) {
                 final File[] contents = file.listFiles();
@@ -42,7 +40,8 @@ public final class Utils {
         }
     }
 
-    public static String getETAString(Context context, long etaInMilliSeconds) {
+    @NonNull
+    public static String getETAString(@NonNull final Context context, final long etaInMilliSeconds) {
         if (etaInMilliSeconds < 0) {
             return "";
         }
@@ -60,7 +59,8 @@ public final class Utils {
         }
     }
 
-    public static String getDownloadSpeedString(Context context, long downloadedBytesPerSecond) {
+    @NonNull
+    public static String getDownloadSpeedString(@NonNull final Context context, final long downloadedBytesPerSecond) {
         if (downloadedBytesPerSecond < 0) {
             return "";
         }
@@ -75,4 +75,5 @@ public final class Utils {
             return context.getString(R.string.download_speed_bytes, downloadedBytesPerSecond);
         }
     }
+
 }

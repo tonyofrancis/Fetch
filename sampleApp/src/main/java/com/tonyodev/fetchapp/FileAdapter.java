@@ -5,6 +5,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -22,30 +24,35 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
+public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
 
+    @NonNull
     private final List<DownloadData> downloads = new ArrayList<>();
+    @NonNull
     private final ActionListener actionListener;
 
-    public FileAdapter(ActionListener actionListener) {
+    public FileAdapter(@NonNull final ActionListener actionListener) {
         this.actionListener = actionListener;
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(final ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull final ViewGroup parent, int viewType) {
         final View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.download_item, parent, false);
-
         return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         holder.actionButton.setOnClickListener(null);
         holder.actionButton.setEnabled(true);
 
         final DownloadData downloadData = downloads.get(position);
-        final Uri uri = Uri.parse(downloadData.download.getUrl());
+        String url = "";
+        if (downloadData.download != null) {
+            url = downloadData.download.getUrl();
+        }
+        final Uri uri = Uri.parse(url);
         final Status status = downloadData.download.getStatus();
         final Context context = holder.itemView.getContext();
 
@@ -154,23 +161,20 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
 
     }
 
-    public void addDownload(final Download download) {
-        if (download != null) {
-            boolean found = false;
-            for (DownloadData downloadData : downloads) {
-                if (downloadData.id == download.getId()) {
-                    found = true;
-                    break;
-                }
+    public void addDownload(@NonNull final Download download) {
+        boolean found = false;
+        for (DownloadData downloadData : downloads) {
+            if (downloadData.id == download.getId()) {
+                found = true;
+                break;
             }
-            if (!found) {
-                final DownloadData downloadData = new DownloadData();
-                downloadData.id = download.getId();
-                downloadData.download = download;
-                downloads.add(downloadData);
-                notifyItemInserted(downloads.size() - 1);
-            }
-
+        }
+        if (!found) {
+            final DownloadData downloadData = new DownloadData();
+            downloadData.id = download.getId();
+            downloadData.download = download;
+            downloads.add(downloadData);
+            notifyItemInserted(downloads.size() - 1);
         }
     }
 
@@ -180,7 +184,7 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
     }
 
 
-    public void update(final Download download, long eta, long downloadedBytesPerSecond) {
+    public void update(@NonNull final Download download, long eta, long downloadedBytesPerSecond) {
         if (download != null) {
             for (int position = 0; position < downloads.size(); position++) {
                 final DownloadData downloadData = downloads.get(position);
@@ -251,6 +255,7 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
 
     public static class DownloadData {
         public int id;
+        @Nullable
         public Download download;
         public long eta = -1;
         public long downloadedBytesPerSecond = 0;
@@ -262,18 +267,15 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
 
         @Override
         public String toString() {
+            if (download == null) {
+                return "";
+            }
             return download.toString();
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == this) {
-                return true;
-            }
-            if (obj instanceof DownloadData) {
-                return ((DownloadData) obj).id == id;
-            }
-            return false;
+            return obj == this || obj instanceof DownloadData && ((DownloadData) obj).id == id;
         }
     }
 

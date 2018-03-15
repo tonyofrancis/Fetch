@@ -18,31 +18,34 @@ import java.util.List;
 
 public class FailedMultiEnqueueActivity extends AppCompatActivity implements FetchListener {
 
+    final static String FETCH_NAMESPACE = "FailedEnqueue";
+
+    private Fetch fetch;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_multi_enqueue);
         final View mainView = findViewById(R.id.activity_main);
-        final Fetch fetch = ((App) getApplication()).getFetch();
+
+        fetch = ((App) getApplication()).getNewFetchInstance(FETCH_NAMESPACE);
         fetch.deleteAll();
+
         final List<Request> requests = new ArrayList<>();
         final String url = "https://www.notdownloadable.com/test.txt";
         final int size = 15;
 
         for (int x = 0; x < size; x++) {
-
             final String filePath = Data.getSaveDir()
                     .concat("/multiTest/")
                     .concat("file")
                     .concat("" + (x + 1))
                     .concat(".txt");
-
             final Request request = new Request(url, filePath);
             requests.add(request);
         }
 
         fetch.enqueue(requests, null, null);
-
         Snackbar.make(mainView, "Enqueued " + size + " requests. Check Logcat for " +
                 "failed status", Snackbar.LENGTH_INDEFINITE)
                 .show();
@@ -51,13 +54,19 @@ public class FailedMultiEnqueueActivity extends AppCompatActivity implements Fet
     @Override
     protected void onResume() {
         super.onResume();
-        ((App) getApplication()).getFetch().addListener(this);
+        fetch.addListener(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        ((App) getApplication()).getFetch().removeListener(this);
+        fetch.removeListener(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        fetch.close();
     }
 
     @Override

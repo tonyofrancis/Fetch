@@ -1,6 +1,7 @@
 package com.tonyodev.fetchapp;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -23,20 +24,20 @@ public class ProgressFragment extends Fragment implements FetchListener {
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_progress, container, false);
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
         progressTextView = (TextView) view.findViewById(R.id.progressTextView);
         updateProgress(0);
     }
 
-    private void updateProgress(int progress) {
+    public void updateProgress(int progress) {
         if (progress == -1) {
             progress = 0;
         }
@@ -45,7 +46,10 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     public int getDownloadId() {
-        return request.getId();
+        if (request != null) {
+            return request.getId();
+        }
+        return -1;
     }
 
     public void setRequest(Request request) {
