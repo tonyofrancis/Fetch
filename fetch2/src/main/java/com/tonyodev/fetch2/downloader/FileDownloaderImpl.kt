@@ -79,13 +79,13 @@ class FileDownloaderImpl(private val initialDownload: Download,
                         }
                         writeToOutput(input, output)
                     }
-                } else if (response == null) {
+                } else if (response == null && !interrupted && !terminated) {
                     throw FetchException(EMPTY_RESPONSE_BODY,
                             FetchException.Code.EMPTY_RESPONSE_BODY)
-                } else if (!isResponseSuccessful) {
+                } else if (!isResponseSuccessful && !interrupted && !terminated) {
                     throw FetchException(RESPONSE_NOT_SUCCESSFUL,
                             FetchException.Code.REQUEST_NOT_SUCCESSFUL)
-                } else {
+                } else if(!interrupted && !terminated) {
                     throw FetchException(UNKNOWN_ERROR,
                             FetchException.Code.UNKNOWN)
                 }

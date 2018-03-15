@@ -19,8 +19,8 @@ fun getErrorFromMessage(message: String?): Error {
         Error.EMPTY_RESPONSE_FROM_SERVER
     } else if (message.equals(FNC, ignoreCase = true) || message.equals(ENOENT, ignoreCase = true)) {
         Error.FILE_NOT_CREATED
-    } else if (message.equals(ETIMEDOUT, ignoreCase = true)
-            || message.equals(CONNECTION_TIMEOUT, ignoreCase = true)) {
+    } else if (message.contains(ETIMEDOUT, ignoreCase = true)
+            || message.contains(CONNECTION_TIMEOUT, ignoreCase = true)) {
         Error.CONNECTION_TIMED_OUT
     } else if (message.equals(IO404, ignoreCase = true) || message.contains(NO_ADDRESS_HOSTNAME)) {
         Error.HTTP_NOT_FOUND
