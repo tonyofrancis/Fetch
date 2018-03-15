@@ -11,7 +11,7 @@ import com.tonyodev.fetch2.util.FAILED_TO_ENQUEUE_REQUEST
 import com.tonyodev.fetch2.util.DOWNLOAD_NOT_FOUND
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import java.util.concurrent.TimeUnit
+
 
 open class RxFetchImpl(namespace: String,
                        handler: Handler,

@@ -4,7 +4,6 @@ package com.tonyodev.fetch2.util
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Request
-import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.DownloadInfo
 
 fun Request.toDownloadInfo(): DownloadInfo {
