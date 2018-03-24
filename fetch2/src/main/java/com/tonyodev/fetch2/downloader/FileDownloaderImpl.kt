@@ -1,11 +1,7 @@
 package com.tonyodev.fetch2.downloader
 
-import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Downloader
-import com.tonyodev.fetch2.Error
-import com.tonyodev.fetch2.Logger
+import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
-import com.tonyodev.fetch2.getErrorFromMessage
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.*
 import java.io.BufferedInputStream
@@ -103,10 +99,11 @@ class FileDownloaderImpl(private val initialDownload: Download,
         } catch (e: Exception) {
             if (!interrupted && !terminated) {
                 logger.e("FileDownloader", e)
-                var error = getErrorFromMessage(e.message)
+                var error = getErrorFromThrowable(e)
+                error.throwable = e
                 if (retryOnNetworkGain) {
                     try {
-                        Thread.sleep(4000)
+                        Thread.sleep(5000)
                     } catch (e: InterruptedException) {
                         logger.e("FileDownloader", e)
                     }

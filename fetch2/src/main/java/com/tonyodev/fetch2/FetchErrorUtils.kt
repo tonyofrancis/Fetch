@@ -3,13 +3,24 @@
 package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2.util.*
+import java.io.IOException
+import java.net.SocketTimeoutException
 
 fun getErrorFromThrowable(throwable: Throwable): Error {
-    return getErrorFromMessage(throwable.message)
+    var message = throwable.message ?: ""
+    if (throwable is SocketTimeoutException && message.isEmpty()) {
+        message = CONNECTION_TIMEOUT
+    }
+    val error = getErrorFromMessage(message)
+    return when {
+        error == Error.UNKNOWN && throwable is SocketTimeoutException -> Error.CONNECTION_TIMED_OUT
+        error == Error.UNKNOWN && throwable is IOException -> Error.UNKNOWN_IO_ERROR
+        else -> error
+    }
 }
 
 fun getErrorFromMessage(message: String?): Error {
-    return if (message == null) {
+    return if (message == null || message.isEmpty()) {
         Error.UNKNOWN
     } else if (message.contains(UNIQUE_ID_DATABASE)) {
         Error.REQUEST_WITH_ID_ALREADY_EXIST
@@ -20,7 +31,9 @@ fun getErrorFromMessage(message: String?): Error {
     } else if (message.equals(FNC, ignoreCase = true) || message.equals(ENOENT, ignoreCase = true)) {
         Error.FILE_NOT_CREATED
     } else if (message.contains(ETIMEDOUT, ignoreCase = true)
-            || message.contains(CONNECTION_TIMEOUT, ignoreCase = true)) {
+            || message.contains(CONNECTION_TIMEOUT, ignoreCase = true)
+            || message.contains(SOFTWARE_ABORT_CONNECTION, ignoreCase = true)
+            || message.contains(READ_TIME_OUT, ignoreCase = true)) {
         Error.CONNECTION_TIMED_OUT
     } else if (message.equals(IO404, ignoreCase = true) || message.contains(NO_ADDRESS_HOSTNAME)) {
         Error.HTTP_NOT_FOUND

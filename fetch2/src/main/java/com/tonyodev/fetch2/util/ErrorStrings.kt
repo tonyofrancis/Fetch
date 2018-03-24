@@ -23,3 +23,5 @@ const val FETCH_ALREADY_EXIST = "already exists. You cannot have more than one a
 const val UNIQUE_ID_DATABASE = "UNIQUE constraint failed: requests._id"
 const val UNIQUE_FILE_PATH_DATABASE = "UNIQUE constraint failed: requests._file"
 const val FAILED_TO_CONNECT = "Failed to connect"
+const val SOFTWARE_ABORT_CONNECTION = "Software caused connection abort"
+const val READ_TIME_OUT = "Read timed out at"
