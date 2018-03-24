@@ -24,6 +24,7 @@ Features
 * Easy progress and status tracking.
 * Download remaining time reporting (ETA).
 * Download speed reporting.
+* Save and Retrive download information anytime.
 * And more...
 
 Prerequisites
