@@ -8,6 +8,7 @@ import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.exception.FetchImplementationException
+import com.tonyodev.fetch2.util.sanitize
 
 
 class DatabaseManagerImpl constructor(context: Context,
@@ -119,47 +120,69 @@ class DatabaseManagerImpl constructor(context: Context,
     override fun get(): List<DownloadInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return requestDatabase.requestDao().get()
+            val downloads = requestDatabase.requestDao().get()
+            sanitize(downloads)
+            return downloads
         }
     }
 
     override fun get(id: Int): DownloadInfo? {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return requestDatabase.requestDao().get(id)
+            val download = requestDatabase.requestDao().get(id)
+            sanitize(download)
+            return download
         }
     }
 
     override fun get(ids: List<Int>): List<DownloadInfo?> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return requestDatabase.requestDao().get(ids)
+            val downloads = requestDatabase.requestDao().get(ids)
+            sanitize(downloads)
+            return downloads
         }
     }
 
     override fun getByStatus(status: Status): List<DownloadInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return requestDatabase.requestDao().getByStatus(status)
+            var downloads = requestDatabase.requestDao().getByStatus(status)
+            if (sanitize(downloads)) {
+                downloads = downloads.filter { it.status == status }
+            }
+            return downloads
         }
     }
 
     override fun getByGroup(group: Int): List<DownloadInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return requestDatabase.requestDao().getByGroup(group)
+            val downloads = requestDatabase.requestDao().getByGroup(group)
+            sanitize(downloads)
+            return downloads
         }
     }
 
     override fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<DownloadInfo> {
         synchronized(lock) {
-            return requestDatabase.requestDao().getByGroupWithStatus(groupId, status)
+            throwExceptionIfClosed()
+            var downloads = requestDatabase.requestDao().getByGroupWithStatus(groupId, status)
+            if (sanitize(downloads)) {
+                downloads = downloads.filter { it.status == status }
+            }
+            return downloads
         }
     }
 
     override fun getPendingDownloadsSorted(): List<DownloadInfo> {
         synchronized(lock) {
-            return requestDatabase.requestDao().getPendingDownloadsSorted(Status.QUEUED)
+            throwExceptionIfClosed()
+            var downloads = requestDatabase.requestDao().getPendingDownloadsSorted(Status.QUEUED)
+            if (sanitize(downloads)) {
+                downloads = downloads.filter { it.status == Status.QUEUED }
+            }
+            return downloads
         }
     }
 

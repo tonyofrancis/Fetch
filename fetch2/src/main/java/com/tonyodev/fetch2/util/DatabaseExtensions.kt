@@ -5,39 +5,103 @@ package com.tonyodev.fetch2.util
 import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.DatabaseManager
+import com.tonyodev.fetch2.database.DownloadInfo
 import java.io.File
 
-fun DatabaseManager.verifyDatabase() {
-    val downloads = get()
-    val downloadingStatus = Status.DOWNLOADING
-    downloads.forEach {
-        if (it.status == downloadingStatus) {
-            it.status = Status.QUEUED
-        }
-        val file = File(it.file)
-        if (file.exists()) {
-            it.downloaded = file.length()
-        } else {
-            when (it.status) {
-                Status.PAUSED,
-                Status.COMPLETED,
-                Status.CANCELLED,
-                Status.REMOVED -> {
-                    it.status = Status.FAILED
-                    it.error = Error.FILE_NOT_FOUND
-                    it.downloaded = 0L
-                    it.total = -1L
+@JvmOverloads
+fun DatabaseManager.sanitize(initializing: Boolean = false): Boolean {
+    return sanitize(get(), initializing)
+}
+
+@JvmOverloads
+fun DatabaseManager.sanitize(downloads: List<DownloadInfo>, initializing: Boolean = false): Boolean {
+    val changedDownloadsList = mutableListOf<DownloadInfo>()
+    var file: File?
+    var fileLength: Long
+    var fileExist: Boolean
+    var downloadInfo: DownloadInfo
+    var update: Boolean
+    for (i in 0 until downloads.size) {
+        downloadInfo = downloads[i]
+        file = File(downloadInfo.file)
+        fileLength = file.length()
+        fileExist = file.exists()
+        when (downloadInfo.status) {
+            Status.PAUSED,
+            Status.COMPLETED,
+            Status.CANCELLED,
+            Status.REMOVED -> {
+                if (!fileExist) {
+                    downloadInfo.status = Status.FAILED
+                    downloadInfo.error = Error.FILE_NOT_FOUND
+                    downloadInfo.downloaded = 0L
+                    downloadInfo.total = -1L
+                    changedDownloadsList.add(downloadInfo)
+                } else {
+                    update = false
+                    if (downloadInfo.downloaded != fileLength) {
+                        downloadInfo.downloaded = fileLength
+                        update = true
+                    }
+                    if (downloadInfo.status == Status.COMPLETED && downloadInfo.total < 1
+                            && downloadInfo.downloaded > 0) {
+                        downloadInfo.total = downloadInfo.downloaded
+                        update = true
+                    }
+                    if (update) {
+                        changedDownloadsList.add(downloadInfo)
+                    }
                 }
-                else -> {
+            }
+            Status.FAILED -> {
+                if (fileExist) {
+                    if (downloadInfo.downloaded != fileLength) {
+                        downloadInfo.downloaded = fileLength
+                        changedDownloadsList.add(downloadInfo)
+                    }
+                } else {
+                    downloadInfo.error = Error.FILE_NOT_FOUND
+                    downloadInfo.downloaded = 0L
+                    downloadInfo.total = -1L
+                    changedDownloadsList.add(downloadInfo)
                 }
+            }
+            Status.DOWNLOADING -> {
+                if (initializing) {
+                    downloadInfo.status = Status.QUEUED
+                    if (fileExist) {
+                        downloadInfo.downloaded = fileLength
+                    }
+                    changedDownloadsList.add(downloadInfo)
+                }
+            }
+            Status.QUEUED -> {
+                if (fileExist && downloadInfo.downloaded != fileLength) {
+                    downloadInfo.downloaded = fileLength
+                    changedDownloadsList.add(downloadInfo)
+                }
+            }
+            Status.NONE,
+            Status.DELETED -> {
+
             }
         }
     }
-    if (downloads.isNotEmpty()) {
+    if (changedDownloadsList.size > 0) {
         try {
-            update(downloads)
+            update(changedDownloadsList)
         } catch (e: Exception) {
-            logger.e("Database verification update error", e)
+            logger.e("Database sanitize update error", e)
         }
+    }
+    return changedDownloadsList.size > 0
+}
+
+@JvmOverloads
+fun DatabaseManager.sanitize(downloadInfo: DownloadInfo?, initializing: Boolean = false): Boolean {
+    return if (downloadInfo == null) {
+        false
+    } else {
+        sanitize(listOf(downloadInfo), initializing)
     }
 }

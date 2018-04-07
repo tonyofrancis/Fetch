@@ -343,7 +343,7 @@ public class DatabaseInstrumentedTest {
         databaseManager.insert(downloadInfoList);
         int size = databaseManager.get().size();
         assertEquals(20, size);
-        FetchDatabaseExtensions.verifyDatabase(databaseManager);
+        FetchDatabaseExtensions.sanitize(databaseManager, true);
         final List<DownloadInfo> downloads = databaseManager.get();
         for (DownloadInfo download : downloads) {
             assertNotNull(download);
