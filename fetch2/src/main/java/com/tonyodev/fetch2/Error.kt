@@ -79,7 +79,11 @@ enum class Error constructor(
     REQUEST_NOT_SUCCESSFUL(15),
 
     /** Indicates that an unknown IO issue occurred. */
-    UNKNOWN_IO_ERROR(16);
+    UNKNOWN_IO_ERROR(16),
+
+    /** Indicates that the file belonging to the request has been deleted. The file
+     * could have been deleted by an external source.*/
+    FILE_NOT_FOUND(17);
 
     companion object {
 
@@ -104,6 +108,7 @@ enum class Error constructor(
                 14 -> REQUEST_WITH_FILE_PATH_ALREADY_EXIST
                 15 -> REQUEST_NOT_SUCCESSFUL
                 16 -> UNKNOWN_IO_ERROR
+                17 -> FILE_NOT_FOUND
                 else -> UNKNOWN
             }
         }
