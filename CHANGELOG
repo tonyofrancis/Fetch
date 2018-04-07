@@ -1,3 +1,9 @@
+Version 2.0.0-RC13
+- Bug fixes.
+- Added new Error.FILE_NOT_FOUND constant if the downloaded file on the local devices was deleted
+  and the matching request is still managed by Fetch.
+- Fetch now sanitizes(Checks if the local file exist) downloads from the database on each get call.
+
 Version 2.0.0-RC12
 - Improved error reporting and handling when a download encounters an error.
 - Error returned with a download that encountered an error now has a throwable attached when the error occurs.
