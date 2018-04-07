@@ -18,6 +18,7 @@ interface DatabaseManager : Closeable {
     fun deleteAll()
     fun update(downloadInfo: DownloadInfo)
     fun update(downloadInfoList: List<DownloadInfo>)
+    fun updateNoLock(downloadInfoList: List<DownloadInfo>)
     fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo)
     fun get(): List<DownloadInfo>
     fun get(id: Int): DownloadInfo?
