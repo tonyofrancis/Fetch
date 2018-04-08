@@ -38,9 +38,9 @@ before_install:
 
 script:
     - ./gradlew clean assemble
-    - ./gradlew test --stacktrace --info
-    - ./gradlew fetch2:connectedAndroidTest -PdisablePreDex --stacktrace --info
-    - ./gradlew assembleAndroidTest --stacktrace --info
+    - ./gradlew test
+    - ./gradlew fetch2:connectedAndroidTest -PdisablePreDex
+    - ./gradlew assembleAndroidTest
 
 
 # Emulator Management: Create, Start and Wait
