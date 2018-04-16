@@ -89,9 +89,13 @@ class DatabaseManagerImpl constructor(context: Context,
 
     override fun update(downloadInfoList: List<DownloadInfo>) {
         synchronized(lock) {
-            throwExceptionIfClosed()
-            requestDatabase.requestDao().update(downloadInfoList)
+            updateNoLock(downloadInfoList)
         }
+    }
+
+    override fun updateNoLock(downloadInfoList: List<DownloadInfo>) {
+        throwExceptionIfClosed()
+        requestDatabase.requestDao().update(downloadInfoList)
     }
 
     override fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo) {

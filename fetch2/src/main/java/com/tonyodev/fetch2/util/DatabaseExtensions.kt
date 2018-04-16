@@ -30,8 +30,10 @@ fun DatabaseManager.sanitize(downloads: List<DownloadInfo>, initializing: Boolea
             Status.PAUSED,
             Status.COMPLETED,
             Status.CANCELLED,
-            Status.REMOVED -> {
-                if (!fileExist) {
+            Status.REMOVED,
+            Status.FAILED,
+            Status.QUEUED -> {
+                if (!fileExist && downloadInfo.status == Status.COMPLETED) {
                     downloadInfo.status = Status.FAILED
                     downloadInfo.error = Error.FILE_NOT_FOUND
                     downloadInfo.downloaded = 0L
@@ -39,31 +41,18 @@ fun DatabaseManager.sanitize(downloads: List<DownloadInfo>, initializing: Boolea
                     changedDownloadsList.add(downloadInfo)
                 } else {
                     update = false
-                    if (downloadInfo.downloaded != fileLength) {
+                    if (downloadInfo.downloaded != fileLength && fileExist) {
                         downloadInfo.downloaded = fileLength
                         update = true
                     }
                     if (downloadInfo.status == Status.COMPLETED && downloadInfo.total < 1
-                            && downloadInfo.downloaded > 0) {
+                            && downloadInfo.downloaded > 0 && fileExist) {
                         downloadInfo.total = downloadInfo.downloaded
                         update = true
                     }
                     if (update) {
                         changedDownloadsList.add(downloadInfo)
                     }
-                }
-            }
-            Status.FAILED -> {
-                if (fileExist) {
-                    if (downloadInfo.downloaded != fileLength) {
-                        downloadInfo.downloaded = fileLength
-                        changedDownloadsList.add(downloadInfo)
-                    }
-                } else {
-                    downloadInfo.error = Error.FILE_NOT_FOUND
-                    downloadInfo.downloaded = 0L
-                    downloadInfo.total = -1L
-                    changedDownloadsList.add(downloadInfo)
                 }
             }
             Status.DOWNLOADING -> {
@@ -75,21 +64,14 @@ fun DatabaseManager.sanitize(downloads: List<DownloadInfo>, initializing: Boolea
                     changedDownloadsList.add(downloadInfo)
                 }
             }
-            Status.QUEUED -> {
-                if (fileExist && downloadInfo.downloaded != fileLength) {
-                    downloadInfo.downloaded = fileLength
-                    changedDownloadsList.add(downloadInfo)
-                }
-            }
             Status.NONE,
             Status.DELETED -> {
-
             }
         }
     }
     if (changedDownloadsList.size > 0) {
         try {
-            update(changedDownloadsList)
+            updateNoLock(changedDownloadsList)
         } catch (e: Exception) {
             logger.e("Database sanitize update error", e)
         }
