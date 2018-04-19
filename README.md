@@ -303,27 +303,29 @@ implementation "com.tonyodev.fetchmigrator:fetchmigrator:2.0.0-RC15"
 Then run the Migrator.
 
 ```java
-try {
-    final String fetch2Namespace = "Main";
-    FetchMigrator.migrateFromV1toV2(this, fetch2Namespace);
-    FetchMigrator.deleteFetchV1Database(this);
-
-    final Fetch fetch = new Fetch.Builder(context, fetch2Namespace)
-      .setDownloadConcurrentLimit(4) // Allows Fetch to download 4 downloads in Parallel.
-      .enableLogging(true)
-      .build();
-
-    fetch.getDownloads(new Func<List<? extends Download>>() {
-        @Override
-        public void call(List<? extends Download> downloads) {
-            /* All downloads from the first version of Fetch
-             * will now be maintained, downloaded and monitored in version 2 of Fetch.
-            */
+        if (didMigrationRun()) {
+            //Migration has to run on a background thread
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        final List<DownloadTransferPair> transferredDownloads = FetchMigrator.migrateFromV1toV2(getApplicationContext(), APP_FETCH_NAMESPACE);
+                        //TODO: update external references of ids
+                        for (DownloadTransferPair transferredDownload : transferredDownloads) {
+                            Log.d("newDownload", transferredDownload.getNewDownload().toString());
+                            Log.d("oldId in Fetch v1", transferredDownload.getOldID() + "");
+                        }
+                        FetchMigrator.deleteFetchV1Database(getApplicationContext());
+                        setMigrationDidRun(true);
+                        //Setup and Run Fetch2 after the migration
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        } else {
+            //Setup and Run Fetch2  normally
         }
-    });
-} catch (SQLException e) {
-    e.printStackTrace();
-}
 ```
 
 Contribute
