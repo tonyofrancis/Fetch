@@ -40,7 +40,7 @@ internal class DatabaseHelper constructor(context: Context)
 
     fun get(): Cursor? {
         synchronized(lock) {
-            return db.rawQuery("SELECT * FROM " + TABLE_NAME, null)
+            return db.rawQuery("SELECT * FROM $TABLE_NAME", null)
         }
     }
 
@@ -99,6 +99,7 @@ internal class DatabaseHelper constructor(context: Context)
         const val COLUMN_FILE_SIZE = "_file_size"
         const val COLUMN_ERROR = "_error"
         const val COLUMN_PRIORITY = "_priority"
+        const val INDEX_ID = 0
         const val INDEX_COLUMN_URL = 1
         const val INDEX_COLUMN_FILEPATH = 2
         const val INDEX_COLUMN_STATUS = 3
