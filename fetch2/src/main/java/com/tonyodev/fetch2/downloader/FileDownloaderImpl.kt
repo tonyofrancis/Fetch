@@ -81,7 +81,7 @@ class FileDownloaderImpl(private val initialDownload: Download,
                 } else if (!isResponseSuccessful && !interrupted && !terminated) {
                     throw FetchException(RESPONSE_NOT_SUCCESSFUL,
                             FetchException.Code.REQUEST_NOT_SUCCESSFUL)
-                } else if(!interrupted && !terminated) {
+                } else if (!interrupted && !terminated) {
                     throw FetchException(UNKNOWN_ERROR,
                             FetchException.Code.UNKNOWN)
                 }
@@ -102,12 +102,20 @@ class FileDownloaderImpl(private val initialDownload: Download,
                 var error = getErrorFromThrowable(e)
                 error.throwable = e
                 if (retryOnNetworkGain) {
-                    try {
-                        Thread.sleep(5000)
-                    } catch (e: InterruptedException) {
-                        logger.e("FileDownloader", e)
+                    var disconnectDetected = !networkInfoProvider.isNetworkAvailable
+                    for(i in 1..10) {
+                        try {
+                            Thread.sleep(500)
+                        } catch (e: InterruptedException) {
+                            logger.e("FileDownloader", e)
+                            break;
+                        }
+                        if (!networkInfoProvider.isNetworkAvailable) {
+                            disconnectDetected = true
+                            break;
+                        }
                     }
-                    if (!networkInfoProvider.isNetworkAvailable) {
+                    if (disconnectDetected) {
                         error = Error.NO_NETWORK_CONNECTION
                     }
                 }
