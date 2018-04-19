@@ -303,7 +303,7 @@ implementation "com.tonyodev.fetchmigrator:fetchmigrator:2.0.0-RC15"
 Then run the Migrator.
 
 ```java
-        if (didMigrationRun()) {
+        if (!didMigrationRun()) {
             //Migration has to run on a background thread
             new Thread(new Runnable() {
                 @Override
