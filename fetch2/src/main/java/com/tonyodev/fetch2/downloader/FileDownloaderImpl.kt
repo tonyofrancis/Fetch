@@ -108,11 +108,11 @@ class FileDownloaderImpl(private val initialDownload: Download,
                             Thread.sleep(500)
                         } catch (e: InterruptedException) {
                             logger.e("FileDownloader", e)
-                            break;
+                            break
                         }
                         if (!networkInfoProvider.isNetworkAvailable) {
                             disconnectDetected = true
-                            break;
+                            break
                         }
                     }
                     if (disconnectDetected) {

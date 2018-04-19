@@ -1,3 +1,7 @@
+Version 2.0.0-RC16
+- Fix for retry on network gain. Thanks to dougkeen
+- Library updates
+
 Version 2.0.0-RC15
 - updated Fetch Migrator
 
