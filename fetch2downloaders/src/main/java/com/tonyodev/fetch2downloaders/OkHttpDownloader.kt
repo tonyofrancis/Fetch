@@ -5,6 +5,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.InputStream
+import java.io.OutputStream
 import java.util.Collections
 import java.util.concurrent.TimeUnit
 
@@ -16,8 +17,7 @@ import java.util.concurrent.TimeUnit
 open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient? = null)
     : Downloader {
 
-    protected val connections: MutableMap<Downloader.Response, Response>
-            = Collections.synchronizedMap(HashMap<Downloader.Response, Response>())
+    protected val connections: MutableMap<Downloader.Response, Response> = Collections.synchronizedMap(HashMap<Downloader.Response, Response>())
 
     @Volatile
     var client: OkHttpClient = okHttpClient ?: OkHttpClient.Builder()
@@ -48,7 +48,8 @@ open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient
                 code = code,
                 isSuccessful = success,
                 contentLength = contentLength,
-                byteStream = byteStream)
+                byteStream = byteStream,
+                request = request)
 
         connections[response] = okHttpResponse
         return response
@@ -75,6 +76,10 @@ open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient
         } catch (e: Exception) {
 
         }
+    }
+
+    override fun getRequestOutputStream(request: Downloader.Request, filePointerOffset: Long): OutputStream? {
+        return null
     }
 
 }
