@@ -4,8 +4,6 @@ package com.tonyodev.fetch2.util
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Status
-import java.io.File
-import java.io.IOException
 
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
@@ -50,14 +48,6 @@ fun calculateProgress(downloaded: Long, total: Long): Int {
         downloaded < 1 -> 0
         downloaded >= total -> 100
         else -> ((downloaded.toDouble() / total.toDouble()) * 100).toInt()
-    }
-}
-
-fun getFileLength(file: String): Long {
-    return try {
-        File(file).length()
-    } catch (e: IOException) {
-        0
     }
 }
 

@@ -1,3 +1,13 @@
+Version 2.0.0-RC17
+- Added new method getRequestOutputStream(request: Request, filePointerOffset: Long): OutputStream? on Downloader interface.
+  You can now provide Fetch a custom downloader that provides an OutputStream per Download. See Downloader.kt documentation for more information.
+  Also see sample app for more information on custom downloader.
+
+Breaking Changes
+- Added new method getRequestOutputStream(request: Request, filePointerOffset: Long): OutputStream? on Downloader interface.
+- Added new fields id, file, and tag on Downloader.Request class.
+- Added new field request on Downloader.Response class.
+
 Version 2.0.0-RC16
 - Fix for retry on network gain. Thanks to dougkeen
 - Library updates

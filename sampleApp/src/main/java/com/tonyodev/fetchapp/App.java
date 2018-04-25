@@ -10,6 +10,12 @@ import com.tonyodev.fetch2downloaders.OkHttpDownloader;
 import com.tonyodev.fetch2rx.RxFetch;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 import okhttp3.OkHttpClient;
 import timber.log.Timber;
@@ -110,6 +116,33 @@ public class App extends Application {
                 Timber.e(throwable);
             }
         }
+    }
+
+    /**
+     * Customer downloader that lets you provide your own output streams for downloads.
+     * See Downloader.kt documentation for more information on providing your own downloader.
+     */
+    private static class OkHttpOutputStreamDownloader extends OkHttpDownloader {
+
+        public OkHttpOutputStreamDownloader(@Nullable OkHttpClient okHttpClient) {
+            super(okHttpClient);
+        }
+
+        @Nullable
+        @Override
+        public OutputStream getRequestOutputStream(@NotNull Request request, long filePointerOffset) {
+            //If overriding this method, see the Downloader.kt documentation on how to properly use this method.
+            // If done incorrectly you may override data in files.
+            try {
+                final FileOutputStream fileOutputStream = new FileOutputStream(request.getFile(), true);
+                return new BufferedOutputStream(fileOutputStream);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                //Cannot find file. Provide fallback.
+            }
+            return null;
+        }
+
     }
 
 }

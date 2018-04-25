@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2
 
 import java.io.InputStream
+import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Collections
@@ -20,8 +21,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         httpUrlConnectionPreferences: HttpUrlConnectionPreferences? = null) : Downloader {
 
     protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
-    protected val connections: MutableMap<Downloader.Response, HttpURLConnection>
-            = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
+    protected val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
 
     override fun execute(request: Downloader.Request): Downloader.Response? {
         val httpUrl = URL(request.url)
@@ -55,7 +55,8 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 code = code,
                 isSuccessful = success,
                 contentLength = contentLength,
-                byteStream = byteStream)
+                byteStream = byteStream,
+                request = request)
 
         connections[response] = client
         return response
@@ -86,6 +87,10 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         } catch (e: Exception) {
 
         }
+    }
+
+    override fun getRequestOutputStream(request: Downloader.Request, filePointerOffset: Long): OutputStream? {
+        return null
     }
 
     /**

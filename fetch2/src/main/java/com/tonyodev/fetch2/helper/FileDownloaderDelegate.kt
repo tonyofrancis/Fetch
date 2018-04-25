@@ -30,7 +30,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         }
     }
 
-    private val progressRunnable = object: DownloadReportingRunnable() {
+    private val progressRunnable = object : DownloadReportingRunnable() {
         override fun run() {
             fetchListener.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
         }
@@ -38,9 +38,6 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
 
     override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
         try {
-            val downloadInfo = download as DownloadInfo
-            downloadInfo.status = Status.DOWNLOADING
-            downloadInfoUpdater.updateFileBytesInfoAndStatusOnly(downloadInfo)
             progressRunnable.download = download
             progressRunnable.etaInMilliSeconds = etaInMilliSeconds
             progressRunnable.downloadedBytesPerSecond = downloadedBytesPerSecond
@@ -85,4 +82,13 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         }
     }
 
+    override fun saveDownloadProgress(download: Download) {
+        try {
+            val downloadInfo = download as DownloadInfo
+            downloadInfo.status = Status.DOWNLOADING
+            downloadInfoUpdater.updateFileBytesInfoAndStatusOnly(downloadInfo)
+        } catch (e: Exception) {
+            logger.e("DownloadManagerDelegate", e)
+        }
+    }
 }
