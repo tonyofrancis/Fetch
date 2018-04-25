@@ -173,6 +173,8 @@ class FileDownloaderImpl(private val initialDownload: Download,
             downloaderOutputStream?.write(buffer, 0, read)
             if (!terminated) {
                 downloaded += read
+                downloadInfo.downloaded = downloaded
+                downloadInfo.total = total
                 downloadSpeedStopTime = System.nanoTime()
                 val downloadSpeedCheckTimeElapsed = hasIntervalTimeElapsed(downloadSpeedStartTime,
                         downloadSpeedStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
@@ -187,6 +189,9 @@ class FileDownloaderImpl(private val initialDownload: Download,
                             totalBytes = total,
                             downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                     downloadedBytesPerSecond = downloaded
+                    if (progressReportingIntervalMillis > DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS) {
+                        delegate?.saveDownloadProgress(downloadInfo)
+                    }
                 }
 
                 reportingStopTime = System.nanoTime()
@@ -194,8 +199,9 @@ class FileDownloaderImpl(private val initialDownload: Download,
                         reportingStopTime, progressReportingIntervalMillis)
 
                 if (hasReportingTimeElapsed) {
-                    downloadInfo.downloaded = downloaded
-                    downloadInfo.total = total
+                    if (progressReportingIntervalMillis <= DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS) {
+                        delegate?.saveDownloadProgress(downloadInfo)
+                    }
                     if (!terminated) {
                         delegate?.onProgress(
                                 download = downloadInfo,

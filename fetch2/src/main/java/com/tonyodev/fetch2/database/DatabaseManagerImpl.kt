@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2.database
 
+import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.content.Context
 import android.database.sqlite.SQLiteException
@@ -37,6 +38,8 @@ class DatabaseManagerImpl constructor(context: Context,
         builder.addMigrations(*migrations)
         builder.build()
     }()
+
+    val database: SupportSQLiteDatabase = requestDatabase.openHelper.writableDatabase
 
     override fun insert(downloadInfo: DownloadInfo): Pair<DownloadInfo, Boolean> {
         synchronized(lock) {
@@ -101,7 +104,6 @@ class DatabaseManagerImpl constructor(context: Context,
     override fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo) {
         synchronized(lock) {
             throwExceptionIfClosed()
-            val database = requestDatabase.openHelper.writableDatabase
             try {
                 database.beginTransaction()
                 database.execSQL("UPDATE ${DownloadDatabase.TABLE_NAME} SET "

@@ -23,6 +23,9 @@ interface FileDownloader : Runnable {
         fun onError(download: Download)
 
         fun onComplete(download: Download)
+
+        fun saveDownloadProgress(download: Download)
+
     }
 
 }
