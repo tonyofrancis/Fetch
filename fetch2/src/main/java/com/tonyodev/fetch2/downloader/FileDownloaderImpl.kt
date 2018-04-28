@@ -228,6 +228,10 @@ class FileDownloaderImpl(private val initialDownload: Download,
             downloadInfo.downloaded = downloaded
             downloadInfo.total = total
             if (!terminated) {
+                delegate?.onProgress(
+                        download = downloadInfo,
+                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                 delegate?.onComplete(
                         download = downloadInfo)
             }
