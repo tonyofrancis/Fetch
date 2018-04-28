@@ -4,6 +4,7 @@ import android.os.Handler
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.Logger
+import com.tonyodev.fetch2.RequestOptions
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.exception.FetchImplementationException
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater
@@ -21,7 +22,8 @@ class DownloadManagerImpl(private val downloader: Downloader,
                           private val retryOnNetworkGain: Boolean,
                           private val fetchListenerProvider: ListenerProvider,
                           private val uiHandler: Handler,
-                          private val downloadInfoUpdater: DownloadInfoUpdater) : DownloadManager {
+                          private val downloadInfoUpdater: DownloadInfoUpdater,
+                          private val requestOptions: Set<RequestOptions>) : DownloadManager {
 
     private val lock = Object()
     private val executor = Executors.newFixedThreadPool(concurrentLimit)
@@ -184,7 +186,8 @@ class DownloadManagerImpl(private val downloader: Downloader,
                 uiHandler = uiHandler,
                 fetchListener = fetchListenerProvider.mainListener,
                 logger = logger,
-                retryOnNetworkGain = retryOnNetworkGain)
+                retryOnNetworkGain = retryOnNetworkGain,
+                requestOptions = requestOptions)
     }
 
 }
