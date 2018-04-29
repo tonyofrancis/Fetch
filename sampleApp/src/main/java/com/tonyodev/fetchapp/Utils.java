@@ -26,7 +26,7 @@ public final class Utils {
         return type;
     }
 
-    public static void deleteFileAndContents(@NonNull final File file) throws Exception {
+    public static void deleteFileAndContents(@NonNull final File file) {
         if (file.exists()) {
             if (file.isDirectory()) {
                 final File[] contents = file.listFiles();

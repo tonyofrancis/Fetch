@@ -24,7 +24,10 @@ interface RxFetch : Fetch {
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
      * It would be best to check if Fetch is managing a download before enqueuing.
-     * @param request Download Request
+     * @param request Download Request. If using Request Options with Fetch,
+     *               the download object file and ID values may be different from the
+     *               initial request object file and ID values when enqueuing.
+     *               Update all external references accordingly.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return A Convertible object that allows you to get the results as on observable or
      * flowable
@@ -41,7 +44,10 @@ interface RxFetch : Fetch {
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
      * It would be best to check if Fetch is managing a download before enqueuing.
-     * @param requests Download Request
+     * @param requests Download Requests. If using Request Options with Fetch,
+     *               the download object file and ID values may be different from the
+     *               initial request object file and ID values when enqueuing.
+     *               Update all external references accordingly.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return A Convertible object that allows you to get the results as on observable or
      * flowable

@@ -1,10 +1,7 @@
 package com.tonyodev.fetch2.fetch
 
 import android.content.Context
-import com.tonyodev.fetch2.Downloader
-import com.tonyodev.fetch2.FetchLogger
-import com.tonyodev.fetch2.Logger
-import com.tonyodev.fetch2.NetworkType
+import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.util.*
 
@@ -35,6 +32,7 @@ abstract class FetchBuilder<out B, out F> constructor(
     private var logger: Logger = defaultLogger
     private var autoStart = DEFAULT_AUTO_START
     private var retryOnNetworkGain = DEFAULT_RETRY_ON_NETWORK_GAIN
+    private var requestOptions = mutableSetOf<RequestOptions>()
 
     /**
      * Sets the downloader client Fetch will use to perform downloads.
@@ -163,6 +161,21 @@ abstract class FetchBuilder<out B, out F> constructor(
         return this
     }
 
+    /**
+     * Adds request options that Fetch can use when a situation occurs pertaining to requests.
+     * Example: Add RequestOptions.AUTO_REMOVE_ON_COMPLETED to remove a completed request from the
+     * Fetch database when a download completes. Note: If more than one request option matches
+     * a situation, Fetch will select the less damaging option. For Example:
+     * If RequestOption.AUTO_REMOVE_ON_FAILED and RequestOption.AUTO_REMOVE_ON_FAILED_DELETE_FILE
+     * is set, Fetch will always select the less damaging one which is RequestOption.AUTO_REMOVE_ON_FAILED.
+     * @param requestOptions Request Options that Fetch can use when a situation occurs.
+     * @return com.tonyodev.fetch2.Fetch.Builder.this
+     * */
+    fun addRequestOptions(vararg requestOptions: RequestOptions): FetchBuilder<B, F> {
+        this.requestOptions.addAll(requestOptions)
+        return this
+    }
+
     /** Gets this builders current configuration settings.
      * @return Builder configuration settings.
      * */
@@ -186,7 +199,8 @@ abstract class FetchBuilder<out B, out F> constructor(
                 globalNetworkType = globalNetworkType,
                 logger = prefsLogger,
                 autoStart = autoStart,
-                retryOnNetworkGain = retryOnNetworkGain)
+                retryOnNetworkGain = retryOnNetworkGain,
+                requestOptions = requestOptions)
     }
 
     /** Builds a new instance of Fetch with the proper configuration.

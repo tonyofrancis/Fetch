@@ -31,7 +31,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -68,9 +70,10 @@ public class FetchHandlerInstrumentedTest {
         final ListenerProvider listenerProvider = new ListenerProvider();
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
+        final Set<RequestOptions> requestOptions = new HashSet<>();
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                listenerProvider, uiHandler, downloadInfoUpdater);
+                listenerProvider, uiHandler, downloadInfoUpdater, requestOptions);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),
@@ -78,7 +81,7 @@ public class FetchHandlerInstrumentedTest {
                 new NetworkInfoProvider(appContext),
                 fetchLogger);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
-                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart);
+                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart, requestOptions);
     }
 
     @Test

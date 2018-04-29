@@ -33,6 +33,9 @@ interface Fetch {
      * and file name is already managed.
      * @param request Download Request
      * @param func Callback that the enqueued download results will be returned on.
+     *             If using Request Options with Fetch, the download object file and ID values may be different
+     *             from the initial request object file and ID values when enqueuing.
+     *             Update all external references accordingly.
      * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * */
@@ -48,6 +51,9 @@ interface Fetch {
      * and file name is already managed.
      * @param requests Request List
      * @param func Callback that the enqueued download results will be returned on.
+     *             If using Request Options with Fetch, the download object file and ID values may be different
+     *             from the initial request object file and ID values when enqueuing.
+     *             Update all external references accordingly.
      * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * */

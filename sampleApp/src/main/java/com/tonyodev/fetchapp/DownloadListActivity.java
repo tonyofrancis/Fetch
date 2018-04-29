@@ -10,7 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SwitchCompat;
-import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 
@@ -30,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import timber.log.Timber;
 
 public class DownloadListActivity extends AppCompatActivity implements ActionListener {
 
@@ -53,8 +54,8 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     }
 
     private void setUpViews() {
-        final SwitchCompat networkSwitch = (SwitchCompat) findViewById(R.id.networkSwitch);
-        final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        final SwitchCompat networkSwitch = findViewById(R.id.networkSwitch);
+        final RecyclerView recyclerView = findViewById(R.id.recyclerView);
         mainView = findViewById(R.id.activity_main);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         networkSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -77,8 +78,21 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         fetch.getDownloadsInGroup(GROUP_ID, new Func<List<? extends Download>>() {
             @Override
             public void call(@NotNull List<? extends Download> downloads) {
-                for (Download download : downloads) {
-                    fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
+                final ArrayList<Download> list = new ArrayList<>(downloads);
+                Collections.sort(list, new Comparator<Download>() {
+                    @Override
+                    public int compare(Download first, Download second) {
+                        if (first.getCreated() > second.getCreated()) {
+                            return 1;
+                        } else if (first.getCreated() == second.getCreated()) {
+                            return 0;
+                        } else {
+                            return -1;
+                        }
+                    }
+                });
+                for (Download download : list) {
+                    fileAdapter.addDownload(download);
                 }
             }
         });
@@ -146,7 +160,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
 
     private void checkStoragePermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE},
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     STORAGE_PERMISSION_CODE);
         } else {
             enqueueDownloads();
@@ -159,9 +173,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
             enqueueDownloads();
-
         } else {
             Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_INDEFINITE)
                     .show();
@@ -169,42 +181,18 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     }
 
     private void enqueueDownloads() {
-        fetch.getDownloadsInGroup(GROUP_ID, new Func<List<? extends Download>>() {
+        final List<Request> initialRequests = Data.getFetchRequestWithGroupId(GROUP_ID);
+        fetch.enqueue(initialRequests, new Func<List<? extends Download>>() {
             @Override
             public void call(@NotNull List<? extends Download> downloads) {
-                if (downloads.size() == 0) {
-                    final List<Request> requests = Data.getFetchRequestWithGroupId(GROUP_ID);
-                    fetch.enqueue(requests, new Func<List<? extends Download>>() {
-                        @Override
-                        public void call(@NotNull List<? extends Download> downloads) {
-                            for (Download download : downloads) {
-                                fileAdapter.addDownload(download);
-                            }
-                        }
-                    }, new Func<Error>() {
-                        @Override
-                        public void call(@NotNull Error error) {
-                            Log.d("DownloadListActivity", "Error: " + error.toString());
-                        }
-                    });
-                } else {
-                    final ArrayList<Download> list = new ArrayList<>(downloads);
-                    Collections.sort(list, new Comparator<Download>() {
-                        @Override
-                        public int compare(Download first, Download second) {
-                            if (first.getCreated() > second.getCreated()) {
-                                return 1;
-                            } else if (first.getCreated() == second.getCreated()) {
-                                return 0;
-                            } else {
-                                return -1;
-                            }
-                        }
-                    });
-                    for (Download download : list) {
-                        fileAdapter.addDownload(download);
-                    }
+                for (Download download : downloads) {
+                    fileAdapter.addDownload(download);
                 }
+            }
+        }, new Func<Error>() {
+            @Override
+            public void call(@NotNull Error error) {
+                Timber.d("DownloadListActivity Error: %1$s", error.toString());
             }
         });
     }

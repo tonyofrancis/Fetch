@@ -2,6 +2,7 @@
 
 package com.tonyodev.fetch2.util
 
+import android.net.Uri
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Status
 import java.io.File
@@ -53,14 +54,6 @@ fun calculateProgress(downloaded: Long, total: Long): Int {
     }
 }
 
-fun getFileLength(file: String): Long {
-    return try {
-        File(file).length()
-    } catch (e: IOException) {
-        0
-    }
-}
-
 fun calculateEstimatedTimeRemainingInMilliseconds(downloadedBytes: Long,
                                                   totalBytes: Long,
                                                   downloadedBytesPerSecond: Long): Long {
@@ -79,4 +72,39 @@ fun hasIntervalTimeElapsed(nanoStartTime: Long, nanoStopTime: Long,
                            progressIntervalMilliseconds: Long): Boolean {
     return TimeUnit.NANOSECONDS
             .toMillis(nanoStopTime - nanoStartTime) >= progressIntervalMilliseconds
+}
+
+fun getUniqueId(url: String, file: String): Int {
+    return (url.hashCode() * 31) + file.hashCode()
+}
+
+fun getIncrementedFileIfOriginalExists(originalPath: String): File {
+    var file = File(originalPath)
+    var counter = 0
+    if (file.exists()) {
+        val parentPath = "${file.parent}/"
+        val extension = file.extension
+        val fileName: String = file.nameWithoutExtension
+        while (file.exists()) {
+            ++counter
+            val newFileName = "$fileName ($counter) "
+            file = File("$parentPath$newFileName.$extension")
+        }
+    }
+    return file
+}
+
+fun createFileIfPossible(file: File) {
+    try {
+        if (!file.exists()) {
+            if (file.parentFile != null && !file.parentFile.exists()) {
+                if (file.parentFile.mkdirs()) {
+                    file.createNewFile()
+                }
+            } else {
+                file.createNewFile()
+            }
+        }
+    } catch (e: IOException) {
+    }
 }

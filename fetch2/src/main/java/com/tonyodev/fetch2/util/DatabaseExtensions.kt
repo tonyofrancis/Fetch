@@ -17,14 +17,12 @@ fun DatabaseManager.sanitize(initializing: Boolean = false): Boolean {
 fun DatabaseManager.sanitize(downloads: List<DownloadInfo>, initializing: Boolean = false): Boolean {
     val changedDownloadsList = mutableListOf<DownloadInfo>()
     var file: File?
-    var fileLength: Long
     var fileExist: Boolean
     var downloadInfo: DownloadInfo
     var update: Boolean
     for (i in 0 until downloads.size) {
         downloadInfo = downloads[i]
         file = File(downloadInfo.file)
-        fileLength = file.length()
         fileExist = file.exists()
         when (downloadInfo.status) {
             Status.PAUSED,
@@ -41,10 +39,6 @@ fun DatabaseManager.sanitize(downloads: List<DownloadInfo>, initializing: Boolea
                     changedDownloadsList.add(downloadInfo)
                 } else {
                     update = false
-                    if (downloadInfo.downloaded != fileLength && fileExist) {
-                        downloadInfo.downloaded = fileLength
-                        update = true
-                    }
                     if (downloadInfo.status == Status.COMPLETED && downloadInfo.total < 1
                             && downloadInfo.downloaded > 0 && fileExist) {
                         downloadInfo.total = downloadInfo.downloaded
@@ -58,9 +52,6 @@ fun DatabaseManager.sanitize(downloads: List<DownloadInfo>, initializing: Boolea
             Status.DOWNLOADING -> {
                 if (initializing) {
                     downloadInfo.status = Status.QUEUED
-                    if (fileExist) {
-                        downloadInfo.downloaded = fileLength
-                    }
                     changedDownloadsList.add(downloadInfo)
                 }
             }

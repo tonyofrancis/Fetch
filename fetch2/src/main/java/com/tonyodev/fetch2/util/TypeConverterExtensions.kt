@@ -17,7 +17,7 @@ fun Request.toDownloadInfo(): DownloadInfo {
     downloadInfo.networkType = networkType
     downloadInfo.status = defaultStatus
     downloadInfo.error = defaultNoError
-    downloadInfo.downloaded = getFileLength(file)
+    downloadInfo.downloaded = 0L
     downloadInfo.tag = tag
     return downloadInfo
 }

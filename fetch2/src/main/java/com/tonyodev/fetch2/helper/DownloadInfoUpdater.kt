@@ -13,4 +13,9 @@ class DownloadInfoUpdater(private val databaseManager: DatabaseManager) {
     fun update(downloadInfo: DownloadInfo) {
         databaseManager.update(downloadInfo)
     }
+
+    fun deleteDownload(downloadInfo: DownloadInfo) {
+        databaseManager.delete(downloadInfo)
+    }
+
 }

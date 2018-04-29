@@ -12,8 +12,7 @@ import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetchmigrator.fetch1.DatabaseHelper
 import com.tonyodev.fetchmigrator.fetch1.DownloadTransferPair
 import com.tonyodev.fetchmigrator.helpers.v1CursorToV2DownloadInfo
-import java.io.File
-import java.io.IOException
+
 import java.sql.SQLException
 
 /** Migrates Downloads from Fetch version 1 to Fetch version 2. Note that the ids
@@ -47,13 +46,6 @@ fun migrateFromV1toV2(context: Context, v2Namespace: String): List<DownloadTrans
         cursor.moveToFirst()
         while (!cursor.isAfterLast) {
             val downloadTransferPair = v1CursorToV2DownloadInfo(cursor)
-            try {
-                val file = File(downloadTransferPair.newDownload.file)
-                if (file.exists()) {
-                    (downloadTransferPair.newDownload as DownloadInfo).downloaded = file.length()
-                }
-            } catch (e: IOException) {
-            }
             (downloadTransferPair.newDownload as DownloadInfo).namespace = v2Namespace
             downloadInfoList.add(downloadTransferPair)
             cursor.moveToNext()

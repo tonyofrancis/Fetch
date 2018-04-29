@@ -9,15 +9,15 @@ import com.tonyodev.fetch2.Request;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 
 public final class Data {
 
-    public static final String[] sampleUrls = new String[] {
+    public static final String[] sampleUrls = new String[]{
             "http://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v",
             "http://media.mongodb.org/zips.json",
             "http://www.example/some/unknown/123/Errorlink.txt",
-            "http://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v",
             "http://storage.googleapis.com/ix_choosemuse/uploads/2016/02/android-logo.png"
     };
 
@@ -28,12 +28,10 @@ public final class Data {
     @NonNull
     public static List<Request> getFetchRequests() {
         final List<Request> requests = new ArrayList<>();
-
         for (String sampleUrl : sampleUrls) {
-            final Request request = new Request(sampleUrl, getFilePath(sampleUrl));
+            final Request request = new Request(UUID.randomUUID().hashCode(), sampleUrl, getFilePath(sampleUrl));
             requests.add(request);
         }
-
         return requests;
     }
 
@@ -51,7 +49,7 @@ public final class Data {
         final Uri uri = Uri.parse(url);
         final String fileName = uri.getLastPathSegment();
         final String dir = getSaveDir();
-        return (dir + "/DownloadList/" + System.nanoTime() + "_" + fileName);
+        return (dir + "/DownloadList/" + fileName);
     }
 
     @NonNull
@@ -60,12 +58,11 @@ public final class Data {
         final String url = "http://speedtest.ftp.otenet.gr/files/test100k.db";
         for (int i = 0; i < 10; i++) {
             final String filePath = getSaveDir() + "/gameAssets/" + "asset_"
-                    + System.nanoTime() + ".asset";
+                    + i + ".asset";
             final Request request = new Request(url, filePath);
             request.setPriority(Priority.HIGH);
             requests.add(request);
         }
-
         return requests;
     }
 

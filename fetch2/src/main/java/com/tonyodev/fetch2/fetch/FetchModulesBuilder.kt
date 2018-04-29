@@ -84,7 +84,8 @@ object FetchModulesBuilder {
                     retryOnNetworkGain = prefs.retryOnNetworkGain,
                     fetchListenerProvider = fetchListenerProvider,
                     uiHandler = uiHandler,
-                    downloadInfoUpdater = downloadInfoUpdater)
+                    downloadInfoUpdater = downloadInfoUpdater,
+                    requestOptions = prefs.requestOptions)
 
             priorityListProcessor = PriorityListProcessorImpl(
                     handler = handler,
@@ -103,7 +104,8 @@ object FetchModulesBuilder {
                     fetchListenerProvider = fetchListenerProvider,
                     handler = handler,
                     logger = prefs.logger,
-                    autoStart = prefs.autoStart)
+                    autoStart = prefs.autoStart,
+                    requestOptions = prefs.requestOptions)
         }
 
     }
