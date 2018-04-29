@@ -6,6 +6,8 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
+import com.tonyodev.fetch2.exception.FetchException
+import com.tonyodev.fetch2.exception.FetchImplementationException
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
@@ -99,6 +101,10 @@ class FetchHandlerImpl(private val namespace: String,
 
     override fun enqueue(requests: List<Request>): List<Download> {
         startPriorityQueueIfNotStarted()
+        val distinctCount = requests.distinctBy { it.id }.count()
+        if (distinctCount != requests.size) {
+            throw FetchException(MULTI_REQUESTS_WITH_IDENTICAL_ID, FetchException.Code.MULTI_REQUESTS_WITH_IDENTICAL_ID)
+        }
         val downloadInfoList = requests.map {
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
@@ -120,7 +126,8 @@ class FetchHandlerImpl(private val namespace: String,
         return when {
             requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE) ||
                     requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH) -> {
-                var existingDownloadInfoList = databaseManager.get(downloadInfoList.map { it.id }).filterNotNull()
+                val ids = downloadInfoList.map { it.id }
+                var existingDownloadInfoList = databaseManager.get(ids).filterNotNull()
                 if (existingDownloadInfoList.isEmpty()) {
                     updateFileForDownloadInfoIfNeeded(downloadInfoList)
                     val downloads = databaseManager.insert(downloadInfoList)
@@ -142,7 +149,6 @@ class FetchHandlerImpl(private val namespace: String,
                                 if (existingDownloadInfo.status == Status.COMPLETED) {
                                     it.status = existingDownloadInfo.status
                                 }
-
                             }
                         }
                     }

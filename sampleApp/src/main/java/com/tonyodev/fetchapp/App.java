@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import com.tonyodev.fetch2.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.Logger;
+import com.tonyodev.fetch2.RequestOptions;
 import com.tonyodev.fetch2downloaders.OkHttpDownloader;
 import com.tonyodev.fetch2rx.RxFetch;
 
@@ -25,7 +26,9 @@ public class App extends Application {
     public static final String APP_FETCH_NAMESPACE = "DefaultFetch";
     public static final String GAMES_FETCH_NAMESPACE = "GameFilesFetch";
 
+    @Nullable
     private Fetch fetch;
+    @Nullable
     private RxFetch rxFetch;
 
     @Override
@@ -48,27 +51,25 @@ public class App extends Application {
     public Fetch getNewFetchInstance(@NonNull final String namespace) {
         final OkHttpClient client = new OkHttpClient.Builder().build();
         final Downloader okHttpDownloader = new OkHttpDownloader(client);
-        final Logger logger = new FetchTimberLogger();
-        final int concurrentLimit = 2;
-        final boolean enableLogging = true;
         return new Fetch.Builder(this, namespace)
-                .setLogger(logger)
+                .setLogger(new FetchTimberLogger())
                 .setDownloader(okHttpDownloader)
-                .setDownloadConcurrentLimit(concurrentLimit)
-                .enableLogging(enableLogging)
+                .setDownloadConcurrentLimit(4)
+                .enableLogging(true)
                 .enableRetryOnNetworkGain(true)
+                .addRequestOptions(RequestOptions.REPLACE_ON_ENQUEUE)
                 .build();
     }
 
+    @NonNull
     public RxFetch getRxFetch() {
         if (rxFetch == null || rxFetch.isClosed()) {
-            final Logger logger = new FetchTimberLogger();
-            final int concurrentLimit = 2;
-            final boolean enableLogging = true;
+            final OkHttpClient client = new OkHttpClient.Builder().build();
             rxFetch = new RxFetch.Builder(this, GAMES_FETCH_NAMESPACE)
-                    .setLogger(logger)
-                    .setDownloadConcurrentLimit(concurrentLimit)
-                    .enableLogging(enableLogging)
+                    .setDownloader(new OkHttpOutputStreamDownloader(client))
+                    .setDownloadConcurrentLimit(1)
+                    .enableLogging(true)
+                    .addRequestOptions(RequestOptions.REPLACE_ON_ENQUEUE_FRESH)
                     .build();
         }
         return rxFetch;
@@ -123,6 +124,10 @@ public class App extends Application {
      * See Downloader.kt documentation for more information on providing your own downloader.
      */
     private static class OkHttpOutputStreamDownloader extends OkHttpDownloader {
+
+        public OkHttpOutputStreamDownloader() {
+            super(null);
+        }
 
         public OkHttpOutputStreamDownloader(@Nullable OkHttpClient okHttpClient) {
             super(okHttpClient);

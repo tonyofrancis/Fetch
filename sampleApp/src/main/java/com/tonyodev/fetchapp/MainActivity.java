@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deleteDownloadedFiles() {
-        final String[] namespaces = new String[] {
+        final String[] namespaces = new String[]{
                 DownloadListActivity.FETCH_NAMESPACE,
                 FailedMultiEnqueueActivity.FETCH_NAMESPACE
         };

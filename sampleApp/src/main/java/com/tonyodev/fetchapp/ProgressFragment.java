@@ -32,8 +32,8 @@ public class ProgressFragment extends Fragment implements FetchListener {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
-        progressTextView = (TextView) view.findViewById(R.id.progressTextView);
+        progressBar = view.findViewById(R.id.progressBar);
+        progressTextView = view.findViewById(R.id.progressTextView);
         updateProgress(0);
     }
 
@@ -56,67 +56,55 @@ public class ProgressFragment extends Fragment implements FetchListener {
         this.request = request;
     }
 
-    @Override
-    public void onQueued(@NotNull Download download) {
+    private void updateProgressForDownload(@NotNull Download download) {
         if (download.getId() == getDownloadId()) {
             updateProgress(download.getProgress());
         }
+    }
+
+    @Override
+    public void onQueued(@NotNull Download download) {
+        updateProgressForDownload(download);
     }
 
     @Override
     public void onCompleted(@NotNull Download download) {
-        if (download.getId() == getDownloadId()) {
-            updateProgress(download.getProgress());
-        }
+        updateProgressForDownload(download);
     }
 
     @Override
     public void onError(@NotNull Download download) {
-        if (download.getId() == getDownloadId()) {
-            updateProgress(download.getProgress());
-        }
+        updateProgressForDownload(download);
     }
 
     @Override
     public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
-        if (download.getId() == getDownloadId()) {
-            updateProgress(download.getProgress());
-        }
+        updateProgressForDownload(download);
     }
 
     @Override
     public void onPaused(@NotNull Download download) {
-        if (download.getId() == getDownloadId()) {
-            updateProgress(download.getProgress());
-        }
+        updateProgressForDownload(download);
     }
 
     @Override
     public void onResumed(@NotNull Download download) {
-        if (download.getId() == getDownloadId()) {
-            updateProgress(download.getProgress());
-        }
+        updateProgressForDownload(download);
     }
 
     @Override
     public void onCancelled(@NotNull Download download) {
-        if (download.getId() == getDownloadId()) {
-            updateProgress(download.getProgress());
-        }
+        updateProgressForDownload(download);
     }
 
     @Override
     public void onRemoved(@NotNull Download download) {
-        if (download.getId() == getDownloadId()) {
-            updateProgress(download.getProgress());
-        }
+        updateProgressForDownload(download);
     }
 
     @Override
     public void onDeleted(@NotNull Download download) {
-        if (download.getId() == getDownloadId()) {
-            updateProgress(download.getProgress());
-        }
+        updateProgressForDownload(download);
     }
 
 }
