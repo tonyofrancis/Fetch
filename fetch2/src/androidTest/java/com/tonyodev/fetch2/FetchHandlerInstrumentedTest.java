@@ -81,7 +81,7 @@ public class FetchHandlerInstrumentedTest {
                 new NetworkInfoProvider(appContext),
                 fetchLogger);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
-                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart);
+                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart, requestOptions);
     }
 
     @Test

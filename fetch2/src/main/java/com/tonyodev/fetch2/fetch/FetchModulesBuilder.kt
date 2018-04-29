@@ -104,7 +104,8 @@ object FetchModulesBuilder {
                     fetchListenerProvider = fetchListenerProvider,
                     handler = handler,
                     logger = prefs.logger,
-                    autoStart = prefs.autoStart)
+                    autoStart = prefs.autoStart,
+                    requestOptions = prefs.requestOptions)
         }
 
     }
