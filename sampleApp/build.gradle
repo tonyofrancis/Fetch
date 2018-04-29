@@ -24,8 +24,8 @@ android {
         applicationId "com.tonyodev.fetchapp"
         minSdkVersion library_min_version
         targetSdkVersion library_target_version
-        versionCode 6
-        versionName "2.4"
+        versionCode 7
+        versionName "2.5"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
