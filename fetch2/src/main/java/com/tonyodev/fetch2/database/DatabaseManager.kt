@@ -23,6 +23,7 @@ interface DatabaseManager : Closeable {
     fun get(): List<DownloadInfo>
     fun get(id: Int): DownloadInfo?
     fun get(ids: List<Int>): List<DownloadInfo?>
+    fun getByFile(file: String): DownloadInfo?
     fun getByStatus(status: Status): List<DownloadInfo>
     fun getByGroup(group: Int): List<DownloadInfo>
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<DownloadInfo>

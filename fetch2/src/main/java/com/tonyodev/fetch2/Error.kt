@@ -83,12 +83,7 @@ enum class Error constructor(
 
     /** Indicates that the file belonging to the request has been deleted. The file
      * could have been deleted by an external source.*/
-    FILE_NOT_FOUND(17),
-
-    /** Indicates that multiple requests with the same ID requested to be enqueued.
-     * @see com.tonyodev.fetch2.Request for more information.
-     * */
-    MULTI_REQUESTS_WITH_IDENTICAL_ID(18);
+    FILE_NOT_FOUND(17);
 
     companion object {
 
@@ -114,7 +109,6 @@ enum class Error constructor(
                 15 -> REQUEST_NOT_SUCCESSFUL
                 16 -> UNKNOWN_IO_ERROR
                 17 -> FILE_NOT_FOUND
-                18 -> MULTI_REQUESTS_WITH_IDENTICAL_ID
                 else -> UNKNOWN
             }
         }

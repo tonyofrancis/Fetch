@@ -54,8 +54,6 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FETCH_ALREADY_EXIST
     } else if (message.contains(RESPONSE_NOT_SUCCESSFUL, true) || message.contains(FAILED_TO_CONNECT, true)) {
         Error.REQUEST_NOT_SUCCESSFUL
-    } else if (message.equals(MULTI_REQUESTS_WITH_IDENTICAL_ID, true)) {
-        Error.MULTI_REQUESTS_WITH_IDENTICAL_ID
     } else {
         Error.UNKNOWN
     }

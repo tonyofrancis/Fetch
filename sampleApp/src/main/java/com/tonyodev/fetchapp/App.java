@@ -57,7 +57,7 @@ public class App extends Application {
                 .setDownloadConcurrentLimit(1)
                 .enableLogging(true)
                 .enableRetryOnNetworkGain(true)
-                .addRequestOptions(RequestOptions.REPLACE_ON_ENQUEUE)
+                .addRequestOptions(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
                 .build();
     }
 
@@ -69,7 +69,7 @@ public class App extends Application {
                     .setDownloader(new OkHttpOutputStreamDownloader(client))
                     .setDownloadConcurrentLimit(1)
                     .enableLogging(true)
-                    .addRequestOptions(RequestOptions.REPLACE_ON_ENQUEUE_FRESH)
+                    .addRequestOptions(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
                     .build();
         }
         return rxFetch;
