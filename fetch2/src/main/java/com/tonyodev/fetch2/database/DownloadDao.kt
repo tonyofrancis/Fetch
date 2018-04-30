@@ -3,6 +3,7 @@ package com.tonyodev.fetch2.database
 import android.arch.persistence.room.*
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_CREATED
+import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_FILE
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_GROUP
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_ID
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_PRIORITY
@@ -42,6 +43,9 @@ interface DownloadDao {
 
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_ID IN (:ids)")
     fun get(ids: List<Int>): List<DownloadInfo>
+
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_FILE = :file")
+    fun getByFile(file: String): DownloadInfo?
 
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_STATUS = :status")
     fun getByStatus(status: Status): List<DownloadInfo>
