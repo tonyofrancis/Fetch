@@ -32,6 +32,26 @@ enum class RequestOptions {
      * downloading from the beginning.*/
     REPLACE_ON_ENQUEUE_FRESH,
 
+    /** Fetch will remove any existing requests on enqueue that matches the new request's id or file.
+     * If an old request has started the download process, this new request will continue where
+     * it left off.*/
+    REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE,
+
+    /** Fetch will remove any existing requests on enqueue that matches the new request's id or file.
+     * If the old request has started the download process, this new request will force
+     * downloading from the beginning.*/
+    REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH,
+
+    /** Fetch will auto replace an existing request where the file matches on enqueue.
+     * If the old request has started the download process, this new request will continue where
+     * it left off.*/
+    REPLACE_ON_ENQUEUE_FILE,
+
+    /** Fetch will auto replace an existing request where the file matches on enqueue.
+     * If the old request has started the download process, this new request will force
+     * downloading from the beginning.*/
+    REPLACE_ON_ENQUEUE_FRESH_FILE,
+
     /** If a request with the same file path already exist in the Fetch database
      * when enqueuing a new request, Fetch will append a number to the file name.
      * Example: Original Path = "/data/dir/test.txt" to New Path = "/data/dir/test (1).txt".
