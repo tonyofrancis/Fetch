@@ -2,6 +2,7 @@
 
 package com.tonyodev.fetch2.util
 
+import android.content.Context
 import android.net.Uri
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Status
@@ -107,4 +108,8 @@ fun createFileIfPossible(file: File) {
         }
     } catch (e: IOException) {
     }
+}
+
+fun getFileChunkTempDir(context: Context): String {
+    return "${context.filesDir.absoluteFile}/_fetchData/temp"
 }

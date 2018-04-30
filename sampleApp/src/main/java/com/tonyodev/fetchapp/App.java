@@ -54,7 +54,7 @@ public class App extends Application {
         return new Fetch.Builder(this, namespace)
                 .setLogger(new FetchTimberLogger())
                 .setDownloader(okHttpDownloader)
-                .setDownloadConcurrentLimit(4)
+                .setDownloadConcurrentLimit(1)
                 .enableLogging(true)
                 .enableRetryOnNetworkGain(true)
                 .addRequestOptions(RequestOptions.REPLACE_ON_ENQUEUE)

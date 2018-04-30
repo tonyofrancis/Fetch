@@ -23,7 +23,8 @@ class DownloadManagerImpl(private val downloader: Downloader,
                           private val fetchListenerProvider: ListenerProvider,
                           private val uiHandler: Handler,
                           private val downloadInfoUpdater: DownloadInfoUpdater,
-                          private val requestOptions: Set<RequestOptions>) : DownloadManager {
+                          private val requestOptions: Set<RequestOptions>,
+                          private val fileChunkTempDir: String) : DownloadManager {
 
     private val lock = Object()
     private val executor = Executors.newFixedThreadPool(concurrentLimit)
@@ -170,14 +171,24 @@ class DownloadManagerImpl(private val downloader: Downloader,
     }
 
     override fun getNewFileDownloaderForDownload(download: Download): FileDownloader {
-        return FileDownloaderImpl(
+//        return FileDownloaderImpl(
+//                initialDownload = download,
+//                downloader = downloader,
+//                progressReportingIntervalMillis = progressReportingIntervalMillis,
+//                downloadBufferSizeBytes = downloadBufferSizeBytes,
+//                logger = logger,
+//                networkInfoProvider = networkInfoProvider,
+//                retryOnNetworkGain = retryOnNetworkGain)
+        return ChunkFileDownloaderImpl(
                 initialDownload = download,
                 downloader = downloader,
                 progressReportingIntervalMillis = progressReportingIntervalMillis,
                 downloadBufferSizeBytes = downloadBufferSizeBytes,
                 logger = logger,
                 networkInfoProvider = networkInfoProvider,
-                retryOnNetworkGain = retryOnNetworkGain)
+                retryOnNetworkGain = retryOnNetworkGain,
+                chuckLimit = 10,
+                fileChunkTempDir = fileChunkTempDir)
     }
 
     override fun getFileDownloaderDelegate(): FileDownloader.Delegate {

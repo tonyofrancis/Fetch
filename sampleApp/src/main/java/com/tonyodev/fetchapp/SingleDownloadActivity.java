@@ -100,7 +100,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     private void enqueueDownload() {
-        final String url = Data.sampleUrls[0];
+        final String url = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";//Data.sampleUrls[0];
         final String filePath = Data.getSaveDir() + "/movies/buckbunny_singleDownloadActivity.m4v";
         final Request initialRequest = new Request(url, filePath);
         fetch.enqueue(initialRequest, new Func<Download>() {
