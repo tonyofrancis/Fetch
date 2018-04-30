@@ -16,8 +16,7 @@ open class FetchException constructor(message: String,
         LOGGER,
         ILLEGAL_CONCURRENT_INSERT,
         INVALID_STATUS,
-        DOWNLOAD_NOT_FOUND,
-        MULTI_REQUESTS_WITH_IDENTICAL_ID;
+        DOWNLOAD_NOT_FOUND
     }
 
 }

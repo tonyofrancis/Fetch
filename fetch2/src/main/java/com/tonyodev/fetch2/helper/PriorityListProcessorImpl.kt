@@ -29,17 +29,18 @@ class PriorityListProcessorImpl constructor(private val handler: Handler,
 
     private val priorityIteratorRunnable = Runnable {
         if (canContinueToProcess()) {
-            if (networkInfoProvider.isNetworkAvailable) {
+            if (networkInfoProvider.isNetworkAvailable && downloadManager.canAccommodateNewDownload()) {
                 val priorityList = getPriorityList()
                 for (index in 0..priorityList.lastIndex) {
-                    if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
+                    if (canContinueToProcess()) {
                         val download = priorityList[index]
                         val networkType = when {
                             globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
                             download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
                             else -> download.networkType
                         }
-                        if (networkInfoProvider.isOnAllowedNetwork(networkType) && canContinueToProcess()) {
+                        if (networkInfoProvider.isOnAllowedNetwork(networkType) && canContinueToProcess()
+                                && !downloadManager.contains(download.id)) {
                             downloadManager.start(download)
                         }
                     } else {

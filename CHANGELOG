@@ -1,3 +1,8 @@
+Version 2.0.0-RC19
+- Added new RequestOptions for Fetch. Fixed RequestOptions from RC18. See the Java documents and sample app for more information.
+- Bug fixes
+- Updated the sample app to reflect RequestOption changes
+
 Version 2.0.0-RC18
 - Added new RequestOptions for Fetch. See the Java documents and sample app for more information.
 - Bug fixes

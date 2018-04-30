@@ -6,8 +6,6 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
-import com.tonyodev.fetch2.exception.FetchException
-import com.tonyodev.fetch2.exception.FetchImplementationException
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
@@ -37,47 +35,79 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun enqueue(request: Request): Download {
-        startPriorityQueueIfNotStarted()
         val downloadInfo = request.toDownloadInfo()
         downloadInfo.namespace = namespace
         downloadInfo.status = Status.QUEUED
-        return enqueue(downloadInfo)
+        prepareDownloadInfoForEnqueue(downloadInfo)
+        databaseManager.insert(downloadInfo)
+        startPriorityQueueIfNotStarted()
+        return downloadInfo
     }
 
-    private fun enqueue(downloadInfo: DownloadInfo): Download {
-        return when {
-            requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE) ||
-                    requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH) -> {
-                var existingDownloadInfo = databaseManager.get(downloadInfo.id)
-                if (existingDownloadInfo == null) {
-                    updateFileForDownloadInfoIfNeeded(downloadInfo)
-                    databaseManager.insert(downloadInfo)
-                    startPriorityQueueIfNotStarted()
-                    downloadInfo
-                } else {
-                    cancelDownload(existingDownloadInfo.id)
-                    existingDownloadInfo = databaseManager.get(downloadInfo.id)
-                    if (existingDownloadInfo != null) {
-                        if (requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE)) {
-                            downloadInfo.downloaded = existingDownloadInfo.downloaded
-                            downloadInfo.total = existingDownloadInfo.total
-                            if (existingDownloadInfo.status == Status.COMPLETED) {
-                                downloadInfo.status = existingDownloadInfo.status
-                            }
-                        }
-                        databaseManager.delete(existingDownloadInfo)
+    private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
+        var doAutoIncrementFileNameCheck = true
+        when {
+        //Jump in here if any request options pertain to enqueuing a request
+            requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
+                    || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
+                    || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_ID)
+                    || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_ID)
+                    || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FILE)
+                    || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_FILE) -> {
+                //If any options pertain to id, do a database query based on id. If match found cancel download.
+                var existingDownloadInfoWithId: DownloadInfo? = null
+                if (requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
+                        || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
+                        || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_ID)
+                        || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_ID)) {
+                    existingDownloadInfoWithId = databaseManager.get(downloadInfo.id)
+                    if (existingDownloadInfoWithId != null) {
+                        cancelDownload(existingDownloadInfoWithId.id)
+                        existingDownloadInfoWithId = databaseManager.get(downloadInfo.id)
                     }
-                    databaseManager.insert(downloadInfo)
-                    startPriorityQueueIfNotStarted()
-                    downloadInfo
+                }
+                //If any options pertain to file, do a database query based on file. If match found cancel download.
+                var existingDownloadInfoWithFile: DownloadInfo? = null
+                if (requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
+                        || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
+                        || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FILE)
+                        || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_FILE)) {
+                    existingDownloadInfoWithFile = databaseManager.getByFile(downloadInfo.file)
+                    if (existingDownloadInfoWithFile != null) {
+                        cancelDownload(existingDownloadInfoWithFile.id)
+                        existingDownloadInfoWithFile = databaseManager.getByFile(downloadInfo.file)
+                    }
+                }
+                //If less damaging(do not delete existing file) option exist jump in here
+                if (requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_ID)
+                        || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
+                        || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FILE)) {
+                    val download: DownloadInfo? = existingDownloadInfoWithFile
+                            ?: existingDownloadInfoWithId
+                    if (download != null) {
+                        downloadInfo.downloaded = download.downloaded
+                        downloadInfo.total = download.total
+                        if (download.status == Status.COMPLETED) {
+                            downloadInfo.status = download.status
+                        }
+                        doAutoIncrementFileNameCheck = false
+                    } else {
+                        doAutoIncrementFileNameCheck = true
+                    }
+                } else {
+                    doAutoIncrementFileNameCheck = true
+                }
+                //Delete found records if they exist
+                if (existingDownloadInfoWithFile != null) {
+                    databaseManager.delete(existingDownloadInfoWithFile)
+                }
+                if (existingDownloadInfoWithId != null) {
+                    databaseManager.delete(existingDownloadInfoWithId)
                 }
             }
-            else -> {
-                updateFileForDownloadInfoIfNeeded(downloadInfo)
-                databaseManager.insert(downloadInfo)
-                startPriorityQueueIfNotStarted()
-                downloadInfo
-            }
+        }
+        if (doAutoIncrementFileNameCheck) {
+            updateFileForDownloadInfoIfNeeded(downloadInfo)
         }
     }
 
@@ -86,7 +116,8 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     private fun updateFileForDownloadInfoIfNeeded(downloadInfoList: List<DownloadInfo>) {
-        if (requestOptions.contains(RequestOptions.ADD_AUTO_INCREMENT_TO_FILE_ON_ENQUEUE)) {
+        if (requestOptions.contains(RequestOptions.ADD_AUTO_INCREMENT_TO_FILE_ON_ENQUEUE)
+                || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)) {
             downloadInfoList.forEach { downloadInfo ->
                 val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
                 val generatedId = getUniqueId(downloadInfo.url, downloadInfo.file)
@@ -100,71 +131,39 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun enqueue(requests: List<Request>): List<Download> {
-        startPriorityQueueIfNotStarted()
-        val distinctCount = requests.distinctBy { it.id }.count()
-        if (distinctCount != requests.size) {
-            throw FetchException(MULTI_REQUESTS_WITH_IDENTICAL_ID, FetchException.Code.MULTI_REQUESTS_WITH_IDENTICAL_ID)
-        }
-        val downloadInfoList = requests.map {
+        val requestsList = prepareRequestListForEnqueue(requests)
+        val downloadInfoList = requestsList.map {
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
             downloadInfo.status = Status.QUEUED
+            prepareDownloadInfoForEnqueue(downloadInfo)
             downloadInfo
         }
-        val results = mutableListOf<Download>()
-        val insertedList = enqueueList(downloadInfoList)
-        insertedList.forEach {
-            if (it.second) {
-                logger.d("Enqueued download ${it.first}")
-                results.add(it.first)
-            }
-        }
+        val results = databaseManager.insert(downloadInfoList)
+                .filter { it.second }
+                .map {
+                    logger.d("Enqueued download ${it.first}")
+                    it.first
+                }
+        startPriorityQueueIfNotStarted()
         return results
     }
 
-    private fun enqueueList(downloadInfoList: List<DownloadInfo>): List<Pair<Download, Boolean>> {
-        return when {
-            requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE) ||
-                    requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH) -> {
-                val ids = downloadInfoList.map { it.id }
-                var existingDownloadInfoList = databaseManager.get(ids).filterNotNull()
-                if (existingDownloadInfoList.isEmpty()) {
-                    updateFileForDownloadInfoIfNeeded(downloadInfoList)
-                    val downloads = databaseManager.insert(downloadInfoList)
-                    startPriorityQueueIfNotStarted()
-                    downloads
-                } else {
-                    existingDownloadInfoList.forEach {
-                        cancelDownload(it.id)
-                    }
-                    existingDownloadInfoList = databaseManager.get(downloadInfoList.map { it.id }).filterNotNull()
-                    if (requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE)) {
-                        downloadInfoList.forEach {
-                            val existingDownloadInfo = existingDownloadInfoList.find { downloadInfo ->
-                                it.id == downloadInfo.id
-                            }
-                            if (existingDownloadInfo != null) {
-                                it.downloaded = existingDownloadInfo.downloaded
-                                it.total = existingDownloadInfo.total
-                                if (existingDownloadInfo.status == Status.COMPLETED) {
-                                    it.status = existingDownloadInfo.status
-                                }
-                            }
-                        }
-                    }
-                    databaseManager.delete(downloadInfoList)
-                    val downloads = databaseManager.insert(downloadInfoList)
-                    startPriorityQueueIfNotStarted()
-                    downloads
-                }
-            }
-            else -> {
-                updateFileForDownloadInfoIfNeeded(downloadInfoList)
-                val downloads = databaseManager.insert(downloadInfoList)
-                startPriorityQueueIfNotStarted()
-                downloads
-            }
+    private fun prepareRequestListForEnqueue(requests: List<Request>): List<Request> {
+        var sequence = requests.asSequence()
+        if (requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
+                || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
+                || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_ID)
+                || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_ID)) {
+            sequence = sequence.distinctBy { it.id }
         }
+        if (requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
+                || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
+                || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FILE)
+                || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_FILE)) {
+            sequence = sequence.distinctBy { it.file }
+        }
+        return sequence.toList()
     }
 
     override fun pause(ids: IntArray): List<Download> {

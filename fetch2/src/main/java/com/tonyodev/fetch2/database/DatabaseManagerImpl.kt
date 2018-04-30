@@ -150,6 +150,15 @@ class DatabaseManagerImpl constructor(context: Context,
         }
     }
 
+    override fun getByFile(file: String): DownloadInfo? {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            val download = requestDatabase.requestDao().getByFile(file)
+            sanitize(download)
+            return download
+        }
+    }
+
     override fun getByStatus(status: Status): List<DownloadInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
