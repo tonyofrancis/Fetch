@@ -22,22 +22,22 @@ enum class RequestOptions {
      * The file is deleted if it exists.*/
     AUTO_REMOVE_ON_COMPLETED_DELETE_FILE,
 
-    /** Fetch will auto replace an existing request where the id matches on enqueue.
+    /** Fetch will auto replace an existing request in the database where the id matches on enqueue.
      * If the old request has started the download process, this new request will continue where
      * it left off.*/
-    REPLACE_ON_ENQUEUE,
+    REPLACE_ON_ENQUEUE_ID,
 
-    /** Fetch will auto replace an existing request where the id matches on enqueue.
+    /** Fetch will auto replace an existing request in the database where the id matches on enqueue.
      * If the old request has started the download process, this new request will force
      * downloading from the beginning.*/
-    REPLACE_ON_ENQUEUE_FRESH,
+    REPLACE_ON_ENQUEUE_FRESH_ID,
 
-    /** Fetch will remove any existing requests on enqueue that matches the new request's id or file.
+    /** Fetch will remove any existing requests in the database on enqueue that matches the new request's id or file.
      * If an old request has started the download process, this new request will continue where
      * it left off.*/
     REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE,
 
-    /** Fetch will remove any existing requests on enqueue that matches the new request's id or file.
+    /** Fetch will remove any existing requests in the database on enqueue that matches the new request's id or file.
      * If the old request has started the download process, this new request will force
      * downloading from the beginning.*/
     REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH,
