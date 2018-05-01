@@ -47,26 +47,15 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
     @Volatile
     private var downloaded = 0L
 
-    private var total = 0L
-
     private val downloadedLock = Object()
 
-    private val doneLock = Object()
-
-    @Volatile
-    private var doneCounter = 0
+    private var total = 0L
 
     private var averageDownloadedBytesPerSecond = 0.0
 
     private val movingAverageCalculator = AverageCalculator(5)
 
     private var estimatedTimeRemainingInMilliseconds: Long = -1
-
-    @Volatile
-    private var didChunkFail = false
-
-    @Volatile
-    private var chunkFailedException: Exception? = null
 
     private var chunkExecutorService: ExecutorService? = null
 
@@ -81,17 +70,18 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                 total = openingResponse.contentLength
                 if (total > 0) {
                     val fileChunks = getFileChunkList(openingResponse.code)
-                    val chunkDownloadsList = fileChunks.filter { !it.done }
+                    val chunkDownloadsList = fileChunks.filter { !it.completed }
                     if (!interrupted && !terminated) {
                         delegate?.onStarted(
                                 download = downloadInfo,
                                 etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
                                 downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                        chunkExecutorService = Executors.newFixedThreadPool(chunkDownloadsList.size)
+                        if (chunkDownloadsList.isNotEmpty()) {
+                            chunkExecutorService = Executors.newFixedThreadPool(chunkDownloadsList.size)
+                        }
                         downloadChunks(chunkDownloadsList)
-                        //Wait for chucks to complete downloading and perform reporting
-                        waitAndPerformProgressReporting(chunkDownloadsList.size)
-                        if (!interrupted && !terminated && doneCounter == chunkDownloadsList.size && !didChunkFail) {
+                        waitAndPerformProgressReporting(chunkDownloadsList)
+                        if (!interrupted && !terminated) {
                             val downloadedBytesSum = fileChunks.asSequence().map { it.downloaded }.sum()
                             if (downloadedBytesSum == total) {
                                 downloadInfo.downloaded = downloadedBytesSum
@@ -101,11 +91,14 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                                     randomAccessFile = RandomAccessFile(getFile(downloadInfo.file), "rw")
                                     randomAccessFile.seek(0)
                                 }
-                                //Merge file together
                                 for (fileChunk in fileChunks) {
                                     mergeChunk(fileChunk, output, randomAccessFile)
                                 }
                                 if (!interrupted && !terminated) {
+                                    for (fileChunk in fileChunks) {
+                                        val file = File(fileChunk.file)
+                                        file.delete()
+                                    }
                                     completedDownload = true
                                     if (!terminated) {
                                         delegate?.onProgress(
@@ -121,17 +114,15 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
                         delegate?.saveDownloadProgress(downloadInfo)
-                        if (!completedDownload) {
-                            if (!terminated) {
-                                delegate?.onProgress(
-                                        download = downloadInfo,
-                                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                            }
+                        if (!completedDownload && !terminated) {
+                            delegate?.onProgress(
+                                    download = downloadInfo,
+                                    etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                         }
-                        if (didChunkFail) {
-                            delegate?.onError(download)
-                            completedDownload = false
+                        val failedChunk = fileChunks.firstOrNull { it.status == DownloadingStatus.ERROR }
+                        if (failedChunk != null) {
+                            throw failedChunk.errorException!!
                         }
                     }
                 } else {
@@ -249,10 +240,12 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                 val file = File(it.file)
                 it.downloaded = file.length()
                 downloaded += it.downloaded
+                if (it.startBytes + it.downloaded == it.endBytes) {
+                    it.status = DownloadingStatus.COMPLETED
+                }
             }
             fileChunks
         } else {
-            //Sever did not reply with Partial Content code. Will now Operate like FileDownloaderImpl
             val singleFileChunk = FileChuck(
                     id = downloadInfo.id,
                     position = 1,
@@ -262,6 +255,9 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
             //TODO: get this information from a database
             val file = File(singleFileChunk.file)
             singleFileChunk.downloaded = file.length()
+            if (singleFileChunk.startBytes + singleFileChunk.downloaded == singleFileChunk.endBytes) {
+                singleFileChunk.status = DownloadingStatus.COMPLETED
+            }
             downloaded += singleFileChunk.downloaded
             listOf(singleFileChunk)
         }
@@ -273,19 +269,18 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
             val fileSizeInGb = total.toFloat() / (1024 * 1024 * 1024).toFloat()
             when {
                 fileSizeInGb >= 1 -> {
-                    val chunks = 4 //ceil(fileSizeInGb / 100.toFloat()).toInt()
-                    val bytesPerChunk = ceil((total.toFloat() / chunks.toFloat())).toLong() //1e8.toLong()
+                    val chunks = 4
+                    val bytesPerChunk = ceil((total.toFloat() / chunks.toFloat())).toLong()
                     FileChunkInfo(chunks, bytesPerChunk)
                 }
                 fileSizeInMb >= 1 -> {
-                    val chunks = 2 //ceil(fileSizeInMb / 10.toFloat()).toInt()
-                    val bytesPerChunk = ceil((total.toFloat() / chunks.toFloat())).toLong() //1e7.toLong()
+                    val chunks = 2
+                    val bytesPerChunk = ceil((total.toFloat() / chunks.toFloat())).toLong()
                     FileChunkInfo(chunks, bytesPerChunk)
                 }
                 else -> FileChunkInfo(1, total)
             }
         } else {
-            //TODO: THIS MAY CAUSE ISSUES??
             val bytesPerChunk = ceil((total.toFloat() / fileChunkLimit.toFloat())).toLong()
             return FileChunkInfo(fileChunkLimit, bytesPerChunk)
         }
@@ -302,13 +297,13 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
         return ceil(averageDownloadedBytesPerSecond).toLong()
     }
 
-    private fun waitAndPerformProgressReporting(initialDownloadingCount: Int) {
+    private fun waitAndPerformProgressReporting(chunkDownloadsList: List<FileChuck>) {
         var reportingStopTime: Long
         var downloadSpeedStopTime: Long
         var downloadedBytesPerSecond = downloaded
         var reportingStartTime = System.nanoTime()
         var downloadSpeedStartTime = System.nanoTime()
-        while (doneCounter != initialDownloadingCount && !interrupted && !terminated) {
+        while (chunksDownloading(chunkDownloadsList) && !interrupted && !terminated) {
             downloadInfo.downloaded = downloaded
             downloadInfo.total = total
             downloadSpeedStopTime = System.nanoTime()
@@ -355,6 +350,7 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                            outputStream: OutputStream?,
                            randomAccessFile: RandomAccessFile?) {
         val chunkFile = getFile(fileChunk.file)
+        //TODO:GET INPUT STREAM FROM DOWNLOADER
         val chunkInputStream = BufferedInputStream(FileInputStream(chunkFile))
         try {
             val buffer = ByteArray(downloadBufferSizeBytes)
@@ -379,19 +375,25 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
     private fun downloadChunks(fileChunks: List<FileChuck>) {
         for (downloadChunk in fileChunks) {
             if (!interrupted && !terminated) {
+                downloadChunk.status = DownloadingStatus.DOWNLOADING
                 chunkExecutorService?.execute({
                     val downloadRequest = getRequestForFileChunk(downloadChunk)
                     var downloadResponse: Downloader.Response? = null
+                    var outputStream: OutputStream? = null
                     var randomAccessFileOutput: RandomAccessFile? = null
                     try {
                         downloadResponse = downloader.execute(downloadRequest)
                         if (!terminated && !interrupted && downloadResponse?.isSuccessful == true) {
                             val file = getFile(downloadChunk.file)
-                            randomAccessFileOutput = RandomAccessFile(file, "rw")
-                            if (downloadResponse.code == HttpURLConnection.HTTP_PARTIAL) {
-                                randomAccessFileOutput.seek(downloadChunk.downloaded)
+                            val seekPosition = if (downloadResponse.code == HttpURLConnection.HTTP_PARTIAL) {
+                                downloadChunk.downloaded
                             } else {
-                                randomAccessFileOutput.seek(0)
+                                0
+                            }
+                            outputStream = downloader.getRequestOutputStream(downloadRequest, seekPosition)
+                            if (outputStream == null) {
+                                randomAccessFileOutput = RandomAccessFile(file, "rw")
+                                randomAccessFileOutput.seek(seekPosition)
                             }
                             val buffer = ByteArray(downloadBufferSizeBytes)
                             var read: Int = downloadResponse.byteStream?.read(buffer, 0, downloadBufferSizeBytes)
@@ -399,29 +401,38 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                             var remainderBytes: Long = downloadChunk.endBytes - (downloadChunk.startBytes + downloadChunk.downloaded)
                             while (remainderBytes > 0L && read != -1 && !interrupted && !terminated) {
                                 if (read <= remainderBytes) {
-                                    randomAccessFileOutput.write(buffer, 0, read)
+                                    randomAccessFileOutput?.write(buffer, 0, read)
+                                    outputStream?.write(buffer, 0, read)
                                     downloadChunk.downloaded += read
                                     addToTotalDownloaded(read)
                                     read = downloadResponse.byteStream?.read(buffer, 0, downloadBufferSizeBytes) ?: -1
                                     remainderBytes = downloadChunk.endBytes - (downloadChunk.startBytes + downloadChunk.downloaded)
                                 } else {
-                                    randomAccessFileOutput.write(buffer, 0, remainderBytes.toInt())
+                                    randomAccessFileOutput?.write(buffer, 0, remainderBytes.toInt())
+                                    outputStream?.write(buffer, 0, remainderBytes.toInt())
                                     downloadChunk.downloaded += remainderBytes
                                     addToTotalDownloaded(remainderBytes.toInt())
                                     read = -1
                                 }
                             }
-                            //completed download
                             if (remainderBytes == 0L) {
-                                incrementDoneCounter()
+                                downloadChunk.status = DownloadingStatus.COMPLETED
+                            } else {
+                                downloadChunk.status = DownloadingStatus.QUEUED
                             }
-
-                        } else {
-                            didChunkFail = true
+                        } else if (downloadResponse == null && !interrupted && !terminated) {
+                            throw FetchException(EMPTY_RESPONSE_BODY,
+                                    FetchException.Code.EMPTY_RESPONSE_BODY)
+                        } else if (downloadResponse?.isSuccessful == false && !interrupted && !terminated) {
+                            throw FetchException(RESPONSE_NOT_SUCCESSFUL,
+                                    FetchException.Code.REQUEST_NOT_SUCCESSFUL)
+                        } else if (!interrupted && !terminated) {
+                            throw FetchException(UNKNOWN_ERROR,
+                                    FetchException.Code.UNKNOWN)
                         }
                     } catch (e: Exception) {
-                        chunkFailedException = e
-                        didChunkFail = true
+                        downloadChunk.status = DownloadingStatus.ERROR
+                        downloadChunk.errorException = e
                     } finally {
                         try {
                             if (downloadResponse != null) {
@@ -432,6 +443,11 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                         }
                         try {
                             randomAccessFileOutput?.close()
+                        } catch (e: Exception) {
+                            logger.e("FileDownloader", e)
+                        }
+                        try {
+                            outputStream?.close()
                         } catch (e: Exception) {
                             logger.e("FileDownloader", e)
                         }
@@ -447,10 +463,15 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun incrementDoneCounter() {
-        synchronized(doneLock) {
-            doneCounter += 1
+    private fun chunksDownloading(chunkDownloadsList: List<FileChuck>): Boolean {
+        if (!interrupted && !terminated) {
+            for (chunk in chunkDownloadsList) {
+                if (chunk.status == DownloadingStatus.DOWNLOADING) {
+                    return true
+                }
+            }
         }
+        return false
     }
 
     private fun getFile(filePath: String): File {
@@ -476,12 +497,21 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                          val startBytes: Long = 0L,
                          val endBytes: Long = 0L,
                          var downloaded: Long = 0L,
-                         var file: String) {
+                         var file: String,
+                         var status: DownloadingStatus = DownloadingStatus.QUEUED,
+                         var errorException: Throwable? = null) {
 
-        val done: Boolean
+        val completed: Boolean
             get() {
-                return downloaded == endBytes - startBytes //TODO: COULD BE WRONG
+                return status == DownloadingStatus.COMPLETED
             }
+    }
+
+    enum class DownloadingStatus {
+        QUEUED,
+        DOWNLOADING,
+        COMPLETED,
+        ERROR;
     }
 
 }
