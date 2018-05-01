@@ -45,7 +45,7 @@ interface Downloader : Closeable {
      * If null is returned, Fetch will provide the output stream. This method is called on a background thread.
      * @param request The request information for the download.
      * @param filePointerOffset The offset position, measured in bytes from the beginning of the file,
-     *                          at which to set the file pointer. Writing will being at the
+     *                          at which to set the file pointer. Writing will begin at the
      *                          filePointerOffset position. Note that your output stream needs
      *                          to use this value to set the file pointer location
      *                          so that data in the file is not overwritten. If not
@@ -56,6 +56,34 @@ interface Downloader : Closeable {
      *         Fetch will provide the output stream.
      * */
     fun getRequestOutputStream(request: Request, filePointerOffset: Long): OutputStream?
+
+    /**
+     * This method is called by Fetch to request the input stream where downloaded data was saved to.
+     * The input stream for the request needs to be the same each time. Note that the type of
+     * input stream may affect download speeds.
+     * If null is returned, Fetch will provide the input stream. This method is called on a background thread.
+     * @param request The request information for the download.
+     * @param filePointerOffset The offset position, measured in bytes from the beginning of the file,
+     *                          at which to set the file pointer. Reading will begin at the
+     *                          filePointerOffset position. Note that your input stream needs
+     *                          to use this value to set the file pointer location
+     *                          so that data in the file will be read correctly.
+     * @return The input stream the downloaded data will be read from. Fetch will close the input stream automatically
+     *         after the disconnect(response) method is called. Can return null. If null,
+     *         Fetch will provide the input stream.
+     * */
+    fun getRequestInputStream(request: Request, filePointerOffset: Long): InputStream?
+
+
+    /**
+     * This method is called by Fetch if the File Chunk feature is enabled.
+     * Return the desired size/ chunk size for each download request. If null is returned
+     * Fetch will automatically select an appropriate chunk size based on the content length.
+     * @param request The request information for the download.
+     * @param fileLengthBytes the total content length in bytes
+     * @return the chunk size for the request file. Can be null
+     * */
+    fun getFileChunkSize(request: Request, fileLengthBytes: Long): Int?
 
     /**
      * A class that contains the information used by the Downloader to create a connection

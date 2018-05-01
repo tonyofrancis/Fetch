@@ -21,8 +21,7 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                               private val logger: Logger,
                               private val networkInfoProvider: NetworkInfoProvider,
                               private val retryOnNetworkGain: Boolean,
-                              private val fileChunkTempDir: String,
-                              private val fileChunkLimit: Int) : FileDownloader {
+                              private val fileChunkTempDir: String) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -69,7 +68,7 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
             if (!interrupted && !terminated && openingResponse?.isSuccessful == true) {
                 total = openingResponse.contentLength
                 if (total > 0) {
-                    val fileChunks = getFileChunkList(openingResponse.code)
+                    val fileChunks = getFileChunkList(openingResponse.code, openingRequest)
                     val chunkDownloadsList = fileChunks.filter { !it.completed }
                     if (!interrupted && !terminated) {
                         delegate?.onStarted(
@@ -214,9 +213,9 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                 tag = initialDownload.tag)
     }
 
-    private fun getFileChunkList(openingResponseCode: Int): List<FileChuck> {
+    private fun getFileChunkList(openingResponseCode: Int, request: Downloader.Request): List<FileChuck> {
         return if (openingResponseCode == HttpURLConnection.HTTP_PARTIAL) {
-            val fileChunkInfo = getChuckInfo()
+            val fileChunkInfo = getChuckInfo(request)
             var counterBytes = 0L
             val fileChunks = mutableListOf<FileChuck>()
             for (position in 1..fileChunkInfo.chunks) {
@@ -263,7 +262,8 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun getChuckInfo(): FileChunkInfo {
+    private fun getChuckInfo(request: Downloader.Request): FileChunkInfo {
+        val fileChunkLimit = downloader.getFileChunkSize(request, total) ?: DEFAULT_FILE_CHUNK_LIMIT
         return if (fileChunkLimit == DEFAULT_FILE_CHUNK_LIMIT) {
             val fileSizeInMb = total.toFloat() / (1024 * 1024).toFloat()
             val fileSizeInGb = total.toFloat() / (1024 * 1024 * 1024).toFloat()
@@ -350,22 +350,32 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                            outputStream: OutputStream?,
                            randomAccessFile: RandomAccessFile?) {
         val chunkFile = getFile(fileChunk.file)
-        //TODO:GET INPUT STREAM FROM DOWNLOADER
-        val chunkInputStream = BufferedInputStream(FileInputStream(chunkFile))
+        val request = getRequestForFileChunk(fileChunk)
+        val inputStream = downloader.getRequestInputStream(request, 0)
+        var inputRandomAccessFile: RandomAccessFile? = null
+        if (inputStream == null) {
+            inputRandomAccessFile = RandomAccessFile(chunkFile, "r")
+        }
         try {
             val buffer = ByteArray(downloadBufferSizeBytes)
-            var read = chunkInputStream.read(buffer, 0, downloadBufferSizeBytes)
+            var read = inputStream?.read(buffer, 0, downloadBufferSizeBytes)
+                    ?: (inputRandomAccessFile?.read(buffer, 0, downloadBufferSizeBytes) ?: -1)
             while (read != -1) {
                 outputStream?.write(buffer, 0, read)
                 randomAccessFile?.write(buffer, 0, read)
-                read = chunkInputStream.read(buffer, 0, downloadBufferSizeBytes)
+                read = inputStream?.read(buffer, 0, downloadBufferSizeBytes) ?: (inputRandomAccessFile?.read(buffer, 0, downloadBufferSizeBytes) ?: -1)
             }
         } catch (e: Exception) {
             logger.e("FileDownloader", e)
-            throw Exception("chunk_merge_failed") //TODO: CATCH THIS IN MAIN CATCH
+            throw e
         } finally {
             try {
-                chunkInputStream.close()
+                inputStream?.close()
+            } catch (e: Exception) {
+                logger.e("FileDownloader", e)
+            }
+            try {
+                inputRandomAccessFile?.close()
             } catch (e: Exception) {
                 logger.e("FileDownloader", e)
             }

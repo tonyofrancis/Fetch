@@ -93,6 +93,14 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return null
     }
 
+    override fun getRequestInputStream(request: Downloader.Request, filePointerOffset: Long): InputStream? {
+        return null
+    }
+
+    override fun getFileChunkSize(request: Downloader.Request, fileLengthBytes: Long): Int? {
+        return null
+    }
+
     /**
      * Use this class to set preference settings for the
      * HttpUrlConnectionDownloader HttpUrlConnection client.
