@@ -187,8 +187,8 @@ class DownloadManagerImpl(private val downloader: Downloader,
                 logger = logger,
                 networkInfoProvider = networkInfoProvider,
                 retryOnNetworkGain = retryOnNetworkGain,
-                chuckLimit = 10,
-                fileChunkTempDir = fileChunkTempDir)
+                fileChunkTempDir = fileChunkTempDir,
+                fileChunkLimit = 16) //TODO: GET FROM PREFS
     }
 
     override fun getFileDownloaderDelegate(): FileDownloader.Delegate {
