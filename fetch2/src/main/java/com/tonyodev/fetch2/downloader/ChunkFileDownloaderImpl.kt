@@ -234,10 +234,8 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                         file = getFileForChunk(downloadInfo.id, position))
                 fileChunks.add(fileChunk)
             }
-            //TODO: get this information from a database
             fileChunks.forEach {
-                val file = File(it.file)
-                it.downloaded = file.length()
+                it.downloaded = getSavedDownloadedForFileChunk(it)
                 downloaded += it.downloaded
                 if (it.startBytes + it.downloaded == it.endBytes) {
                     it.status = DownloadingStatus.COMPLETED
@@ -251,9 +249,7 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                     startBytes = 0,
                     endBytes = total,
                     file = getFileForChunk(downloadInfo.id, 1))
-            //TODO: get this information from a database
-            val file = File(singleFileChunk.file)
-            singleFileChunk.downloaded = file.length()
+            singleFileChunk.downloaded = getSavedDownloadedForFileChunk(singleFileChunk)
             if (singleFileChunk.startBytes + singleFileChunk.downloaded == singleFileChunk.endBytes) {
                 singleFileChunk.status = DownloadingStatus.COMPLETED
             }
@@ -288,6 +284,45 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
 
     private fun getFileForChunk(id: Int, position: Int): String {
         return "$fileChunkTempDir/$id/$id.$position.tmp"
+    }
+
+    private fun getSavedDownloadedForFileChunk(fileChunk: FileChuck): Long {
+        var downloaded = 0L
+        val file = File("${getFileForChunk(fileChunk.id, fileChunk.position)}.txt")
+        if (file.exists() && !interrupted && !terminated) {
+            val bufferedReader = BufferedReader(FileReader(file))
+            try {
+                val string: String? = bufferedReader.readLine()
+                downloaded = string?.toLong() ?: 0L
+            } catch (e: Exception) {
+                logger.e("FileDownloader", e)
+            } finally {
+                try {
+                    bufferedReader.close()
+                } catch (e: Exception) {
+                    logger.e("FileDownloader", e)
+                }
+            }
+        }
+        return downloaded
+    }
+
+    private fun saveDownloadedForFileChunk(fileChunk: FileChuck, downloaded: Long) {
+        val file = getFile("${getFileForChunk(fileChunk.id, fileChunk.position)}.txt")
+        if (file.exists() && !interrupted && !terminated) {
+            val bufferedWriter = BufferedWriter(FileWriter(file))
+            try {
+                bufferedWriter.write(downloaded.toString())
+            } catch (e: Exception) {
+                logger.e("FileDownloader", e)
+            } finally {
+                try {
+                    bufferedWriter.close()
+                } catch (e: Exception) {
+                    logger.e("FileDownloader", e)
+                }
+            }
+        }
     }
 
     private fun getAverageDownloadedBytesPerSecond(): Long {
@@ -363,7 +398,8 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
             while (read != -1) {
                 outputStream?.write(buffer, 0, read)
                 randomAccessFile?.write(buffer, 0, read)
-                read = inputStream?.read(buffer, 0, downloadBufferSizeBytes) ?: (inputRandomAccessFile?.read(buffer, 0, downloadBufferSizeBytes) ?: -1)
+                read = inputStream?.read(buffer, 0, downloadBufferSizeBytes) ?: (inputRandomAccessFile?.read(buffer, 0, downloadBufferSizeBytes)
+                        ?: -1)
             }
         } catch (e: Exception) {
             logger.e("FileDownloader", e)
@@ -405,10 +441,12 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                                 randomAccessFileOutput = RandomAccessFile(file, "rw")
                                 randomAccessFileOutput.seek(seekPosition)
                             }
+                            var reportingStopTime: Long
                             val buffer = ByteArray(downloadBufferSizeBytes)
                             var read: Int = downloadResponse.byteStream?.read(buffer, 0, downloadBufferSizeBytes)
                                     ?: -1
                             var remainderBytes: Long = downloadChunk.endBytes - (downloadChunk.startBytes + downloadChunk.downloaded)
+                            var reportingStartTime = System.nanoTime()
                             while (remainderBytes > 0L && read != -1 && !interrupted && !terminated) {
                                 if (read <= remainderBytes) {
                                     randomAccessFileOutput?.write(buffer, 0, read)
@@ -423,6 +461,14 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                                     downloadChunk.downloaded += remainderBytes
                                     addToTotalDownloaded(remainderBytes.toInt())
                                     read = -1
+                                }
+
+                                reportingStopTime = System.nanoTime()
+                                val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
+                                        reportingStopTime, progressReportingIntervalMillis)
+                                if (hasReportingTimeElapsed) {
+                                    saveDownloadedForFileChunk(downloadChunk, downloadChunk.downloaded)
+                                    reportingStartTime = System.nanoTime()
                                 }
                             }
                             if (remainderBytes == 0L) {
