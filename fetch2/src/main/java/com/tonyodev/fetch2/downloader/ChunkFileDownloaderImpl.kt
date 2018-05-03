@@ -1,6 +1,5 @@
 package com.tonyodev.fetch2.downloader
 
-import android.util.Log
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.Error
@@ -58,11 +57,11 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
 
     private var estimatedTimeRemainingInMilliseconds: Long = -1
 
-    private var chunkExecutorService: ExecutorService? = null
+    private var executorService: ExecutorService? = null
 
     private var phase = Phase.DOWNLOADING
 
-    private var fileChunks = listOf<FileChuck>()
+    private var fileChunks = emptyList<FileChuck>()
 
     override fun run() {
         var openingResponse: Downloader.Response? = null
@@ -83,11 +82,16 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                                 download = downloadInfo,
                                 etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
                                 downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                        chunkExecutorService = Executors.newFixedThreadPool(chunkDownloadsList.size + 1)
+                        executorService = Executors.newFixedThreadPool(chunkDownloadsList.size + 1)
                         downloadChunks(chunkDownloadsList)
                         waitAndPerformProgressReporting(fileChunks)
                         if (!interrupted && !terminated) {
-                            val downloadedBytesSum = fileChunks.asSequence().map { it.downloaded }.sum()
+                            var downloadedBytesSum = 0L
+                            for (chunk in fileChunks) {
+                                downloadedBytesSum += chunk.downloaded
+                                chunk.status = Status.MERGING
+                            }
+                            phase = Phase.MERGING
                             if (downloadedBytesSum == total) {
                                 downloaded = downloadedBytesSum
                                 downloadInfo.downloaded = getProgressDownloaded()
@@ -96,44 +100,48 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                                     randomAccessFile = RandomAccessFile(getFile(downloadInfo.file), "rw")
                                     randomAccessFile.seek(0)
                                 }
-                                phase = Phase.MERGING
-                                fileChunks.forEach { it.status = Status.MERGING }
-                                chunkExecutorService?.execute({
-                                    for (fileChunk in fileChunks) {
-                                        if (!interrupted && !terminated) {
-                                            mergeChunk(fileChunk, output, randomAccessFile)
-                                            fileChunk.status = Status.MERGED
-                                        } else {
-                                            fileChunks.forEach { it.status = Status.QUEUED }
-                                            break
-                                        }
-                                    }
-                                })
-                                waitAndPerformProgressReporting(fileChunks)
                                 if (!interrupted && !terminated) {
-                                    val allMerged = fileChunks.filter { it.status == Status.MERGED }.count() == fileChunks.size
-                                    if (allMerged) {
-                                        completedDownload = true
-                                        phase = Phase.COMPLETED
-                                        if (!terminated) {
-                                            delegate?.onProgress(
-                                                    download = downloadInfo,
-                                                    etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                                            delegate?.onComplete(
-                                                    download = downloadInfo)
-                                        }
+                                    executorService?.execute({
+                                        var interrupted = false
                                         for (fileChunk in fileChunks) {
-                                            val file = File(fileChunk.file)
-                                            if (file.exists()) {
-                                                file.delete()
-                                            }
-                                            val text = getFile("${getFileForChunk(fileChunk.id, fileChunk.position)}.txt")
-                                            if (text.exists()) {
-                                                text.delete()
+                                            if (!interrupted && !terminated) {
+                                                mergeChunk(fileChunk, output, randomAccessFile)
+                                            } else {
+                                                interrupted = true
+                                                break
                                             }
                                         }
-                                        deleteTempDirForId(initialDownload.id)
+                                        if (interrupted) {
+                                            for (chunk in fileChunks) {
+                                                chunk.status = Status.QUEUED
+                                            }
+                                        }
+                                    })
+                                    waitAndPerformProgressReporting(fileChunks)
+                                    if (!interrupted && !terminated) {
+                                        var mergeCount = 0
+                                        for (chunk in fileChunks) {
+                                            if (chunk.status == Status.MERGED) {
+                                                mergeCount += 1
+                                            }
+                                        }
+                                        val allMerged = mergeCount == fileChunks.size
+                                        if (allMerged) {
+                                            completedDownload = true
+                                            phase = Phase.COMPLETED
+                                            if (!terminated) {
+                                                delegate?.onProgress(
+                                                        download = downloadInfo,
+                                                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                                delegate?.onComplete(
+                                                        download = downloadInfo)
+                                            }
+                                            for (fileChunk in fileChunks) {
+                                                deleteTempInfoForChunk(fileChunk)
+                                            }
+                                            deleteTempDirForId(initialDownload.id)
+                                        }
                                     }
                                 }
                             }
@@ -146,9 +154,9 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                                     etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
                                     downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                         }
-                        val failedChunk = fileChunks.firstOrNull { it.status == Status.ERROR }
-                        if (failedChunk != null) {
-                            throw failedChunk.errorException!!
+                        val failedException = fileChunks.firstOrNull { it.status == Status.ERROR }?.errorException
+                        if (failedException != null) {
+                            throw failedException
                         }
                     }
                 } else {
@@ -189,13 +197,18 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                     }
                 }
                 downloadInfo.downloaded = getProgressDownloaded()
+                downloadInfo.total = total
                 downloadInfo.error = error
                 if (!terminated) {
                     delegate?.onError(download = downloadInfo)
                 }
             }
         } finally {
-            chunkExecutorService?.shutdown()
+            try {
+                executorService?.shutdown()
+            } catch (e: Exception) {
+                logger.e("FileDownloader", e)
+            }
             if (openingResponse != null) {
                 try {
                     downloader.disconnect(openingResponse)
@@ -229,7 +242,13 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                 val downloadedTotal = (0.9F * total.toFloat())
                 val onePercentOfTotal = (0.01F * total.toFloat())
                 val mergeAllocTotal = 10F / fileChunks.size.toFloat()
-                val completedMerge = fileChunks.filter { it.status == Status.MERGED }.count().toFloat() * mergeAllocTotal
+                var mergeCount = 0
+                for (chunk in fileChunks) {
+                    if (chunk.status == Status.MERGED) {
+                        mergeCount += 1
+                    }
+                }
+                val completedMerge = mergeCount.toFloat() * mergeAllocTotal
                 val mergedTotal = completedMerge * onePercentOfTotal
                 (downloadedTotal + mergedTotal).roundToLong()
             }
@@ -280,14 +299,12 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                         startBytes = startBytes,
                         endBytes = endBytes,
                         file = getFileForChunk(downloadInfo.id, position))
-                fileChunks.add(fileChunk)
-            }
-            fileChunks.forEach {
-                it.downloaded = getSavedDownloadedForFileChunk(it)
-                downloaded += it.downloaded
-                if (it.startBytes + it.downloaded == it.endBytes) {
-                    it.status = Status.COMPLETED
+                fileChunk.downloaded = getSavedDownloadedForFileChunk(fileChunk)
+                downloaded += fileChunk.downloaded
+                if (fileChunk.startBytes + fileChunk.downloaded == fileChunk.endBytes) {
+                    fileChunk.status = Status.COMPLETED
                 }
+                fileChunks.add(fileChunk)
             }
             fileChunks
         } else {
@@ -307,8 +324,8 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
     }
 
     private fun getChuckInfo(request: Downloader.Request): FileChunkInfo {
-        val fileChunkLimit = downloader.getFileChunkSize(request, total) ?: DEFAULT_FILE_CHUNK_LIMIT
-        return if (fileChunkLimit == DEFAULT_FILE_CHUNK_LIMIT) {
+        val fileChunkSize = downloader.getFileChunkSize(request, total) ?: DEFAULT_FILE_CHUNK_LIMIT
+        return if (fileChunkSize == DEFAULT_FILE_CHUNK_LIMIT) {
             val fileSizeInMb = total.toFloat() / (1024 * 1024).toFloat()
             val fileSizeInGb = total.toFloat() / (1024 * 1024 * 1024).toFloat()
             when {
@@ -325,8 +342,8 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                 else -> FileChunkInfo(1, total)
             }
         } else {
-            val bytesPerChunk = ceil((total.toFloat() / fileChunkLimit.toFloat())).toLong()
-            return FileChunkInfo(fileChunkLimit, bytesPerChunk)
+            val bytesPerChunk = ceil((total.toFloat() / fileChunkSize.toFloat())).toLong()
+            return FileChunkInfo(fileChunkSize, bytesPerChunk)
         }
     }
 
@@ -335,15 +352,38 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
     }
 
     private fun deleteTempDirForId(id: Int) {
-        val file = File("$fileChunkTempDir/$id")
-        if (file.exists()) {
-            file.delete()
+        try {
+            val file = File("$fileChunkTempDir/$id")
+            if (file.exists()) {
+                file.delete()
+            }
+        } catch (e: Exception) {
+
+        }
+    }
+
+    private fun deleteTempInfoForChunk(fileChunk: FileChuck) {
+        try {
+            val file = File(fileChunk.file)
+            if (file.exists()) {
+                file.delete()
+            }
+        } catch (e: Exception) {
+
+        }
+        try {
+            val text = getFile("${getFileForChunk(fileChunk.id, fileChunk.position)}.txt")
+            if (text.exists()) {
+                text.delete()
+            }
+        } catch (e: Exception) {
+
         }
     }
 
     private fun getSavedDownloadedForFileChunk(fileChunk: FileChuck): Long {
         var downloaded = 0L
-        val file = File("${getFileForChunk(fileChunk.id, fileChunk.position)}.txt")
+        val file = getFile("${getFileForChunk(fileChunk.id, fileChunk.position)}.txt")
         if (file.exists() && !interrupted && !terminated) {
             val bufferedReader = BufferedReader(FileReader(file))
             try {
@@ -421,7 +461,6 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                     delegate?.saveDownloadProgress(downloadInfo)
                 }
                 if (!terminated) {
-                    Log.d("tonyoTest", "progress ${calculateProgress(getProgressDownloaded(), total)}% Phase ${phase}")
                     delegate?.onProgress(
                             download = downloadInfo,
                             etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
@@ -429,7 +468,6 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                 }
                 reportingStartTime = System.nanoTime()
             }
-
             if (downloadSpeedCheckTimeElapsed) {
                 downloadSpeedStartTime = System.nanoTime()
             }
@@ -453,12 +491,14 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
             while (read != -1 && !interrupted && !terminated) {
                 outputStream?.write(buffer, 0, read)
                 randomAccessFile?.write(buffer, 0, read)
-                read = inputStream?.read(buffer, 0, downloadBufferSizeBytes) ?: (inputRandomAccessFile?.read(buffer, 0, downloadBufferSizeBytes)
-                        ?: -1)
+                read = inputStream?.read(buffer, 0, downloadBufferSizeBytes)
+                        ?: (inputRandomAccessFile?.read(buffer, 0, downloadBufferSizeBytes) ?: -1)
             }
+            fileChunk.status = Status.MERGED
         } catch (e: Exception) {
             logger.e("FileDownloader", e)
-            throw e
+            fileChunk.status = Status.ERROR
+            fileChunk.errorException = e
         } finally {
             try {
                 inputStream?.close()
@@ -477,7 +517,7 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
         for (downloadChunk in fileChunks) {
             if (!interrupted && !terminated) {
                 downloadChunk.status = Status.DOWNLOADING
-                chunkExecutorService?.execute({
+                executorService?.execute({
                     val downloadRequest = getRequestForFileChunk(downloadChunk)
                     var downloadResponse: Downloader.Response? = null
                     var outputStream: OutputStream? = null
@@ -517,10 +557,9 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                                     addToTotalDownloaded(remainderBytes.toInt())
                                     read = -1
                                 }
-
                                 reportingStopTime = System.nanoTime()
                                 val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
-                                        reportingStopTime, progressReportingIntervalMillis)
+                                        reportingStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
                                 if (hasReportingTimeElapsed) {
                                     saveDownloadedForFileChunk(downloadChunk, downloadChunk.downloaded)
                                     reportingStartTime = System.nanoTime()
