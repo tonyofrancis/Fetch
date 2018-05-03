@@ -101,6 +101,14 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return null
     }
 
+    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.Request): String? {
+        return null
+    }
+
+    override fun getFileDownloaderType(request: Downloader.Request): Downloader.FileDownloaderType {
+        return Downloader.FileDownloaderType.SEQUENTIAL
+    }
+
     /**
      * Use this class to set preference settings for the
      * HttpUrlConnectionDownloader HttpUrlConnection client.

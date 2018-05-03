@@ -74,7 +74,6 @@ interface Downloader : Closeable {
      * */
     fun getRequestInputStream(request: Request, filePointerOffset: Long): InputStream?
 
-
     /**
      * This method is called by Fetch if the File Chunk feature is enabled.
      * Return the desired size/ chunk size for each download request. If null is returned
@@ -84,6 +83,24 @@ interface Downloader : Closeable {
      * @return the chunk size for the request file. Can be null
      * */
     fun getFileChunkSize(request: Request, fileLengthBytes: Long): Int?
+
+    /** This method is called by Fetch to return the FileDownloaderType for each
+     * request. The Default is FileDownloaderType.SEQUENTIAL
+     * @param request the request information for the download.
+     * @return the FileDownloaderType
+     * */;
+    fun getFileDownloaderType(request: Request): FileDownloaderType
+
+    /**
+     * This method is called by Fetch for requests that are downloaded using the
+     * FileDownloaderType.PARALLEL type. Fetch uses this directory to store the
+     * chunk/temp files for a request. If the return directory is null. Fetch
+     * will select the default default directory. Temp files in this directory are automatically
+     * deleted by Fetch once a download completes.
+     * @param request the request information for the download.
+     * @return the directory where the temp files for parallel downloads will be stored.
+     * */
+    fun getDirectoryForFileDownloaderTypeParallel(request: Request): String?
 
     /**
      * A class that contains the information used by the Downloader to create a connection
@@ -125,5 +142,15 @@ interface Downloader : Closeable {
 
             /** The request that initiated this response.*/
             val request: Request)
+
+    /** File Downloading Type used to download each request.*/
+    enum class FileDownloaderType {
+
+        /** Performs the download sequentially. Bytes are downloaded in sequence.*/
+        SEQUENTIAL,
+
+        /** Performs the download by splitting parts of the file in parallel for download.*/
+        PARALLEL
+    }
 
 }

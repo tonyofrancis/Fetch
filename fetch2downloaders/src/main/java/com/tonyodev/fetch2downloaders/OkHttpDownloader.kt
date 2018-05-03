@@ -89,4 +89,13 @@ open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient
     override fun getFileChunkSize(request: Downloader.Request, fileLengthBytes: Long): Int? {
         return null
     }
+
+    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.Request): String? {
+        return null
+    }
+
+    override fun getFileDownloaderType(request: Downloader.Request): Downloader.FileDownloaderType {
+        return Downloader.FileDownloaderType.SEQUENTIAL
+    }
+
 }

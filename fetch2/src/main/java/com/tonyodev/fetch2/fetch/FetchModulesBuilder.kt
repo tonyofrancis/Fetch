@@ -87,7 +87,7 @@ object FetchModulesBuilder {
                     uiHandler = uiHandler,
                     downloadInfoUpdater = downloadInfoUpdater,
                     requestOptions = prefs.requestOptions,
-                    fileChunkTempDir = getFileChunkTempDir(prefs.appContext))
+                    fileTempDir = getFileChunkTempDir(prefs.appContext))
 
             priorityListProcessor = PriorityListProcessorImpl(
                     handler = handler,

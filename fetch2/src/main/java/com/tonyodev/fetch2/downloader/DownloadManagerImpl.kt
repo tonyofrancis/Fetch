@@ -24,7 +24,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
                           private val uiHandler: Handler,
                           private val downloadInfoUpdater: DownloadInfoUpdater,
                           private val requestOptions: Set<RequestOptions>,
-                          private val fileChunkTempDir: String) : DownloadManager {
+                          private val fileTempDir: String) : DownloadManager {
 
     private val lock = Object()
     private val executor = Executors.newFixedThreadPool(concurrentLimit)
@@ -171,23 +171,40 @@ class DownloadManagerImpl(private val downloader: Downloader,
     }
 
     override fun getNewFileDownloaderForDownload(download: Download): FileDownloader {
-//        return FileDownloaderImpl(
-//                initialDownload = download,
-//                downloader = downloader,
-//                progressReportingIntervalMillis = progressReportingIntervalMillis,
-//                downloadBufferSizeBytes = downloadBufferSizeBytes,
-//                logger = logger,
-//                networkInfoProvider = networkInfoProvider,
-//                retryOnNetworkGain = retryOnNetworkGain)
-        return ChunkFileDownloaderImpl(
-                initialDownload = download,
-                downloader = downloader,
-                progressReportingIntervalMillis = progressReportingIntervalMillis,
-                downloadBufferSizeBytes = downloadBufferSizeBytes,
-                logger = logger,
-                networkInfoProvider = networkInfoProvider,
-                retryOnNetworkGain = retryOnNetworkGain,
-                fileChunkTempDir = fileChunkTempDir)
+        val request = getRequestForDownload(download)
+        return if (downloader.getFileDownloaderType(request) == Downloader.FileDownloaderType.SEQUENTIAL) {
+            FileDownloaderImpl(
+                    initialDownload = download,
+                    downloader = downloader,
+                    progressReportingIntervalMillis = progressReportingIntervalMillis,
+                    downloadBufferSizeBytes = downloadBufferSizeBytes,
+                    logger = logger,
+                    networkInfoProvider = networkInfoProvider,
+                    retryOnNetworkGain = retryOnNetworkGain)
+        } else {
+            val tempDir = downloader.getDirectoryForFileDownloaderTypeParallel(request)
+                    ?: fileTempDir
+            ParallelFileDownloaderImpl(
+                    initialDownload = download,
+                    downloader = downloader,
+                    progressReportingIntervalMillis = progressReportingIntervalMillis,
+                    downloadBufferSizeBytes = downloadBufferSizeBytes,
+                    logger = logger,
+                    networkInfoProvider = networkInfoProvider,
+                    retryOnNetworkGain = retryOnNetworkGain,
+                    fileChunkTempDir = tempDir)
+        }
+    }
+
+    private fun getRequestForDownload(download: Download): Downloader.Request {
+        val headers = download.headers.toMutableMap()
+        headers["Range"] = "bytes=0-"
+        return Downloader.Request(
+                id = download.id,
+                url = download.url,
+                headers = headers,
+                file = download.file,
+                tag = download.tag)
     }
 
     override fun getFileDownloaderDelegate(): FileDownloader.Delegate {

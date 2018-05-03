@@ -15,14 +15,14 @@ import java.util.concurrent.Executors
 import kotlin.math.ceil
 import kotlin.math.roundToLong
 
-class ChunkFileDownloaderImpl(private val initialDownload: Download,
-                              private val downloader: Downloader,
-                              private val progressReportingIntervalMillis: Long,
-                              private val downloadBufferSizeBytes: Int,
-                              private val logger: Logger,
-                              private val networkInfoProvider: NetworkInfoProvider,
-                              private val retryOnNetworkGain: Boolean,
-                              private val fileChunkTempDir: String) : FileDownloader {
+class ParallelFileDownloaderImpl(private val initialDownload: Download,
+                                 private val downloader: Downloader,
+                                 private val progressReportingIntervalMillis: Long,
+                                 private val downloadBufferSizeBytes: Int,
+                                 private val logger: Logger,
+                                 private val networkInfoProvider: NetworkInfoProvider,
+                                 private val retryOnNetworkGain: Boolean,
+                                 private val fileChunkTempDir: String) : FileDownloader {
 
     @Volatile
     override var interrupted = false
