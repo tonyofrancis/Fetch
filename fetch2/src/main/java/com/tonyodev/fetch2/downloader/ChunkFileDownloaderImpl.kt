@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2.downloader
 
+import android.util.Log
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.Error
@@ -13,6 +14,7 @@ import java.net.HttpURLConnection
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.ceil
+import kotlin.math.roundToLong
 
 class ChunkFileDownloaderImpl(private val initialDownload: Download,
                               private val downloader: Downloader,
@@ -38,7 +40,7 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
 
     override val download: Download
         get () {
-            downloadInfo.downloaded = downloaded
+            downloadInfo.downloaded = getProgressDownloaded()
             downloadInfo.total = total
             return downloadInfo
         }
@@ -58,6 +60,10 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
 
     private var chunkExecutorService: ExecutorService? = null
 
+    private var phase = Phase.DOWNLOADING
+
+    private var fileChunks = listOf<FileChuck>()
+
     override fun run() {
         var openingResponse: Downloader.Response? = null
         var output: OutputStream? = null
@@ -68,7 +74,9 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
             if (!interrupted && !terminated && openingResponse?.isSuccessful == true) {
                 total = openingResponse.contentLength
                 if (total > 0) {
-                    val fileChunks = getFileChunkList(openingResponse.code, openingRequest)
+                    downloadInfo.total = total
+                    fileChunks = getFileChunkList(openingResponse.code, openingRequest)
+                    downloadInfo.downloaded = getProgressDownloaded()
                     val chunkDownloadsList = fileChunks.filter { !it.completed }
                     if (!interrupted && !terminated) {
                         delegate?.onStarted(
@@ -81,13 +89,14 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                         if (!interrupted && !terminated) {
                             val downloadedBytesSum = fileChunks.asSequence().map { it.downloaded }.sum()
                             if (downloadedBytesSum == total) {
-                                downloadInfo.downloaded = downloadedBytesSum
-                                downloadInfo.total = total
+                                downloaded = downloadedBytesSum
+                                downloadInfo.downloaded = getProgressDownloaded()
                                 output = downloader.getRequestOutputStream(openingRequest, 0)
                                 if (output == null) {
                                     randomAccessFile = RandomAccessFile(getFile(downloadInfo.file), "rw")
                                     randomAccessFile.seek(0)
                                 }
+                                phase = Phase.MERGING
                                 fileChunks.forEach { it.status = Status.MERGING }
                                 chunkExecutorService?.execute({
                                     for (fileChunk in fileChunks) {
@@ -104,12 +113,8 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                                 if (!interrupted && !terminated) {
                                     val allMerged = fileChunks.filter { it.status == Status.MERGED }.count() == fileChunks.size
                                     if (allMerged) {
-                                        for (fileChunk in fileChunks) {
-                                            val file = File(fileChunk.file)
-                                            file.delete()
-                                        }
-                                        deleteTempDirForId(initialDownload.id)
                                         completedDownload = true
+                                        phase = Phase.COMPLETED
                                         if (!terminated) {
                                             delegate?.onProgress(
                                                     download = downloadInfo,
@@ -118,12 +123,22 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                                             delegate?.onComplete(
                                                     download = downloadInfo)
                                         }
+                                        for (fileChunk in fileChunks) {
+                                            val file = File(fileChunk.file)
+                                            if (file.exists()) {
+                                                file.delete()
+                                            }
+                                            val text = getFile("${getFileForChunk(fileChunk.id, fileChunk.position)}.txt")
+                                            if (text.exists()) {
+                                                text.delete()
+                                            }
+                                        }
+                                        deleteTempDirForId(initialDownload.id)
                                     }
                                 }
                             }
                         }
-                        downloadInfo.downloaded = downloaded
-                        downloadInfo.total = total
+                        downloadInfo.downloaded = getProgressDownloaded()
                         delegate?.saveDownloadProgress(downloadInfo)
                         if (!completedDownload && !terminated) {
                             delegate?.onProgress(
@@ -173,8 +188,7 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                         error = Error.NO_NETWORK_CONNECTION
                     }
                 }
-                downloadInfo.downloaded = downloaded
-                downloadInfo.total = total
+                downloadInfo.downloaded = getProgressDownloaded()
                 downloadInfo.error = error
                 if (!terminated) {
                     delegate?.onError(download = downloadInfo)
@@ -200,6 +214,28 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                 logger.e("FileDownloader", e)
             }
             terminated = true
+        }
+    }
+
+    private fun getProgressDownloaded(): Long {
+        return when (phase) {
+            Phase.DOWNLOADING -> {
+                val actualProgress = calculateProgress(downloaded, total)
+                val downloadedPercentageTotal = (0.9F * total.toFloat())
+                val downloaded = (actualProgress.toFloat() / 100.toFloat()) * downloadedPercentageTotal
+                downloaded.roundToLong()
+            }
+            Phase.MERGING -> {
+                val downloadedTotal = (0.9F * total.toFloat())
+                val onePercentOfTotal = (0.01F * total.toFloat())
+                val mergeAllocTotal = 10F / fileChunks.size.toFloat()
+                val completedMerge = fileChunks.filter { it.status == Status.MERGED }.count().toFloat() * mergeAllocTotal
+                val mergedTotal = completedMerge * onePercentOfTotal
+                (downloadedTotal + mergedTotal).roundToLong()
+            }
+            Phase.COMPLETED -> {
+                total
+            }
         }
     }
 
@@ -354,26 +390,25 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
     private fun waitAndPerformProgressReporting(chunksList: List<FileChuck>) {
         var reportingStopTime: Long
         var downloadSpeedStopTime: Long
-        var downloadedBytesPerSecond = downloaded
+        var downloadedBytesPerSecond = getProgressDownloaded()
         var reportingStartTime = System.nanoTime()
         var downloadSpeedStartTime = System.nanoTime()
         while (chunksMergingOrDownloading(chunksList) && !interrupted && !terminated) {
-            downloadInfo.downloaded = downloaded
-            downloadInfo.total = total
+            downloadInfo.downloaded = getProgressDownloaded()
             downloadSpeedStopTime = System.nanoTime()
             val downloadSpeedCheckTimeElapsed = hasIntervalTimeElapsed(downloadSpeedStartTime,
                     downloadSpeedStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
 
             if (downloadSpeedCheckTimeElapsed) {
-                downloadedBytesPerSecond = downloaded - downloadedBytesPerSecond
+                downloadedBytesPerSecond = getProgressDownloaded() - downloadedBytesPerSecond
                 movingAverageCalculator.add(downloadedBytesPerSecond.toDouble())
                 averageDownloadedBytesPerSecond =
                         movingAverageCalculator.getMovingAverageWithWeightOnRecentValues()
                 estimatedTimeRemainingInMilliseconds = calculateEstimatedTimeRemainingInMilliseconds(
-                        downloadedBytes = downloaded,
+                        downloadedBytes = getProgressDownloaded(),
                         totalBytes = total,
                         downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                downloadedBytesPerSecond = downloaded
+                downloadedBytesPerSecond = getProgressDownloaded()
                 if (progressReportingIntervalMillis > DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS) {
                     delegate?.saveDownloadProgress(downloadInfo)
                 }
@@ -386,6 +421,7 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                     delegate?.saveDownloadProgress(downloadInfo)
                 }
                 if (!terminated) {
+                    Log.d("tonyoTest", "progress ${calculateProgress(getProgressDownloaded(), total)}% Phase ${phase}")
                     delegate?.onProgress(
                             download = downloadInfo,
                             etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
@@ -591,6 +627,12 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
         ERROR,
         MERGING,
         MERGED;
+    }
+
+    enum class Phase {
+        DOWNLOADING,
+        MERGING,
+        COMPLETED;
     }
 
 }
