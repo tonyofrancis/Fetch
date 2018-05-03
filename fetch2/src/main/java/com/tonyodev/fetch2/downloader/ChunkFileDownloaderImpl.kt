@@ -102,20 +102,24 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
                                 }
                                 if (!interrupted && !terminated) {
                                     executorService?.execute({
-                                        var interrupted = false
-                                        for (fileChunk in fileChunks) {
-                                            if (!interrupted && !terminated) {
-                                                mergeChunk(fileChunk, output, randomAccessFile)
-                                            } else {
-                                                interrupted = true
-                                                break
-                                            }
-                                        }
-                                        if (interrupted) {
-                                            for (chunk in fileChunks) {
-                                                chunk.status = Status.QUEUED
-                                            }
-                                        }
+                                       try {
+                                           var interrupted = false
+                                           for (fileChunk in fileChunks) {
+                                               if (!interrupted && !terminated) {
+                                                   mergeChunk(fileChunk, output, randomAccessFile)
+                                               } else {
+                                                   interrupted = true
+                                                   break
+                                               }
+                                           }
+                                           if (interrupted) {
+                                               for (chunk in fileChunks) {
+                                                   chunk.status = Status.QUEUED
+                                               }
+                                           }
+                                       } catch (e: Exception) {
+                                           logger.e("FileDownloader", e)
+                                       }
                                     })
                                     waitAndPerformProgressReporting(fileChunks)
                                     if (!interrupted && !terminated) {
@@ -499,6 +503,7 @@ class ChunkFileDownloaderImpl(private val initialDownload: Download,
             logger.e("FileDownloader", e)
             fileChunk.status = Status.ERROR
             fileChunk.errorException = e
+            throw e
         } finally {
             try {
                 inputStream?.close()
