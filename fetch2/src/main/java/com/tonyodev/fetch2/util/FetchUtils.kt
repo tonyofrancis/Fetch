@@ -127,3 +127,17 @@ fun getRequestForDownload(download: Download, rangeStart: Long = -1, rangeEnd: L
             file = download.file,
             tag = download.tag)
 }
+
+fun getFile(filePath: String): File {
+    val file = File(filePath)
+    if (!file.exists()) {
+        if (file.parentFile != null && !file.parentFile.exists()) {
+            if (file.parentFile.mkdirs()) {
+                file.createNewFile()
+            }
+        } else {
+            file.createNewFile()
+        }
+    }
+    return file
+}
