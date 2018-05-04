@@ -77,7 +77,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         var output: OutputStream? = null
         var randomAccessFile: RandomAccessFile? = null
         try {
-            val openingRequest = getOpeningRequest()
+            val openingRequest = getRequestForDownload(initialDownload)
             openingResponse = downloader.execute(openingRequest)
             if (!interrupted && !terminated && openingResponse?.isSuccessful == true) {
                 total = openingResponse.contentLength
@@ -280,28 +280,6 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun getOpeningRequest(): Downloader.Request {
-        val headers = initialDownload.headers.toMutableMap()
-        headers["Range"] = "bytes=0-"
-        return Downloader.Request(
-                id = initialDownload.id,
-                url = initialDownload.url,
-                headers = headers,
-                file = initialDownload.file,
-                tag = initialDownload.tag)
-    }
-
-    private fun getRequestForFileChunk(fileChunk: FileChuck): Downloader.Request {
-        val headers = initialDownload.headers.toMutableMap()
-        headers["Range"] = "bytes=${fileChunk.startBytes + fileChunk.downloaded}-"
-        return Downloader.Request(
-                id = initialDownload.id,
-                url = initialDownload.url,
-                headers = headers,
-                file = initialDownload.file,
-                tag = initialDownload.tag)
-    }
-
     private fun getFileChunkList(openingResponseCode: Int, request: Downloader.Request): List<FileChuck> {
         return if (openingResponseCode == HttpURLConnection.HTTP_PARTIAL) {
             val fileChunkInfo = getChuckInfo(request)
@@ -500,7 +478,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                            outputStream: OutputStream?,
                            randomAccessFile: RandomAccessFile?) {
         val chunkFile = getFile(fileChunk.file)
-        val request = getRequestForFileChunk(fileChunk)
+        val request = getRequestForDownload(downloadInfo, fileChunk.startBytes + fileChunk.downloaded)
         val inputStream = downloader.getRequestInputStream(request, 0)
         var inputRandomAccessFile: RandomAccessFile? = null
         if (inputStream == null) {
@@ -545,7 +523,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             if (!interrupted && !terminated) {
                 downloadChunk.status = Status.DOWNLOADING
                 executorService?.execute({
-                    val downloadRequest = getRequestForFileChunk(downloadChunk)
+                    val downloadRequest = getRequestForDownload(downloadInfo, downloadChunk.startBytes + downloadChunk.downloaded)
                     var downloadResponse: Downloader.Response? = null
                     var outputStream: OutputStream? = null
                     var randomAccessFileOutput: RandomAccessFile? = null

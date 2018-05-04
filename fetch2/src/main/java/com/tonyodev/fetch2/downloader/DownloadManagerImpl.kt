@@ -11,6 +11,7 @@ import com.tonyodev.fetch2.helper.DownloadInfoUpdater
 import com.tonyodev.fetch2.helper.FileDownloaderDelegate
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
+import com.tonyodev.fetch2.util.getRequestForDownload
 import java.util.concurrent.Executors
 
 class DownloadManagerImpl(private val downloader: Downloader,
@@ -194,17 +195,6 @@ class DownloadManagerImpl(private val downloader: Downloader,
                     retryOnNetworkGain = retryOnNetworkGain,
                     fileChunkTempDir = tempDir)
         }
-    }
-
-    private fun getRequestForDownload(download: Download): Downloader.Request {
-        val headers = download.headers.toMutableMap()
-        headers["Range"] = "bytes=0-"
-        return Downloader.Request(
-                id = download.id,
-                url = download.url,
-                headers = headers,
-                file = download.file,
-                tag = download.tag)
     }
 
     override fun getFileDownloaderDelegate(): FileDownloader.Delegate {
