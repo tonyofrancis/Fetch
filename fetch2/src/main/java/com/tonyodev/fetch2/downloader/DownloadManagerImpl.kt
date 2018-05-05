@@ -185,7 +185,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
         } else {
             val tempDir = downloader.getDirectoryForFileDownloaderTypeParallel(request)
                     ?: fileTempDir
-            InlineParallelFileDownloaderImpl(
+            ParallelFileDownloaderImpl(
                     initialDownload = download,
                     downloader = downloader,
                     progressReportingIntervalMillis = progressReportingIntervalMillis,
