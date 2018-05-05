@@ -75,13 +75,13 @@ interface Downloader : Closeable {
 
     /**
      * This method is called by Fetch if the FileDownloaderType.Parallel type was set
-     * for the download request. Return the desired size/chunk size for each download request.
-     * If null is returned, Fetch will automatically select an appropriate chunk size based on the content length.
+     * for the download request. Returns the desired slices that the file will be divided in for parallel downloading.
+     * If null is returned, Fetch will automatically select an appropriate slicing size based on the content length.
      * @param request the request information for the download.
      * @param contentLength the total content length in bytes.
-     * @return the chunk size for the request file. Can be null.
+     * @return the slicing size for the request file. Can be null.
      * */
-    fun getFileChunkSize(request: Request, contentLength: Long): Int?
+    fun getFileSlicingCount(request: Request, contentLength: Long): Int?
 
     /** This method is called by Fetch to select the FileDownloaderType for each
      * download request. The Default is FileDownloaderType.SEQUENTIAL

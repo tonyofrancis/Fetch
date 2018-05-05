@@ -21,7 +21,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                  private val logger: Logger,
                                  private val networkInfoProvider: NetworkInfoProvider,
                                  private val retryOnNetworkGain: Boolean,
-                                 private val fileChunkTempDir: String) : FileDownloader {
+                                 private val fileTempDir: String) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -64,7 +64,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private var throwable: Throwable? = null
 
-    private var fileChunks = emptyList<FileChuck>()
+    private var fileSlices = emptyList<FileSlice>()
 
     private var outputStream: OutputStream? = null
 
@@ -78,13 +78,13 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             if (!interrupted && !terminated && openingResponse?.isSuccessful == true) {
                 total = openingResponse.contentLength
                 if (total > 0) {
-                    fileChunks = getFileChunkList(openingResponse.code, openingRequest)
+                    fileSlices = getFileSliceList(openingResponse.code, openingRequest)
                     try {
                         downloader.disconnect(openingResponse)
                     } catch (e: Exception) {
                         logger.e("FileDownloader", e)
                     }
-                    val chunkFileDownloadsList = fileChunks.filter { !it.isDownloaded }
+                    val sliceFileDownloadsList = fileSlices.filter { !it.isDownloaded }
                     if (!interrupted && !terminated) {
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
@@ -92,10 +92,10 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                 download = downloadInfo,
                                 etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
                                 downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                        if (chunkFileDownloadsList.isNotEmpty()) {
-                            executorService = Executors.newFixedThreadPool(chunkFileDownloadsList.size)
+                        if (sliceFileDownloadsList.isNotEmpty()) {
+                            executorService = Executors.newFixedThreadPool(sliceFileDownloadsList.size)
                         }
-                        downloadChunkFiles(openingRequest, chunkFileDownloadsList)
+                        downloadSliceFiles(openingRequest, sliceFileDownloadsList)
                         waitAndPerformProgressReporting()
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
@@ -189,110 +189,110 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun getFileChunkList(openingResponseCode: Int, request: Downloader.Request): List<FileChuck> {
+    private fun getFileSliceList(openingResponseCode: Int, request: Downloader.Request): List<FileSlice> {
         val file = getFile(downloadInfo.file)
         if (!file.exists()) {
             deleteAllTempFiles()
         }
-        val previousChunkSize = getPreviousChunkCount(downloadInfo.id)
+        val previousSliceSize = getPreviousSliceCount(downloadInfo.id)
         return if (openingResponseCode == HttpURLConnection.HTTP_PARTIAL) {
-            val fileChunkInfo = getChuckInfo(request)
-            if (previousChunkSize != fileChunkInfo.chunkCount) {
+            val fileSliceInfo = getChuckInfo(request)
+            if (previousSliceSize != fileSliceInfo.slicingCount) {
                 deleteAllTempFiles()
             }
-            saveCurrentChunkCount(downloadInfo.id, fileChunkInfo.chunkCount)
+            saveCurrentSliceCount(downloadInfo.id, fileSliceInfo.slicingCount)
             var counterBytes = 0L
-            val fileChunks = mutableListOf<FileChuck>()
-            for (position in 1..fileChunkInfo.chunkCount) {
+            val fileSlices = mutableListOf<FileSlice>()
+            for (position in 1..fileSliceInfo.slicingCount) {
                 if (!interrupted && !terminated) {
                     val startBytes = counterBytes
-                    val endBytes = if (fileChunkInfo.chunkCount == position) {
+                    val endBytes = if (fileSliceInfo.slicingCount == position) {
                         total
                     } else {
-                        counterBytes + fileChunkInfo.bytesPerFileChunk
+                        counterBytes + fileSliceInfo.bytesPerFileSlice
                     }
                     counterBytes = endBytes
-                    val fileChunk = FileChuck(
+                    val fileSlice = FileSlice(
                             id = downloadInfo.id,
                             position = position,
                             startBytes = startBytes,
                             endBytes = endBytes,
                             downloaded = getSavedDownloadedInfo(downloadInfo.id, position)
                     )
-                    downloaded += fileChunk.downloaded
-                    fileChunks.add(fileChunk)
+                    downloaded += fileSlice.downloaded
+                    fileSlices.add(fileSlice)
                 } else {
                     break
                 }
             }
-            fileChunks
+            fileSlices
         } else {
-            if (previousChunkSize != 1) {
+            if (previousSliceSize != 1) {
                 deleteAllTempFiles()
             }
-            saveCurrentChunkCount(downloadInfo.id, 1)
-            val fileChunk = FileChuck(
+            saveCurrentSliceCount(downloadInfo.id, 1)
+            val fileSlice = FileSlice(
                     id = downloadInfo.id,
                     position = 1,
                     startBytes = 0,
                     endBytes = total,
                     downloaded = getSavedDownloadedInfo(downloadInfo.id, 1))
-            downloaded += fileChunk.downloaded
-            listOf(fileChunk)
+            downloaded += fileSlice.downloaded
+            listOf(fileSlice)
         }
     }
 
-    private fun getPreviousChunkCount(id: Int): Int {
-        var chunkCount = -1
+    private fun getPreviousSliceCount(id: Int): Int {
+        var sliceCount = -1
         try {
             if (!terminated && !interrupted) {
-                chunkCount = getSingleLineTextFromFile(getMetaFilePath(id))?.toInt() ?: -1
+                sliceCount = getSingleLineTextFromFile(getMetaFilePath(id))?.toInt() ?: -1
             }
         } catch (e: Exception) {
         }
-        return chunkCount
+        return sliceCount
     }
 
-    private fun saveCurrentChunkCount(id: Int, chunkCount: Int) {
+    private fun saveCurrentSliceCount(id: Int, SliceCount: Int) {
         try {
             if (!terminated && !interrupted) {
-                writeTextToFile(getMetaFilePath(id), chunkCount.toString())
+                writeTextToFile(getMetaFilePath(id), SliceCount.toString())
             }
         } catch (e: Exception) {
         }
     }
 
     private fun getMetaFilePath(id: Int): String {
-        return "$fileChunkTempDir/$id.meta.txt"
+        return "$fileTempDir/$id.meta.txt"
     }
 
-    private fun getChuckInfo(request: Downloader.Request): FileChunkInfo {
-        val fileChunkSize = downloader.getFileChunkSize(request, total)
-                ?: DEFAULT_FILE_CHUNK_NO_LIMIT_SET
-        return if (fileChunkSize == DEFAULT_FILE_CHUNK_NO_LIMIT_SET) {
+    private fun getChuckInfo(request: Downloader.Request): FileSliceInfo {
+        val fileSliceSize = downloader.getFileSlicingCount(request, total)
+                ?: DEFAULT_FILE_SLICE_NO_LIMIT_SET
+        return if (fileSliceSize == DEFAULT_FILE_SLICE_NO_LIMIT_SET) {
             val fileSizeInMb = total.toFloat() / 1024F * 1024F
             val fileSizeInGb = total.toFloat() / 1024F * 1024F * 1024F
             when {
                 fileSizeInGb >= 1F -> {
-                    val chunks = 6
-                    val bytesPerChunk = ceil((total.toFloat() / chunks.toFloat())).toLong()
-                    FileChunkInfo(chunks, bytesPerChunk)
+                    val slices = 6
+                    val bytesPerSlice = ceil((total.toFloat() / slices.toFloat())).toLong()
+                    FileSliceInfo(slices, bytesPerSlice)
                 }
                 fileSizeInMb >= 1F -> {
-                    val chunks = 4
-                    val bytesPerChunk = ceil((total.toFloat() / chunks.toFloat())).toLong()
-                    FileChunkInfo(chunks, bytesPerChunk)
+                    val slices = 4
+                    val bytesPerSlice = ceil((total.toFloat() / slices.toFloat())).toLong()
+                    FileSliceInfo(slices, bytesPerSlice)
                 }
-                else -> FileChunkInfo(2, total)
+                else -> FileSliceInfo(2, total)
             }
         } else {
-            val bytesPerChunk = ceil((total.toFloat() / fileChunkSize.toFloat())).toLong()
-            return FileChunkInfo(fileChunkSize, bytesPerChunk)
+            val bytesPerSlice = ceil((total.toFloat() / fileSliceSize.toFloat())).toLong()
+            return FileSliceInfo(fileSliceSize, bytesPerSlice)
         }
     }
 
     private fun getDownloadedInfoFilePath(id: Int, position: Int): String {
-        return "$fileChunkTempDir/$id.$position.txt"
+        return "$fileTempDir/$id.$position.txt"
     }
 
     private fun deleteTempFile(id: Int, position: Int) {
@@ -394,18 +394,18 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun downloadChunkFiles(request: Downloader.Request, chunksDownloadsList: List<FileChuck>) {
+    private fun downloadSliceFiles(request: Downloader.Request, fileSlicesDownloadsList: List<FileSlice>) {
         actionsCounter = 0
-        actionsTotal = chunksDownloadsList.size
+        actionsTotal = fileSlicesDownloadsList.size
         outputStream = downloader.getRequestOutputStream(request, 0)
         if (outputStream == null) {
             randomAccessFileOutput = RandomAccessFile(downloadInfo.file, "rw")
             randomAccessFileOutput?.seek(0)
         }
-        for (downloadChunk in chunksDownloadsList) {
+        for (fileSlice in fileSlicesDownloadsList) {
             if (!interrupted && !terminated) {
                 executorService?.execute({
-                    val downloadRequest = getRequestForDownload(downloadInfo, downloadChunk.startBytes + downloadChunk.downloaded)
+                    val downloadRequest = getRequestForDownload(downloadInfo, fileSlice.startBytes + fileSlice.downloaded)
                     var downloadResponse: Downloader.Response? = null
                     try {
                         downloadResponse = downloader.execute(downloadRequest)
@@ -414,7 +414,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             val buffer = ByteArray(downloadBufferSizeBytes)
                             var read: Int = downloadResponse.byteStream?.read(buffer, 0, downloadBufferSizeBytes)
                                     ?: -1
-                            var remainderBytes: Long = downloadChunk.endBytes - (downloadChunk.startBytes + downloadChunk.downloaded)
+                            var remainderBytes: Long = fileSlice.endBytes - (fileSlice.startBytes + fileSlice.downloaded)
                             var reportingStartTime = System.nanoTime()
                             var streamBytes: Int
                             var seekPosition: Long
@@ -425,7 +425,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     read = -1
                                     remainderBytes.toInt()
                                 }
-                                seekPosition = downloadChunk.startBytes + downloadChunk.downloaded
+                                seekPosition = fileSlice.startBytes + fileSlice.downloaded
                                 synchronized(lock) {
                                     if (!interrupted && !terminated) {
                                         val outputStream = outputStream
@@ -436,7 +436,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                             randomAccessFileOutput?.seek(seekPosition)
                                             randomAccessFileOutput?.write(buffer, 0, streamBytes)
                                         }
-                                        downloadChunk.downloaded += streamBytes
+                                        fileSlice.downloaded += streamBytes
                                         downloaded += streamBytes
                                     }
                                 }
@@ -445,12 +445,12 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
                                             reportingStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
                                     if (hasReportingTimeElapsed) {
-                                        saveDownloadedInfo(downloadChunk.id, downloadChunk.position, downloadChunk.downloaded)
+                                        saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded)
                                         reportingStartTime = System.nanoTime()
                                     }
                                     if (read != -1) {
                                         read = downloadResponse.byteStream?.read(buffer, 0, downloadBufferSizeBytes) ?: -1
-                                        remainderBytes = downloadChunk.endBytes - (downloadChunk.startBytes + downloadChunk.downloaded)
+                                        remainderBytes = fileSlice.endBytes - (fileSlice.startBytes + fileSlice.downloaded)
                                     }
                                 }
                             }
@@ -483,9 +483,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private fun deleteAllTempFiles() {
         try {
-            for (fileChunk in fileChunks) {
+            for (fileSlice in fileSlices) {
                 if (!interrupted && !terminated) {
-                    deleteTempFile(fileChunk.id, fileChunk.position)
+                    deleteTempFile(fileSlice.id, fileSlice.position)
                 } else {
                     break
                 }
@@ -510,9 +510,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    data class FileChunkInfo(val chunkCount: Int, val bytesPerFileChunk: Long)
+    data class FileSliceInfo(val slicingCount: Int, val bytesPerFileSlice: Long)
 
-    data class FileChuck(val id: Int = 0,
+    data class FileSlice(val id: Int = 0,
                          val position: Int = 0,
                          val startBytes: Long = 0L,
                          val endBytes: Long = 0L,

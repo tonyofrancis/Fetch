@@ -193,7 +193,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
                     logger = logger,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = retryOnNetworkGain,
-                    fileChunkTempDir = tempDir)
+                    fileTempDir = tempDir)
         }
     }
 

@@ -98,7 +98,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun getFileChunkSize(request: Downloader.Request, contentLength: Long): Int? {
+    override fun getFileSlicingCount(request: Downloader.Request, contentLength: Long): Int? {
         return null
     }
 
