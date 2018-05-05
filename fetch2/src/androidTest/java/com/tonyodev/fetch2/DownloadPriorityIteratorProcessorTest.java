@@ -59,7 +59,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final Set<RequestOptions> requestOptions = new HashSet<>();
-        final String tempDir = FetchUtils.getFileChunkTempDir(appContext);
+        final String tempDir = FetchUtils.getFileTempDir(appContext);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 listenerProvider, uiHandler, downloadInfoUpdater, requestOptions, tempDir);

@@ -72,7 +72,7 @@ public class FetchHandlerInstrumentedTest {
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final Set<RequestOptions> requestOptions = new HashSet<>();
-        final String tempDir = FetchUtils.getFileChunkTempDir(appContext);
+        final String tempDir = FetchUtils.getFileTempDir(appContext);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 listenerProvider, uiHandler, downloadInfoUpdater, requestOptions, tempDir);
@@ -83,7 +83,8 @@ public class FetchHandlerInstrumentedTest {
                 new NetworkInfoProvider(appContext),
                 fetchLogger);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
-                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart, requestOptions);
+                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart,
+                requestOptions, client, tempDir);
     }
 
     @Test
@@ -488,7 +489,7 @@ public class FetchHandlerInstrumentedTest {
         }
         final List<Download> downloadInfoList = fetchHandler.enqueue(requestList);
         final List<Integer> ids = new ArrayList<>();
-        for(Request request : requestList) {
+        for (Request request : requestList) {
             ids.add(request.getId());
         }
         final List<Download> queryList = fetchHandler.getDownloads(ids);

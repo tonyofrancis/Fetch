@@ -108,7 +108,7 @@ fun createFileIfPossible(file: File) {
     }
 }
 
-fun getFileChunkTempDir(context: Context): String {
+fun getFileTempDir(context: Context): String {
     return "${context.filesDir.absoluteFile}/_fetchData/temp"
 }
 
@@ -172,4 +172,29 @@ fun getSingleLineTextFromFile(filePath: String): String? {
         }
     }
     return null
+}
+
+fun deleteRequestTempFiles(fileTempDir: String,
+                           downloader: Downloader,
+                           download: Download) {
+    try {
+        val request = getRequestForDownload(download)
+        val tempDirPath = downloader.getDirectoryForFileDownloaderTypeParallel(request)
+                ?: fileTempDir
+        val tempDir = getFile(tempDirPath)
+        if (tempDir.exists()) {
+            val tempFiles = tempDir.listFiles()
+            for (tempFile in tempFiles) {
+                val match = tempFile.name.startsWith("${download.id}.")
+                if (match && tempFile.exists()) {
+                    try {
+                        tempFile.delete()
+                    } catch (e: Exception) {
+                    }
+                }
+            }
+        }
+    } catch (e: Exception) {
+
+    }
 }

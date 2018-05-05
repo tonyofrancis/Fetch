@@ -17,7 +17,7 @@ import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.FETCH_ALREADY_EXIST
-import com.tonyodev.fetch2.util.getFileChunkTempDir
+import com.tonyodev.fetch2.util.getFileTempDir
 
 object FetchModulesBuilder {
 
@@ -87,7 +87,7 @@ object FetchModulesBuilder {
                     uiHandler = uiHandler,
                     downloadInfoUpdater = downloadInfoUpdater,
                     requestOptions = prefs.requestOptions,
-                    fileTempDir = getFileChunkTempDir(prefs.appContext))
+                    fileTempDir = getFileTempDir(prefs.appContext))
 
             priorityListProcessor = PriorityListProcessorImpl(
                     handler = handler,
@@ -107,7 +107,9 @@ object FetchModulesBuilder {
                     handler = handler,
                     logger = prefs.logger,
                     autoStart = prefs.autoStart,
-                    requestOptions = prefs.requestOptions)
+                    requestOptions = prefs.requestOptions,
+                    downloader = prefs.downloader,
+                    fileTempDir = getFileTempDir(prefs.appContext))
         }
 
     }
