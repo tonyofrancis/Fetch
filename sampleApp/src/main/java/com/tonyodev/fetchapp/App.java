@@ -50,10 +50,11 @@ public class App extends Application {
     @NonNull
     public Fetch getNewFetchInstance(@NonNull final String namespace) {
         final OkHttpClient client = new OkHttpClient.Builder().build();
-        final Downloader okHttpDownloader = new OkHttpDownloader(client);
+        final Downloader okHttpDownloader = new OkHttpDownloader(client,
+                Downloader.FileDownloaderType.PARALLEL);
         return new Fetch.Builder(this, namespace)
                 .setLogger(new FetchTimberLogger())
-                .setDownloader(new OkHttpOutputStreamDownloader())
+                .setDownloader(okHttpDownloader)
                 .setDownloadConcurrentLimit(1)
                 .enableLogging(true)
                 .enableRetryOnNetworkGain(true)
@@ -138,27 +139,16 @@ public class App extends Application {
         public OutputStream getRequestOutputStream(@NotNull Request request, long filePointerOffset) {
             //If overriding this method, see the Downloader.kt documentation on how to properly use this method.
             // If done incorrectly you may override data in files.
-//            try {
-//                final FileOutputStream fileOutputStream = new FileOutputStream(request.getFile(), true);
-//                return new BufferedOutputStream(fileOutputStream);
-//            } catch (FileNotFoundException e) {
-//                e.printStackTrace();
-//                //Cannot find file. Provide fallback.
-//            }
+            try {
+                final FileOutputStream fileOutputStream = new FileOutputStream(request.getFile(), true);
+                return new BufferedOutputStream(fileOutputStream);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                //Cannot find file. Provide fallback.
+            }
             return null;
         }
 
-        @NotNull
-        @Override
-        public FileDownloaderType getFileDownloaderType(@NotNull Request request) {
-            return FileDownloaderType.PARALLEL;
-        }
-
-        @Nullable
-        @Override
-        public Integer getFileChunkSize(@NotNull Request request, long fileLengthBytes) {
-            return 12;
-        }
     }
 
 }

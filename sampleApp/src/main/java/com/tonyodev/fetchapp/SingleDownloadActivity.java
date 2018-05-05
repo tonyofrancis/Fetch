@@ -100,7 +100,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     private void enqueueDownload() {
-        final String url = "http://speedtest.ftp.otenet.gr/files/test1Gb.db";//Data.sampleUrls[0];
+        final String url = Data.sampleUrls[0];
         final String filePath = Data.getSaveDir() + "/movies/buckbunny_singleDownloadActivity.m4v";
         final Request initialRequest = new Request(url, filePath);
         fetch.enqueue(initialRequest, new Func<Download>() {
