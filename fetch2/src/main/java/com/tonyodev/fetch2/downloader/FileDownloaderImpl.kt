@@ -1,22 +1,20 @@
 package com.tonyodev.fetch2.downloader
 
-import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Downloader
-import com.tonyodev.fetch2.Logger
+import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
-import com.tonyodev.fetch2.getErrorFromMessage
+import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.*
-import java.io.BufferedInputStream
-import java.io.File
-import java.io.RandomAccessFile
+import java.io.*
 import java.net.HttpURLConnection
 import kotlin.math.ceil
 
-open class FileDownloaderImpl(val initialDownload: Download,
-                              val downloader: Downloader,
-                              val progressReportingIntervalMillis: Long,
-                              val downloadBufferSizeBytes: Int,
-                              val logger: Logger) : FileDownloader {
+class FileDownloaderImpl(private val initialDownload: Download,
+                         private val downloader: Downloader,
+                         private val progressReportingIntervalMillis: Long,
+                         private val downloadBufferSizeBytes: Int,
+                         private val logger: Logger,
+                         private val networkInfoProvider: NetworkInfoProvider,
+                         private val retryOnNetworkGain: Boolean) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -25,85 +23,116 @@ open class FileDownloaderImpl(val initialDownload: Download,
     @Volatile
     override var completedDownload = false
     override var delegate: FileDownloader.Delegate? = null
-    var totalInternal: Long = 0
-    var downloadedInternal: Long = 0
-    var estimatedTimeRemainingInMillisecondsInternal: Long = -1
-    var downloadInfoInternal = initialDownload.toDownloadInfo()
-    var averageDownloadedBytesPerSecondInternal = 0.0
-    val movingAverageCalculatorInternal = AverageCalculator(5)
+    private var total: Long = 0
+    private var downloaded: Long = 0
+    private var estimatedTimeRemainingInMilliseconds: Long = -1
+    private var downloadInfo = initialDownload.toDownloadInfo()
+    private var averageDownloadedBytesPerSecond = 0.0
+    private val movingAverageCalculator = AverageCalculator(5)
 
     override val download: Download
         get () {
-            downloadInfoInternal.downloaded = downloadedInternal
-            downloadInfoInternal.total = totalInternal
-            return downloadInfoInternal
+            downloadInfo.downloaded = downloaded
+            downloadInfo.total = total
+            return downloadInfo
         }
 
     override fun run() {
-        var output: RandomAccessFile? = null
+        var randomAccessFileOutput: RandomAccessFile? = null
+        var output: OutputStream? = null
         var input: BufferedInputStream? = null
         var response: Downloader.Response? = null
         try {
-            val file = getFileInternal()
-            downloadedInternal = file.length()
-            if (!interrupted) {
-                response = downloader.execute(getRequestInternal())
+            val file = getFile()
+            downloaded = initialDownload.downloaded
+            if (!interrupted && !terminated) {
+                val request = getRequest()
+                response = downloader.execute(request)
                 val isResponseSuccessful = response?.isSuccessful ?: false
-                if (!interrupted && response != null && isResponseSuccessful) {
-                    totalInternal = if (response.contentLength == (-1).toLong()) {
+                if (!interrupted && !terminated && response != null && isResponseSuccessful) {
+                    total = if (response.contentLength == (-1).toLong()) {
                         -1
                     } else {
-                        downloadedInternal + response.contentLength
+                        downloaded + response.contentLength
                     }
-                    output = RandomAccessFile(file, "rw")
-                    if (response.code == HttpURLConnection.HTTP_PARTIAL) {
-                        output.seek(downloadedInternal)
+                    val seekPosition = if (response.code == HttpURLConnection.HTTP_PARTIAL) {
                         logger.d("FileDownloader resuming Download $download")
+                        downloaded
                     } else {
-                        output.seek(0)
                         logger.d("FileDownloader starting Download $download")
+                        0L
                     }
-                    if (!interrupted) {
+                    output = downloader.getRequestOutputStream(request, seekPosition)
+                    if (output == null) {
+                        randomAccessFileOutput = RandomAccessFile(file, "rw")
+                        randomAccessFileOutput.seek(seekPosition)
+                    }
+                    if (!interrupted && !terminated) {
                         input = BufferedInputStream(response.byteStream, downloadBufferSizeBytes)
-                        downloadInfoInternal.downloaded = downloadedInternal
-                        downloadInfoInternal.total = totalInternal
-                        delegate?.onStarted(
-                                download = downloadInfoInternal,
-                                etaInMilliseconds = estimatedTimeRemainingInMillisecondsInternal,
-                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                        writeToOutputInternal(input, output)
+                        downloadInfo.downloaded = downloaded
+                        downloadInfo.total = total
+                        if (!terminated) {
+                            delegate?.onStarted(
+                                    download = downloadInfo,
+                                    etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
+                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                        }
+                        writeToOutput(input, randomAccessFileOutput, output)
                     }
-                } else if (response == null) {
+                } else if (response == null && !interrupted && !terminated) {
                     throw FetchException(EMPTY_RESPONSE_BODY,
                             FetchException.Code.EMPTY_RESPONSE_BODY)
-                } else if (!isResponseSuccessful) {
+                } else if (!isResponseSuccessful && !interrupted && !terminated) {
                     throw FetchException(RESPONSE_NOT_SUCCESSFUL,
                             FetchException.Code.REQUEST_NOT_SUCCESSFUL)
-                } else {
+                } else if (!interrupted && !terminated) {
                     throw FetchException(UNKNOWN_ERROR,
                             FetchException.Code.UNKNOWN)
                 }
             }
             if (!completedDownload) {
-                downloadInfoInternal.downloaded = downloadedInternal
-                downloadInfoInternal.total = totalInternal
-                delegate?.onProgress(
-                        download = downloadInfoInternal,
-                        etaInMilliSeconds = estimatedTimeRemainingInMillisecondsInternal,
-                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                downloadInfo.downloaded = downloaded
+                downloadInfo.total = total
+                if (!terminated) {
+                    delegate?.onProgress(
+                            download = downloadInfo,
+                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                }
             }
         } catch (e: Exception) {
-            if (!interrupted) {
+            if (!interrupted && !terminated) {
                 logger.e("FileDownloader", e)
-                val error = getErrorFromMessage(e.message)
-                downloadInfoInternal.downloaded = downloadedInternal
-                downloadInfoInternal.total = totalInternal
-                downloadInfoInternal.error = error
-                delegate?.onError(download = downloadInfoInternal)
+                var error = getErrorFromThrowable(e)
+                error.throwable = e
+                if (retryOnNetworkGain) {
+                    var disconnectDetected = !networkInfoProvider.isNetworkAvailable
+                    for (i in 1..10) {
+                        try {
+                            Thread.sleep(500)
+                        } catch (e: InterruptedException) {
+                            logger.e("FileDownloader", e)
+                            break
+                        }
+                        if (!networkInfoProvider.isNetworkAvailable) {
+                            disconnectDetected = true
+                            break
+                        }
+                    }
+                    if (disconnectDetected) {
+                        error = Error.NO_NETWORK_CONNECTION
+                    }
+                }
+                downloadInfo.downloaded = downloaded
+                downloadInfo.total = total
+                downloadInfo.error = error
+                if (!terminated) {
+                    delegate?.onError(download = downloadInfo)
+                }
             }
         } finally {
             try {
-                output?.close()
+                randomAccessFileOutput?.close()
             } catch (e: Exception) {
                 logger.e("FileDownloader", e)
             }
@@ -119,69 +148,97 @@ open class FileDownloaderImpl(val initialDownload: Download,
                     logger.e("FileDownloader", e)
                 }
             }
+            try {
+                output?.close()
+            } catch (e: Exception) {
+                logger.e("FileDownloader", e)
+            }
             terminated = true
         }
     }
 
-    open fun writeToOutputInternal(input: BufferedInputStream, output: RandomAccessFile) {
+    private fun writeToOutput(input: BufferedInputStream,
+                              randomAccessFileOutput: RandomAccessFile?,
+                              downloaderOutputStream: OutputStream?) {
         var reportingStopTime: Long
         var downloadSpeedStopTime: Long
-        var downloadedBytesPerSecond = downloadedInternal
+        var downloadedBytesPerSecond = downloaded
         val buffer = ByteArray(downloadBufferSizeBytes)
         var reportingStartTime = System.nanoTime()
         var downloadSpeedStartTime = System.nanoTime()
 
         var read = input.read(buffer, 0, downloadBufferSizeBytes)
-        while (!interrupted && read != -1) {
-            output.write(buffer, 0, read)
-            downloadedInternal += read
+        while (!interrupted && !terminated && read != -1) {
+            randomAccessFileOutput?.write(buffer, 0, read)
+            downloaderOutputStream?.write(buffer, 0, read)
+            if (!terminated) {
+                downloaded += read
+                downloadInfo.downloaded = downloaded
+                downloadInfo.total = total
+                downloadSpeedStopTime = System.nanoTime()
+                val downloadSpeedCheckTimeElapsed = hasIntervalTimeElapsed(downloadSpeedStartTime,
+                        downloadSpeedStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
 
-            downloadSpeedStopTime = System.nanoTime()
-            val downloadSpeedCheckTimeElapsed = hasIntervalTimeElapsed(downloadSpeedStartTime,
-                    downloadSpeedStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
+                if (downloadSpeedCheckTimeElapsed) {
+                    downloadedBytesPerSecond = downloaded - downloadedBytesPerSecond
+                    movingAverageCalculator.add(downloadedBytesPerSecond.toDouble())
+                    averageDownloadedBytesPerSecond =
+                            movingAverageCalculator.getMovingAverageWithWeightOnRecentValues()
+                    estimatedTimeRemainingInMilliseconds = calculateEstimatedTimeRemainingInMilliseconds(
+                            downloadedBytes = downloaded,
+                            totalBytes = total,
+                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                    downloadedBytesPerSecond = downloaded
+                    if (progressReportingIntervalMillis > DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS) {
+                        delegate?.saveDownloadProgress(downloadInfo)
+                    }
+                }
 
-            if (downloadSpeedCheckTimeElapsed) {
-                downloadedBytesPerSecond = downloadedInternal - downloadedBytesPerSecond
-                movingAverageCalculatorInternal.add(downloadedBytesPerSecond.toDouble())
-                averageDownloadedBytesPerSecondInternal =
-                        movingAverageCalculatorInternal.getMovingAverageWithWeightOnRecentValues()
-                estimatedTimeRemainingInMillisecondsInternal = calculateEstimatedTimeRemainingInMilliseconds(
-                        downloadedBytes = downloadedInternal,
-                        totalBytes = totalInternal,
-                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                downloadedBytesPerSecond = downloadedInternal
+                reportingStopTime = System.nanoTime()
+                val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
+                        reportingStopTime, progressReportingIntervalMillis)
+
+                if (hasReportingTimeElapsed) {
+                    if (progressReportingIntervalMillis <= DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS) {
+                        delegate?.saveDownloadProgress(downloadInfo)
+                    }
+                    if (!terminated) {
+                        delegate?.onProgress(
+                                download = downloadInfo,
+                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                    }
+                    reportingStartTime = System.nanoTime()
+                }
+
+                if (downloadSpeedCheckTimeElapsed) {
+                    downloadSpeedStartTime = System.nanoTime()
+                }
+                read = input.read(buffer, 0, downloadBufferSizeBytes)
             }
-
-            reportingStopTime = System.nanoTime()
-            val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
-                    reportingStopTime, progressReportingIntervalMillis)
-
-            if (hasReportingTimeElapsed) {
-                downloadInfoInternal.downloaded = downloadedInternal
-                downloadInfoInternal.total = totalInternal
-                delegate?.onProgress(
-                        download = downloadInfoInternal,
-                        etaInMilliSeconds = estimatedTimeRemainingInMillisecondsInternal,
-                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                reportingStartTime = System.nanoTime()
-            }
-
-            if (downloadSpeedCheckTimeElapsed) {
-                downloadSpeedStartTime = System.nanoTime()
-            }
-            read = input.read(buffer, 0, downloadBufferSizeBytes)
         }
-        if (read == -1 && !interrupted) {
-            totalInternal = downloadedInternal
+        try {
+            downloaderOutputStream?.flush()
+        } catch (e: IOException) {
+            logger.e("FileDownloader", e)
+        }
+        if (read == -1 && !interrupted && !terminated) {
+            total = downloaded
             completedDownload = true
-            downloadInfoInternal.downloaded = downloadedInternal
-            downloadInfoInternal.total = totalInternal
-            delegate?.onComplete(
-                    download = downloadInfoInternal)
+            downloadInfo.downloaded = downloaded
+            downloadInfo.total = total
+            if (!terminated) {
+                delegate?.onProgress(
+                        download = downloadInfo,
+                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                delegate?.onComplete(
+                        download = downloadInfo)
+            }
         }
     }
 
-    open fun getFileInternal(): File {
+    private fun getFile(): File {
         val file = File(initialDownload.file)
         if (!file.exists()) {
             if (file.parentFile != null && !file.parentFile.exists()) {
@@ -197,17 +254,22 @@ open class FileDownloaderImpl(val initialDownload: Download,
         return file
     }
 
-    open fun getRequestInternal(): Downloader.Request {
+    private fun getRequest(): Downloader.Request {
         val headers = initialDownload.headers.toMutableMap()
-        headers.put("Range", "bytes=$downloadedInternal-")
-        return Downloader.Request(initialDownload.url, headers)
+        headers["Range"] = "bytes=$downloaded-"
+        return Downloader.Request(
+                id = initialDownload.id,
+                url = initialDownload.url,
+                headers = headers,
+                file = initialDownload.file,
+                tag = initialDownload.tag)
     }
 
-    fun getAverageDownloadedBytesPerSecond(): Long {
-        if (averageDownloadedBytesPerSecondInternal < 1) {
+    private fun getAverageDownloadedBytesPerSecond(): Long {
+        if (averageDownloadedBytesPerSecond < 1) {
             return 0L
         }
-        return ceil(averageDownloadedBytesPerSecondInternal).toLong()
+        return ceil(averageDownloadedBytesPerSecond).toLong()
     }
 
 }

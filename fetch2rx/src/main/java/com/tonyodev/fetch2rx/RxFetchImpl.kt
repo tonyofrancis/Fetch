@@ -11,7 +11,7 @@ import com.tonyodev.fetch2.util.FAILED_TO_ENQUEUE_REQUEST
 import com.tonyodev.fetch2.util.DOWNLOAD_NOT_FOUND
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import java.util.concurrent.TimeUnit
+
 
 open class RxFetchImpl(namespace: String,
                        handler: Handler,
@@ -22,19 +22,23 @@ open class RxFetchImpl(namespace: String,
     : FetchImpl(namespace, handler, uiHandler,
         fetchHandler, fetchListenerProvider, logger), RxFetch {
 
-    val scheduler = AndroidSchedulers.from(handler.looper)
-    val uiSceduler = AndroidSchedulers.mainThread()
+    protected val scheduler = AndroidSchedulers.from(handler.looper)
+    protected val uiSceduler = AndroidSchedulers.mainThread()
 
     override fun enqueue(request: Request): Convertible<Download> {
         synchronized(lock) {
-            fetchHandler.throwExceptionIfClosed()
+            throwExceptionIfClosed()
             val flowable = Flowable.just(request)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        fetchHandler.throwExceptionIfClosed()
+                        throwExceptionIfClosed()
                         val download: Download
                         try {
                             download = fetchHandler.enqueue(it)
+                            uiHandler.post {
+                                fetchListenerProvider.mainListener.onQueued(download)
+                                logger.d("Queued $download for download")
+                            }
                         } catch (e: Exception) {
                             throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
                         }
@@ -47,14 +51,20 @@ open class RxFetchImpl(namespace: String,
 
     override fun enqueue(requests: List<Request>): Convertible<List<Download>> {
         synchronized(lock) {
-            fetchHandler.throwExceptionIfClosed()
+            throwExceptionIfClosed()
             val flowable = Flowable.just(requests)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        fetchHandler.throwExceptionIfClosed()
+                        throwExceptionIfClosed()
                         val downloads: List<Download>
                         try {
                             downloads = fetchHandler.enqueue(it)
+                            uiHandler.post {
+                                downloads.forEach {
+                                    fetchListenerProvider.mainListener.onQueued(it)
+                                    logger.d("Queued $it for download")
+                                }
+                            }
                         } catch (e: Exception) {
                             throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
                         }
@@ -67,12 +77,11 @@ open class RxFetchImpl(namespace: String,
 
     override fun updateRequest(id: Int, requestInfo: RequestInfo): Convertible<Download> {
         synchronized(lock) {
-            fetchHandler.throwExceptionIfClosed()
-
+            throwExceptionIfClosed()
             val flowable = Flowable.just(Object())
                     .subscribeOn(scheduler)
                     .flatMap {
-                        fetchHandler.throwExceptionIfClosed()
+                        throwExceptionIfClosed()
                         val download: Download?
                         try {
                             download = fetchHandler.updateRequest(id, requestInfo)
@@ -91,11 +100,11 @@ open class RxFetchImpl(namespace: String,
 
     override fun getDownloads(): Convertible<List<Download>> {
         synchronized(lock) {
-            fetchHandler.throwExceptionIfClosed()
+            throwExceptionIfClosed()
             val flowable = Flowable.just(Object())
                     .subscribeOn(scheduler)
                     .flatMap {
-                        fetchHandler.throwExceptionIfClosed()
+                        throwExceptionIfClosed()
                         val downloads = fetchHandler.getDownloads()
                         Flowable.just(downloads)
                     }
@@ -106,11 +115,11 @@ open class RxFetchImpl(namespace: String,
 
     override fun getDownloads(idList: List<Int>): Convertible<List<Download>> {
         synchronized(lock) {
-            fetchHandler.throwExceptionIfClosed()
+            throwExceptionIfClosed()
             val flowable = Flowable.just(idList)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        fetchHandler.throwExceptionIfClosed()
+                        throwExceptionIfClosed()
                         val downloads = fetchHandler.getDownloads(it)
                         Flowable.just(downloads)
                     }
@@ -121,11 +130,11 @@ open class RxFetchImpl(namespace: String,
 
     override fun getDownload(id: Int): Convertible<Download> {
         synchronized(lock) {
-            fetchHandler.throwExceptionIfClosed()
+            throwExceptionIfClosed()
             val flowable = Flowable.just(id)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        fetchHandler.throwExceptionIfClosed()
+                        throwExceptionIfClosed()
                         val download = fetchHandler.getDownload(it) ?:
                                 throw FetchException(DOWNLOAD_NOT_FOUND)
                         Flowable.just(download)
@@ -137,11 +146,11 @@ open class RxFetchImpl(namespace: String,
 
     override fun getDownloadsInGroup(groupId: Int): Convertible<List<Download>> {
         synchronized(lock) {
-            fetchHandler.throwExceptionIfClosed()
+            throwExceptionIfClosed()
             val flowable = Flowable.just(groupId)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        fetchHandler.throwExceptionIfClosed()
+                        throwExceptionIfClosed()
                         val downloads = fetchHandler.getDownloadsInGroup(it)
                         Flowable.just(downloads)
                     }
@@ -152,11 +161,11 @@ open class RxFetchImpl(namespace: String,
 
     override fun getDownloadsWithStatus(status: Status): Convertible<List<Download>> {
         synchronized(lock) {
-            fetchHandler.throwExceptionIfClosed()
+            throwExceptionIfClosed()
             val flowable = Flowable.just(status)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        fetchHandler.throwExceptionIfClosed()
+                        throwExceptionIfClosed()
                         val downloads = fetchHandler.getDownloadsWithStatus(it)
                         Flowable.just(downloads)
                     }
@@ -167,11 +176,11 @@ open class RxFetchImpl(namespace: String,
 
     override fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): Convertible<List<Download>> {
         synchronized(lock) {
-            fetchHandler.throwExceptionIfClosed()
+            throwExceptionIfClosed()
             val flowable = Flowable.just(status)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        fetchHandler.throwExceptionIfClosed()
+                        throwExceptionIfClosed()
                         val downloads = fetchHandler.getDownloadsInGroupWithStatus(groupId, status)
                         Flowable.just(downloads)
                     }
@@ -181,6 +190,8 @@ open class RxFetchImpl(namespace: String,
     }
 
     companion object {
+
+        @JvmStatic
         fun newInstance(modules: Modules): RxFetchImpl {
             return RxFetchImpl(
                     namespace = modules.prefs.namespace,
@@ -190,6 +201,7 @@ open class RxFetchImpl(namespace: String,
                     fetchListenerProvider = modules.fetchListenerProvider,
                     logger = modules.prefs.logger)
         }
+
     }
 
 }

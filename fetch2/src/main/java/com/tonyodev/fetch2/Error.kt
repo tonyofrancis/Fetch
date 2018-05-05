@@ -3,7 +3,17 @@ package com.tonyodev.fetch2
 /**
  * Enumeration which contains specific errors that can occur.
  * */
-enum class Error constructor(val value: Int) {
+enum class Error constructor(
+        /** Error Value*/
+        val value: Int,
+        /** A throwable will only be present at the time the error
+         * occurs and will not be saved in the Fetch database. This means that if a download encounters
+         * an error, the throwable will be attached to the error and the error will be attached to the
+         * download and this information will be sent to all attached FetchListeners.
+         * Fetch will not save the throwable in the database for later use.
+         * Only the error enum type and value field of the error will be saved. This throwable field may be null.
+         * */
+        var throwable: Throwable? = null) {
 
     /** Indicates that the specific issue or error is not known.*/
     UNKNOWN(-1),
@@ -53,7 +63,27 @@ enum class Error constructor(val value: Int) {
      * This error is thrown by the FetchBuilder.
      * @see com.tonyodev.fetch2.Fetch.Builder
      * */
-    FETCH_ALREADY_EXIST(12);
+    FETCH_ALREADY_EXIST(12),
+
+    /** Indicates that a request in the Fetch database already has this unique id.
+     * Ids must be unique.*/
+    REQUEST_WITH_ID_ALREADY_EXIST(13),
+
+    /** Indicates that a request in the Fetch database already has this file path. File Paths
+     * have to be unique for each request. This limitation maintains consistency and prevents data lose.
+     * Fetch cannot write data to two different downloads with the same file path.
+     * */
+    REQUEST_WITH_FILE_PATH_ALREADY_EXIST(14),
+
+    /** Indicates that unsuccessful response was returned by the server. */
+    REQUEST_NOT_SUCCESSFUL(15),
+
+    /** Indicates that an unknown IO issue occurred. */
+    UNKNOWN_IO_ERROR(16),
+
+    /** Indicates that the file belonging to the request has been deleted. The file
+     * could have been deleted by an external source.*/
+    FILE_NOT_FOUND(17);
 
     companion object {
 
@@ -74,6 +104,11 @@ enum class Error constructor(val value: Int) {
                 10 -> DOWNLOAD_NOT_FOUND
                 11 -> FETCH_DATABASE_ERROR
                 12 -> FETCH_ALREADY_EXIST
+                13 -> REQUEST_WITH_ID_ALREADY_EXIST
+                14 -> REQUEST_WITH_FILE_PATH_ALREADY_EXIST
+                15 -> REQUEST_NOT_SUCCESSFUL
+                16 -> UNKNOWN_IO_ERROR
+                17 -> FILE_NOT_FOUND
                 else -> UNKNOWN
             }
         }

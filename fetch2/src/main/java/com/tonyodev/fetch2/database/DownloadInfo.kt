@@ -11,7 +11,6 @@ import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.NetworkType
 import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2.util.*
-import java.util.Date
 
 
 @Entity(tableName = DownloadDatabase.TABLE_NAME,
@@ -57,7 +56,10 @@ class DownloadInfo : Download {
     override var networkType: NetworkType = defaultNetworkType
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_CREATED)
-    override var created: Long = Date().time
+    override var created: Long = System.nanoTime()
+
+    @ColumnInfo(name = DownloadDatabase.COLUMN_TAG)
+    override var tag: String? = null
 
     override val progress: Int
         get() {
@@ -66,7 +68,7 @@ class DownloadInfo : Download {
 
     override val request: Request
         get() {
-            val request = Request(url, file)
+            val request = Request(id, url, file)
             request.groupId = group
             request.headers.putAll(headers)
             request.networkType = networkType
@@ -74,16 +76,16 @@ class DownloadInfo : Download {
             return request
         }
 
-    override fun toString(): String {
-        return "DownloadInfo(id:$id,namespace:$namespace, url:$url, file:$file, " +
-                "group:$group, priority:$priority, headers:$headers, downloaded:$downloaded, " +
-                "total:$total, status:$status, error:$error, progress:$progress)"
+    override fun copy(): Download {
+        return this.toDownloadInfo()
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
+
         other as DownloadInfo
+
         if (id != other.id) return false
         if (namespace != other.namespace) return false
         if (url != other.url) return false
@@ -97,6 +99,8 @@ class DownloadInfo : Download {
         if (error != other.error) return false
         if (networkType != other.networkType) return false
         if (created != other.created) return false
+        if (tag != other.tag) return false
+
         return true
     }
 
@@ -114,7 +118,14 @@ class DownloadInfo : Download {
         result = 31 * result + error.hashCode()
         result = 31 * result + networkType.hashCode()
         result = 31 * result + created.hashCode()
+        result = 31 * result + (tag?.hashCode() ?: 0)
         return result
+    }
+
+    override fun toString(): String {
+        return "Download(id=$id, namespace='$namespace', url='$url', file='$file', group=$group," +
+                " priority=$priority, headers=$headers, downloaded=$downloaded, total=$total, status=$status," +
+                " error=$error, networkType=$networkType, created=$created, tag=$tag)"
     }
 
 }

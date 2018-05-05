@@ -1,10 +1,7 @@
 package com.tonyodev.fetch2.fetch
 
 import android.content.Context
-import com.tonyodev.fetch2.Downloader
-import com.tonyodev.fetch2.FetchLogger
-import com.tonyodev.fetch2.Logger
-import com.tonyodev.fetch2.NetworkType
+import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.util.*
 
@@ -33,6 +30,9 @@ abstract class FetchBuilder<out B, out F> constructor(
     private var downloader = defaultDownloader
     private var globalNetworkType = defaultGlobalNetworkType
     private var logger: Logger = defaultLogger
+    private var autoStart = DEFAULT_AUTO_START
+    private var retryOnNetworkGain = DEFAULT_RETRY_ON_NETWORK_GAIN
+    private var requestOptions = mutableSetOf<RequestOptions>()
 
     /**
      * Sets the downloader client Fetch will use to perform downloads.
@@ -140,6 +140,42 @@ abstract class FetchBuilder<out B, out F> constructor(
         return this
     }
 
+    /** Allows Fetch to start processing old requests after the build method is called
+     * on the builder. Default is true.
+     * @param enabled enable or disable auto start.
+     * @return com.tonyodev.fetch2.Fetch.Builder.this
+     * */
+    fun enableAutoStart(enabled: Boolean): FetchBuilder<B, F> {
+        this.autoStart = enabled
+        return this
+    }
+
+    /** Allows Fetch to auto try downloading a request if the network connection was lost when the request
+     * was being downloaded. The download will automatically resume when network connection is gained.
+     * Default is false.
+     * @param enabled enable or disable
+     * @return com.tonyodev.fetch2.Fetch.Builder.this
+     * */
+    fun enableRetryOnNetworkGain(enabled: Boolean): FetchBuilder<B, F> {
+        this.retryOnNetworkGain = enabled
+        return this
+    }
+
+    /**
+     * Adds request options that Fetch can use when a situation occurs pertaining to requests.
+     * Example: Add RequestOptions.AUTO_REMOVE_ON_COMPLETED to remove a completed request from the
+     * Fetch database when a download completes. Note: If more than one request option matches
+     * a situation, Fetch will select the less damaging option. For Example:
+     * If RequestOption.AUTO_REMOVE_ON_FAILED and RequestOption.AUTO_REMOVE_ON_FAILED_DELETE_FILE
+     * is set, Fetch will always select the less damaging one which is RequestOption.AUTO_REMOVE_ON_FAILED.
+     * @param requestOptions Request Options that Fetch can use when a situation occurs.
+     * @return com.tonyodev.fetch2.Fetch.Builder.this
+     * */
+    fun addRequestOptions(vararg requestOptions: RequestOptions): FetchBuilder<B, F> {
+        this.requestOptions.addAll(requestOptions)
+        return this
+    }
+
     /** Gets this builders current configuration settings.
      * @return Builder configuration settings.
      * */
@@ -161,7 +197,10 @@ abstract class FetchBuilder<out B, out F> constructor(
                 inMemoryDatabaseEnabled = inMemoryDatabaseEnabled,
                 downloader = downloader,
                 globalNetworkType = globalNetworkType,
-                logger = prefsLogger)
+                logger = prefsLogger,
+                autoStart = autoStart,
+                retryOnNetworkGain = retryOnNetworkGain,
+                requestOptions = requestOptions)
     }
 
     /** Builds a new instance of Fetch with the proper configuration.

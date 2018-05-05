@@ -18,11 +18,14 @@ interface DatabaseManager : Closeable {
     fun deleteAll()
     fun update(downloadInfo: DownloadInfo)
     fun update(downloadInfoList: List<DownloadInfo>)
+    fun updateNoLock(downloadInfoList: List<DownloadInfo>)
     fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo)
     fun get(): List<DownloadInfo>
     fun get(id: Int): DownloadInfo?
     fun get(ids: List<Int>): List<DownloadInfo?>
+    fun getByFile(file: String): DownloadInfo?
     fun getByStatus(status: Status): List<DownloadInfo>
     fun getByGroup(group: Int): List<DownloadInfo>
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<DownloadInfo>
+    fun getPendingDownloadsSorted(): List<DownloadInfo>
 }

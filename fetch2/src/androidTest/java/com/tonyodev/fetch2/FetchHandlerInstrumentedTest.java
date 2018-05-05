@@ -3,21 +3,25 @@ package com.tonyodev.fetch2;
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.DatabaseManagerImpl;
+import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
+import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.fetch.FetchHandler;
 import com.tonyodev.fetch2.fetch.FetchHandlerImpl;
-import com.tonyodev.fetch2.helper.PriorityQueueProcessor;
-import com.tonyodev.fetch2.helper.PriorityQueueProcessorImpl;
+import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
+import com.tonyodev.fetch2.helper.PriorityListProcessor;
+import com.tonyodev.fetch2.helper.PriorityListProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
 import com.tonyodev.fetch2.provider.ListenerProvider;
-import com.tonyodev.fetch2.provider.NetworkProvider;
+import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
 
@@ -27,7 +31,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,7 +47,7 @@ public class FetchHandlerInstrumentedTest {
     private Context appContext;
     private FetchHandler fetchHandler;
     private DatabaseManager databaseManager;
-    private PriorityQueueProcessor<Download> priorityQueueProcessorImpl;
+    private PriorityListProcessor<Download> priorityListProcessorImpl;
 
     @Before
     public void useAppContext() throws Exception {
@@ -51,23 +57,31 @@ public class FetchHandlerInstrumentedTest {
         final Handler handler = new Handler(handlerThread.getLooper());
         final String namespace = "fetch2DatabaseTest";
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
+        final Boolean autoStart = true;
+        final Migration[] migrations = DownloadDatabase.getMigrations();
         databaseManager = new DatabaseManagerImpl(appContext, namespace,
-                true, fetchLogger);
+                true, fetchLogger, migrations);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final long progessInterval = FetchDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
+        final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
+        final boolean retryOnNetworkGain = false;
+        final ListenerProvider listenerProvider = new ListenerProvider();
+        final Handler uiHandler = new Handler(Looper.getMainLooper());
+        final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
+        final Set<RequestOptions> requestOptions = new HashSet<>();
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger);
-        priorityQueueProcessorImpl = new PriorityQueueProcessorImpl(
+                progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
+                listenerProvider, uiHandler, downloadInfoUpdater, requestOptions);
+        priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),
                 downloadManager,
-                new NetworkProvider(appContext),
+                new NetworkInfoProvider(appContext),
                 fetchLogger);
-        final ListenerProvider listenerProvider = new ListenerProvider();
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
-                priorityQueueProcessorImpl, listenerProvider, handler, fetchLogger);
+                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart, requestOptions);
     }
 
     @Test
@@ -143,7 +157,7 @@ public class FetchHandlerInstrumentedTest {
         assertNotNull(downloads);
         assertEquals(size, downloads.size());
         fetchHandler.freeze();
-        assertTrue(priorityQueueProcessorImpl.isPaused());
+        assertTrue(priorityListProcessorImpl.isPaused());
     }
 
     @Test
@@ -185,7 +199,7 @@ public class FetchHandlerInstrumentedTest {
         List<Request> requestList = getTestRequestList(size);
         fetchHandler.enqueue(requestList);
         fetchHandler.unfreeze();
-        assertFalse(priorityQueueProcessorImpl.isPaused());
+        assertFalse(priorityListProcessorImpl.isPaused());
     }
 
     @Test
@@ -424,7 +438,7 @@ public class FetchHandlerInstrumentedTest {
     public void updateSetGlobalNetworkType() throws Exception {
         final NetworkType networkType = NetworkType.WIFI_ONLY;
         fetchHandler.setGlobalNetworkType(networkType);
-        assertEquals(networkType, priorityQueueProcessorImpl.getGlobalNetworkType());
+        assertEquals(networkType, priorityListProcessorImpl.getGlobalNetworkType());
 
         fetchHandler.setGlobalNetworkType(NetworkType.GLOBAL_OFF);
     }

@@ -1,6 +1,7 @@
 package com.tonyodev.fetchapp;
 
 import android.Manifest;
+
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -9,7 +10,6 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 
 import com.tonyodev.fetch2.AbstractFetchListener;
@@ -18,20 +18,24 @@ import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Func;
+import com.tonyodev.fetch2.Func2;
 import com.tonyodev.fetch2.Request;
 
 import org.jetbrains.annotations.NotNull;
+
+import timber.log.Timber;
 
 public class FragmentActivity extends AppCompatActivity {
 
     private static final int STORAGE_PERMISSION_CODE = 150;
 
-    private Fetch fetch;
-
     private View rootView;
     private ProgressFragment progressFragment1;
     private ProgressFragment progressFragment2;
 
+    private Fetch fetch;
+
+    @Nullable
     private Request request;
 
     @Override
@@ -39,19 +43,33 @@ public class FragmentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fragment_progress);
         rootView = findViewById(R.id.rootView);
-        fetch = ((App) getApplication()).getFetch();
-
+        fetch = ((App) getApplication()).getAppFetchInstance();
+        final FragmentManager fragmentManager = getSupportFragmentManager();
         if (savedInstanceState == null) {
-            fetch.deleteAll();
             progressFragment1 = new ProgressFragment();
             progressFragment2 = new ProgressFragment();
-
-            final FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.beginTransaction()
                     .add(R.id.fragment1, progressFragment1)
                     .add(R.id.fragment2, progressFragment2)
                     .commit();
-            checkStoragePermissions();
+        } else {
+            progressFragment1 = (ProgressFragment) fragmentManager.findFragmentById(R.id.fragment1);
+            progressFragment2 = (ProgressFragment) fragmentManager.findFragmentById(R.id.fragment2);
+        }
+        checkStoragePermissions();
+    }
+
+    private void setRequestForFragments(@NotNull final Download download) {
+        //If we are using Request Options with Fetch, the download.getRequest() object ID and File values may be different
+        // from the initialRequest. It's always best to update your request references with download.getRequest()
+        request = download.getRequest(); // update request
+        if (progressFragment1 != null) {
+            progressFragment1.setRequest(request);
+            progressFragment1.updateProgress(download.getProgress());
+        }
+        if (progressFragment2 != null) {
+            progressFragment2.setRequest(request);
+            progressFragment2.updateProgress(download.getProgress());
         }
     }
 
@@ -66,46 +84,55 @@ public class FragmentActivity extends AppCompatActivity {
 
     private void enqueueDownload() {
         final String url = Data.sampleUrls[0];
-        final String filePath = Data.getSaveDir() + "/fragments/smallFile.txt";
-
-        request = new Request(url, filePath);
-        fetch.enqueue(request, new Func<Download>() {
+        final String filePath = Data.getSaveDir() + "/fragments/movie.mp4";
+        final Request initialRequest = new Request(url, filePath);
+        fetch.enqueue(initialRequest, new Func<Download>() {
             @Override
-            public void call(Download download) {
-                progressFragment1.setRequest(request);
-                progressFragment2.setRequest(request);
+            public void call(@NotNull Download download) {
+                setRequestForFragments(download);
             }
         }, new Func<Error>() {
             @Override
-            public void call(Error error) {
-                Log.d("FragmentActivity", "Error" + error.toString());
+            public void call(@NotNull Error error) {
+                Timber.d("FragmentActivity Error: %1$s", error.toString());
                 Snackbar.make(rootView, R.string.enqueue_error, Snackbar.LENGTH_INDEFINITE)
                         .show();
             }
         });
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        fetch.addListener(progressFragment1);
-        fetch.addListener(progressFragment2);
+        if (progressFragment1 != null) {
+            fetch.addListener(progressFragment1);
+        }
+        if (progressFragment2 != null) {
+            fetch.addListener(progressFragment2);
+        }
         fetch.addListener(fetchListener);
+        if (request != null) {
+            fetch.getDownload(request.getId(), new Func2<Download>() {
+                @Override
+                public void call(@org.jetbrains.annotations.Nullable Download download) {
+                    if (download != null) {
+                        setRequestForFragments(download);
+                    }
+                }
+            });
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        fetch.removeListener(progressFragment1);
-        fetch.removeListener(progressFragment2);
+        if (progressFragment1 != null) {
+            fetch.removeListener(progressFragment1);
+        }
+        if (progressFragment2 != null) {
+            fetch.removeListener(progressFragment2);
+        }
         fetch.removeListener(fetchListener);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        fetch.close();
     }
 
     @Override
@@ -113,24 +140,20 @@ public class FragmentActivity extends AppCompatActivity {
                                            @NonNull int[] grantResults) {
         if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
             enqueueDownload();
-
         } else {
             Snackbar.make(rootView, R.string.permission_not_enabled, Snackbar.LENGTH_LONG)
                     .show();
         }
     }
 
-    private FetchListener fetchListener = new AbstractFetchListener() {
+    private final FetchListener fetchListener = new AbstractFetchListener() {
 
         @Override
         public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
-            super.onProgress(download, etaInMilliseconds, downloadedBytesPerSecond);
             if (request != null && request.getId() == download.getId()) {
-                Log.d("FragmentActivity", "id:" + download.getId() +
-                        ",status:" + download.getStatus() + ",progress:" + download.getProgress()
-                        + ",error:" + download.getError());
+                Timber.d("FragmentActivity id: %1$d, status: %2$s, progress: %3$d, error: %4$s", download.getId(), download.getStatus(),
+                        download.getProgress(), download.getError());
             }
         }
 

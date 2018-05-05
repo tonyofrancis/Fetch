@@ -1,20 +1,24 @@
 package com.tonyodev.fetch2.database
 
+import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.content.Context
 import android.database.sqlite.SQLiteException
 import com.tonyodev.fetch2.Logger
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.database.migration.Migration
+import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.exception.FetchImplementationException
-import android.arch.persistence.room.RoomMasterTable.TABLE_NAME
+import com.tonyodev.fetch2.util.sanitize
 
 
-open class DatabaseManagerImpl constructor(context: Context,
-                                           val namespace: String,
-                                           override val isMemoryDatabase: Boolean,
-                                           override val logger: Logger) : DatabaseManager {
+class DatabaseManagerImpl constructor(context: Context,
+                                      private val namespace: String,
+                                      override val isMemoryDatabase: Boolean,
+                                      override val logger: Logger,
+                                      migrations: Array<Migration>) : DatabaseManager {
 
-    val lock = Object()
+    private val lock = Object()
 
     @Volatile
     private var closed = false
@@ -22,7 +26,7 @@ open class DatabaseManagerImpl constructor(context: Context,
     override val isClosed: Boolean
         get() = closed
 
-    open val requestDatabaseInternal = {
+    private val requestDatabase = {
         val builder = if (isMemoryDatabase) {
             logger.d("Init in memory database named $namespace")
             Room.inMemoryDatabaseBuilder(context, DownloadDatabase::class.java)
@@ -31,24 +35,27 @@ open class DatabaseManagerImpl constructor(context: Context,
             Room.databaseBuilder(context, DownloadDatabase::class.java,
                     "$namespace.db")
         }
+        builder.addMigrations(*migrations)
         builder.build()
     }()
+
+    val database: SupportSQLiteDatabase = requestDatabase.openHelper.writableDatabase
 
     override fun insert(downloadInfo: DownloadInfo): Pair<DownloadInfo, Boolean> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            val row = requestDatabaseInternal.requestDao().insert(downloadInfo)
-            return Pair(downloadInfo, requestDatabaseInternal.wasRowInserted(row))
+            val row = requestDatabase.requestDao().insert(downloadInfo)
+            return Pair(downloadInfo, requestDatabase.wasRowInserted(row))
         }
     }
 
     override fun insert(downloadInfoList: List<DownloadInfo>): List<Pair<DownloadInfo, Boolean>> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            val rowsList = requestDatabaseInternal.requestDao().insert(downloadInfoList)
+            val rowsList = requestDatabase.requestDao().insert(downloadInfoList)
             return rowsList.indices.map {
                 val pair = Pair(downloadInfoList[it],
-                        requestDatabaseInternal.wasRowInserted(rowsList[it]))
+                        requestDatabase.wasRowInserted(rowsList[it]))
                 pair
             }
         }
@@ -57,21 +64,21 @@ open class DatabaseManagerImpl constructor(context: Context,
     override fun delete(downloadInfo: DownloadInfo) {
         synchronized(lock) {
             throwExceptionIfClosed()
-            requestDatabaseInternal.requestDao().delete(downloadInfo)
+            requestDatabase.requestDao().delete(downloadInfo)
         }
     }
 
     override fun delete(downloadInfoList: List<DownloadInfo>) {
         synchronized(lock) {
             throwExceptionIfClosed()
-            requestDatabaseInternal.requestDao().delete(downloadInfoList)
+            requestDatabase.requestDao().delete(downloadInfoList)
         }
     }
 
     override fun deleteAll() {
         synchronized(lock) {
             throwExceptionIfClosed()
-            requestDatabaseInternal.requestDao().deleteAll()
+            requestDatabase.requestDao().deleteAll()
             logger.d("Cleared Database $namespace.db")
         }
     }
@@ -79,21 +86,24 @@ open class DatabaseManagerImpl constructor(context: Context,
     override fun update(downloadInfo: DownloadInfo) {
         synchronized(lock) {
             throwExceptionIfClosed()
-            requestDatabaseInternal.requestDao().update(downloadInfo)
+            requestDatabase.requestDao().update(downloadInfo)
         }
     }
 
     override fun update(downloadInfoList: List<DownloadInfo>) {
         synchronized(lock) {
-            throwExceptionIfClosed()
-            requestDatabaseInternal.requestDao().update(downloadInfoList)
+            updateNoLock(downloadInfoList)
         }
+    }
+
+    override fun updateNoLock(downloadInfoList: List<DownloadInfo>) {
+        throwExceptionIfClosed()
+        requestDatabase.requestDao().update(downloadInfoList)
     }
 
     override fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo) {
         synchronized(lock) {
             throwExceptionIfClosed()
-            val database = requestDatabaseInternal.openHelper.writableDatabase
             try {
                 database.beginTransaction()
                 database.execSQL("UPDATE ${DownloadDatabase.TABLE_NAME} SET "
@@ -116,41 +126,78 @@ open class DatabaseManagerImpl constructor(context: Context,
     override fun get(): List<DownloadInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return requestDatabaseInternal.requestDao().get()
+            val downloads = requestDatabase.requestDao().get()
+            sanitize(downloads)
+            return downloads
         }
     }
 
     override fun get(id: Int): DownloadInfo? {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return requestDatabaseInternal.requestDao().get(id)
+            val download = requestDatabase.requestDao().get(id)
+            sanitize(download)
+            return download
         }
     }
 
     override fun get(ids: List<Int>): List<DownloadInfo?> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return requestDatabaseInternal.requestDao().get(ids)
+            val downloads = requestDatabase.requestDao().get(ids)
+            sanitize(downloads)
+            return downloads
+        }
+    }
+
+    override fun getByFile(file: String): DownloadInfo? {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            val download = requestDatabase.requestDao().getByFile(file)
+            sanitize(download)
+            return download
         }
     }
 
     override fun getByStatus(status: Status): List<DownloadInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return requestDatabaseInternal.requestDao().getByStatus(status)
+            var downloads = requestDatabase.requestDao().getByStatus(status)
+            if (sanitize(downloads)) {
+                downloads = downloads.filter { it.status == status }
+            }
+            return downloads
         }
     }
 
     override fun getByGroup(group: Int): List<DownloadInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return requestDatabaseInternal.requestDao().getByGroup(group)
+            val downloads = requestDatabase.requestDao().getByGroup(group)
+            sanitize(downloads)
+            return downloads
         }
     }
 
     override fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<DownloadInfo> {
         synchronized(lock) {
-            return requestDatabaseInternal.requestDao().getByGroupWithStatus(groupId, status)
+            throwExceptionIfClosed()
+            var downloads = requestDatabase.requestDao().getByGroupWithStatus(groupId, status)
+            if (sanitize(downloads)) {
+                downloads = downloads.filter { it.status == status }
+            }
+            return downloads
+        }
+    }
+
+    override fun getPendingDownloadsSorted(): List<DownloadInfo> {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            var downloads = requestDatabase.requestDao().getPendingDownloadsSorted(Status.QUEUED)
+            if (sanitize(downloads)) {
+                downloads = downloads.filter { it.status == Status.QUEUED }
+            }
+            return downloads
         }
     }
 
@@ -160,15 +207,15 @@ open class DatabaseManagerImpl constructor(context: Context,
                 return
             }
             closed = true
-            requestDatabaseInternal.close()
+            requestDatabase.close()
             logger.d("Database closed")
         }
     }
 
-    open fun throwExceptionIfClosed() {
+    private fun throwExceptionIfClosed() {
         if (closed) {
             throw FetchImplementationException("database is closed",
-                    FetchImplementationException.Code.CLOSED)
+                    FetchException.Code.CLOSED)
         }
     }
 

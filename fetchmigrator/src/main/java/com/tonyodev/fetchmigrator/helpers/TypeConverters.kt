@@ -6,10 +6,12 @@ import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetchmigrator.fetch1.DatabaseHelper
+import com.tonyodev.fetchmigrator.fetch1.DownloadTransferPair
 import com.tonyodev.fetchmigrator.fetch1.FetchConst
 import org.json.JSONObject
 
-fun v1CursorToV2DownloadInfo(cursor: Cursor): DownloadInfo {
+fun v1CursorToV2DownloadInfo(cursor: Cursor): DownloadTransferPair {
+    val id = cursor.getLong(DatabaseHelper.INDEX_ID)
     val status = cursor.getInt(DatabaseHelper.INDEX_COLUMN_STATUS)
     val url = cursor.getString(DatabaseHelper.INDEX_COLUMN_URL)
     val file = cursor.getString(DatabaseHelper.INDEX_COLUMN_FILEPATH)
@@ -20,6 +22,7 @@ fun v1CursorToV2DownloadInfo(cursor: Cursor): DownloadInfo {
     val headers = cursor.getString(DatabaseHelper.INDEX_COLUMN_HEADERS)
 
     val downloadInfo = DownloadInfo()
+    downloadInfo.id = (url.hashCode() * 31) + file.hashCode()
     downloadInfo.url = url
     downloadInfo.file = file
     downloadInfo.status = getStatusFromV1ForV2(status)
@@ -28,8 +31,7 @@ fun v1CursorToV2DownloadInfo(cursor: Cursor): DownloadInfo {
     downloadInfo.headers = fromHeaderStringToMap(headers)
     downloadInfo.priority = getPriorityFromV1ForV2(priority)
     downloadInfo.error = getErrorFromV1ForV2(error)
-    downloadInfo.id = downloadInfo.request.id
-    return downloadInfo
+    return DownloadTransferPair(downloadInfo, id)
 }
 
 fun getStatusFromV1ForV2(v1StatusCode: Int): Status {
@@ -55,6 +57,7 @@ fun getPriorityFromV1ForV2(v1PriorityCode: Int): Priority {
 
 fun getErrorFromV1ForV2(v1ErrorCode: Int): Error {
     return when (v1ErrorCode) {
+        -1 -> Error.NONE
         FetchConst.ERROR_FILE_NOT_CREATED -> Error.FILE_NOT_CREATED
         FetchConst.ERROR_CONNECTION_TIMEOUT -> Error.CONNECTION_TIMED_OUT
         FetchConst.ERROR_UNKNOWN_HOST -> Error.UNKNOWN_HOST
@@ -72,7 +75,7 @@ fun fromHeaderStringToMap(headerString: String): Map<String, String> {
     val map = mutableMapOf<String, String>()
     val json = JSONObject(headerString)
     json.keys().forEach {
-        map.put(it, json.getString(it))
+        map[it] = json.getString(it)
     }
     return map
 }

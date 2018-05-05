@@ -6,10 +6,10 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.util.ArrayMap;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -29,7 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import timber.log.Timber;
 
 public class GameFilesActivity extends AppCompatActivity {
 
@@ -47,31 +49,35 @@ public class GameFilesActivity extends AppCompatActivity {
 
     private RxFetch rxFetch;
 
+    @Nullable
+    private Disposable enqueueDisposable;
+    @Nullable
+    private Disposable resumeDisposable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game_files);
         setUpViews();
         rxFetch = ((App) getApplication()).getRxFetch();
-        rxFetch.deleteAll();
         reset();
     }
 
     private void setUpViews() {
-        progressTextView = (TextView) findViewById(R.id.progressTextView);
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        startButton = (Button) findViewById(R.id.startButton);
-        labelTextView = (TextView) findViewById(R.id.labelTextView);
+        progressTextView = findViewById(R.id.progressTextView);
+        progressBar = findViewById(R.id.progressBar);
+        startButton = findViewById(R.id.startButton);
+        labelTextView = findViewById(R.id.labelTextView);
         mainView = findViewById(R.id.activity_loading);
-
-        //Start downloads
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 final String label = (String) startButton.getText();
                 final Context context = GameFilesActivity.this;
                 if (label.equals(context.getString(R.string.reset))) {
+                    rxFetch.deleteAll();
                     reset();
+
                 } else {
                     startButton.setVisibility(View.GONE);
                     labelTextView.setText(R.string.fetch_started);
@@ -85,7 +91,7 @@ public class GameFilesActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         rxFetch.addListener(fetchListener);
-        rxFetch.getDownloadsInGroup(groupId)
+        resumeDisposable = rxFetch.getDownloadsInGroup(groupId)
                 .asFlowable()
                 .subscribe(new Consumer<List<Download>>() {
                     @Override
@@ -101,7 +107,7 @@ public class GameFilesActivity extends AppCompatActivity {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
                         final Error error = FetchErrorUtils.getErrorFromThrowable(throwable);
-                        Log.d("GamesFilesActivity", "Error:" + error.toString());
+                        Timber.d("GamesFilesActivity Error: %1$s", error);
                     }
                 });
     }
@@ -117,6 +123,12 @@ public class GameFilesActivity extends AppCompatActivity {
         super.onDestroy();
         rxFetch.deleteAll();
         rxFetch.close();
+        if (enqueueDisposable != null && !enqueueDisposable.isDisposed()) {
+            enqueueDisposable.dispose();
+        }
+        if (resumeDisposable != null && !resumeDisposable.isDisposed()) {
+            resumeDisposable.dispose();
+        }
     }
 
     private void checkStoragePermission() {
@@ -134,9 +146,7 @@ public class GameFilesActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == STORAGE_PERMISSION_CODE || grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
             enqueueFiles();
-
         } else {
             Toast.makeText(this, R.string.permission_not_enabled, Toast.LENGTH_SHORT)
                     .show();
@@ -150,11 +160,8 @@ public class GameFilesActivity extends AppCompatActivity {
 
         progressTextView.setText(getResources()
                 .getString(R.string.complete_over, completedFiles, totalFiles));
-
         final int progress = getDownloadProgress();
-
         progressBar.setProgress(progress);
-
         if (completedFiles == totalFiles) {
             labelTextView.setText(getString(R.string.fetch_done));
             startButton.setText(R.string.reset);
@@ -165,29 +172,24 @@ public class GameFilesActivity extends AppCompatActivity {
     private int getDownloadProgress() {
         int currentProgress = 0;
         final int totalProgress = fileProgressMap.size() * 100;
-
         final Set<Integer> ids = fileProgressMap.keySet();
 
         for (int id : ids) {
             currentProgress += fileProgressMap.get(id);
         }
-
         currentProgress = (int) (((double) currentProgress / (double) totalProgress) * 100);
-
         return currentProgress;
     }
 
     private int getCompletedFileCount() {
         int count = 0;
         final Set<Integer> ids = fileProgressMap.keySet();
-
         for (int id : ids) {
             int progress = fileProgressMap.get(id);
             if (progress == 100) {
                 count++;
             }
         }
-
         return count;
     }
 
@@ -206,7 +208,7 @@ public class GameFilesActivity extends AppCompatActivity {
         for (Request request : requestList) {
             request.setGroupId(groupId);
         }
-        rxFetch.enqueue(requestList)
+        enqueueDisposable = rxFetch.enqueue(requestList)
                 .asFlowable()
                 .subscribe(new Consumer<List<Download>>() {
                     @Override
@@ -220,7 +222,7 @@ public class GameFilesActivity extends AppCompatActivity {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
                         final Error error = FetchErrorUtils.getErrorFromThrowable(throwable);
-                        Log.d("GamesFilesActivity", "Error:" + error.toString());
+                        Timber.d("GamesFilesActivity Error: %1$s", error);
                     }
                 });
     }

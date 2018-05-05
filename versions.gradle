@@ -1,0 +1,21 @@
+ext {
+    kotlin_version = '1.2.41'
+    okhttp_version = '3.10.0'
+    android_support_version = '27.1.1'
+    constraint_layout_version = "1.1.0"
+    room_version = '1.0.0'
+    junit_version = '4.12'
+    espresso_version = '3.0.1'
+    test_runner_version = '1.0.1'
+    library_min_version = '14'
+    library_compile_version = 27
+    library_target_version = 27
+    library_build_tools_version = "27.0.3"
+    gradle_tools_version = "3.1.2"
+    rxJava2_version = "2.1.13"
+    rxAndroid2_version = "2.0.2"
+    timber_version = "4.7.0"
+    novoda_bintray_version = "0.8.0"
+    library_version = "2.0.0-RC19"
+    library_version_code = 20
+}

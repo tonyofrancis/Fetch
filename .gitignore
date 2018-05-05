@@ -9,3 +9,7 @@
 .externalNativeBuild
 /.idea/modules.xml
 /.idea/misc.xml
+/.idea/codeStyles
+/.idea/compiler.xml
+/.idea/caches
+/.idea/copyright/profiles_settings.xml

@@ -33,6 +33,9 @@ interface Fetch {
      * and file name is already managed.
      * @param request Download Request
      * @param func Callback that the enqueued download results will be returned on.
+     *             If using Request Options with Fetch, the download object file and ID values may be different
+     *             from the initial request object file and ID values when enqueuing.
+     *             Update all external references accordingly.
      * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * */
@@ -48,6 +51,9 @@ interface Fetch {
      * and file name is already managed.
      * @param requests Request List
      * @param func Callback that the enqueued download results will be returned on.
+     *             If using Request Options with Fetch, the download object file and ID values may be different
+     *             from the initial request object file and ID values when enqueuing.
+     *             Update all external references accordingly.
      * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * */
@@ -118,6 +124,14 @@ interface Fetch {
     fun removeAll()
 
     /**
+     * Remove all downloads with the specified status in this instance of Fetch.
+     * The downloaded files for removed downloads are not deleted.
+     * @param status status
+     * @throws FetchException if this instance of Fetch has been closed.
+     * */
+    fun removeAllWithStatus(status: Status)
+
+    /**
      * Delete a download managed by this instance of Fetch.
      * The downloaded file is deleted.
      * @param ids ids of downloads to be deleted.
@@ -139,6 +153,14 @@ interface Fetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * */
     fun deleteAll()
+
+    /**
+     * Deletes all downloads with the specified status in this instance of Fetch.
+     * The downloaded files are also deleted.
+     * @param status status
+     * @throws FetchException if this instance of Fetch has been closed.
+     * */
+    fun deleteAllWithStatus(status: Status)
 
     /**
      * Cancel a non completed download managed by this instance of Fetch.
@@ -273,7 +295,7 @@ interface Fetch {
     /**
      * Builder used to configure and create an instance of Fetch.
      * */
-    open class Builder constructor(
+    class Builder constructor(
             /** Context*/
             context: Context,
 

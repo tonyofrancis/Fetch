@@ -5,6 +5,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.InputStream
+import java.io.OutputStream
 import java.util.Collections
 import java.util.concurrent.TimeUnit
 
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit
 open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient? = null)
     : Downloader {
 
-    val connections = Collections.synchronizedMap(HashMap<Downloader.Response, Response>())
+    protected val connections: MutableMap<Downloader.Response, Response> = Collections.synchronizedMap(HashMap<Downloader.Response, Response>())
 
     @Volatile
     var client: OkHttpClient = okHttpClient ?: OkHttpClient.Builder()
@@ -47,7 +48,8 @@ open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient
                 code = code,
                 isSuccessful = success,
                 contentLength = contentLength,
-                byteStream = byteStream)
+                byteStream = byteStream,
+                request = request)
 
         connections[response] = okHttpResponse
         return response
@@ -57,15 +59,27 @@ open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient
         if (connections.contains(response)) {
             val okHttpResponse = connections[response] as Response
             connections.remove(response)
-            okHttpResponse.close()
+            closeResponse(okHttpResponse)
         }
     }
 
     override fun close() {
         connections.entries.forEach {
-            it.value.close()
+            closeResponse(it.value)
         }
         connections.clear()
+    }
+
+    private fun closeResponse(response: Response?) {
+        try {
+            response?.close()
+        } catch (e: Exception) {
+
+        }
+    }
+
+    override fun getRequestOutputStream(request: Downloader.Request, filePointerOffset: Long): OutputStream? {
+        return null
     }
 
 }

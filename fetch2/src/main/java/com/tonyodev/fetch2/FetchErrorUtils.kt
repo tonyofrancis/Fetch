@@ -3,20 +3,37 @@
 package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2.util.*
+import java.io.IOException
+import java.net.SocketTimeoutException
 
 fun getErrorFromThrowable(throwable: Throwable): Error {
-    return getErrorFromMessage(throwable.message)
+    var message = throwable.message ?: ""
+    if (throwable is SocketTimeoutException && message.isEmpty()) {
+        message = CONNECTION_TIMEOUT
+    }
+    val error = getErrorFromMessage(message)
+    return when {
+        error == Error.UNKNOWN && throwable is SocketTimeoutException -> Error.CONNECTION_TIMED_OUT
+        error == Error.UNKNOWN && throwable is IOException -> Error.UNKNOWN_IO_ERROR
+        else -> error
+    }
 }
 
 fun getErrorFromMessage(message: String?): Error {
-    return if (message == null) {
+    return if (message == null || message.isEmpty()) {
         Error.UNKNOWN
+    } else if (message.contains(UNIQUE_ID_DATABASE)) {
+        Error.REQUEST_WITH_ID_ALREADY_EXIST
+    } else if (message.contains(UNIQUE_FILE_PATH_DATABASE)) {
+        Error.REQUEST_WITH_FILE_PATH_ALREADY_EXIST
     } else if (message.equals(EMPTY_RESPONSE_BODY, true)) {
         Error.EMPTY_RESPONSE_FROM_SERVER
     } else if (message.equals(FNC, ignoreCase = true) || message.equals(ENOENT, ignoreCase = true)) {
         Error.FILE_NOT_CREATED
-    } else if (message.equals(ETIMEDOUT, ignoreCase = true)
-            || message.equals(CONNECTION_TIMEOUT, ignoreCase = true)) {
+    } else if (message.contains(ETIMEDOUT, ignoreCase = true)
+            || message.contains(CONNECTION_TIMEOUT, ignoreCase = true)
+            || message.contains(SOFTWARE_ABORT_CONNECTION, ignoreCase = true)
+            || message.contains(READ_TIME_OUT, ignoreCase = true)) {
         Error.CONNECTION_TIMED_OUT
     } else if (message.equals(IO404, ignoreCase = true) || message.contains(NO_ADDRESS_HOSTNAME)) {
         Error.HTTP_NOT_FOUND
@@ -35,6 +52,8 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FETCH_DATABASE_ERROR
     } else if (message.contains(FETCH_ALREADY_EXIST, true)) {
         Error.FETCH_ALREADY_EXIST
+    } else if (message.contains(RESPONSE_NOT_SUCCESSFUL, true) || message.contains(FAILED_TO_CONNECT, true)) {
+        Error.REQUEST_NOT_SUCCESSFUL
     } else {
         Error.UNKNOWN
     }

@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2
 
 import java.io.InputStream
+import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Collections
@@ -19,8 +20,8 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
          * */
         httpUrlConnectionPreferences: HttpUrlConnectionPreferences? = null) : Downloader {
 
-    val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
-    val connections = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
+    protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
+    protected val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
 
     override fun execute(request: Downloader.Request): Downloader.Response? {
         val httpUrl = URL(request.url)
@@ -54,34 +55,42 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 code = code,
                 isSuccessful = success,
                 contentLength = contentLength,
-                byteStream = byteStream)
+                byteStream = byteStream,
+                request = request)
 
         connections[response] = client
         return response
     }
 
-    fun isResponseOk(responseCode: Int): Boolean {
-        return when (responseCode) {
-            HttpURLConnection.HTTP_OK,
-            HttpURLConnection.HTTP_PARTIAL,
-            HttpURLConnection.HTTP_ACCEPTED -> true
-            else -> false
-        }
+    protected fun isResponseOk(responseCode: Int): Boolean {
+        return responseCode in 200..299
     }
 
     override fun disconnect(response: Downloader.Response) {
         if (connections.contains(response)) {
             val client = connections[response] as HttpURLConnection
             connections.remove(response)
-            client.disconnect()
+            disconnectClient(client)
         }
     }
 
     override fun close() {
         connections.entries.forEach {
-            it.value.disconnect()
+            disconnectClient(it.value)
         }
         connections.clear()
+    }
+
+    private fun disconnectClient(client: HttpURLConnection?) {
+        try {
+            client?.disconnect()
+        } catch (e: Exception) {
+
+        }
+    }
+
+    override fun getRequestOutputStream(request: Downloader.Request, filePointerOffset: Long): OutputStream? {
+        return null
     }
 
     /**

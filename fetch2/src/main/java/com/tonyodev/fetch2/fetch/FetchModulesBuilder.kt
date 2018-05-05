@@ -6,34 +6,32 @@ import android.os.Looper
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DatabaseManagerImpl
+import com.tonyodev.fetch2.database.DownloadDatabase
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl
 import com.tonyodev.fetch2.exception.FetchException
-import com.tonyodev.fetch2.helper.DownloadInfoManagerDelegate
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater
-import com.tonyodev.fetch2.helper.PriorityQueueProcessor
-import com.tonyodev.fetch2.helper.PriorityQueueProcessorImpl
+import com.tonyodev.fetch2.helper.PriorityListProcessor
+import com.tonyodev.fetch2.helper.PriorityListProcessorImpl
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.ListenerProvider
-import com.tonyodev.fetch2.provider.NetworkProvider
+import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.FETCH_ALREADY_EXIST
-import com.tonyodev.fetch2.util.defaultDownloader
-import java.lang.ref.WeakReference
 
 object FetchModulesBuilder {
 
     private val lock = Object()
-    private val activeFetchHandlerPool: MutableMap<String, WeakReference<FetchHandler>> = hashMapOf()
+    private val activeFetchHandlerPool: MutableMap<String, Modules> = hashMapOf()
 
     fun buildModulesFromPrefs(prefs: FetchBuilderPrefs): Modules {
         synchronized(lock) {
-            val ref = activeFetchHandlerPool[prefs.namespace]?.get()
-            if (ref != null) {
+            val modulesRef = activeFetchHandlerPool[prefs.namespace]
+            if (modulesRef != null) {
                 throw FetchException("Namespace:${prefs.namespace} $FETCH_ALREADY_EXIST",
                         FetchException.Code.FETCH_INSTANCE_WITH_NAMESPACE_ALREADY_EXIST)
             }
             val modules = Modules(prefs)
-            activeFetchHandlerPool[prefs.namespace] = WeakReference(modules.fetchHandler)
+            activeFetchHandlerPool[prefs.namespace] = modules
             return modules
         }
     }
@@ -44,16 +42,19 @@ object FetchModulesBuilder {
         }
     }
 
-    open class Modules constructor(val prefs: FetchBuilderPrefs) {
+    class Modules constructor(val prefs: FetchBuilderPrefs) {
 
         val uiHandler = Handler(Looper.getMainLooper())
         val handler: Handler
         val fetchListenerProvider: ListenerProvider
         val downloadManager: DownloadManager
         val databaseManager: DatabaseManager
-        val downloadInfoManagerDelegate: DownloadInfoManagerDelegate
-        val priorityQueueProcessor: PriorityQueueProcessor<Download>
+        val priorityListProcessor: PriorityListProcessor<Download>
         val fetchHandler: FetchHandler
+        val networkInfoProvider: NetworkInfoProvider
+        val downloadProvider: DownloadProvider
+        val downloadInfoUpdater: DownloadInfoUpdater
+        val migrations = DownloadDatabase.getMigrations()
 
         init {
             val handlerThread = HandlerThread("fetch_${prefs.namespace}")
@@ -61,45 +62,50 @@ object FetchModulesBuilder {
             handler = Handler(handlerThread.looper)
 
             fetchListenerProvider = ListenerProvider()
+            networkInfoProvider = NetworkInfoProvider(prefs.appContext)
 
             databaseManager = DatabaseManagerImpl(
                     context = prefs.appContext,
                     namespace = prefs.namespace,
                     isMemoryDatabase = prefs.inMemoryDatabaseEnabled,
-                    logger = prefs.logger)
+                    logger = prefs.logger,
+                    migrations = migrations)
+
+            downloadProvider = DownloadProvider(databaseManager)
+            downloadInfoUpdater = DownloadInfoUpdater(databaseManager)
 
             downloadManager = DownloadManagerImpl(
-                    downloader = defaultDownloader,
+                    downloader = prefs.downloader,
                     concurrentLimit = prefs.concurrentLimit,
                     progressReportingIntervalMillis = prefs.progressReportingIntervalMillis,
                     downloadBufferSizeBytes = prefs.downloadBufferSizeBytes,
-                    logger = prefs.logger)
-
-            downloadInfoManagerDelegate = DownloadInfoManagerDelegate(
-                    downloadInfoUpdater = DownloadInfoUpdater(databaseManager),
+                    logger = prefs.logger,
+                    networkInfoProvider = networkInfoProvider,
+                    retryOnNetworkGain = prefs.retryOnNetworkGain,
+                    fetchListenerProvider = fetchListenerProvider,
                     uiHandler = uiHandler,
-                    fetchListener = fetchListenerProvider.mainListener,
-                    logger = prefs.logger)
+                    downloadInfoUpdater = downloadInfoUpdater,
+                    requestOptions = prefs.requestOptions)
 
-            downloadManager.delegate = downloadInfoManagerDelegate
-
-            priorityQueueProcessor = PriorityQueueProcessorImpl(
+            priorityListProcessor = PriorityListProcessorImpl(
                     handler = handler,
-                    downloadProvider = DownloadProvider(databaseManager),
+                    downloadProvider = downloadProvider,
                     downloadManager = downloadManager,
-                    networkProvider = NetworkProvider(prefs.appContext),
+                    networkInfoProvider = networkInfoProvider,
                     logger = prefs.logger)
 
-            priorityQueueProcessor.globalNetworkType = prefs.globalNetworkType
+            priorityListProcessor.globalNetworkType = prefs.globalNetworkType
 
             fetchHandler = FetchHandlerImpl(
                     namespace = prefs.namespace,
                     databaseManager = databaseManager,
                     downloadManager = downloadManager,
-                    priorityQueueProcessor = priorityQueueProcessor,
+                    priorityListProcessor = priorityListProcessor,
                     fetchListenerProvider = fetchListenerProvider,
                     handler = handler,
-                    logger = prefs.logger)
+                    logger = prefs.logger,
+                    autoStart = prefs.autoStart,
+                    requestOptions = prefs.requestOptions)
         }
 
     }
