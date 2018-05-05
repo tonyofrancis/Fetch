@@ -204,7 +204,9 @@ class DownloadManagerImpl(private val downloader: Downloader,
                 fetchListener = fetchListenerProvider.mainListener,
                 logger = logger,
                 retryOnNetworkGain = retryOnNetworkGain,
-                requestOptions = requestOptions)
+                requestOptions = requestOptions,
+                downloader = downloader,
+                fileTempDir = fileTempDir)
     }
 
 }
