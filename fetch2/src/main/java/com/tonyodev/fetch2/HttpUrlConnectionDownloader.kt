@@ -93,11 +93,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun getRequestInputStream(request: Downloader.Request, filePointerOffset: Long): InputStream? {
-        return null
-    }
-
-    override fun getFileChunkSize(request: Downloader.Request, fileLengthBytes: Long): Int? {
+    override fun getFileChunkSize(request: Downloader.Request, contentLength: Long): Int? {
         return null
     }
 
@@ -109,7 +105,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return Downloader.FileDownloaderType.SEQUENTIAL
     }
 
-    override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, seekPosition: Long) {
+    override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, filePointerOffset: Long) {
 
     }
 

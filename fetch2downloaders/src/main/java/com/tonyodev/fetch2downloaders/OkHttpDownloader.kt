@@ -82,11 +82,7 @@ open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient
         return null
     }
 
-    override fun getRequestInputStream(request: Downloader.Request, filePointerOffset: Long): InputStream? {
-        return null
-    }
-
-    override fun getFileChunkSize(request: Downloader.Request, fileLengthBytes: Long): Int? {
+    override fun getFileChunkSize(request: Downloader.Request, contentLength: Long): Int? {
         return null
     }
 
@@ -94,7 +90,7 @@ open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient
         return null
     }
 
-    override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, seekPosition: Long) {
+    override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, filePointerOffset: Long) {
 
     }
 

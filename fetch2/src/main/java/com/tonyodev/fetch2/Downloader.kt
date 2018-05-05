@@ -57,52 +57,49 @@ interface Downloader : Closeable {
      * */
     fun getRequestOutputStream(request: Request, filePointerOffset: Long): OutputStream?
 
-    /**
-     * This method is called by Fetch to request the input stream where downloaded data was saved to.
-     * The input stream for the request needs to be the same each time. Note that the type of
-     * input stream may affect download speeds.
-     * If null is returned, Fetch will provide the input stream. This method is called on a background thread.
-     * @param request The request information for the download.
-     * @param filePointerOffset The offset position, measured in bytes from the beginning of the file,
-     *                          at which to set the file pointer. Reading will begin at the
-     *                          filePointerOffset position. Note that your input stream needs
-     *                          to use this value to set the file pointer location
-     *                          so that data in the file will be read correctly.
-     * @return The input stream the downloaded data will be read from. Fetch will close the input stream automatically
-     *         after the disconnect(response) method is called. Can return null. If null,
-     *         Fetch will provide the input stream.
-     * */
-    fun getRequestInputStream(request: Request, filePointerOffset: Long): InputStream?
-
-    /**
-     * This method is called by Fetch if the File Chunk feature is enabled.
-     * Return the desired size/ chunk size for each download request. If null is returned
-     * Fetch will automatically select an appropriate chunk size based on the content length.
-     * @param request The request information for the download.
-     * @param fileLengthBytes the total content length in bytes
-     * @return the chunk size for the request file. Can be null
-     * */
-    fun getFileChunkSize(request: Request, fileLengthBytes: Long): Int?
-
-    /** This method is called by Fetch to return the FileDownloaderType for each
-     * request. The Default is FileDownloaderType.SEQUENTIAL
+    /** This method is called by Fetch for a request using the FileDownloaderType.Parallel type
+     * and an output stream was provided for the request. If an output stream was provided,
+     * use the filePointerOffset to seek the required location for byte data to be stored.
+     * Not properly setting this field will cause data corruption.
      * @param request the request information for the download.
-     * @return the FileDownloaderType
-     * */;
+     * @param outputStream the output stream the download will be saved to.
+     * @param filePointerOffset The offset position, measured in bytes from the beginning of the file,
+     *                          at which to set the file pointer. Writing will begin at the
+     *                          filePointerOffset position. Note that your output stream needs
+     *                          to use this value to set the file pointer location
+     *                          so that data in the file is not overwritten. If not
+     *                          handled correctly, Fetch will override the file and being writing
+     *                          data at the beginning of the file.
+     * */
+    fun seekOutputStreamToPosition(request: Request, outputStream: OutputStream, filePointerOffset: Long)
+
+    /**
+     * This method is called by Fetch if the FileDownloaderType.Parallel type was set
+     * for the download request. Return the desired size/chunk size for each download request.
+     * If null is returned, Fetch will automatically select an appropriate chunk size based on the content length.
+     * @param request the request information for the download.
+     * @param contentLength the total content length in bytes.
+     * @return the chunk size for the request file. Can be null.
+     * */
+    fun getFileChunkSize(request: Request, contentLength: Long): Int?
+
+    /** This method is called by Fetch to select the FileDownloaderType for each
+     * download request. The Default is FileDownloaderType.SEQUENTIAL
+     * @param request the request information for the download.
+     * @return the FileDownloaderType.
+     * */
     fun getFileDownloaderType(request: Request): FileDownloaderType
 
     /**
-     * This method is called by Fetch for requests that are downloaded using the
+     * This method is called by Fetch for download requests that are downloading using the
      * FileDownloaderType.PARALLEL type. Fetch uses this directory to store the
-     * chunk/temp files for a request. If the return directory is null. Fetch
-     * will select the default default directory. Temp files in this directory are automatically
-     * deleted by Fetch once a download completes.
+     * temp files for the request. If the return directory is null, Fetch
+     * will select the default directory. Temp files in this directory are automatically
+     * deleted by Fetch once a download completes or a request is removed.
      * @param request the request information for the download.
-     * @return the directory where the temp files for parallel downloads will be stored.
+     * @return the directory where the temp files will be stored. Can be null.
      * */
     fun getDirectoryForFileDownloaderTypeParallel(request: Request): String?
-
-    fun seekOutputStreamToPosition(request: Request, outputStream: OutputStream, seekPosition: Long)
 
     /**
      * A class that contains the information used by the Downloader to create a connection
@@ -151,7 +148,8 @@ interface Downloader : Closeable {
         /** Performs the download sequentially. Bytes are downloaded in sequence.*/
         SEQUENTIAL,
 
-        /** Performs the download by splitting parts of the file in parallel for download.*/
+        /** Performs the download by splitting parts of the file in parallel for download.
+         * Fastest download option*/
         PARALLEL
     }
 
