@@ -3,12 +3,10 @@
 package com.tonyodev.fetch2.util
 
 import android.content.Context
-import android.net.Uri
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.Status
 import java.io.*
-
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -114,7 +112,9 @@ fun getFileChunkTempDir(context: Context): String {
     return "${context.filesDir.absoluteFile}/_fetchData/temp"
 }
 
-fun getRequestForDownload(download: Download, rangeStart: Long = -1, rangeEnd: Long = -1): Downloader.Request {
+fun getRequestForDownload(download: Download,
+                          rangeStart: Long = -1,
+                          rangeEnd: Long = -1): Downloader.Request {
     val start = if (rangeStart == -1L) 0 else rangeStart
     val end = if (rangeEnd == -1L) "" else rangeEnd.toString()
     val headers = download.headers.toMutableMap()
@@ -157,7 +157,7 @@ fun writeTextToFile(filePath: String, text: String) {
     }
 }
 
-fun getTextFromFile(filePath: String): String? {
+fun getSingleLineTextFromFile(filePath: String): String? {
     val file = getFile(filePath)
     if (file.exists()) {
         val bufferedReader = BufferedReader(FileReader(file))
