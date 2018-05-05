@@ -94,6 +94,10 @@ open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient
         return null
     }
 
+    override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, seekPosition: Long) {
+
+    }
+
     override fun getFileDownloaderType(request: Downloader.Request): Downloader.FileDownloaderType {
         return Downloader.FileDownloaderType.SEQUENTIAL
     }

@@ -109,6 +109,10 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return Downloader.FileDownloaderType.SEQUENTIAL
     }
 
+    override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, seekPosition: Long) {
+
+    }
+
     /**
      * Use this class to set preference settings for the
      * HttpUrlConnectionDownloader HttpUrlConnection client.

@@ -102,6 +102,8 @@ interface Downloader : Closeable {
      * */
     fun getDirectoryForFileDownloaderTypeParallel(request: Request): String?
 
+    fun seekOutputStreamToPosition(request: Request, outputStream: OutputStream, seekPosition: Long)
+
     /**
      * A class that contains the information used by the Downloader to create a connection
      * to the server.
