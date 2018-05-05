@@ -7,8 +7,7 @@ import android.net.Uri
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.Status
-import java.io.File
-import java.io.IOException
+import java.io.*
 
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
@@ -140,4 +139,37 @@ fun getFile(filePath: String): File {
         }
     }
     return file
+}
+
+fun writeTextToFile(filePath: String, text: String) {
+    val file = getFile(filePath)
+    if (file.exists()) {
+        val bufferedWriter = BufferedWriter(FileWriter(file))
+        try {
+            bufferedWriter.write(text)
+        } catch (e: Exception) {
+        } finally {
+            try {
+                bufferedWriter.close()
+            } catch (e: Exception) {
+            }
+        }
+    }
+}
+
+fun getTextFromFile(filePath: String): String? {
+    val file = getFile(filePath)
+    if (file.exists()) {
+        val bufferedReader = BufferedReader(FileReader(file))
+        try {
+            return bufferedReader.readLine()
+        } catch (e: Exception) {
+        } finally {
+            try {
+                bufferedReader.close()
+            } catch (e: Exception) {
+            }
+        }
+    }
+    return null
 }
