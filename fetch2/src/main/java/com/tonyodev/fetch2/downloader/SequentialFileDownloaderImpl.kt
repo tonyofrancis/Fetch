@@ -8,13 +8,13 @@ import java.io.*
 import java.net.HttpURLConnection
 import kotlin.math.ceil
 
-class FileDownloaderImpl(private val initialDownload: Download,
-                         private val downloader: Downloader,
-                         private val progressReportingIntervalMillis: Long,
-                         private val downloadBufferSizeBytes: Int,
-                         private val logger: Logger,
-                         private val networkInfoProvider: NetworkInfoProvider,
-                         private val retryOnNetworkGain: Boolean) : FileDownloader {
+class SequentialFileDownloaderImpl(private val initialDownload: Download,
+                                   private val downloader: Downloader,
+                                   private val progressReportingIntervalMillis: Long,
+                                   private val downloadBufferSizeBytes: Int,
+                                   private val logger: Logger,
+                                   private val networkInfoProvider: NetworkInfoProvider,
+                                   private val retryOnNetworkGain: Boolean) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -23,7 +23,7 @@ class FileDownloaderImpl(private val initialDownload: Download,
     @Volatile
     override var completedDownload = false
     override var delegate: FileDownloader.Delegate? = null
-    private var total: Long = 0
+    private var total: Long = -1L
     private var downloaded: Long = 0
     private var estimatedTimeRemainingInMilliseconds: Long = -1
     private var downloadInfo = initialDownload.toDownloadInfo()
@@ -50,8 +50,8 @@ class FileDownloaderImpl(private val initialDownload: Download,
                 response = downloader.execute(request)
                 val isResponseSuccessful = response?.isSuccessful ?: false
                 if (!interrupted && !terminated && response != null && isResponseSuccessful) {
-                    total = if (response.contentLength == (-1).toLong()) {
-                        -1
+                    total = if (response.contentLength == -1L) {
+                        -1L
                     } else {
                         downloaded + response.contentLength
                     }

@@ -174,7 +174,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
     override fun getNewFileDownloaderForDownload(download: Download): FileDownloader {
         val request = getRequestForDownload(download)
         return if (downloader.getFileDownloaderType(request) == Downloader.FileDownloaderType.SEQUENTIAL) {
-            FileDownloaderImpl(
+            SequentialFileDownloaderImpl(
                     initialDownload = download,
                     downloader = downloader,
                     progressReportingIntervalMillis = progressReportingIntervalMillis,

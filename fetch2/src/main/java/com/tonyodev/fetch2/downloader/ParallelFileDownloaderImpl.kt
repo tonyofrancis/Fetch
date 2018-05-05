@@ -47,7 +47,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private val downloadedLock = Object()
 
-    private var total = 0L
+    private var total = -1L
 
     private var averageDownloadedBytesPerSecond = 0.0
 
@@ -61,21 +61,21 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private var actionsCounter = 0
 
-    private val actionCountLock = Object()
+    private val actionsLock = Object()
 
-    private var queuedActionsTotal = 0
+    private var actionsTotal = 0
 
-    private val mergeCompletedCountLock = Object()
+    private val mergeLock = Object()
 
-    private var mergeCompletedCount = 0
+    private var mergeCounter = 0
 
     @Volatile
-    private var mergedBytesWritten = 0L
+    private var mergeBytesWritten = 0L
 
     @Volatile
     private var tempFilesDeleted = 0L
 
-    private var exceptionThrown: Exception? = null
+    private var throwable: Throwable? = null
 
     private var fileChunks = emptyList<FileChuck>()
 
@@ -89,11 +89,11 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             if (!interrupted && !terminated && openingResponse?.isSuccessful == true) {
                 total = openingResponse.contentLength
                 if (total > 0) {
-                    downloadInfo.total = total
                     fileChunks = getFileChunkList(openingResponse.code, openingRequest)
                     val chunkDownloadsList = fileChunks.filter { !it.isDownloaded }
                     if (!interrupted && !terminated) {
                         downloadInfo.downloaded = getProgressDownloaded()
+                        downloadInfo.total = total
                         delegate?.onStarted(
                                 download = downloadInfo,
                                 etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
@@ -102,57 +102,41 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         downloadChunks(chunkDownloadsList)
                         waitAndPerformProgressReporting()
                         if (!interrupted && !terminated) {
-                            var downloadedBytesSum = 0L
-                            for (fileChuck in fileChunks) {
-                                val exception = fileChuck.errorException
-                                if (fileChuck.status == Status.ERROR && exception != null) {
-                                    throw exception
-                                }
-                                fileChuck.status = Status.MERGING
-                                downloadedBytesSum += fileChuck.downloaded
-                            }
-                            if (downloadedBytesSum == total) {
-                                downloaded = total
-                                downloadInfo.downloaded = getProgressDownloaded()
+                            throwExceptionIfFound()
+                            if (downloaded == total) {
                                 output = downloader.getRequestOutputStream(openingRequest, 0)
                                 if (output == null) {
                                     randomAccessFile = RandomAccessFile(getFile(downloadInfo.file), "rw")
                                     randomAccessFile.seek(0)
                                 }
                                 if (!interrupted && !terminated) {
+                                    phase = Phase.DOWNLOADING
+                                    downloadInfo.downloaded = getProgressDownloaded()
+                                    delegate?.onProgress(
+                                            download = downloadInfo,
+                                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                    phase = Phase.IDLE
                                     mergeAllChunks(output, randomAccessFile)
                                     waitAndPerformProgressReporting()
                                     if (!interrupted && !terminated) {
-                                        val mergeException = exceptionThrown
-                                        if (mergeException != null) {
-                                            throw  mergeException
-                                        }
-                                        var mergeCount = 0
-                                        for (chunk in fileChunks) {
-                                            if (chunk.status == Status.MERGED) {
-                                                mergeCount += 1
-                                            }
-                                        }
-                                        val allFileChunksMerged = mergeCount == fileChunks.size
+                                        throwExceptionIfFound()
+                                        val allFileChunksMerged = mergeCounter == fileChunks.size
                                         if (allFileChunksMerged) {
-                                            if (!terminated) {
-                                                deleteAllTempFiles()
-                                                waitAndPerformProgressReporting()
-                                                if (!interrupted && !terminated) {
-                                                    val deleteTempFilesException = exceptionThrown
-                                                    if (deleteTempFilesException != null) {
-                                                        throw  deleteTempFilesException
-                                                    }
-                                                    downloadInfo.downloaded = total
-                                                    completedDownload = true
-                                                    phase = Phase.COMPLETED
-                                                    delegate?.onProgress(
-                                                            download = downloadInfo,
-                                                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                                                    delegate?.onComplete(
-                                                            download = downloadInfo)
-                                                }
+                                            deleteAllTempFiles()
+                                            waitAndPerformProgressReporting()
+                                            if (!interrupted && !terminated) {
+                                                throwExceptionIfFound()
+                                                downloadInfo.downloaded = total
+                                                downloadInfo.total = total
+                                                phase = Phase.COMPLETED
+                                                completedDownload = true
+                                                delegate?.onProgress(
+                                                        download = downloadInfo,
+                                                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                                delegate?.onComplete(
+                                                        download = downloadInfo)
                                             }
                                         }
                                     }
@@ -168,12 +152,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                         }
                         if (!terminated) {
-                            for (fileChunk in fileChunks) {
-                                val exception = fileChunk.errorException
-                                if (fileChunk.status == Status.ERROR && exception != null) {
-                                    throw exception
-                                }
-                            }
+                            throwExceptionIfFound()
                         }
                     }
                     phase = Phase.IDLE
@@ -257,7 +236,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 downloaded.toLong()
             }
             Phase.MERGING -> {
-                val actualProgress = calculateProgress(mergedBytesWritten, total)
+                val actualProgress = calculateProgress(mergeBytesWritten, total)
                 val tenPercentOfTotal = (0.1F * total.toFloat())
                 val eightyNinePercentOfTotal = (0.89F * total.toFloat())
                 val merged = (actualProgress.toFloat() / 100.toFloat()) * tenPercentOfTotal
@@ -296,45 +275,41 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 val fileChunk = FileChuck(
                         id = downloadInfo.id,
                         position = position,
+                        file = getBytesDataFileForChunk(downloadInfo.id, position),
                         startBytes = startBytes,
                         endBytes = endBytes,
-                        file = getBytesDataFileForChunk(downloadInfo.id, position))
-                fileChunk.downloaded = getSavedDownloadedForFileChunk(fileChunk)
+                        downloaded = getSavedDownloadedForFileChunk(downloadInfo.id, position)
+                )
                 downloaded += fileChunk.downloaded
-                if (fileChunk.startBytes + fileChunk.downloaded == fileChunk.endBytes) {
-                    fileChunk.status = Status.DOWNLOADED
-                }
                 fileChunks.add(fileChunk)
             }
             fileChunks
         } else {
-            val singleFileChunk = FileChuck(
+            val fileChunk = FileChuck(
                     id = downloadInfo.id,
                     position = 1,
                     startBytes = 0,
+                    file = getBytesDataFileForChunk(downloadInfo.id, 1),
                     endBytes = total,
-                    file = getBytesDataFileForChunk(downloadInfo.id, 1))
-            singleFileChunk.downloaded = getSavedDownloadedForFileChunk(singleFileChunk)
-            if (singleFileChunk.startBytes + singleFileChunk.downloaded == singleFileChunk.endBytes) {
-                singleFileChunk.status = Status.DOWNLOADED
-            }
-            downloaded += singleFileChunk.downloaded
-            listOf(singleFileChunk)
+                    downloaded = getSavedDownloadedForFileChunk(downloadInfo.id, 1))
+            downloaded += fileChunk.downloaded
+            listOf(fileChunk)
         }
     }
 
     private fun getChuckInfo(request: Downloader.Request): FileChunkInfo {
-        val fileChunkSize = downloader.getFileChunkSize(request, total) ?: DEFAULT_FILE_CHUNK_LIMIT
-        return if (fileChunkSize == DEFAULT_FILE_CHUNK_LIMIT) {
+        val fileChunkSize = downloader.getFileChunkSize(request, total)
+                ?: DEFAULT_FILE_CHUNK_NO_LIMIT_SET
+        return if (fileChunkSize == DEFAULT_FILE_CHUNK_NO_LIMIT_SET) {
             val fileSizeInMb = total.toFloat() / 1024F * 1024F
             val fileSizeInGb = total.toFloat() / 1024F * 1024F * 1024F
             when {
-                fileSizeInGb >= 1 -> {
+                fileSizeInGb >= 1F -> {
                     val chunks = 4
                     val bytesPerChunk = ceil((total.toFloat() / chunks.toFloat())).toLong()
                     FileChunkInfo(chunks, bytesPerChunk)
                 }
-                fileSizeInMb >= 1 -> {
+                fileSizeInMb >= 1F -> {
                     val chunks = 2
                     val bytesPerChunk = ceil((total.toFloat() / chunks.toFloat())).toLong()
                     FileChunkInfo(chunks, bytesPerChunk)
@@ -357,7 +332,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private fun deleteTempDirForId(id: Int) {
         try {
-            val file = File("$fileChunkTempDir/$id")
+            val file = getFile("$fileChunkTempDir/$id")
             if (file.exists()) {
                 file.delete()
             }
@@ -365,9 +340,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun deleteTempInFilesForChunk(fileChunk: FileChuck) {
+    private fun deleteTempInFilesForFileChunk(fileChunk: FileChuck) {
         try {
-            val file = File(fileChunk.file)
+            val file = getFile(fileChunk.file)
             if (file.exists()) {
                 file.delete()
             }
@@ -382,9 +357,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun getSavedDownloadedForFileChunk(fileChunk: FileChuck): Long {
+    private fun getSavedDownloadedForFileChunk(id: Int, position: Int): Long {
         var downloaded = 0L
-        val file = getFile(getDownloadedInfoFileForChunk(fileChunk.id, fileChunk.position))
+        val file = getFile(getDownloadedInfoFileForChunk(id, position))
         if (file.exists() && !interrupted && !terminated) {
             val bufferedReader = BufferedReader(FileReader(file))
             try {
@@ -436,6 +411,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         var downloadSpeedStartTime = System.nanoTime()
         while (chunksMergingDownloadingOrDeleting() && !interrupted && !terminated) {
             downloadInfo.downloaded = getProgressDownloaded()
+            downloadInfo.total = total
             downloadSpeedStopTime = System.nanoTime()
             val downloadSpeedCheckTimeElapsed = hasIntervalTimeElapsed(downloadSpeedStartTime,
                     downloadSpeedStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
@@ -477,28 +453,19 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private fun mergeAllChunks(output: OutputStream?, randomAccessFile: RandomAccessFile?) {
         actionsCounter = 0
-        queuedActionsTotal = 1
+        actionsTotal = 1
         phase = Phase.MERGING
         executorService?.execute({
             try {
-                var interrupted = false
                 for (fileChunk in fileChunks) {
                     if (!interrupted && !terminated) {
                         mergeChunk(fileChunk, output, randomAccessFile)
                     } else {
-                        interrupted = true
                         break
                     }
                 }
-                if (interrupted) {
-                    for (fileChuck in fileChunks) {
-                        fileChuck.status = Status.QUEUED
-                        fileChuck.errorException = null
-                    }
-                }
             } catch (e: Exception) {
-                exceptionThrown = e
-                logger.e("FileDownloader", e)
+                throwable = e
             } finally {
                 incrementActionCompleted()
             }
@@ -522,16 +489,12 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             while (read != -1 && !interrupted && !terminated) {
                 outputStream?.write(buffer, 0, read)
                 randomAccessFile?.write(buffer, 0, read)
-                mergedBytesWritten += read
+                mergeBytesWritten += read
                 read = inputStream?.read(buffer, 0, downloadBufferSizeBytes)
                         ?: (inputRandomAccessFile?.read(buffer, 0, downloadBufferSizeBytes) ?: -1)
             }
-            fileChunk.status = Status.MERGED
             incrementMergeCompleted()
         } catch (e: Exception) {
-            logger.e("FileDownloader", e)
-            fileChunk.status = Status.ERROR
-            fileChunk.errorException = e
             throw e
         } finally {
             try {
@@ -549,11 +512,10 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private fun downloadChunks(chunksDownloadsList: List<FileChuck>) {
         actionsCounter = 0
-        queuedActionsTotal = chunksDownloadsList.size
+        actionsTotal = chunksDownloadsList.size
         phase = Phase.DOWNLOADING
         for (downloadChunk in chunksDownloadsList) {
             if (!interrupted && !terminated) {
-                downloadChunk.status = Status.DOWNLOADING
                 executorService?.execute({
                     val downloadRequest = getRequestForDownload(downloadInfo, downloadChunk.startBytes + downloadChunk.downloaded)
                     var downloadResponse: Downloader.Response? = null
@@ -602,11 +564,6 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     reportingStartTime = System.nanoTime()
                                 }
                             }
-                            if (remainderBytes == 0L) {
-                                downloadChunk.status = Status.DOWNLOADED
-                            } else {
-                                downloadChunk.status = Status.QUEUED
-                            }
                         } else if (downloadResponse == null && !interrupted && !terminated) {
                             throw FetchException(EMPTY_RESPONSE_BODY,
                                     FetchException.Code.EMPTY_RESPONSE_BODY)
@@ -618,8 +575,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     FetchException.Code.UNKNOWN)
                         }
                     } catch (e: Exception) {
-                        downloadChunk.status = Status.ERROR
-                        downloadChunk.errorException = e
+                        throwable = e
                     } finally {
                         try {
                             if (downloadResponse != null) {
@@ -647,32 +603,23 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private fun deleteAllTempFiles() {
         actionsCounter = 0
-        queuedActionsTotal = 1
+        actionsTotal = 1
         phase = Phase.DELETING_TEMP_FILES
         executorService?.execute({
             try {
-                var interrupted = false
                 for (fileChunk in fileChunks) {
                     if (!interrupted && !terminated) {
-                        deleteTempInFilesForChunk(fileChunk)
+                        deleteTempInFilesForFileChunk(fileChunk)
                         tempFilesDeleted += 1
                     } else {
-                        interrupted = true
                         break
                     }
                 }
-                if (!interrupted) {
+                if (!interrupted && !terminated) {
                     deleteTempDirForId(initialDownload.id)
                 }
-                if (interrupted) {
-                    for (fileChuck in fileChunks) {
-                        fileChuck.status = Status.QUEUED
-                        fileChuck.errorException = null
-                    }
-                }
             } catch (e: Exception) {
-                exceptionThrown = e
-                logger.e("FileDownloader", e)
+                throwable = e
             } finally {
                 incrementActionCompleted()
             }
@@ -686,17 +633,17 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     }
 
     private fun incrementActionCompleted() {
-        synchronized(actionCountLock) {
+        synchronized(actionsLock) {
             actionsCounter += 1
-            if (actionsCounter == queuedActionsTotal) {
+            if (actionsCounter == actionsTotal) {
                 phase = Phase.IDLE
             }
         }
     }
 
     private fun incrementMergeCompleted() {
-        synchronized(mergeCompletedCountLock) {
-            mergeCompletedCount += 1
+        synchronized(mergeLock) {
+            mergeCounter += 1
         }
     }
 
@@ -705,32 +652,26 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 || phase == Phase.DELETING_TEMP_FILES)
     }
 
+    private fun throwExceptionIfFound() {
+        val exception = throwable
+        if (exception != null) {
+            throw exception
+        }
+    }
+
     data class FileChunkInfo(val chunkCount: Int, val bytesPerChunk: Long)
 
     data class FileChuck(val id: Int = 0,
                          val position: Int = 0,
+                         val file: String,
                          val startBytes: Long = 0L,
                          val endBytes: Long = 0L,
-                         @Volatile
-                         var downloaded: Long = 0L,
-                         var file: String,
-                         @Volatile
-                         var status: Status = Status.QUEUED,
-                         var errorException: Throwable? = null) {
+                         var downloaded: Long = 0L) {
 
         val isDownloaded: Boolean
             get() {
-                return status == Status.DOWNLOADED
+                return startBytes + downloaded == endBytes
             }
-    }
-
-    enum class Status {
-        QUEUED,
-        DOWNLOADING,
-        DOWNLOADED,
-        ERROR,
-        MERGING,
-        MERGED;
     }
 
     enum class Phase {
