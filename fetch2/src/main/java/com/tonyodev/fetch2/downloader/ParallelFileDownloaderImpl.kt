@@ -13,7 +13,6 @@ import java.net.HttpURLConnection
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.ceil
-import kotlin.math.roundToLong
 
 class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                  private val downloader: Downloader,
@@ -237,17 +236,16 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         return when (phase) {
             Phase.DOWNLOADING -> {
                 val actualProgress = calculateProgress(downloaded, total)
-                val downloadedPercentageTotal = (0.9F * total.toFloat())
-                val downloaded = (actualProgress.toFloat() / 100.toFloat()) * downloadedPercentageTotal
-                downloaded.roundToLong()
+                val ninetyPercentOfTotal = (0.9F * total.toFloat())
+                val downloaded = (actualProgress.toFloat() / 100.toFloat()) * ninetyPercentOfTotal
+                downloaded.toLong()
             }
             Phase.MERGING -> {
-                val downloadedTotal = (0.9F * total.toFloat())
-                val onePercentOfTotal = (0.01F * total.toFloat())
-                val mergeAllocTotal = 10F / fileChunks.size.toFloat()
-                val completedMerge = mergeCompletedCount.toFloat() * mergeAllocTotal
-                val mergedTotal = completedMerge * onePercentOfTotal
-                (downloadedTotal + mergedTotal).roundToLong()
+                val ninetyPercentOfTotal = (0.9F * total.toFloat())
+                val tenPercentOfTotal = (0.1F * total.toFloat())
+                val singleMergeTotal = tenPercentOfTotal / fileChunks.size.toFloat()
+                val completedMergeTotal = singleMergeTotal * mergeCompletedCount.toFloat()
+                (ninetyPercentOfTotal + completedMergeTotal).toLong()
             }
             Phase.COMPLETED -> {
                 total
