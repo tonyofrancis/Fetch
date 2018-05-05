@@ -69,6 +69,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private var mergeCompletedCount = 0
 
+    @Volatile
+    private var mergedBytesWritten = 0L
+
     private var fileChunks = emptyList<FileChuck>()
 
     override fun run() {
@@ -241,11 +244,11 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 downloaded.toLong()
             }
             Phase.MERGING -> {
-                val ninetyPercentOfTotal = (0.9F * total.toFloat())
+                val actualProgress = calculateProgress(mergedBytesWritten, total)
                 val tenPercentOfTotal = (0.1F * total.toFloat())
-                val singleMergeTotal = tenPercentOfTotal / fileChunks.size.toFloat()
-                val completedMergeTotal = singleMergeTotal * mergeCompletedCount.toFloat()
-                (ninetyPercentOfTotal + completedMergeTotal).toLong()
+                val ninetyPercentOfTotal = (0.9F * total.toFloat())
+                val merged = (actualProgress.toFloat() / 100.toFloat()) * tenPercentOfTotal
+                (ninetyPercentOfTotal + merged).toLong()
             }
             Phase.COMPLETED -> {
                 total
@@ -497,6 +500,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             while (read != -1 && !interrupted && !terminated) {
                 outputStream?.write(buffer, 0, read)
                 randomAccessFile?.write(buffer, 0, read)
+                mergedBytesWritten += read
                 read = inputStream?.read(buffer, 0, downloadBufferSizeBytes)
                         ?: (inputRandomAccessFile?.read(buffer, 0, downloadBufferSizeBytes) ?: -1)
             }
