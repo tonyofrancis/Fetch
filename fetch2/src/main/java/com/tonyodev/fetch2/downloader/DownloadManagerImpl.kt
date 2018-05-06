@@ -11,6 +11,7 @@ import com.tonyodev.fetch2.helper.DownloadInfoUpdater
 import com.tonyodev.fetch2.helper.FileDownloaderDelegate
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
+import com.tonyodev.fetch2.util.getRequestForDownload
 import java.util.concurrent.Executors
 
 class DownloadManagerImpl(private val downloader: Downloader,
@@ -23,7 +24,8 @@ class DownloadManagerImpl(private val downloader: Downloader,
                           private val fetchListenerProvider: ListenerProvider,
                           private val uiHandler: Handler,
                           private val downloadInfoUpdater: DownloadInfoUpdater,
-                          private val requestOptions: Set<RequestOptions>) : DownloadManager {
+                          private val requestOptions: Set<RequestOptions>,
+                          private val fileTempDir: String) : DownloadManager {
 
     private val lock = Object()
     private val executor = Executors.newFixedThreadPool(concurrentLimit)
@@ -170,14 +172,29 @@ class DownloadManagerImpl(private val downloader: Downloader,
     }
 
     override fun getNewFileDownloaderForDownload(download: Download): FileDownloader {
-        return FileDownloaderImpl(
-                initialDownload = download,
-                downloader = downloader,
-                progressReportingIntervalMillis = progressReportingIntervalMillis,
-                downloadBufferSizeBytes = downloadBufferSizeBytes,
-                logger = logger,
-                networkInfoProvider = networkInfoProvider,
-                retryOnNetworkGain = retryOnNetworkGain)
+        val request = getRequestForDownload(download)
+        return if (downloader.getFileDownloaderType(request) == Downloader.FileDownloaderType.SEQUENTIAL) {
+            SequentialFileDownloaderImpl(
+                    initialDownload = download,
+                    downloader = downloader,
+                    progressReportingIntervalMillis = progressReportingIntervalMillis,
+                    downloadBufferSizeBytes = downloadBufferSizeBytes,
+                    logger = logger,
+                    networkInfoProvider = networkInfoProvider,
+                    retryOnNetworkGain = retryOnNetworkGain)
+        } else {
+            val tempDir = downloader.getDirectoryForFileDownloaderTypeParallel(request)
+                    ?: fileTempDir
+            ParallelFileDownloaderImpl(
+                    initialDownload = download,
+                    downloader = downloader,
+                    progressReportingIntervalMillis = progressReportingIntervalMillis,
+                    downloadBufferSizeBytes = downloadBufferSizeBytes,
+                    logger = logger,
+                    networkInfoProvider = networkInfoProvider,
+                    retryOnNetworkGain = retryOnNetworkGain,
+                    fileTempDir = tempDir)
+        }
     }
 
     override fun getFileDownloaderDelegate(): FileDownloader.Delegate {
@@ -187,7 +204,9 @@ class DownloadManagerImpl(private val downloader: Downloader,
                 fetchListener = fetchListenerProvider.mainListener,
                 logger = logger,
                 retryOnNetworkGain = retryOnNetworkGain,
-                requestOptions = requestOptions)
+                requestOptions = requestOptions,
+                downloader = downloader,
+                fileTempDir = fileTempDir)
     }
 
 }

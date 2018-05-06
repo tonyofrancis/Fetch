@@ -24,6 +24,7 @@ import com.tonyodev.fetch2.provider.ListenerProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
+import com.tonyodev.fetch2.util.FetchUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -71,9 +72,10 @@ public class FetchHandlerInstrumentedTest {
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final Set<RequestOptions> requestOptions = new HashSet<>();
+        final String tempDir = FetchUtils.getFileTempDir(appContext);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                listenerProvider, uiHandler, downloadInfoUpdater, requestOptions);
+                listenerProvider, uiHandler, downloadInfoUpdater, requestOptions, tempDir);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handler,
                 new DownloadProvider(databaseManager),
@@ -81,7 +83,8 @@ public class FetchHandlerInstrumentedTest {
                 new NetworkInfoProvider(appContext),
                 fetchLogger);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
-                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart, requestOptions);
+                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart,
+                requestOptions, client, tempDir);
     }
 
     @Test
@@ -486,7 +489,7 @@ public class FetchHandlerInstrumentedTest {
         }
         final List<Download> downloadInfoList = fetchHandler.enqueue(requestList);
         final List<Integer> ids = new ArrayList<>();
-        for(Request request : requestList) {
+        for (Request request : requestList) {
             ids.add(request.getId());
         }
         final List<Download> queryList = fetchHandler.getDownloads(ids);

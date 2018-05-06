@@ -22,7 +22,9 @@ class FetchHandlerImpl(private val namespace: String,
                        private val handler: Handler,
                        private val logger: Logger,
                        private val autoStart: Boolean,
-                       private val requestOptions: Set<RequestOptions>) : FetchHandler {
+                       private val requestOptions: Set<RequestOptions>,
+                       private val downloader: Downloader,
+                       private val fileTempDir: String) : FetchHandler {
 
     @Volatile
     private var isTerminating = false
@@ -100,9 +102,17 @@ class FetchHandlerImpl(private val namespace: String,
                 //Delete found records if they exist
                 if (existingDownloadInfoWithFile != null) {
                     databaseManager.delete(existingDownloadInfoWithFile)
+                    deleteRequestTempFiles(
+                            fileTempDir,
+                            downloader,
+                            existingDownloadInfoWithFile)
                 }
                 if (existingDownloadInfoWithId != null) {
                     databaseManager.delete(existingDownloadInfoWithId)
+                    deleteRequestTempFiles(
+                            fileTempDir,
+                            downloader,
+                            existingDownloadInfoWithId)
                 }
             }
         }
@@ -276,6 +286,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadsList.forEach {
             it.status = removedStatus
+            deleteRequestTempFiles(fileTempDir, downloader, it)
         }
         return downloadsList
     }
@@ -292,6 +303,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadInfoList.forEach {
             it.status = removedStatus
+            deleteRequestTempFiles(fileTempDir, downloader, it)
         }
         return downloadInfoList
     }
@@ -304,6 +316,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadInfoList.forEach {
             it.status = removedStatus
+            deleteRequestTempFiles(fileTempDir, downloader, it)
         }
         return downloadInfoList
     }
@@ -320,6 +333,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadInfoList.forEach {
             it.status = removedStatus
+            deleteRequestTempFiles(fileTempDir, downloader, it)
         }
         return downloadInfoList
     }
@@ -344,6 +358,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
+            deleteRequestTempFiles(fileTempDir, downloader, it)
         }
         return downloadsList
     }
@@ -368,6 +383,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
+            deleteRequestTempFiles(fileTempDir, downloader, it)
         }
         return downloadInfoList
     }
@@ -388,6 +404,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
+            deleteRequestTempFiles(fileTempDir, downloader, it)
         }
         return downloadInfoList
     }
@@ -412,6 +429,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
+            deleteRequestTempFiles(fileTempDir, downloader, it)
         }
         return downloadInfoList
     }

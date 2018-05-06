@@ -50,11 +50,12 @@ public class App extends Application {
     @NonNull
     public Fetch getNewFetchInstance(@NonNull final String namespace) {
         final OkHttpClient client = new OkHttpClient.Builder().build();
-        final Downloader okHttpDownloader = new OkHttpDownloader(client);
+        final Downloader okHttpDownloader = new OkHttpDownloader(client,
+                Downloader.FileDownloaderType.PARALLEL);
         return new Fetch.Builder(this, namespace)
                 .setLogger(new FetchTimberLogger())
                 .setDownloader(okHttpDownloader)
-                .setDownloadConcurrentLimit(4)
+                .setDownloadConcurrentLimit(1)
                 .enableLogging(true)
                 .enableRetryOnNetworkGain(true)
                 .addRequestOptions(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)

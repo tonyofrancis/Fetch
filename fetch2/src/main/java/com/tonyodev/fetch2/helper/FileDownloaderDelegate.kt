@@ -5,6 +5,7 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.FileDownloader
 import com.tonyodev.fetch2.util.defaultNoError
+import com.tonyodev.fetch2.util.deleteRequestTempFiles
 import java.io.File
 
 
@@ -13,7 +14,9 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                              private val fetchListener: FetchListener,
                              private val logger: Logger,
                              private val retryOnNetworkGain: Boolean,
-                             private val requestOptions: Set<RequestOptions>) : FileDownloader.Delegate {
+                             private val requestOptions: Set<RequestOptions>,
+                             private val downloader: Downloader,
+                             private val fileTempDir: String) : FileDownloader.Delegate {
 
     override fun onStarted(download: Download, etaInMilliseconds: Long, downloadedBytesPerSecond: Long) {
         val downloadInfo = download as DownloadInfo
@@ -115,6 +118,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         downloadInfoUpdater.deleteDownload(downloadInfo)
         if (deleteFile && file.exists()) {
             file.delete()
+            deleteRequestTempFiles(fileTempDir, downloader, downloadInfo)
         }
     }
 

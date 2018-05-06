@@ -14,7 +14,14 @@ import java.util.concurrent.TimeUnit
  * You can also pass in your custom okHttpClient for this downloader to use.
  * @see {@link com.tonyodev.fetch2.Downloader}
  * */
-open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient? = null)
+open class OkHttpDownloader @JvmOverloads constructor(
+        /** OkHttpClient */
+        okHttpClient: OkHttpClient? = null,
+        /** The file downloader type used to download a request.
+         * The SEQUENTIAL type downloads bytes in sequence.
+         * The PARALLEL type downloads bytes in parallel.
+         * */
+        private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL)
     : Downloader {
 
     protected val connections: MutableMap<Downloader.Response, Response> = Collections.synchronizedMap(HashMap<Downloader.Response, Response>())
@@ -80,6 +87,22 @@ open class OkHttpDownloader @JvmOverloads constructor(okHttpClient: OkHttpClient
 
     override fun getRequestOutputStream(request: Downloader.Request, filePointerOffset: Long): OutputStream? {
         return null
+    }
+
+    override fun getFileSlicingCount(request: Downloader.Request, contentLength: Long): Int? {
+        return null
+    }
+
+    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.Request): String? {
+        return null
+    }
+
+    override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, filePointerOffset: Long) {
+
+    }
+
+    override fun getFileDownloaderType(request: Downloader.Request): Downloader.FileDownloaderType {
+        return fileDownloaderType
     }
 
 }

@@ -45,7 +45,7 @@ interface Downloader : Closeable {
      * If null is returned, Fetch will provide the output stream. This method is called on a background thread.
      * @param request The request information for the download.
      * @param filePointerOffset The offset position, measured in bytes from the beginning of the file,
-     *                          at which to set the file pointer. Writing will being at the
+     *                          at which to set the file pointer. Writing will begin at the
      *                          filePointerOffset position. Note that your output stream needs
      *                          to use this value to set the file pointer location
      *                          so that data in the file is not overwritten. If not
@@ -56,6 +56,50 @@ interface Downloader : Closeable {
      *         Fetch will provide the output stream.
      * */
     fun getRequestOutputStream(request: Request, filePointerOffset: Long): OutputStream?
+
+    /** This method is called by Fetch for a request using the FileDownloaderType.Parallel type
+     * and an output stream was provided for the request. If an output stream was provided,
+     * use the filePointerOffset to seek the required location for byte data to be stored.
+     * Not properly setting this field will cause data corruption.
+     * @param request the request information for the download.
+     * @param outputStream the output stream the download will be saved to.
+     * @param filePointerOffset The offset position, measured in bytes from the beginning of the file,
+     *                          at which to set the file pointer. Writing will begin at the
+     *                          filePointerOffset position. Note that your output stream needs
+     *                          to use this value to set the file pointer location
+     *                          so that data in the file is not overwritten. If not
+     *                          handled correctly, Fetch will override the file and being writing
+     *                          data at the beginning of the file.
+     * */
+    fun seekOutputStreamToPosition(request: Request, outputStream: OutputStream, filePointerOffset: Long)
+
+    /**
+     * This method is called by Fetch if the FileDownloaderType.Parallel type was set
+     * for the download request. Returns the desired slices that the file will be divided in for parallel downloading.
+     * If null is returned, Fetch will automatically select an appropriate slicing size based on the content length.
+     * @param request the request information for the download.
+     * @param contentLength the total content length in bytes.
+     * @return the slicing size for the request file. Can be null.
+     * */
+    fun getFileSlicingCount(request: Request, contentLength: Long): Int?
+
+    /** This method is called by Fetch to select the FileDownloaderType for each
+     * download request. The Default is FileDownloaderType.SEQUENTIAL
+     * @param request the request information for the download.
+     * @return the FileDownloaderType.
+     * */
+    fun getFileDownloaderType(request: Request): FileDownloaderType
+
+    /**
+     * This method is called by Fetch for download requests that are downloading using the
+     * FileDownloaderType.PARALLEL type. Fetch uses this directory to store the
+     * temp files for the request. If the return directory is null, Fetch
+     * will select the default directory. Temp files in this directory are automatically
+     * deleted by Fetch once a download completes or a request is removed.
+     * @param request the request information for the download.
+     * @return the directory where the temp files will be stored. Can be null.
+     * */
+    fun getDirectoryForFileDownloaderTypeParallel(request: Request): String?
 
     /**
      * A class that contains the information used by the Downloader to create a connection
@@ -97,5 +141,16 @@ interface Downloader : Closeable {
 
             /** The request that initiated this response.*/
             val request: Request)
+
+    /** File Downloading Type used to download each request.*/
+    enum class FileDownloaderType {
+
+        /** Performs the download sequentially. Bytes are downloaded in sequence.*/
+        SEQUENTIAL,
+
+        /** Performs the download by splitting parts of the file in parallel for download.
+         * Fastest download option*/
+        PARALLEL
+    }
 
 }

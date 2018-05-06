@@ -18,7 +18,12 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
          * HttpUrlConnectionDownloader HttpUrlConnection client.
          * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader.HttpUrlConnectionPreferences
          * */
-        httpUrlConnectionPreferences: HttpUrlConnectionPreferences? = null) : Downloader {
+        httpUrlConnectionPreferences: HttpUrlConnectionPreferences? = null,
+        /** The file downloader type used to download a request.
+         * The SEQUENTIAL type downloads bytes in sequence.
+         * The PARALLEL type downloads bytes in parallel.
+         * */
+        private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL) : Downloader {
 
     protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
     protected val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
@@ -91,6 +96,22 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     override fun getRequestOutputStream(request: Downloader.Request, filePointerOffset: Long): OutputStream? {
         return null
+    }
+
+    override fun getFileSlicingCount(request: Downloader.Request, contentLength: Long): Int? {
+        return null
+    }
+
+    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.Request): String? {
+        return null
+    }
+
+    override fun getFileDownloaderType(request: Downloader.Request): Downloader.FileDownloaderType {
+        return fileDownloaderType
+    }
+
+    override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, filePointerOffset: Long) {
+
     }
 
     /**

@@ -1,3 +1,13 @@
+Version 2.0.0-RC20
+- Added New FileDownloader types. Parallel and Sequential Downloaders.
+  a)Parallel downloader slices a download in multiple parts allowing for faster download.
+    This downloader processes the download over several background threads. Use the parallel downloader when system resources are not constrained.
+  b)Sequential downloader is the default downloader, and processes a download request Sequentially.
+    The download is processed on a single background thread. The Downloader is Generally Fast.
+  See the Downloader.kt java docs for more information.
+
+- Bug fixes
+
 Version 2.0.0-RC19
 - Added new RequestOptions for Fetch. Fixed RequestOptions from RC18. See the Java documents and sample app for more information.
 - Bug fixes
