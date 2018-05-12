@@ -1,3 +1,6 @@
+Version 2.0.0-RC21
+- Bug fix for status reporting on Parallel downloads
+
 Version 2.0.0-RC20
 - Added New FileDownloader types. Parallel and Sequential Downloaders.
   a)Parallel downloader slices a download in multiple parts allowing for faster download.
