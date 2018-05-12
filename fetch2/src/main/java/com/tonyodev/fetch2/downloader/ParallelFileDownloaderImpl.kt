@@ -110,12 +110,16 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     download = downloadInfo)
                             deleteAllTempFiles()
                         }
-                        delegate?.saveDownloadProgress(downloadInfo)
-                        if (!completedDownload && !terminated) {
-                            delegate?.onProgress(
-                                    download = downloadInfo,
-                                    etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                        if (!completedDownload) {
+                            downloadInfo.downloaded = downloaded
+                            downloadInfo.total = total
+                            if (!terminated) {
+                                delegate?.saveDownloadProgress(downloadInfo)
+                                delegate?.onProgress(
+                                        download = downloadInfo,
+                                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                            }
                         }
                     }
                 } else {
