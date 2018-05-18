@@ -3,6 +3,8 @@
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Networking-blue.svg?style=flat)](https://android-arsenal.com/details/1/5196)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tonyofrancis/Fetch/blob/master/LICENSE)
 
+![ScreenShot](https://github.com/tonyofrancis/Fetch/blob/v2/full_logo.png)
+
 Overview
 --------
 
