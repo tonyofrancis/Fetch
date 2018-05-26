@@ -336,9 +336,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private fun saveDownloadedInfo(id: Int, position: Int, downloaded: Long) {
         try {
-            if (!terminated && !interrupted) {
-                writeTextToFile(getDownloadedInfoFilePath(id, position), downloaded.toString())
-            }
+            writeTextToFile(getDownloadedInfoFilePath(id, position), downloaded.toString())
         } catch (e: Exception) {
         }
     }
@@ -458,6 +456,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     }
                                 }
                             }
+                            saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded)
                         } else if (downloadResponse == null && !interrupted && !terminated) {
                             throw FetchException(EMPTY_RESPONSE_BODY,
                                     FetchException.Code.EMPTY_RESPONSE_BODY)
