@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Set;
 
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
 import timber.log.Timber;
 
 public class GameFilesActivity extends AppCompatActivity {
@@ -59,7 +58,7 @@ public class GameFilesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game_files);
         setUpViews();
-        rxFetch = ((App) getApplication()).getRxFetch();
+        rxFetch = RxFetch.Impl.getDefaultRxInstance();
         reset();
     }
 
@@ -69,20 +68,17 @@ public class GameFilesActivity extends AppCompatActivity {
         startButton = findViewById(R.id.startButton);
         labelTextView = findViewById(R.id.labelTextView);
         mainView = findViewById(R.id.activity_loading);
-        startButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final String label = (String) startButton.getText();
-                final Context context = GameFilesActivity.this;
-                if (label.equals(context.getString(R.string.reset))) {
-                    rxFetch.deleteAll();
-                    reset();
+        startButton.setOnClickListener(v -> {
+            final String label = (String) startButton.getText();
+            final Context context = GameFilesActivity.this;
+            if (label.equals(context.getString(R.string.reset))) {
+                rxFetch.deleteAll();
+                reset();
 
-                } else {
-                    startButton.setVisibility(View.GONE);
-                    labelTextView.setText(R.string.fetch_started);
-                    checkStoragePermission();
-                }
+            } else {
+                startButton.setVisibility(View.GONE);
+                labelTextView.setText(R.string.fetch_started);
+                checkStoragePermission();
             }
         });
     }
@@ -93,22 +89,16 @@ public class GameFilesActivity extends AppCompatActivity {
         rxFetch.addListener(fetchListener);
         resumeDisposable = rxFetch.getDownloadsInGroup(groupId)
                 .asFlowable()
-                .subscribe(new Consumer<List<Download>>() {
-                    @Override
-                    public void accept(List<Download> downloads) throws Exception {
-                        for (Download download : downloads) {
-                            if (fileProgressMap.containsKey(download.getId())) {
-                                fileProgressMap.put(download.getId(), download.getProgress());
-                                updateUIWithProgress();
-                            }
+                .subscribe(downloads -> {
+                    for (Download download : downloads) {
+                        if (fileProgressMap.containsKey(download.getId())) {
+                            fileProgressMap.put(download.getId(), download.getProgress());
+                            updateUIWithProgress();
                         }
                     }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        final Error error = FetchErrorUtils.getErrorFromThrowable(throwable);
-                        Timber.d("GamesFilesActivity Error: %1$s", error);
-                    }
+                }, throwable -> {
+                    final Error error = FetchErrorUtils.getErrorFromThrowable(throwable);
+                    Timber.d("GamesFilesActivity Error: %1$s", error);
                 });
     }
 
@@ -210,20 +200,14 @@ public class GameFilesActivity extends AppCompatActivity {
         }
         enqueueDisposable = rxFetch.enqueue(requestList)
                 .asFlowable()
-                .subscribe(new Consumer<List<Download>>() {
-                    @Override
-                    public void accept(List<Download> downloads) throws Exception {
-                        for (Download download : downloads) {
-                            fileProgressMap.put(download.getId(), 0);
-                            updateUIWithProgress();
-                        }
+                .subscribe(downloads -> {
+                    for (Download download : downloads) {
+                        fileProgressMap.put(download.getId(), 0);
+                        updateUIWithProgress();
                     }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        final Error error = FetchErrorUtils.getErrorFromThrowable(throwable);
-                        Timber.d("GamesFilesActivity Error: %1$s", error);
-                    }
+                }, throwable -> {
+                    final Error error = FetchErrorUtils.getErrorFromThrowable(throwable);
+                    Timber.d("GamesFilesActivity Error: %1$s", error);
                 });
     }
 

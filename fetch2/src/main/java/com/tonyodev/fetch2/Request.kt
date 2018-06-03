@@ -26,27 +26,19 @@ open class Request constructor(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
+        if (!super.equals(other)) return false
         other as Request
+        if (id != other.id) return false
         if (url != other.url) return false
         if (file != other.file) return false
-        if (id != other.id) return false
-        if (groupId != other.groupId) return false
-        if (headers != other.headers) return false
-        if (priority != other.priority) return false
-        if (networkType != other.networkType) return false
-        if (tag != other.tag) return false
         return true
     }
 
     override fun hashCode(): Int {
-        var result = url.hashCode()
-        result = 31 * result + file.hashCode()
+        var result = super.hashCode()
         result = 31 * result + id
-        result = 31 * result + groupId
-        result = 31 * result + headers.hashCode()
-        result = 31 * result + priority.hashCode()
-        result = 31 * result + networkType.hashCode()
-        result = 31 * result + (tag?.hashCode() ?: 0)
+        result = 31 * result + url.hashCode()
+        result = 31 * result + file.hashCode()
         return result
     }
 

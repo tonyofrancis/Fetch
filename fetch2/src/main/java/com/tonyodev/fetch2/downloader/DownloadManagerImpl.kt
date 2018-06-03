@@ -1,10 +1,8 @@
 package com.tonyodev.fetch2.downloader
 
 import android.os.Handler
-import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Downloader
-import com.tonyodev.fetch2.Logger
-import com.tonyodev.fetch2.RequestOptions
+import com.tonyodev.fetch2.*
+import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.exception.FetchImplementationException
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater
@@ -24,8 +22,8 @@ class DownloadManagerImpl(private val downloader: Downloader,
                           private val fetchListenerProvider: ListenerProvider,
                           private val uiHandler: Handler,
                           private val downloadInfoUpdater: DownloadInfoUpdater,
-                          private val requestOptions: Set<RequestOptions>,
-                          private val fileTempDir: String) : DownloadManager {
+                          private val fileTempDir: String,
+                          private val namespace: String) : DownloadManager {
 
     private val lock = Object()
     private val executor = Executors.newFixedThreadPool(concurrentLimit)
@@ -53,7 +51,11 @@ class DownloadManagerImpl(private val downloader: Downloader,
             fileDownloader.delegate = getFileDownloaderDelegate()
             downloadCounter += 1
             currentDownloadsMap[download.id] = fileDownloader
+            addFileDownloaderToRegistry(namespace, download.id, fileDownloader)
             return try {
+                val downloadInfo = download as DownloadInfo
+                downloadInfo.status = Status.DOWNLOADING
+                downloadInfoUpdater.update(downloadInfo)
                 executor.execute {
                     logger.d("DownloadManager starting download $download")
                     fileDownloader.run()
@@ -62,6 +64,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
                             currentDownloadsMap.remove(download.id)
                             downloadCounter -= 1
                         }
+                        removeFileDownloaderFromRegistry(namespace, download.id)
                     }
                 }
                 true
@@ -83,9 +86,11 @@ class DownloadManagerImpl(private val downloader: Downloader,
                 }
                 currentDownloadsMap.remove(id)
                 downloadCounter -= 1
+                removeFileDownloaderFromRegistry(namespace, id)
                 logger.d("DownloadManager cancelled download ${fileDownloader.download}")
                 true
             } else {
+                interruptDownloadInRegistry(namespace, id)
                 false
             }
         }
@@ -99,12 +104,13 @@ class DownloadManagerImpl(private val downloader: Downloader,
     }
 
     private fun cancelAllDownloads() {
-        currentDownloadsMap.iterator().forEach {
-            it.value.interrupted = true
-            while (!it.value.terminated) {
+        getFileDownloaderListForNamespace(namespace).forEach {
+            it.interrupted = true
+            while (!it.terminated) {
                 //Wait until download runnable terminates
             }
-            logger.d("DownloadManager cancelled download ${it.value.download}")
+            removeFileDownloaderFromRegistry(namespace, it.download.id)
+            logger.d("DownloadManager cancelled download ${it.download}")
         }
         currentDownloadsMap.clear()
         downloadCounter = 0
@@ -113,15 +119,14 @@ class DownloadManagerImpl(private val downloader: Downloader,
     override fun terminateAllDownloads() {
         currentDownloadsMap.iterator().forEach {
             it.value.terminated = true
+            while (!it.value.terminated) {
+                //Wait until download runnable terminates
+            }
             logger.d("DownloadManager terminated download ${it.value.download}")
+            removeFileDownloaderFromRegistry(namespace, it.key)
         }
         currentDownloadsMap.clear()
         downloadCounter = 0
-        try {
-            downloader.close()
-        } catch (e: Exception) {
-            logger.e("DownloadManager closing downloader", e)
-        }
     }
 
     override fun close() {
@@ -139,14 +144,13 @@ class DownloadManagerImpl(private val downloader: Downloader,
     override fun contains(id: Int): Boolean {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return currentDownloadsMap.containsKey(id)
+            return registrycontainsFileDownloader(namespace, id)
         }
     }
 
     override fun canAccommodateNewDownload(): Boolean {
         synchronized(lock) {
-            throwExceptionIfClosed()
-            return downloadCounter < concurrentLimit
+            return !closed && downloadCounter < concurrentLimit
         }
     }
 
@@ -203,10 +207,54 @@ class DownloadManagerImpl(private val downloader: Downloader,
                 uiHandler = uiHandler,
                 fetchListener = fetchListenerProvider.mainListener,
                 logger = logger,
-                retryOnNetworkGain = retryOnNetworkGain,
-                requestOptions = requestOptions,
-                downloader = downloader,
-                fileTempDir = fileTempDir)
+                retryOnNetworkGain = retryOnNetworkGain)
+    }
+
+    companion object {
+
+        private val fileDownloaderMap = mutableMapOf<String, MutableMap<Int, FileDownloader>>()
+        private val lock = Any()
+
+        fun interruptDownloadInRegistry(namespace: String, downloadId: Int) {
+            synchronized(lock) {
+                val map = fileDownloaderMap[namespace]
+                if (map != null) {
+                    val fileDownloader = map[downloadId]
+                    if (fileDownloader != null) {
+                        fileDownloader.interrupted = true
+                        map.remove(downloadId)
+                    }
+                }
+            }
+        }
+
+        fun addFileDownloaderToRegistry(namespace: String, downloadId: Int, fileDownloader: FileDownloader) {
+            synchronized(lock) {
+                val map = fileDownloaderMap[namespace] ?: mutableMapOf()
+                fileDownloaderMap[namespace] = map
+                map[downloadId] = fileDownloader
+            }
+        }
+
+        fun removeFileDownloaderFromRegistry(namespace: String, downloadId: Int) {
+            synchronized(lock) {
+                fileDownloaderMap[namespace]?.remove(downloadId)
+            }
+        }
+
+        fun getFileDownloaderListForNamespace(namespace: String): List<FileDownloader> {
+            return synchronized(lock) {
+                fileDownloaderMap[namespace]?.values?.toList() ?: listOf()
+            }
+        }
+
+        fun registrycontainsFileDownloader(namespace: String, downloadId: Int): Boolean {
+            return synchronized(lock) {
+                val fileDownloader = fileDownloaderMap[namespace]?.get(downloadId)
+                fileDownloader != null
+            }
+        }
+
     }
 
 }

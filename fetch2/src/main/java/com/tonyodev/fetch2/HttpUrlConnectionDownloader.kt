@@ -25,6 +25,8 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
          * */
         private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL) : Downloader {
 
+    constructor(fileDownloaderType: Downloader.FileDownloaderType) : this(null, fileDownloaderType)
+
     protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
     protected val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
 
@@ -38,24 +40,19 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         client.defaultUseCaches = connectionPrefs.usesDefaultCache
         client.instanceFollowRedirects = connectionPrefs.followsRedirect
         client.doInput = true
-
         request.headers.entries.forEach {
             client.addRequestProperty(it.key, it.value)
         }
-
         client.connect()
-
         val code = client.responseCode
         var success = false
         var contentLength = -1L
         var byteStream: InputStream? = null
-
         if (isResponseOk(code)) {
             success = true
             contentLength = client.getHeaderField("Content-Length")?.toLong() ?: -1
             byteStream = client.inputStream
         }
-
         val response = Downloader.Response(
                 code = code,
                 isSuccessful = success,

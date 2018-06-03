@@ -14,11 +14,8 @@ import android.view.View;
 
 import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Download;
-import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchListener;
-import com.tonyodev.fetch2.Func;
-import com.tonyodev.fetch2.Func2;
 import com.tonyodev.fetch2.Request;
 
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +40,7 @@ public class FragmentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fragment_progress);
         rootView = findViewById(R.id.rootView);
-        fetch = ((App) getApplication()).getAppFetchInstance();
+        fetch = Fetch.Impl.getDefaultInstance();
         final FragmentManager fragmentManager = getSupportFragmentManager();
         if (savedInstanceState == null) {
             progressFragment1 = new ProgressFragment();
@@ -86,18 +83,10 @@ public class FragmentActivity extends AppCompatActivity {
         final String url = Data.sampleUrls[0];
         final String filePath = Data.getSaveDir() + "/fragments/movie.mp4";
         final Request initialRequest = new Request(url, filePath);
-        fetch.enqueue(initialRequest, new Func<Download>() {
-            @Override
-            public void call(@NotNull Download download) {
-                setRequestForFragments(download);
-            }
-        }, new Func<Error>() {
-            @Override
-            public void call(@NotNull Error error) {
-                Timber.d("FragmentActivity Error: %1$s", error.toString());
-                Snackbar.make(rootView, R.string.enqueue_error, Snackbar.LENGTH_INDEFINITE)
-                        .show();
-            }
+        fetch.enqueue(initialRequest, this::setRequestForFragments, error -> {
+            Timber.d("FragmentActivity Error: %1$s", error.toString());
+            Snackbar.make(rootView, R.string.enqueue_error, Snackbar.LENGTH_INDEFINITE)
+                    .show();
         });
     }
 
@@ -112,12 +101,9 @@ public class FragmentActivity extends AppCompatActivity {
         }
         fetch.addListener(fetchListener);
         if (request != null) {
-            fetch.getDownload(request.getId(), new Func2<Download>() {
-                @Override
-                public void call(@org.jetbrains.annotations.Nullable Download download) {
-                    if (download != null) {
-                        setRequestForFragments(download);
-                    }
+            fetch.getDownload(request.getId(), download -> {
+                if (download != null) {
+                    setRequestForFragments(download);
                 }
             });
         }

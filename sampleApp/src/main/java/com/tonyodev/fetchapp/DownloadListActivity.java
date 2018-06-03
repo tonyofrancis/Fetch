@@ -11,23 +11,22 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SwitchCompat;
 import android.view.View;
-import android.widget.CompoundButton;
 
 import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Download;
-import com.tonyodev.fetch2.Error;
+import com.tonyodev.fetch2.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchListener;
-import com.tonyodev.fetch2.Func;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2.FetchConfiguration;
+import com.tonyodev.fetch2downloaders.OkHttpDownloader;
 
 import org.jetbrains.annotations.NotNull;
 
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import timber.log.Timber;
@@ -43,13 +42,20 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     private View mainView;
     private FileAdapter fileAdapter;
     private Fetch fetch;
+    private FetchConfiguration fetchConfiguration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_download_list);
         setUpViews();
-        fetch = ((App) getApplication()).getNewFetchInstance(FETCH_NAMESPACE);
+        fetchConfiguration = new FetchConfiguration.Builder(this)
+                .setDownloadConcurrentLimit(4)
+                .setDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))
+                .setNamespace(FETCH_NAMESPACE)
+                .build();
+        fetch = Fetch.Impl.getInstance(fetchConfiguration);
+        fetch.deleteAll();
         checkStoragePermissions();
     }
 
@@ -58,14 +64,11 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         final RecyclerView recyclerView = findViewById(R.id.recyclerView);
         mainView = findViewById(R.id.activity_main);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        networkSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    fetch.setGlobalNetworkType(NetworkType.WIFI_ONLY);
-                } else {
-                    fetch.setGlobalNetworkType(NetworkType.ALL);
-                }
+        networkSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                fetch.setGlobalNetworkType(NetworkType.WIFI_ONLY);
+            } else {
+                fetch.setGlobalNetworkType(NetworkType.ALL);
             }
         });
         fileAdapter = new FileAdapter(this);
@@ -75,28 +78,13 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     @Override
     protected void onResume() {
         super.onResume();
-        fetch.getDownloadsInGroup(GROUP_ID, new Func<List<? extends Download>>() {
-            @Override
-            public void call(@NotNull List<? extends Download> downloads) {
-                final ArrayList<Download> list = new ArrayList<>(downloads);
-                Collections.sort(list, new Comparator<Download>() {
-                    @Override
-                    public int compare(Download first, Download second) {
-                        if (first.getCreated() > second.getCreated()) {
-                            return 1;
-                        } else if (first.getCreated() == second.getCreated()) {
-                            return 0;
-                        } else {
-                            return -1;
-                        }
-                    }
-                });
-                for (Download download : list) {
-                    fileAdapter.addDownload(download);
-                }
+        fetch.getDownloadsInGroup(GROUP_ID, downloads -> {
+            final ArrayList<Download> list = new ArrayList<>(downloads);
+            Collections.sort(list, (first, second) -> Long.compare(first.getCreated(), second.getCreated()));
+            for (Download download : list) {
+                fileAdapter.addDownload(download);
             }
-        });
-        fetch.addListener(fetchListener);
+        }).addListener(fetchListener);
     }
 
     @Override
@@ -182,19 +170,20 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
 
     private void enqueueDownloads() {
         final List<Request> initialRequests = Data.getFetchRequestWithGroupId(GROUP_ID);
-        fetch.enqueue(initialRequests, new Func<List<? extends Download>>() {
-            @Override
-            public void call(@NotNull List<? extends Download> downloads) {
-                for (Download download : downloads) {
-                    fileAdapter.addDownload(download);
-                }
+        fetch.enqueue(initialRequests, downloads -> {
+            for (Download download : downloads) {
+                fileAdapter.addDownload(download);
             }
-        }, new Func<Error>() {
-            @Override
-            public void call(@NotNull Error error) {
-                Timber.d("DownloadListActivity Error: %1$s", error.toString());
-            }
-        });
+        }, error -> Timber.d("DownloadListActivity Error: %1$s", error.toString()));
+        Fetch.Impl.getInstance(fetchConfiguration)
+                .addListener(new AbstractFetchListener() {
+                    @Override
+                    public void onDeleted(@NotNull Download download) {
+                        super.onDeleted(download);
+                        Timber.d("Download Deleted " + download.toString());
+                    }
+                })
+                .deleteAll();
     }
 
     @Override

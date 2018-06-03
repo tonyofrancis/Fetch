@@ -42,8 +42,7 @@ public class DatabaseInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace,
-                true, fetchLogger, migrations);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
     }
 
     @After

@@ -1,14 +1,14 @@
 package com.tonyodev.fetch2.helper
 
 
-import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.downloader.DownloadManager
+import com.tonyodev.fetch2.fetch.HandlerWrapper
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
 
-class PriorityListProcessorImpl constructor(private val handler: Handler,
+class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerWrapper,
                                             private val downloadProvider: DownloadProvider,
                                             private val downloadManager: DownloadManager,
                                             private val networkInfoProvider: NetworkInfoProvider,
@@ -105,11 +105,11 @@ class PriorityListProcessorImpl constructor(private val handler: Handler,
     }
 
     private fun registerPriorityIterator() {
-        handler.postDelayed(priorityIteratorRunnable, PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS)
+        handlerWrapper.postDelayed(priorityIteratorRunnable, PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS)
     }
 
     private fun unregisterPriorityIterator() {
-        handler.removeCallbacks(priorityIteratorRunnable)
+        handlerWrapper.removeCallbacks(priorityIteratorRunnable)
     }
 
 }

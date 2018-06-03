@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
+import com.tonyodev.fetch2.fetch.HandlerWrapper
 import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.util.FAILED_TO_ENQUEUE_REQUEST
 import com.tonyodev.fetch2.util.DOWNLOAD_NOT_FOUND
@@ -14,15 +15,15 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 
 
 open class RxFetchImpl(namespace: String,
-                       handler: Handler,
+                       handlerWrapper: HandlerWrapper,
                        uiHandler: Handler,
                        fetchHandler: FetchHandler,
                        fetchListenerProvider: ListenerProvider,
                        logger: Logger)
-    : FetchImpl(namespace, handler, uiHandler,
+    : FetchImpl(namespace, handlerWrapper, uiHandler,
         fetchHandler, fetchListenerProvider, logger), RxFetch {
 
-    protected val scheduler = AndroidSchedulers.from(handler.looper)
+    protected val scheduler = AndroidSchedulers.from(handlerWrapper.getLooper())
     protected val uiSceduler = AndroidSchedulers.mainThread()
 
     override fun enqueue(request: Request): Convertible<Download> {
@@ -194,12 +195,12 @@ open class RxFetchImpl(namespace: String,
         @JvmStatic
         fun newInstance(modules: Modules): RxFetchImpl {
             return RxFetchImpl(
-                    namespace = modules.prefs.namespace,
-                    handler = modules.handler,
+                    namespace = modules.fetchConfiguration.namespace,
+                    handlerWrapper = modules.handlerWrapper,
                     uiHandler = modules.uiHandler,
                     fetchHandler = modules.fetchHandler,
                     fetchListenerProvider = modules.fetchListenerProvider,
-                    logger = modules.prefs.logger)
+                    logger = modules.fetchConfiguration.logger)
         }
 
     }

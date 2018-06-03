@@ -26,8 +26,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -48,8 +46,7 @@ public class DownloadManagerInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace,
-                true, fetchLogger, migrations);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final long progessInterval = FetchDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
@@ -59,11 +56,10 @@ public class DownloadManagerInstrumentedTest {
         final ListenerProvider listenerProvider = new ListenerProvider();
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
-        final Set<RequestOptions> requestOptions = new HashSet<>();
         final String tempDir = FetchUtils.getFileTempDir(appContext);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                listenerProvider, uiHandler, downloadInfoUpdater, requestOptions, tempDir);
+                listenerProvider, uiHandler, downloadInfoUpdater, tempDir, namespace);
     }
 
     @After

@@ -40,8 +40,7 @@ public class DownloadProviderInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace,
-                true, fetchLogger, migrations);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
         downloadProvider = new DownloadProvider(databaseManager);
     }
 
@@ -103,7 +102,7 @@ public class DownloadProviderInstrumentedTest {
         }
         databaseManager.insert(downloadInfoList);
         final List<Integer> ids = new ArrayList<>();
-        for(DownloadInfo downloadInfo : downloadInfoList) {
+        for (DownloadInfo downloadInfo : downloadInfoList) {
             ids.add(downloadInfo.getId());
         }
         final List<Download> queryList = downloadProvider.getDownloads(ids);

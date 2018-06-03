@@ -17,9 +17,10 @@ import com.tonyodev.fetch2.exception.FetchException
  *             Update all external references accordingly.
  * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
  * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
  * */
-fun Fetch.enqueue(request: Request, func: ((Download) -> Unit)?, func2: ((Error) -> Unit)?) {
-    enqueue(request, object : Func<Download> {
+fun Fetch.enqueue(request: Request, func: ((Download) -> Unit)?, func2: ((Error) -> Unit)?): Fetch {
+    return enqueue(request, object : Func<Download> {
         override fun call(t: Download) {
             func?.invoke(t)
         }
@@ -45,9 +46,10 @@ fun Fetch.enqueue(request: Request, func: ((Download) -> Unit)?, func2: ((Error)
  *             Update all external references accordingly.
  * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
  * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
  * */
-fun Fetch.enqueue(requests: List<Request>, func: ((List<Download>) -> Unit)?, func2: ((Error) -> Unit)?) {
-    enqueue(requests, object : Func<List<Download>> {
+fun Fetch.enqueue(requests: List<Request>, func: ((List<Download>) -> Unit)?, func2: ((Error) -> Unit)?): Fetch {
+    return enqueue(requests, object : Func<List<Download>> {
         override fun call(t: List<Download>) {
             func?.invoke(t)
         }
@@ -66,10 +68,11 @@ fun Fetch.enqueue(requests: List<Request>, func: ((List<Download>) -> Unit)?, fu
  * @param func Successful callback that the download will be returned on.
  * @param func2 Failed callback that the error will be returned on.
  * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
  * */
 fun Fetch.updateRequest(id: Int, requestInfo: RequestInfo, func: ((Download) -> Unit)?,
-                        func2: ((Error) -> Unit)?) {
-    updateRequest(id, requestInfo, object : Func<Download> {
+                        func2: ((Error) -> Unit)?): Fetch {
+    return updateRequest(id, requestInfo, object : Func<Download> {
         override fun call(t: Download) {
             func?.invoke(t)
         }
@@ -84,9 +87,10 @@ fun Fetch.updateRequest(id: Int, requestInfo: RequestInfo, func: ((Download) -> 
  * Gets all downloads managed by this instance of Fetch.
  * @param func Callback that the results will be returned on.
  * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
  * */
-fun Fetch.getDownloads(func: (List<Download>) -> Unit) {
-    getDownloads(object : Func<List<Download>> {
+fun Fetch.getDownloads(func: (List<Download>) -> Unit): Fetch {
+    return getDownloads(object : Func<List<Download>> {
         override fun call(t: List<Download>) {
             func(t)
         }
@@ -98,9 +102,10 @@ fun Fetch.getDownloads(func: (List<Download>) -> Unit) {
  * @param idList Id list to perform id query against.
  * @param func Callback that the results will be returned on.
  * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
  * */
-fun Fetch.getDownloads(idList: List<Int>, func: (List<Download>) -> Unit) {
-    getDownloads(idList, object : Func<List<Download>> {
+fun Fetch.getDownloads(idList: List<Int>, func: (List<Download>) -> Unit): Fetch {
+    return getDownloads(idList, object : Func<List<Download>> {
         override fun call(t: List<Download>) {
             func(t)
         }
@@ -113,9 +118,10 @@ fun Fetch.getDownloads(idList: List<Int>, func: (List<Download>) -> Unit) {
  * @param id Download id
  * @param func Callback that the results will be returned on. Result maybe null.
  * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
  * */
-fun Fetch.getDownload(id: Int, func: (Download?) -> Unit) {
-    getDownload(id, object : Func2<Download?> {
+fun Fetch.getDownload(id: Int, func: (Download?) -> Unit): Fetch {
+    return getDownload(id, object : Func2<Download?> {
         override fun call(t: Download?) {
             func(t)
         }
@@ -127,9 +133,10 @@ fun Fetch.getDownload(id: Int, func: (Download?) -> Unit) {
  * @param groupId group id to query.
  * @param func Callback that the results will be returned on.
  * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
  * */
-fun Fetch.getDownloadsInGroup(groupId: Int, func: (List<Download>) -> Unit) {
-    getDownloadsInGroup(groupId, object : Func<List<Download>> {
+fun Fetch.getDownloadsInGroup(groupId: Int, func: (List<Download>) -> Unit): Fetch {
+    return getDownloadsInGroup(groupId, object : Func<List<Download>> {
         override fun call(t: List<Download>) {
             func(t)
         }
@@ -142,9 +149,10 @@ fun Fetch.getDownloadsInGroup(groupId: Int, func: (List<Download>) -> Unit) {
  * @param status Status to query.
  * @param func Callback that the results will be returned on.
  * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
  * */
-fun Fetch.getDownloadsWithStatus(status: Status, func: (List<Download>) -> Unit) {
-    getDownloadsWithStatus(status, object : Func<List<Download>> {
+fun Fetch.getDownloadsWithStatus(status: Status, func: (List<Download>) -> Unit): Fetch {
+    return getDownloadsWithStatus(status, object : Func<List<Download>> {
         override fun call(t: List<Download>) {
             func(t)
         }
@@ -158,9 +166,10 @@ fun Fetch.getDownloadsWithStatus(status: Status, func: (List<Download>) -> Unit)
  * @param status Status to query.
  * @param func Callback that the results will be returned on.
  * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
  * */
-fun Fetch.getDownloadsInGroupWithStatus(groupId: Int, status: Status, func: (List<Download>) -> Unit) {
-    getDownloadsInGroupWithStatus(groupId, status, object : Func<List<Download>> {
+fun Fetch.getDownloadsInGroupWithStatus(groupId: Int, status: Status, func: (List<Download>) -> Unit): Fetch {
+    return getDownloadsInGroupWithStatus(groupId, status, object : Func<List<Download>> {
         override fun call(t: List<Download>) {
             func(t)
         }

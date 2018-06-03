@@ -12,6 +12,8 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.tonyodev.fetch2.Fetch;
+import com.tonyodev.fetch2.FetchConfiguration;
+import com.tonyodev.fetch2rx.RxFetch;
 
 import java.io.File;
 
@@ -27,55 +29,37 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mainView = findViewById(R.id.activity_main);
 
-        findViewById(R.id.singleDemoButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent intent = new Intent(MainActivity.this, SingleDownloadActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
+        findViewById(R.id.singleDemoButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, SingleDownloadActivity.class);
+            MainActivity.this.startActivity(intent);
         });
 
-        findViewById(R.id.downloadListButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent intent = new Intent(MainActivity.this, DownloadListActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
+        findViewById(R.id.downloadListButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, DownloadListActivity.class);
+            MainActivity.this.startActivity(intent);
         });
 
-        findViewById(R.id.gameFilesButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent intent = new Intent(MainActivity.this, GameFilesActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
+        findViewById(R.id.gameFilesButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, GameFilesActivity.class);
+            MainActivity.this.startActivity(intent);
         });
 
-        findViewById(R.id.multiEnqueueButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent intent = new Intent(MainActivity.this, FailedMultiEnqueueActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
+        findViewById(R.id.multiEnqueueButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, FailedMultiEnqueueActivity.class);
+            MainActivity.this.startActivity(intent);
         });
 
-        findViewById(R.id.multiFragmentButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent intent = new Intent(MainActivity.this, FragmentActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
+        findViewById(R.id.multiFragmentButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, FragmentActivity.class);
+            MainActivity.this.startActivity(intent);
         });
 
-        findViewById(R.id.deleteAllButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}
-                            , STORAGE_PERMISSION_CODE);
-                } else {
-                    deleteDownloadedFiles();
-                }
+        findViewById(R.id.deleteAllButton).setOnClickListener(v -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}
+                        , STORAGE_PERMISSION_CODE);
+            } else {
+                deleteDownloadedFiles();
             }
         });
     }
@@ -86,12 +70,15 @@ public class MainActivity extends AppCompatActivity {
                 FailedMultiEnqueueActivity.FETCH_NAMESPACE
         };
         for (String namespace : namespaces) {
-            final Fetch fetch = ((App) getApplication()).getNewFetchInstance(namespace);
+            final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+                    .setNamespace(namespace)
+                    .build();
+            final Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
             fetch.deleteAll();
             fetch.close();
         }
-        ((App) getApplication()).getAppFetchInstance().deleteAll();
-        ((App) getApplication()).getRxFetch().deleteAll();
+        Fetch.Impl.getDefaultInstance().deleteAll();
+        RxFetch.Impl.getDefaultRxInstance().deleteAll();
         try {
             final File fetchDir = new File(Data.getSaveDir());
             Utils.deleteFileAndContents(fetchDir);

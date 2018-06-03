@@ -8,7 +8,6 @@ import java.io.Closeable
 interface DatabaseManager : Closeable {
 
     val isClosed: Boolean
-    val isMemoryDatabase: Boolean
     val logger: Logger
 
     fun insert(downloadInfo: DownloadInfo): Pair<DownloadInfo, Boolean>
@@ -28,4 +27,5 @@ interface DatabaseManager : Closeable {
     fun getByGroup(group: Int): List<DownloadInfo>
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<DownloadInfo>
     fun getPendingDownloadsSorted(): List<DownloadInfo>
+    fun contains(id: Int, file: String): Boolean
 }

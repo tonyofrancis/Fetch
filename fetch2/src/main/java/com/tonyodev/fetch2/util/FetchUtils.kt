@@ -5,6 +5,7 @@ package com.tonyodev.fetch2.util
 import android.content.Context
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Downloader
+import com.tonyodev.fetch2.FetchConfiguration
 import com.tonyodev.fetch2.Status
 import java.io.*
 import java.util.concurrent.TimeUnit
@@ -197,4 +198,20 @@ fun deleteRequestTempFiles(fileTempDir: String,
     } catch (e: Exception) {
 
     }
+}
+
+fun createConfigWithNewNamespace(fetchConfiguration: FetchConfiguration,
+                                 namespace: String): FetchConfiguration {
+    return FetchConfiguration.Builder(fetchConfiguration.appContext)
+            .setNamespace(namespace)
+            .enableAutoStart(fetchConfiguration.autoStart)
+            .enableLogging(fetchConfiguration.loggingEnabled)
+            .enableRetryOnNetworkGain(fetchConfiguration.retryOnNetworkGain)
+            .setDownloadBufferSize(fetchConfiguration.downloadBufferSizeBytes)
+            .setDownloader(fetchConfiguration.downloader)
+            .setDownloadConcurrentLimit(fetchConfiguration.concurrentLimit)
+            .setProgressReportingInterval(fetchConfiguration.progressReportingIntervalMillis)
+            .setGlobalNetworkType(fetchConfiguration.globalNetworkType)
+            .setLogger(fetchConfiguration.logger)
+            .build()
 }

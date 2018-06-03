@@ -3,8 +3,8 @@ package com.tonyodev.fetch2rx
 import android.content.Context
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
-import com.tonyodev.fetch2.fetch.FetchBuilder
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
+import com.tonyodev.fetch2.util.DEFAULT_INSTANCE_NAMESPACE
 
 /**
  * A light weight file download manager for Android with Rx features.
@@ -119,32 +119,70 @@ interface RxFetch : Fetch {
      * flowable*/
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): Convertible<List<Download>>
 
-    /**
-     * Builder used to configure and create instances of rxFetch with rxJava goodies.
-     * */
-    class Builder constructor(
-            /** Context*/
-            context: Context,
+    companion object Impl {
 
-            /** The namespace which Fetch operates in. Fetch uses
-             * a namespace to create a database that the instance will use. Downloads
-             * enqueued on the instance will belong to the namespace and will not be accessible
-             * from any other namespace. An App can only have one Active Fetch instance with the
-             * specified namespace. * In essence an App can have many instances of fetch
-             * with a different namespaces.
-             * */
-            namespace: String)
-        : FetchBuilder<Builder, RxFetch>(context, namespace) {
+        private val lock = Any()
 
-        /** Builds a new instance of RxFetch with the proper configuration.
-         * @throws FetchException if an active instance of Fetch with the same namespace already
-         * exists.
-         * @return New instance of RxFetch.
+        /**
+         * Sets the default Configuration settings on the default Fetch instance.
+         * @param context context
          * */
-        override fun build(): RxFetch {
-            val modules = FetchModulesBuilder.buildModulesFromPrefs(getBuilderPrefs())
-            return RxFetchImpl.newInstance(modules)
+        fun setDefaultInstanceConfiguration(context: Context) {
+            return synchronized(lock) {
+                Fetch.setDefaultInstanceConfiguration(context)
+            }
         }
+
+        /**
+         * Sets the default Configuration settings on the default Fetch instance.
+         * @param fetchConfiguration custom Fetch Configuration
+         * */
+        fun setDefaultInstanceConfiguration(fetchConfiguration: FetchConfiguration) {
+            synchronized(lock) {
+                Fetch.setDefaultInstanceConfiguration(fetchConfiguration)
+            }
+        }
+
+        /**
+         * @return Get default Fetch instance
+         * */
+        fun getDefaultInstance(): Fetch {
+            return Fetch.getDefaultInstance()
+        }
+
+        /**
+         * @return Get default RxFetch instance
+         * */
+        fun getDefaultRxInstance(): RxFetch {
+            return synchronized(lock) {
+                val config = Fetch.getDefaultFetchConfiguration()
+                RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(config))
+            }
+        }
+
+        /**
+         * Creates a custom Instance of Fetch with the given configuration and namespace.
+         * @param fetchConfiguration custom Fetch Configuration
+         * @return custom Fetch instance
+         * */
+        fun getInstance(fetchConfiguration: FetchConfiguration): Fetch {
+            return Fetch.getInstance(fetchConfiguration)
+        }
+
+        /**
+         * Creates a custom Instance of Fetch with the given configuration and namespace.
+         * @param fetchConfiguration custom Fetch Configuration
+         * @return custom RxFetch instance
+         * */
+        fun getRxInstance(fetchConfiguration: FetchConfiguration): RxFetch {
+            return if (fetchConfiguration.namespace == DEFAULT_INSTANCE_NAMESPACE) {
+                setDefaultInstanceConfiguration(fetchConfiguration)
+                getDefaultRxInstance()
+            } else {
+                return RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(fetchConfiguration))
+            }
+        }
+
     }
 
 }

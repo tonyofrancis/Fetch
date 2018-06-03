@@ -24,8 +24,6 @@ fun getErrorFromMessage(message: String?): Error {
         Error.UNKNOWN
     } else if (message.contains(UNIQUE_ID_DATABASE)) {
         Error.REQUEST_WITH_ID_ALREADY_EXIST
-    } else if (message.contains(UNIQUE_FILE_PATH_DATABASE)) {
-        Error.REQUEST_WITH_FILE_PATH_ALREADY_EXIST
     } else if (message.equals(EMPTY_RESPONSE_BODY, true)) {
         Error.EMPTY_RESPONSE_FROM_SERVER
     } else if (message.equals(FNC, ignoreCase = true) || message.equals(ENOENT, ignoreCase = true)) {
@@ -50,8 +48,6 @@ fun getErrorFromMessage(message: String?): Error {
         Error.DOWNLOAD_NOT_FOUND
     } else if (message.equals(FETCH_DATABASE_ERROR, true)) {
         Error.FETCH_DATABASE_ERROR
-    } else if (message.contains(FETCH_ALREADY_EXIST, true)) {
-        Error.FETCH_ALREADY_EXIST
     } else if (message.contains(RESPONSE_NOT_SUCCESSFUL, true) || message.contains(FAILED_TO_CONNECT, true)) {
         Error.REQUEST_NOT_SUCCESSFUL
     } else {

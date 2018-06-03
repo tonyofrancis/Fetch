@@ -24,6 +24,8 @@ open class OkHttpDownloader @JvmOverloads constructor(
         private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL)
     : Downloader {
 
+    constructor(fileDownloaderType: Downloader.FileDownloaderType) : this(null, fileDownloaderType)
+
     protected val connections: MutableMap<Downloader.Response, Response> = Collections.synchronizedMap(HashMap<Downloader.Response, Response>())
 
     @Volatile

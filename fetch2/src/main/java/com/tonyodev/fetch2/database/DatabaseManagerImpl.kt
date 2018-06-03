@@ -14,7 +14,6 @@ import com.tonyodev.fetch2.util.sanitize
 
 class DatabaseManagerImpl constructor(context: Context,
                                       private val namespace: String,
-                                      override val isMemoryDatabase: Boolean,
                                       override val logger: Logger,
                                       migrations: Array<Migration>) : DatabaseManager {
 
@@ -27,14 +26,8 @@ class DatabaseManagerImpl constructor(context: Context,
         get() = closed
 
     private val requestDatabase = {
-        val builder = if (isMemoryDatabase) {
-            logger.d("Init in memory database named $namespace")
-            Room.inMemoryDatabaseBuilder(context, DownloadDatabase::class.java)
-        } else {
-            logger.d("Init file based database named $namespace.db")
-            Room.databaseBuilder(context, DownloadDatabase::class.java,
-                    "$namespace.db")
-        }
+        val builder = Room.databaseBuilder(context, DownloadDatabase::class.java,
+                "$namespace.db")
         builder.addMigrations(*migrations)
         builder.build()
     }()
@@ -201,6 +194,14 @@ class DatabaseManagerImpl constructor(context: Context,
         }
     }
 
+    override fun contains(id: Int, file: String): Boolean {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            val download = requestDatabase.requestDao().contains(id, file)
+            download != null
+        }
+    }
+
     override fun close() {
         synchronized(lock) {
             if (closed) {
@@ -214,7 +215,7 @@ class DatabaseManagerImpl constructor(context: Context,
 
     private fun throwExceptionIfClosed() {
         if (closed) {
-            throw FetchImplementationException("database is closed",
+            throw FetchImplementationException("$namespace database is closed",
                     FetchException.Code.CLOSED)
         }
     }

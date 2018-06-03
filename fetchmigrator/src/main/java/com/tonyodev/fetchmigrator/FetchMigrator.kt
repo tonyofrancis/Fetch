@@ -54,7 +54,6 @@ fun migrateFromV1toV2(context: Context, v2Namespace: String): List<DownloadTrans
         val fetchTwoDatabaseManager = DatabaseManagerImpl(
                 context = context,
                 namespace = v2Namespace,
-                isMemoryDatabase = false,
                 logger = FetchLogger(),
                 migrations = DownloadDatabase.getMigrations())
         fetchTwoDatabaseManager.insert(downloadInfoList.map { it.newDownload as DownloadInfo })
