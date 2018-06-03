@@ -38,18 +38,23 @@ open class RequestInfo {
     /** Associate a tag for this request*/
     var tag: String? = null
 
+    /**
+     * Action used by Fetch when enqueuing a request and a previous request with the
+     * same file is already being managed. Default EnqueueAction.REPLACE_EXISTING
+     * which will replaces the existing request.
+     * */
+    var enqueueAction = EnqueueAction.REPLACE_EXISTING
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-
         other as RequestInfo
-
         if (groupId != other.groupId) return false
         if (headers != other.headers) return false
         if (priority != other.priority) return false
         if (networkType != other.networkType) return false
         if (tag != other.tag) return false
-
+        if (enqueueAction != other.enqueueAction) return false
         return true
     }
 
@@ -59,12 +64,13 @@ open class RequestInfo {
         result = 31 * result + priority.hashCode()
         result = 31 * result + networkType.hashCode()
         result = 31 * result + (tag?.hashCode() ?: 0)
+        result = 31 * result + enqueueAction.hashCode()
         return result
     }
 
     override fun toString(): String {
         return "RequestInfo(groupId=$groupId, headers=$headers, priority=$priority, " +
-                "networkType=$networkType, tag=$tag)"
+                "networkType=$networkType, tag=$tag, enqueueAction=$enqueueAction)"
     }
 
 }
