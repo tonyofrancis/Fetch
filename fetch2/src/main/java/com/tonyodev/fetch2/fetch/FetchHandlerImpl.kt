@@ -51,6 +51,7 @@ class FetchHandlerImpl(private val namespace: String,
             if (isDownloading(existingDownload.id)) {
                 downloadManager.cancel(downloadInfo.id)
             }
+            deleteRequestTempFiles(fileTempDir, downloader, existingDownload)
             databaseManager.delete(existingDownload)
         } else if (downloadInfo.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME && existingDownload != null) {
             val file = getIncrementedFileIfOriginalExists(downloadInfo.file)

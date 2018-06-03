@@ -624,10 +624,12 @@ open class FetchImpl constructor(override val namespace: String,
             }
             closed = true
             logger.d("$namespace closing/shutting down")
-            try {
-                fetchHandler.close()
-            } catch (e: Exception) {
-                logger.e("exception occurred whiles shutting down Fetch with namespace:$namespace", e)
+            handlerWrapper.post {
+                try {
+                    fetchHandler.close()
+                } catch (e: Exception) {
+                    logger.e("exception occurred whiles shutting down Fetch with namespace:$namespace", e)
+                }
             }
         }
     }

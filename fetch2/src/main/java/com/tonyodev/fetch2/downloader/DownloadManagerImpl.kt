@@ -118,7 +118,6 @@ class DownloadManagerImpl(private val downloader: Downloader,
     }
 
     private fun terminateAllDownloads() {
-        throwExceptionIfClosed()
         currentDownloadsMap.iterator().forEach {
             it.value.terminated = true
             while (!it.value.terminated) {
