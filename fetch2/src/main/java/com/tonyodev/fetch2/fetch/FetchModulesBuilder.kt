@@ -13,7 +13,6 @@ import com.tonyodev.fetch2.helper.DownloadInfoUpdater
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.helper.PriorityListProcessorImpl
 import com.tonyodev.fetch2.provider.DownloadProvider
-import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.getFileTempDir
 
@@ -99,8 +98,7 @@ object FetchModulesBuilder {
                     logger = fetchConfiguration.logger,
                     autoStart = fetchConfiguration.autoStart,
                     downloader = fetchConfiguration.downloader,
-                    fileTempDir = getFileTempDir(fetchConfiguration.appContext),
-                    handlerWrapper = handlerWrapper)
+                    fileTempDir = getFileTempDir(fetchConfiguration.appContext))
         }
 
     }

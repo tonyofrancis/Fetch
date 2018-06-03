@@ -79,7 +79,7 @@ class HandlerWrapper(val namespace: String) {
             if (!closed) {
                 closed = true
                 try {
-                    handler.removeCallbacks(null)
+                    handler.removeCallbacksAndMessages(null)
                     handler.looper.quit()
                 } catch (e: Exception) {
 

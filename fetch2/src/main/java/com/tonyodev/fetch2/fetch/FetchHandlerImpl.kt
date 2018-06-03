@@ -19,8 +19,7 @@ class FetchHandlerImpl(private val namespace: String,
                        private val logger: Logger,
                        private val autoStart: Boolean,
                        private val downloader: Downloader,
-                       private val fileTempDir: String,
-                       private val handlerWrapper: HandlerWrapper) : FetchHandler {
+                       private val fileTempDir: String) : FetchHandler {
 
     private val listenerSet = mutableSetOf<FetchListener>()
 
@@ -47,7 +46,7 @@ class FetchHandlerImpl(private val namespace: String,
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
         val existingDownload = databaseManager.getByFile(downloadInfo.file)
         if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
-            if (canCancelDownload(existingDownload)) {
+            if (isDownloading(existingDownload.id)) {
                 downloadManager.cancel(downloadInfo.id)
             }
             databaseManager.delete(existingDownload)
@@ -440,6 +439,7 @@ class FetchHandlerImpl(private val namespace: String,
                 downloadInfo.headers = requestInfo.headers
                 downloadInfo.priority = requestInfo.priority
                 downloadInfo.networkType = requestInfo.networkType
+                downloadInfo.enqueueAction = requestInfo.enqueueAction
                 databaseManager.update(downloadInfo)
                 return downloadInfo
             }
@@ -492,10 +492,8 @@ class FetchHandlerImpl(private val namespace: String,
         }
         listenerSet.clear()
         priorityListProcessor.stop()
-        handlerWrapper.post {
-            downloadManager.close()
-            FetchModulesBuilder.removeNamespaceInstanceReference(namespace)
-        }
+        downloadManager.close()
+        FetchModulesBuilder.removeNamespaceInstanceReference(namespace)
     }
 
     override fun setGlobalNetworkType(networkType: NetworkType) {

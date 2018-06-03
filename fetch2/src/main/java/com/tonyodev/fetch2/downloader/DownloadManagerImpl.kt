@@ -221,6 +221,9 @@ class DownloadManagerImpl(private val downloader: Downloader,
                     val fileDownloader = map[downloadId]
                     if (fileDownloader != null) {
                         fileDownloader.interrupted = true
+                        while (!fileDownloader.terminated) {
+                            //Wait until download runnable terminates
+                        }
                         map.remove(downloadId)
                     }
                 }

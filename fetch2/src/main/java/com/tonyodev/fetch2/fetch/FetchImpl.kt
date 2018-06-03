@@ -572,7 +572,9 @@ open class FetchImpl constructor(override val namespace: String,
     override fun addListener(listener: FetchListener): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
-            fetchHandler.addListener(listener)
+            handlerWrapper.post {
+                fetchHandler.addListener(listener)
+            }
             return this
         }
     }
@@ -580,7 +582,9 @@ open class FetchImpl constructor(override val namespace: String,
     override fun removeListener(listener: FetchListener): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
-            fetchHandler.removeListener(listener)
+            handlerWrapper.post {
+                fetchHandler.removeListener(listener)
+            }
             return this
         }
     }
