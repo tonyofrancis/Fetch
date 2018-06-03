@@ -11,11 +11,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
 
-import com.tonyodev.fetch2.Download;
-import com.tonyodev.fetch2.EnqueueAction;
 import com.tonyodev.fetch2.Error;
+import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.Status;
@@ -98,7 +96,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
 
     private void enqueueDownload() {
         final String url = Data.sampleUrls[0];
-        final String filePath = Data.getSaveDir() + "/movies/buckbunny_singleDownloadActivity.m4v";
+        final String filePath = Data.getSaveDir() + "/movies/" + Data.getNameFromUrl(url);
         request = new Request(url, filePath);
         fetch.enqueue(request, download -> {
             // Update your request references with download.getRequest(). The request id and file
