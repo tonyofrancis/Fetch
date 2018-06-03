@@ -34,56 +34,92 @@ class ListenerCoordinator(val namespace: String) {
     val mainListener: FetchListener = object : FetchListener {
 
         override fun onQueued(download: Download) {
-            listenerMap.values.iterator().forEach {
-                it.forEach { onQueued(download) }
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.onQueued(download)
+                    }
+                }
             }
         }
 
         override fun onCompleted(download: Download) {
-            listenerMap.values.iterator().forEach {
-                it.forEach { onCompleted(download) }
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.onCompleted(download)
+                    }
+                }
             }
         }
 
         override fun onError(download: Download) {
-            listenerMap.values.iterator().forEach {
-                it.forEach { onError(download) }
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.onError(download)
+                    }
+                }
             }
         }
 
         override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
-            listenerMap.values.iterator().forEach {
-                it.forEach { onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond) }
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
+                    }
+                }
             }
         }
 
         override fun onPaused(download: Download) {
-            listenerMap.values.iterator().forEach {
-                it.forEach { onPaused(download) }
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.onPaused(download)
+                    }
+                }
             }
         }
 
         override fun onResumed(download: Download) {
-            listenerMap.values.iterator().forEach {
-                it.forEach { onResumed(download) }
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.onResumed(download)
+                    }
+                }
             }
         }
 
         override fun onCancelled(download: Download) {
-            listenerMap.values.iterator().forEach {
-                it.forEach { onCancelled(download) }
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.onCancelled(download)
+                    }
+                }
             }
         }
 
         override fun onRemoved(download: Download) {
-            listenerMap.values.iterator().forEach {
-                it.forEach { onRemoved(download) }
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.onRemoved(download)
+                    }
+                }
             }
         }
 
         override fun onDeleted(download: Download) {
-            listenerMap.values.iterator().forEach {
-                it.forEach { onDeleted(download) }
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.onDeleted(download)
+                    }
+                }
             }
         }
     }
