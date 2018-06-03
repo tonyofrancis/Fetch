@@ -8,8 +8,7 @@ class MigrationTwoToThree : Migration(2, 3) {
 
     override fun migrate(database: SupportSQLiteDatabase) {
         database.execSQL("ALTER TABLE ${DownloadDatabase.TABLE_NAME} "
-                + " ADD COLUMN ${DownloadDatabase.COLUMN_ENQUEUE_ACTION} INTEGER DEFAULT " +
-                "${EnqueueAction.REPLACE_EXISTING}")
+                + " ADD COLUMN ${DownloadDatabase.COLUMN_ENQUEUE_ACTION} INTEGER DEFAULT ${EnqueueAction.REPLACE_EXISTING.value}")
     }
 
 }

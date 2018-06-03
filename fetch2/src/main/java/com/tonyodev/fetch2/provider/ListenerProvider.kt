@@ -8,7 +8,6 @@ import java.util.Collections
 object ListenerProvider {
 
     private val lock = Any()
-
     private val listeners: MutableMap<String, MutableSet<FetchListener>> =
             Collections.synchronizedMap(mutableMapOf<String, MutableSet<FetchListener>>())
 

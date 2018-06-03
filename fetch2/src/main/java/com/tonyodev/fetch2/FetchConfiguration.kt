@@ -5,7 +5,7 @@ import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.util.*
 
 /**
- * Class used to create an instance of Fetch with configurations.
+ * Class used to hold the configuration settings for a Fetch instance.
  * @see Builder
  * */
 class FetchConfiguration private constructor(val appContext: Context,
@@ -20,6 +20,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val autoStart: Boolean,
                                              val retryOnNetworkGain: Boolean) {
 
+    /** Used to create an instance of Fetch Configuration.*/
     class Builder(context: Context) {
 
         private val appContext = context.applicationContext
@@ -36,10 +37,8 @@ class FetchConfiguration private constructor(val appContext: Context,
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
-         * enqueued on the instance will belong to the namespace and will not be accessible
-         * from any other namespace. An App can only have one Active Fetch instance with the
-         * specified namespace. In essence an App can have many instances of fetch
-         * with a different namespaces.
+         * enqueued on the Fetch instance will belong to the namespace and will not be accessible
+         * from any other namespace.
          * @param namespace name. If null or empty, the Global namespace is used.
          * @return Builder
          * */
@@ -210,7 +209,6 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (logger != other.logger) return false
         if (autoStart != other.autoStart) return false
         if (retryOnNetworkGain != other.retryOnNetworkGain) return false
-
         return true
     }
 

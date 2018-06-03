@@ -144,8 +144,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
 
     override fun contains(id: Int): Boolean {
         synchronized(lock) {
-            throwExceptionIfClosed()
-            return registrycontainsFileDownloader(namespace, id)
+            return !isClosed && registrycontainsFileDownloader(namespace, id)
         }
     }
 

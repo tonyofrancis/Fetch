@@ -328,7 +328,7 @@ interface Fetch {
     fun close()
 
     /**
-     * Fetch implementation class
+     * Fetch implementation class. Use this Singleton to get instances of Fetch.
      * */
     companion object Impl {
 
@@ -352,7 +352,7 @@ interface Fetch {
          * @param fetchConfiguration custom Fetch Configuration
          * */
         fun setDefaultInstanceConfiguration(fetchConfiguration: FetchConfiguration) {
-            return synchronized(lock) {
+            synchronized(lock) {
                 val config = if (fetchConfiguration.namespace != DEFAULT_INSTANCE_NAMESPACE) {
                     createConfigWithNewNamespace(fetchConfiguration, DEFAULT_INSTANCE_NAMESPACE)
                 } else {
