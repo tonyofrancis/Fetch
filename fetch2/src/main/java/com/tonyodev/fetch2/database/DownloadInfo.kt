@@ -56,7 +56,7 @@ class DownloadInfo : Download {
     @ColumnInfo(name = DownloadDatabase.COLUMN_TAG)
     override var tag: String? = null
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_ENQUEUE_ACTION)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_ENQUEUE_ACTION, typeAffinity = ColumnInfo.INTEGER)
     override var enqueueAction: EnqueueAction = EnqueueAction.REPLACE_EXISTING
 
     override val progress: Int
