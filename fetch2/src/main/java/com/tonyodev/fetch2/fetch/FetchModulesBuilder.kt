@@ -25,7 +25,8 @@ object FetchModulesBuilder {
         return synchronized(lock) {
             val holder = holderMap[fetchConfiguration.namespace]
             val modules = if (holder != null) {
-                Modules(fetchConfiguration, holder.handlerWrapper, holder.databaseManager)
+                Modules(fetchConfiguration, holder.handlerWrapper, holder.databaseManager,
+                        holder.downloadManagerCoordinator, holder.listenerCoordinator)
             } else {
                 val newHandlerWrapper = HandlerWrapper(fetchConfiguration.namespace)
                 val newDatabaseManager = DatabaseManagerImpl(
@@ -33,8 +34,12 @@ object FetchModulesBuilder {
                         namespace = fetchConfiguration.namespace,
                         logger = fetchConfiguration.logger,
                         migrations = DownloadDatabase.getMigrations())
-                val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager)
-                holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager)
+                val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
+                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace)
+                val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager,
+                        downloadManagerCoordinator, listenerCoordinator)
+                holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager,
+                        downloadManagerCoordinator, listenerCoordinator)
                 newModules
             }
             modules.handlerWrapper.incrementUsageCounter()
@@ -49,18 +54,25 @@ object FetchModulesBuilder {
                 holder.handlerWrapper.decrementUsageCounter()
                 if (holder.handlerWrapper.usageCount() == 0) {
                     holder.handlerWrapper.close()
+                    holder.listenerCoordinator.clearAll()
                     holder.databaseManager.close()
+                    holder.downloadManagerCoordinator.clearAll()
                     holderMap.remove(namespace)
                 }
             }
         }
     }
 
-    data class Holder(val handlerWrapper: HandlerWrapper, val databaseManager: DatabaseManager)
+    data class Holder(val handlerWrapper: HandlerWrapper,
+                      val databaseManager: DatabaseManager,
+                      val downloadManagerCoordinator: DownloadManagerCoordinator,
+                      val listenerCoordinator: ListenerCoordinator)
 
     class Modules constructor(val fetchConfiguration: FetchConfiguration,
                               val handlerWrapper: HandlerWrapper,
-                              databaseManager: DatabaseManager) {
+                              databaseManager: DatabaseManager,
+                              downloadManagerCoordinator: DownloadManagerCoordinator,
+                              val listenerCoordinator: ListenerCoordinator) {
 
         private val downloadManager: DownloadManager
         private val priorityListProcessor: PriorityListProcessor<Download>
@@ -82,7 +94,8 @@ object FetchModulesBuilder {
                     uiHandler = uiHandler,
                     downloadInfoUpdater = downloadInfoUpdater,
                     fileTempDir = getFileTempDir(fetchConfiguration.appContext),
-                    namespace = fetchConfiguration.namespace)
+                    downloadManagerCoordinator = downloadManagerCoordinator,
+                    listenerCoordinator = listenerCoordinator)
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,
                     downloadProvider = downloadProvider,
@@ -98,7 +111,8 @@ object FetchModulesBuilder {
                     logger = fetchConfiguration.logger,
                     autoStart = fetchConfiguration.autoStart,
                     downloader = fetchConfiguration.downloader,
-                    fileTempDir = getFileTempDir(fetchConfiguration.appContext))
+                    fileTempDir = getFileTempDir(fetchConfiguration.appContext),
+                    listenerCoordinator = listenerCoordinator)
         }
 
     }

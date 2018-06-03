@@ -2,7 +2,7 @@ package com.tonyodev.fetch2;
 
 import android.support.test.runner.AndroidJUnit4;
 
-import com.tonyodev.fetch2.provider.ListenerProvider;
+import com.tonyodev.fetch2.fetch.ListenerCoordinator;
 
 import org.junit.After;
 import org.junit.Before;
@@ -15,11 +15,11 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(AndroidJUnit4.class)
 public class listenerProviderTest {
 
-    private ListenerProvider listenerProvider;
+    private ListenerCoordinator listenerProvider;
 
     @Before
     public void setUp() throws Exception {
-        listenerProvider = ListenerProvider.INSTANCE;
+        listenerProvider = new ListenerCoordinator("listenerprovider");
     }
 
     @Test

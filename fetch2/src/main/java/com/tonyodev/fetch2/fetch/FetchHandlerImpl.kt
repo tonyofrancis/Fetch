@@ -4,10 +4,10 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
-import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
 import java.io.File
+import java.util.*
 
 /**
  * This handlerWrapper class handles all tasks and operations of Fetch.
@@ -19,8 +19,10 @@ class FetchHandlerImpl(private val namespace: String,
                        private val logger: Logger,
                        private val autoStart: Boolean,
                        private val downloader: Downloader,
-                       private val fileTempDir: String) : FetchHandler {
+                       private val fileTempDir: String,
+                       private val listenerCoordinator: ListenerCoordinator) : FetchHandler {
 
+    private val listenerId = UUID.randomUUID().hashCode()
     private val listenerSet = mutableSetOf<FetchListener>()
 
     @Volatile
@@ -488,7 +490,7 @@ class FetchHandlerImpl(private val namespace: String,
         }
         isTerminating = true
         listenerSet.iterator().forEach {
-            ListenerProvider.removeListener(namespace, it)
+            listenerCoordinator.removeListener(listenerId, it)
         }
         listenerSet.clear()
         priorityListProcessor.stop()
@@ -512,7 +514,7 @@ class FetchHandlerImpl(private val namespace: String,
     override fun addListener(listener: FetchListener) {
         startPriorityQueueIfNotStarted()
         listenerSet.add(listener)
-        ListenerProvider.addListener(namespace, listener)
+        listenerCoordinator.addListener(listenerId, listener)
         logger.d("Added listener $listener")
     }
 
@@ -527,7 +529,7 @@ class FetchHandlerImpl(private val namespace: String,
                 break
             }
         }
-        ListenerProvider.removeListener(namespace, listener)
+        listenerCoordinator.removeListener(listenerId, listener)
     }
 
     override fun isDownloading(id: Int): Boolean {

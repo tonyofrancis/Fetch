@@ -1,6 +1,7 @@
 package com.tonyodev.fetchmigrator.helpers
 
 import android.database.Cursor
+import com.tonyodev.fetch2.EnqueueAction
 import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Status
@@ -31,6 +32,7 @@ fun v1CursorToV2DownloadInfo(cursor: Cursor): DownloadTransferPair {
     downloadInfo.headers = fromHeaderStringToMap(headers)
     downloadInfo.priority = getPriorityFromV1ForV2(priority)
     downloadInfo.error = getErrorFromV1ForV2(error)
+    downloadInfo.enqueueAction = EnqueueAction.REPLACE_EXISTING
     return DownloadTransferPair(downloadInfo, id)
 }
 

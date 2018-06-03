@@ -7,7 +7,7 @@ import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
 import com.tonyodev.fetch2.fetch.HandlerWrapper
-import com.tonyodev.fetch2.provider.ListenerProvider
+import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.util.FAILED_TO_ENQUEUE_REQUEST
 import com.tonyodev.fetch2.util.DOWNLOAD_NOT_FOUND
 import io.reactivex.Flowable
@@ -18,9 +18,10 @@ open class RxFetchImpl(namespace: String,
                        handlerWrapper: HandlerWrapper,
                        uiHandler: Handler,
                        fetchHandler: FetchHandler,
-                       logger: Logger)
+                       logger: Logger,
+                       listenerCoordinator: ListenerCoordinator)
     : FetchImpl(namespace, handlerWrapper, uiHandler,
-        fetchHandler, logger), RxFetch {
+        fetchHandler, logger, listenerCoordinator), RxFetch {
 
     protected val scheduler = AndroidSchedulers.from(handlerWrapper.getLooper())
     protected val uiSceduler = AndroidSchedulers.mainThread()
@@ -36,7 +37,7 @@ open class RxFetchImpl(namespace: String,
                         try {
                             download = fetchHandler.enqueue(it)
                             uiHandler.post {
-                                ListenerProvider.mainListener.onQueued(download)
+                                listenerCoordinator.mainListener.onQueued(download)
                                 logger.d("Queued $download for download")
                             }
                         } catch (e: Exception) {
@@ -61,7 +62,7 @@ open class RxFetchImpl(namespace: String,
                             downloads = fetchHandler.enqueue(it)
                             uiHandler.post {
                                 downloads.forEach {
-                                    ListenerProvider.mainListener.onQueued(it)
+                                    listenerCoordinator.mainListener.onQueued(it)
                                     logger.d("Queued $it for download")
                                 }
                             }
@@ -198,7 +199,8 @@ open class RxFetchImpl(namespace: String,
                     handlerWrapper = modules.handlerWrapper,
                     uiHandler = modules.uiHandler,
                     fetchHandler = modules.fetchHandler,
-                    logger = modules.fetchConfiguration.logger)
+                    logger = modules.fetchConfiguration.logger,
+                    listenerCoordinator = modules.listenerCoordinator)
         }
 
     }

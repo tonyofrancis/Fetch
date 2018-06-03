@@ -1,7 +1,6 @@
 package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.*
-import com.tonyodev.fetch2.provider.ListenerProvider
 import java.io.Closeable
 
 /**

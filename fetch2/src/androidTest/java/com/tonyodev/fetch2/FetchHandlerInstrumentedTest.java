@@ -14,14 +14,15 @@ import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
+import com.tonyodev.fetch2.fetch.DownloadManagerCoordinator;
 import com.tonyodev.fetch2.fetch.FetchHandler;
 import com.tonyodev.fetch2.fetch.FetchHandlerImpl;
 import com.tonyodev.fetch2.fetch.HandlerWrapper;
+import com.tonyodev.fetch2.fetch.ListenerCoordinator;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
 import com.tonyodev.fetch2.helper.PriorityListProcessor;
 import com.tonyodev.fetch2.helper.PriorityListProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
-import com.tonyodev.fetch2.provider.ListenerProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
@@ -69,9 +70,11 @@ public class FetchHandlerInstrumentedTest {
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchUtils.getFileTempDir(appContext);
+        final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                uiHandler, downloadInfoUpdater, tempDir, namespace);
+                uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator, listenerCoordinator);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handlerWrapper,
                 new DownloadProvider(databaseManager),
@@ -80,7 +83,7 @@ public class FetchHandlerInstrumentedTest {
                 fetchLogger);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
                 priorityListProcessorImpl, fetchLogger, autoStart,
-                client, tempDir, handlerWrapper);
+                client, tempDir, listenerCoordinator);
     }
 
     @Test

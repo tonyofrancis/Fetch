@@ -119,18 +119,17 @@ interface RxFetch : Fetch {
      * flowable*/
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): Convertible<List<Download>>
 
+    /**
+     * RX Fetch implementation class. Use this Singleton to get instances of RxFetch or Fetch.
+     * */
     companion object Impl {
-
-        private val lock = Any()
 
         /**
          * Sets the default Configuration settings on the default Fetch instance.
          * @param context context
          * */
         fun setDefaultInstanceConfiguration(context: Context) {
-            return synchronized(lock) {
-                Fetch.setDefaultInstanceConfiguration(context)
-            }
+            Fetch.setDefaultInstanceConfiguration(context)
         }
 
         /**
@@ -138,9 +137,17 @@ interface RxFetch : Fetch {
          * @param fetchConfiguration custom Fetch Configuration
          * */
         fun setDefaultInstanceConfiguration(fetchConfiguration: FetchConfiguration) {
-            synchronized(lock) {
-                Fetch.setDefaultInstanceConfiguration(fetchConfiguration)
-            }
+            Fetch.setDefaultInstanceConfiguration(fetchConfiguration)
+        }
+
+        /**
+         * Get the default Fetch Configuration set with setDefaultInstanceConfiguration(fetchConfiguration: FetchConfiguration)
+         * or setDefaultInstanceConfiguration(context: Context)
+         * @throws FetchException if default FetchConfiguration is not set.
+         * @return default FetchConfiguration
+         * */
+        fun getDefaultFetchConfiguration(): FetchConfiguration {
+            return Fetch.getDefaultFetchConfiguration()
         }
 
         /**
@@ -154,10 +161,8 @@ interface RxFetch : Fetch {
          * @return Get default RxFetch instance
          * */
         fun getDefaultRxInstance(): RxFetch {
-            return synchronized(lock) {
-                val config = Fetch.getDefaultFetchConfiguration()
-                RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(config))
-            }
+            val config = Fetch.getDefaultFetchConfiguration()
+            return RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(config))
         }
 
         /**

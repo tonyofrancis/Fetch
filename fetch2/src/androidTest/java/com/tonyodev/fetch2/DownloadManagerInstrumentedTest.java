@@ -13,8 +13,9 @@ import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
+import com.tonyodev.fetch2.fetch.DownloadManagerCoordinator;
+import com.tonyodev.fetch2.fetch.ListenerCoordinator;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
-import com.tonyodev.fetch2.provider.ListenerProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
@@ -56,9 +57,11 @@ public class DownloadManagerInstrumentedTest {
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchUtils.getFileTempDir(appContext);
+        final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                uiHandler, downloadInfoUpdater, tempDir, namespace);
+                uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator, listenerCoordinator);
     }
 
     @After
