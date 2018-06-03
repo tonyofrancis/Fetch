@@ -59,7 +59,4 @@ interface DownloadDao {
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_STATUS = :status ORDER BY $COLUMN_PRIORITY DESC, $COLUMN_CREATED ASC")
     fun getPendingDownloadsSorted(status: Status): List<DownloadInfo>
 
-    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_ID = :id OR $COLUMN_FILE = :file LIMIT 1")
-    fun contains(id: Int, file: String): DownloadInfo?
-
 }

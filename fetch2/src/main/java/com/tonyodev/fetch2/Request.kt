@@ -23,6 +23,13 @@ open class Request constructor(
              * downloaded to and saved on disk.*/
             file: String) : this((url.hashCode() * 31) + file.hashCode(), url, file)
 
+    /**
+     * Action used by Fetch when enqueuing a request and a previous request with the
+     * same file is already being managed. Default EnqueueAction.REPLACE_EXISTING
+     * which will replaces the existing request.
+     * */
+    var enqueueAction = EnqueueAction.REPLACE_EXISTING
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

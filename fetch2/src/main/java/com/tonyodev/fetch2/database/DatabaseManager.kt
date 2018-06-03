@@ -27,5 +27,4 @@ interface DatabaseManager : Closeable {
     fun getByGroup(group: Int): List<DownloadInfo>
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<DownloadInfo>
     fun getPendingDownloadsSorted(): List<DownloadInfo>
-    fun contains(id: Int, file: String): Boolean
 }

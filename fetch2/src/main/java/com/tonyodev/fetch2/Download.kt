@@ -73,4 +73,11 @@ interface Download {
     /** Gets the tag associated with this download.*/
     val tag: String?
 
+    /**
+     * Action used by Fetch when enqueuing a request and a previous request with the
+     * same file is already being managed. Default EnqueueAction.REPLACE_EXISTING
+     * which will replaces the existing request.
+     * */
+    val enqueueAction: EnqueueAction
+
 }

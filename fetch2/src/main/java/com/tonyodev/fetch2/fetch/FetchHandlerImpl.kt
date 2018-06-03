@@ -45,7 +45,13 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
-        if (databaseManager.contains(downloadInfo.id, downloadInfo.file)) {
+        val existingDownload = databaseManager.getByFile(downloadInfo.file)
+        if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
+            if (canCancelDownload(existingDownload)) {
+                downloadManager.cancel(downloadInfo.id)
+            }
+            databaseManager.delete(existingDownload)
+        } else if (downloadInfo.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME && existingDownload != null) {
             val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
             val generatedId = getUniqueId(downloadInfo.url, downloadInfo.file)
             downloadInfo.file = file.absolutePath

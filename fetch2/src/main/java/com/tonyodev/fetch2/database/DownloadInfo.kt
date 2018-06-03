@@ -4,12 +4,7 @@ import android.arch.persistence.room.ColumnInfo
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.Index
 import android.arch.persistence.room.PrimaryKey
-import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Priority
-import com.tonyodev.fetch2.Status
-import com.tonyodev.fetch2.Error
-import com.tonyodev.fetch2.NetworkType
-import com.tonyodev.fetch2.Request
+import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.util.*
 
 
@@ -61,6 +56,9 @@ class DownloadInfo : Download {
     @ColumnInfo(name = DownloadDatabase.COLUMN_TAG)
     override var tag: String? = null
 
+    @ColumnInfo(name = DownloadDatabase.COLUMN_ENQUEUE_ACTION)
+    override var enqueueAction: EnqueueAction = EnqueueAction.REPLACE_EXISTING
+
     override val progress: Int
         get() {
             return calculateProgress(downloaded, total)
@@ -73,6 +71,7 @@ class DownloadInfo : Download {
             request.headers.putAll(headers)
             request.networkType = networkType
             request.priority = priority
+            request.enqueueAction = enqueueAction
             return request
         }
 
@@ -83,9 +82,7 @@ class DownloadInfo : Download {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-
         other as DownloadInfo
-
         if (id != other.id) return false
         if (namespace != other.namespace) return false
         if (url != other.url) return false
@@ -100,6 +97,7 @@ class DownloadInfo : Download {
         if (networkType != other.networkType) return false
         if (created != other.created) return false
         if (tag != other.tag) return false
+        if (enqueueAction != other.enqueueAction) return false
 
         return true
     }
@@ -119,13 +117,16 @@ class DownloadInfo : Download {
         result = 31 * result + networkType.hashCode()
         result = 31 * result + created.hashCode()
         result = 31 * result + (tag?.hashCode() ?: 0)
+        result = 31 * result + enqueueAction.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "Download(id=$id, namespace='$namespace', url='$url', file='$file', group=$group," +
-                " priority=$priority, headers=$headers, downloaded=$downloaded, total=$total, status=$status," +
-                " error=$error, networkType=$networkType, created=$created, tag=$tag)"
+        return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file'," +
+                " group=$group, priority=$priority, headers=$headers, downloaded=$downloaded, " +
+                "total=$total, status=$status, error=$error, networkType=$networkType, " +
+                "created=$created, tag=$tag, enqueueAction=$enqueueAction)"
     }
+
 
 }

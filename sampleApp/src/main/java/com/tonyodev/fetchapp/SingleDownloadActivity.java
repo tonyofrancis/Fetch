@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.tonyodev.fetch2.Download;
+import com.tonyodev.fetch2.EnqueueAction;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;

@@ -194,14 +194,6 @@ class DatabaseManagerImpl constructor(context: Context,
         }
     }
 
-    override fun contains(id: Int, file: String): Boolean {
-        return synchronized(lock) {
-            throwExceptionIfClosed()
-            val download = requestDatabase.requestDao().contains(id, file)
-            download != null
-        }
-    }
-
     override fun close() {
         synchronized(lock) {
             if (closed) {

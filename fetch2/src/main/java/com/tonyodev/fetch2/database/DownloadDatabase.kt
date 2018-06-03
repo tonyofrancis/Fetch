@@ -6,6 +6,7 @@ import android.arch.persistence.room.TypeConverters
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.DATABASE_VERSION
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.database.migration.MigrationOneToTwo
+import com.tonyodev.fetch2.database.migration.MigrationTwoToThree
 
 @Database(entities = [DownloadInfo::class], version = DATABASE_VERSION, exportSchema = false)
 @TypeConverters(value = [Converter::class])
@@ -33,12 +34,13 @@ abstract class DownloadDatabase : RoomDatabase() {
         const val COLUMN_NETWORK_TYPE = "_network_type"
         const val COLUMN_CREATED = "_created"
         const val COLUMN_TAG = "_tag"
-        const val OLD_DATABASE_VERSION = 1
-        const val DATABASE_VERSION = 2
+        const val COLUMN_ENQUEUE_ACTION = "_enqueue_action"
+        const val OLD_DATABASE_VERSION = 2
+        const val DATABASE_VERSION = 3
 
         @JvmStatic
         fun getMigrations(): Array<Migration> {
-            return arrayOf(MigrationOneToTwo())
+            return arrayOf(MigrationOneToTwo(), MigrationTwoToThree())
         }
 
     }
