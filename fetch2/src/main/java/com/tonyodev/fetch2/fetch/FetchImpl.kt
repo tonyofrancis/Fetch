@@ -12,7 +12,6 @@ open class FetchImpl constructor(override val namespace: String,
                                  protected val handlerWrapper: HandlerWrapper,
                                  protected val uiHandler: Handler,
                                  val fetchHandler: FetchHandler,
-                                 protected val fetchListenerProvider: ListenerProvider,
                                  protected val logger: Logger) : Fetch {
 
     protected val lock = Object()
@@ -39,7 +38,7 @@ open class FetchImpl constructor(override val namespace: String,
                         }
                     }
                     uiHandler.post {
-                        fetchListenerProvider.mainListener.onQueued(download)
+                        ListenerProvider.mainListener.onQueued(download)
                         logger.d("Queued $download for download")
                     }
                 } catch (e: Exception) {
@@ -69,7 +68,7 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                     uiHandler.post {
                         downloads.forEach {
-                            fetchListenerProvider.mainListener.onQueued(it)
+                            ListenerProvider.mainListener.onQueued(it)
                             logger.d("Queued $it for download")
                         }
                     }
@@ -97,7 +96,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Paused download $it")
-                            fetchListenerProvider.mainListener.onPaused(it)
+                            ListenerProvider.mainListener.onPaused(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -117,7 +116,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Paused download $it")
-                            fetchListenerProvider.mainListener.onPaused(it)
+                            ListenerProvider.mainListener.onPaused(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -165,7 +164,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Resumed download $it")
-                            fetchListenerProvider.mainListener.onResumed(it)
+                            ListenerProvider.mainListener.onResumed(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -185,7 +184,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Resumed download $it")
-                            fetchListenerProvider.mainListener.onResumed(it)
+                            ListenerProvider.mainListener.onResumed(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -205,7 +204,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Removed download $it")
-                            fetchListenerProvider.mainListener.onRemoved(it)
+                            ListenerProvider.mainListener.onRemoved(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -225,7 +224,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Removed download $it")
-                            fetchListenerProvider.mainListener.onRemoved(it)
+                            ListenerProvider.mainListener.onRemoved(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -245,7 +244,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Removed download $it")
-                            fetchListenerProvider.mainListener.onRemoved(it)
+                            ListenerProvider.mainListener.onRemoved(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -265,7 +264,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Removed download $it")
-                            fetchListenerProvider.mainListener.onRemoved(it)
+                            ListenerProvider.mainListener.onRemoved(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -285,7 +284,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Deleted download $it")
-                            fetchListenerProvider.mainListener.onDeleted(it)
+                            ListenerProvider.mainListener.onDeleted(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -305,7 +304,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Deleted download $it")
-                            fetchListenerProvider.mainListener.onDeleted(it)
+                            ListenerProvider.mainListener.onDeleted(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -325,7 +324,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Deleted download $it")
-                            fetchListenerProvider.mainListener.onDeleted(it)
+                            ListenerProvider.mainListener.onDeleted(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -345,7 +344,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Deleted download $it")
-                            fetchListenerProvider.mainListener.onDeleted(it)
+                            ListenerProvider.mainListener.onDeleted(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -365,7 +364,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Cancelled download $it")
-                            fetchListenerProvider.mainListener.onCancelled(it)
+                            ListenerProvider.mainListener.onCancelled(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -385,7 +384,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Cancelled download $it")
-                            fetchListenerProvider.mainListener.onCancelled(it)
+                            ListenerProvider.mainListener.onCancelled(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -406,7 +405,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Cancelled download $it")
-                            fetchListenerProvider.mainListener.onCancelled(it)
+                            ListenerProvider.mainListener.onCancelled(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -426,7 +425,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Queued $it for download")
-                            fetchListenerProvider.mainListener.onQueued(it)
+                            ListenerProvider.mainListener.onQueued(it)
                         }
                     }
                 } catch (e: FetchException) {
@@ -646,7 +645,6 @@ open class FetchImpl constructor(override val namespace: String,
                     handlerWrapper = modules.handlerWrapper,
                     uiHandler = modules.uiHandler,
                     fetchHandler = modules.fetchHandler,
-                    fetchListenerProvider = modules.fetchListenerProvider,
                     logger = modules.fetchConfiguration.logger)
         }
 

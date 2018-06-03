@@ -9,8 +9,6 @@ import java.io.Closeable
  * */
 interface FetchHandler : Closeable {
 
-    val fetchListenerProvider: ListenerProvider
-
     fun init()
     fun enqueue(request: Request): Download
     fun enqueue(requests: List<Request>): List<Download>

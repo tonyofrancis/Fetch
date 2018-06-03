@@ -70,7 +70,6 @@ object FetchModulesBuilder {
         private val networkInfoProvider = NetworkInfoProvider(fetchConfiguration.appContext)
         val fetchHandler: FetchHandler
         val uiHandler = Handler(Looper.getMainLooper())
-        val fetchListenerProvider = ListenerProvider()
 
         init {
             downloadManager = DownloadManagerImpl(
@@ -81,7 +80,6 @@ object FetchModulesBuilder {
                     logger = fetchConfiguration.logger,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = fetchConfiguration.retryOnNetworkGain,
-                    fetchListenerProvider = fetchListenerProvider,
                     uiHandler = uiHandler,
                     downloadInfoUpdater = downloadInfoUpdater,
                     fileTempDir = getFileTempDir(fetchConfiguration.appContext),
@@ -98,7 +96,6 @@ object FetchModulesBuilder {
                     databaseManager = databaseManager,
                     downloadManager = downloadManager,
                     priorityListProcessor = priorityListProcessor,
-                    fetchListenerProvider = fetchListenerProvider,
                     logger = fetchConfiguration.logger,
                     autoStart = fetchConfiguration.autoStart,
                     downloader = fetchConfiguration.downloader,

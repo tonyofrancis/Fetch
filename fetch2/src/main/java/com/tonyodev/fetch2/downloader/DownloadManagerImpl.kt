@@ -19,7 +19,6 @@ class DownloadManagerImpl(private val downloader: Downloader,
                           private val logger: Logger,
                           private val networkInfoProvider: NetworkInfoProvider,
                           private val retryOnNetworkGain: Boolean,
-                          private val fetchListenerProvider: ListenerProvider,
                           private val uiHandler: Handler,
                           private val downloadInfoUpdater: DownloadInfoUpdater,
                           private val fileTempDir: String,
@@ -117,16 +116,18 @@ class DownloadManagerImpl(private val downloader: Downloader,
     }
 
     override fun terminateAllDownloads() {
-        currentDownloadsMap.iterator().forEach {
-            it.value.terminated = true
-            while (!it.value.terminated) {
-                //Wait until download runnable terminates
+        synchronized(lock) {
+            currentDownloadsMap.iterator().forEach {
+                it.value.terminated = true
+                while (!it.value.terminated) {
+                    //Wait until download runnable terminates
+                }
+                logger.d("DownloadManager terminated download ${it.value.download}")
+                removeFileDownloaderFromRegistry(namespace, it.key)
             }
-            logger.d("DownloadManager terminated download ${it.value.download}")
-            removeFileDownloaderFromRegistry(namespace, it.key)
+            currentDownloadsMap.clear()
+            downloadCounter = 0
         }
-        currentDownloadsMap.clear()
-        downloadCounter = 0
     }
 
     override fun close() {
@@ -205,7 +206,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
         return FileDownloaderDelegate(
                 downloadInfoUpdater = downloadInfoUpdater,
                 uiHandler = uiHandler,
-                fetchListener = fetchListenerProvider.mainListener,
+                fetchListener = ListenerProvider.mainListener,
                 logger = logger,
                 retryOnNetworkGain = retryOnNetworkGain)
     }

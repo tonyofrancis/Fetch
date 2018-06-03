@@ -18,10 +18,9 @@ open class RxFetchImpl(namespace: String,
                        handlerWrapper: HandlerWrapper,
                        uiHandler: Handler,
                        fetchHandler: FetchHandler,
-                       fetchListenerProvider: ListenerProvider,
                        logger: Logger)
     : FetchImpl(namespace, handlerWrapper, uiHandler,
-        fetchHandler, fetchListenerProvider, logger), RxFetch {
+        fetchHandler, logger), RxFetch {
 
     protected val scheduler = AndroidSchedulers.from(handlerWrapper.getLooper())
     protected val uiSceduler = AndroidSchedulers.mainThread()
@@ -37,7 +36,7 @@ open class RxFetchImpl(namespace: String,
                         try {
                             download = fetchHandler.enqueue(it)
                             uiHandler.post {
-                                fetchListenerProvider.mainListener.onQueued(download)
+                                ListenerProvider.mainListener.onQueued(download)
                                 logger.d("Queued $download for download")
                             }
                         } catch (e: Exception) {
@@ -62,7 +61,7 @@ open class RxFetchImpl(namespace: String,
                             downloads = fetchHandler.enqueue(it)
                             uiHandler.post {
                                 downloads.forEach {
-                                    fetchListenerProvider.mainListener.onQueued(it)
+                                    ListenerProvider.mainListener.onQueued(it)
                                     logger.d("Queued $it for download")
                                 }
                             }
@@ -136,8 +135,8 @@ open class RxFetchImpl(namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         throwExceptionIfClosed()
-                        val download = fetchHandler.getDownload(it) ?:
-                                throw FetchException(DOWNLOAD_NOT_FOUND)
+                        val download = fetchHandler.getDownload(it)
+                                ?: throw FetchException(DOWNLOAD_NOT_FOUND)
                         Flowable.just(download)
                     }
                     .observeOn(uiSceduler)
@@ -199,7 +198,6 @@ open class RxFetchImpl(namespace: String,
                     handlerWrapper = modules.handlerWrapper,
                     uiHandler = modules.uiHandler,
                     fetchHandler = modules.fetchHandler,
-                    fetchListenerProvider = modules.fetchListenerProvider,
                     logger = modules.fetchConfiguration.logger)
         }
 

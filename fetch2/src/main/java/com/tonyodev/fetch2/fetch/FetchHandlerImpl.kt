@@ -16,12 +16,13 @@ class FetchHandlerImpl(private val namespace: String,
                        private val databaseManager: DatabaseManager,
                        private val downloadManager: DownloadManager,
                        private val priorityListProcessor: PriorityListProcessor<Download>,
-                       override val fetchListenerProvider: ListenerProvider,
                        private val logger: Logger,
                        private val autoStart: Boolean,
                        private val downloader: Downloader,
                        private val fileTempDir: String,
                        private val handlerWrapper: HandlerWrapper) : FetchHandler {
+
+    private val listenerSet = mutableSetOf<FetchListener>()
 
     @Volatile
     private var isTerminating = false
@@ -480,7 +481,10 @@ class FetchHandlerImpl(private val namespace: String,
             return
         }
         isTerminating = true
-        fetchListenerProvider.listeners.clear()
+        listenerSet.iterator().forEach {
+            ListenerProvider.removeListener(namespace, it)
+        }
+        listenerSet.clear()
         priorityListProcessor.stop()
         handlerWrapper.post {
             downloadManager.close()
@@ -503,20 +507,23 @@ class FetchHandlerImpl(private val namespace: String,
 
     override fun addListener(listener: FetchListener) {
         startPriorityQueueIfNotStarted()
-        fetchListenerProvider.listeners.add(listener)
+        listenerSet.add(listener)
+        ListenerProvider.addListener(namespace, listener)
         logger.d("Added listener $listener")
     }
 
     override fun removeListener(listener: FetchListener) {
         startPriorityQueueIfNotStarted()
-        val iterator = fetchListenerProvider.listeners.iterator()
+        val iterator = listenerSet.iterator()
         while (iterator.hasNext()) {
-            if (iterator.next() == listener) {
-                logger.d("Removed listener $listener")
+            val fetchListener = iterator.next()
+            if (fetchListener == listener) {
                 iterator.remove()
+                logger.d("Removed listener $listener")
                 break
             }
         }
+        ListenerProvider.removeListener(namespace, listener)
     }
 
     override fun isDownloading(id: Int): Boolean {

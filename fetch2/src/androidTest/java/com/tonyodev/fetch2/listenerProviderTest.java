@@ -19,7 +19,7 @@ public class listenerProviderTest {
 
     @Before
     public void setUp() throws Exception {
-        listenerProvider = new ListenerProvider();
+        listenerProvider = ListenerProvider.INSTANCE;
     }
 
     @Test

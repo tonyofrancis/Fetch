@@ -53,13 +53,12 @@ public class DownloadManagerInstrumentedTest {
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
-        final ListenerProvider listenerProvider = new ListenerProvider();
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchUtils.getFileTempDir(appContext);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                listenerProvider, uiHandler, downloadInfoUpdater, tempDir, namespace);
+                uiHandler, downloadInfoUpdater, tempDir, namespace);
     }
 
     @After
