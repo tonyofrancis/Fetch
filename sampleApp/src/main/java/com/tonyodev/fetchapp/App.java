@@ -18,7 +18,6 @@ public class App extends Application {
             Timber.plant(new Timber.DebugTree());
         }
         final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
-                .enableLogging(true)
                 .enableRetryOnNetworkGain(true)
                 .setDownloadConcurrentLimit(3)
                 .setDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))

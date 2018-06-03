@@ -36,7 +36,6 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     private TextView etaTextView;
     private TextView downloadSpeedTextView;
 
-    @Nullable
     private Request request;
     private Fetch fetch;
 
@@ -82,32 +81,28 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
 
     private void checkStoragePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}
-                    , STORAGE_PERMISSION_CODE);
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
         } else {
             enqueueDownload();
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             enqueueDownload();
         } else {
-            Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_LONG)
-                    .show();
+            Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_LONG).show();
         }
     }
 
     private void enqueueDownload() {
         final String url = Data.sampleUrls[0];
         final String filePath = Data.getSaveDir() + "/movies/buckbunny_singleDownloadActivity.m4v";
-        final Request initialRequest = new Request(url, filePath);
-        fetch.enqueue(initialRequest, download -> {
-            //If we are using Request Options with Fetch, the download.getRequest() object ID and File values may be different
-            // from the initialRequest. It's always best to update your request references with download.getRequest()
+        request = new Request(url, filePath);
+        fetch.enqueue(request, download -> {
+            // Update your request references with download.getRequest(). The request id and file
+            //may have changed if you selected EnqueueAction.REPLACE_EXISTING
             request = download.getRequest(); //updated request
             setTitleView(download.getFile());
             setProgressView(download.getStatus(), download.getProgress());
@@ -130,8 +125,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
                 if (progress == -1) {
                     progressTextView.setText(R.string.downloading);
                 } else {
-                    final String progressString = getResources()
-                            .getString(R.string.percent_progress, progress);
+                    final String progressString = getResources().getString(R.string.percent_progress, progress);
                     progressTextView.setText(progressString);
                 }
                 break;
@@ -144,22 +138,18 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     private void showDownloadErrorSnackBar(@NotNull Error error) {
-        final Snackbar snackbar = Snackbar.make(mainView, "Download Failed: ErrorCode: "
-                + error, Snackbar.LENGTH_INDEFINITE);
+        final Snackbar snackbar = Snackbar.make(mainView, "Download Failed: ErrorCode: " + error, Snackbar.LENGTH_INDEFINITE);
         snackbar.setAction(R.string.retry, v -> {
-            if (request != null) {
-                fetch.retry(request.getId());
-                snackbar.dismiss();
-            }
+            fetch.retry(request.getId());
+            snackbar.dismiss();
         });
         snackbar.show();
     }
 
     private void updateViews(@NotNull Download download, long etaInMillis, long downloadedBytesPerSecond, @Nullable Error error) {
-        if (request != null && request.getId() == download.getId()) {
+        if (request.getId() == download.getId()) {
             setProgressView(download.getStatus(), download.getProgress());
-            etaTextView.setText(Utils
-                    .getETAString(this, etaInMillis));
+            etaTextView.setText(Utils.getETAString(this, etaInMillis));
             downloadSpeedTextView.setText(Utils.getDownloadSpeedString(this, downloadedBytesPerSecond));
             if (error != null) {
                 showDownloadErrorSnackBar(download.getError());

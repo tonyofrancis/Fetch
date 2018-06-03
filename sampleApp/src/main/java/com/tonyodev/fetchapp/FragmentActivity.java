@@ -31,8 +31,6 @@ public class FragmentActivity extends AppCompatActivity {
     private ProgressFragment progressFragment2;
 
     private Fetch fetch;
-
-    @Nullable
     private Request request;
 
     @Override
@@ -45,10 +43,7 @@ public class FragmentActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             progressFragment1 = new ProgressFragment();
             progressFragment2 = new ProgressFragment();
-            fragmentManager.beginTransaction()
-                    .add(R.id.fragment1, progressFragment1)
-                    .add(R.id.fragment2, progressFragment2)
-                    .commit();
+            fragmentManager.beginTransaction().add(R.id.fragment1, progressFragment1).add(R.id.fragment2, progressFragment2).commit();
         } else {
             progressFragment1 = (ProgressFragment) fragmentManager.findFragmentById(R.id.fragment1);
             progressFragment2 = (ProgressFragment) fragmentManager.findFragmentById(R.id.fragment2);
@@ -72,8 +67,7 @@ public class FragmentActivity extends AppCompatActivity {
 
     private void checkStoragePermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}
-                    , STORAGE_PERMISSION_CODE);
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
         } else {
             enqueueDownload();
         }
@@ -82,24 +76,19 @@ public class FragmentActivity extends AppCompatActivity {
     private void enqueueDownload() {
         final String url = Data.sampleUrls[0];
         final String filePath = Data.getSaveDir() + "/fragments/movie.mp4";
-        final Request initialRequest = new Request(url, filePath);
-        fetch.enqueue(initialRequest, this::setRequestForFragments, error -> {
+        request = new Request(url, filePath);
+        fetch.enqueue(request, this::setRequestForFragments, error -> {
             Timber.d("FragmentActivity Error: %1$s", error.toString());
-            Snackbar.make(rootView, R.string.enqueue_error, Snackbar.LENGTH_INDEFINITE)
-                    .show();
+            Snackbar.make(rootView, R.string.enqueue_error, Snackbar.LENGTH_INDEFINITE).show();
         });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (progressFragment1 != null) {
-            fetch.addListener(progressFragment1);
-        }
-        if (progressFragment2 != null) {
-            fetch.addListener(progressFragment2);
-        }
-        fetch.addListener(fetchListener);
+        fetch.addListener(progressFragment1)
+                .addListener(progressFragment2)
+                .addListener(fetchListener);
         if (request != null) {
             fetch.getDownload(request.getId(), download -> {
                 if (download != null) {
@@ -112,24 +101,23 @@ public class FragmentActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (progressFragment1 != null) {
-            fetch.removeListener(progressFragment1);
-        }
-        if (progressFragment2 != null) {
-            fetch.removeListener(progressFragment2);
-        }
-        fetch.removeListener(fetchListener);
+        fetch.removeListener(progressFragment1)
+                .removeListener(progressFragment2)
+                .removeListener(fetchListener);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+    protected void onDestroy() {
+        super.onDestroy();
+        fetch.close();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             enqueueDownload();
         } else {
-            Snackbar.make(rootView, R.string.permission_not_enabled, Snackbar.LENGTH_LONG)
-                    .show();
+            Snackbar.make(rootView, R.string.permission_not_enabled, Snackbar.LENGTH_LONG).show();
         }
     }
 
@@ -138,8 +126,7 @@ public class FragmentActivity extends AppCompatActivity {
         @Override
         public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
             if (request != null && request.getId() == download.getId()) {
-                Timber.d("FragmentActivity id: %1$d, status: %2$s, progress: %3$d, error: %4$s", download.getId(), download.getStatus(),
-                        download.getProgress(), download.getError());
+                Timber.d("FragmentActivity id: %1$d, status: %2$s, progress: %3$d, error: %4$s", download.getId(), download.getStatus(), download.getProgress(), download.getError());
             }
         }
 

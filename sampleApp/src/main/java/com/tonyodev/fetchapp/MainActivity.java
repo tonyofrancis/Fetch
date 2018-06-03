@@ -56,8 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.deleteAllButton).setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}
-                        , STORAGE_PERMISSION_CODE);
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
             } else {
                 deleteDownloadedFiles();
             }
@@ -65,40 +64,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deleteDownloadedFiles() {
-        final String[] namespaces = new String[]{
-                DownloadListActivity.FETCH_NAMESPACE,
-                FailedMultiEnqueueActivity.FETCH_NAMESPACE
-        };
+        final String[] namespaces = new String[]{DownloadListActivity.FETCH_NAMESPACE, FailedMultiEnqueueActivity.FETCH_NAMESPACE};
         for (String namespace : namespaces) {
-            final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
-                    .setNamespace(namespace)
-                    .build();
-            final Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
-            fetch.deleteAll();
-            fetch.close();
+            final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this).setNamespace(namespace).build();
+            Fetch.Impl.getInstance(fetchConfiguration).deleteAll().close();
         }
-        Fetch.Impl.getDefaultInstance().deleteAll();
-        RxFetch.Impl.getDefaultRxInstance().deleteAll();
+        Fetch.Impl.getDefaultInstance().deleteAll().close();
+        RxFetch.Impl.getDefaultRxInstance().deleteAll().close();
         try {
             final File fetchDir = new File(Data.getSaveDir());
             Utils.deleteFileAndContents(fetchDir);
-            Toast.makeText(MainActivity.this,
-                    R.string.downloaded_files_deleted, Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, R.string.downloaded_files_deleted, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             deleteDownloadedFiles();
         } else {
-            Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_INDEFINITE)
-                    .show();
+            Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_INDEFINITE).show();
         }
     }
 }

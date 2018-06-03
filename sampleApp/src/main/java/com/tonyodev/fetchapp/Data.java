@@ -15,6 +15,7 @@ import java.util.UUID;
 public final class Data {
 
     public static final String[] sampleUrls = new String[]{
+            "http://speedtest.ftp.otenet.gr/files/test100Mb.db",
             "http://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v",
             "http://media.mongodb.org/zips.json",
             "http://www.example/some/unknown/123/Errorlink.txt",
@@ -30,7 +31,7 @@ public final class Data {
     public static List<Request> getFetchRequests() {
         final List<Request> requests = new ArrayList<>();
         for (String sampleUrl : sampleUrls) {
-            final Request request = new Request(UUID.randomUUID().hashCode(), sampleUrl, getFilePath(sampleUrl));
+            final Request request = new Request(sampleUrl, getFilePath(sampleUrl));
             requests.add(request);
         }
         return requests;

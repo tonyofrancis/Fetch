@@ -42,20 +42,18 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     private View mainView;
     private FileAdapter fileAdapter;
     private Fetch fetch;
-    private FetchConfiguration fetchConfiguration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_download_list);
         setUpViews();
-        fetchConfiguration = new FetchConfiguration.Builder(this)
+        final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
                 .setDownloadConcurrentLimit(4)
                 .setDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))
                 .setNamespace(FETCH_NAMESPACE)
                 .build();
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
-        fetch.deleteAll();
         checkStoragePermissions();
     }
 
@@ -148,42 +146,30 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
 
     private void checkStoragePermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    STORAGE_PERMISSION_CODE);
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
         } else {
             enqueueDownloads();
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             enqueueDownloads();
         } else {
-            Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_INDEFINITE)
-                    .show();
+            Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_INDEFINITE).show();
         }
     }
 
     private void enqueueDownloads() {
-        final List<Request> initialRequests = Data.getFetchRequestWithGroupId(GROUP_ID);
-        fetch.enqueue(initialRequests, downloads -> {
+        final List<Request> requests = Data.getFetchRequestWithGroupId(GROUP_ID);
+        fetch.enqueue(requests, downloads -> {
             for (Download download : downloads) {
                 fileAdapter.addDownload(download);
             }
         }, error -> Timber.d("DownloadListActivity Error: %1$s", error.toString()));
-        Fetch.Impl.getInstance(fetchConfiguration)
-                .addListener(new AbstractFetchListener() {
-                    @Override
-                    public void onDeleted(@NotNull Download download) {
-                        super.onDeleted(download);
-                        Timber.d("Download Deleted " + download.toString());
-                    }
-                })
-                .deleteAll();
+
     }
 
     @Override
