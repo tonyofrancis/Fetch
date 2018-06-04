@@ -190,9 +190,9 @@ public class GameFilesActivity extends AppCompatActivity {
         for (Request request : requestList) {
             request.setGroupId(groupId);
         }
-        enqueueDisposable = rxFetch.enqueue(requestList).asFlowable().subscribe(downloads -> {
-            for (Download download : downloads) {
-                fileProgressMap.put(download.getId(), 0);
+        enqueueDisposable = rxFetch.enqueue(requestList).asFlowable().subscribe(updatedRequests -> {
+            for (Request request : updatedRequests) {
+                fileProgressMap.put(request.getId(), 0);
                 updateUIWithProgress();
             }
         }, throwable -> {

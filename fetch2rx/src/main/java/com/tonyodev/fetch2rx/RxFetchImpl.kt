@@ -26,7 +26,7 @@ open class RxFetchImpl(namespace: String,
     protected val scheduler = AndroidSchedulers.from(handlerWrapper.getLooper())
     protected val uiSceduler = AndroidSchedulers.mainThread()
 
-    override fun enqueue(request: Request): Convertible<Download> {
+    override fun enqueue(request: Request): Convertible<Request> {
         synchronized(lock) {
             throwExceptionIfClosed()
             val flowable = Flowable.just(request)
@@ -43,14 +43,14 @@ open class RxFetchImpl(namespace: String,
                         } catch (e: Exception) {
                             throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
                         }
-                        Flowable.just(download)
+                        Flowable.just(download.request)
                     }
                     .observeOn(uiSceduler)
             return Convertible(flowable)
         }
     }
 
-    override fun enqueue(requests: List<Request>): Convertible<List<Download>> {
+    override fun enqueue(requests: List<Request>): Convertible<List<Request>> {
         synchronized(lock) {
             throwExceptionIfClosed()
             val flowable = Flowable.just(requests)
@@ -69,7 +69,7 @@ open class RxFetchImpl(namespace: String,
                         } catch (e: Exception) {
                             throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
                         }
-                        Flowable.just(downloads)
+                        Flowable.just(downloads.map { it.request })
                     }
                     .observeOn(uiSceduler)
             return Convertible(flowable)

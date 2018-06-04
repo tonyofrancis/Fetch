@@ -26,7 +26,7 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
-    override fun enqueue(request: Request, func: Func<Download>?, func2: Func<Error>?): Fetch {
+    override fun enqueue(request: Request, func: Func<Request>?, func2: Func<Error>?): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
@@ -34,7 +34,7 @@ open class FetchImpl constructor(override val namespace: String,
                     val download = fetchHandler.enqueue(request)
                     if (func != null) {
                         uiHandler.post {
-                            func.call(download)
+                            func.call(download.request)
                         }
                     }
                     uiHandler.post {
@@ -55,7 +55,7 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
-    override fun enqueue(requests: List<Request>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+    override fun enqueue(requests: List<Request>, func: Func<List<Request>>?, func2: Func<Error>?): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
@@ -63,7 +63,7 @@ open class FetchImpl constructor(override val namespace: String,
                     val downloads = fetchHandler.enqueue(requests)
                     if (func != null) {
                         uiHandler.post {
-                            func.call(downloads)
+                            func.call(downloads.map { it.request })
                         }
                     }
                     uiHandler.post {

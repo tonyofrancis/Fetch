@@ -100,6 +100,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
     private final FetchListener fetchListener = new AbstractFetchListener() {
         @Override
         public void onQueued(@NotNull Download download) {
+            fileAdapter.addDownload(download);
             fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }
 
@@ -164,10 +165,8 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
 
     private void enqueueDownloads() {
         final List<Request> requests = Data.getFetchRequestWithGroupId(GROUP_ID);
-        fetch.enqueue(requests, downloads -> {
-            for (Download download : downloads) {
-                fileAdapter.addDownload(download);
-            }
+        fetch.enqueue(requests, updatedRequests -> {
+
         }, error -> Timber.d("DownloadListActivity Error: %1$s", error.toString()));
 
     }

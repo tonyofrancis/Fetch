@@ -52,9 +52,6 @@ public class FragmentActivity extends AppCompatActivity {
     }
 
     private void setRequestForFragments(@NotNull final Download download) {
-        //If we are using Request Options with Fetch, the download.getRequest() object ID and File values may be different
-        // from the initialRequest. It's always best to update your request references with download.getRequest()
-        request = download.getRequest(); // update request
         if (progressFragment1 != null) {
             progressFragment1.setRequest(request);
             progressFragment1.updateProgress(download.getProgress());
@@ -77,7 +74,9 @@ public class FragmentActivity extends AppCompatActivity {
         final String url = Data.sampleUrls[0];
         final String filePath = Data.getSaveDir() + "/fragments/movie.mp4";
         request = new Request(url, filePath);
-        fetch.enqueue(request, this::setRequestForFragments, error -> {
+        fetch.enqueue(request, updatedRequest -> {
+            request = updatedRequest;
+        }, error -> {
             Timber.d("FragmentActivity Error: %1$s", error.toString());
             Snackbar.make(rootView, R.string.enqueue_error, Snackbar.LENGTH_INDEFINITE).show();
         });
@@ -122,6 +121,12 @@ public class FragmentActivity extends AppCompatActivity {
     }
 
     private final FetchListener fetchListener = new AbstractFetchListener() {
+
+        @Override
+        public void onQueued(@NotNull Download download) {
+            super.onQueued(download);
+            setRequestForFragments(download);
+        }
 
         @Override
         public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {

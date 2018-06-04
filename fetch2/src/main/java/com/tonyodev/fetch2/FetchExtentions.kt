@@ -11,17 +11,16 @@ import com.tonyodev.fetch2.exception.FetchException
  * 2. Fetch is already managing the same request. This means that a request with the same url
  * and file name is already managed.
  * @param request Download Request
- * @param func Callback that the enqueued download results will be returned on.
- *             If using Request Options with Fetch, the download object file and ID values may be different
- *             from the initial request object file and ID values when enqueuing.
- *             Update all external references accordingly.
+ * @param func Callback that the enqueued request will be returned on.
+ *             Fetch may update a request depending on the initial request's Enqueue Action.
+ *             Update old request references with this request.
  * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
  * @throws FetchException if this instance of Fetch has been closed.
  * @return Instance
  * */
-fun Fetch.enqueue(request: Request, func: ((Download) -> Unit)?, func2: ((Error) -> Unit)?): Fetch {
-    return enqueue(request, object : Func<Download> {
-        override fun call(t: Download) {
+fun Fetch.enqueue(request: Request, func: ((Request) -> Unit)?, func2: ((Error) -> Unit)?): Fetch {
+    return enqueue(request, object : Func<Request> {
+        override fun call(t: Request) {
             func?.invoke(t)
         }
     }, object : Func<Error> {
@@ -40,17 +39,16 @@ fun Fetch.enqueue(request: Request, func: ((Download) -> Unit)?, func2: ((Error)
  * 2. Fetch is already managing the same request. This means that a request with the same url
  * and file name is already managed.
  * @param requests Request List
- * @param func Callback that the enqueued download results will be returned on.
- *             If using Request Options with Fetch, the download object file and ID values may be different
- *             from the initial request object file and ID values when enqueuing.
- *             Update all external references accordingly.
+ * @param func Callback that the enqueued request will be returned on.
+ *             Fetch may update a request depending on the initial request's Enqueue Action.
+ *             Update old request references with this request.
  * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
  * @throws FetchException if this instance of Fetch has been closed.
  * @return Instance
  * */
-fun Fetch.enqueue(requests: List<Request>, func: ((List<Download>) -> Unit)?, func2: ((Error) -> Unit)?): Fetch {
-    return enqueue(requests, object : Func<List<Download>> {
-        override fun call(t: List<Download>) {
+fun Fetch.enqueue(requests: List<Request>, func: ((List<Request>) -> Unit)?, func2: ((Error) -> Unit)?): Fetch {
+    return enqueue(requests, object : Func<List<Request>> {
+        override fun call(t: List<Request>) {
             func?.invoke(t)
         }
     }, object : Func<Error> {

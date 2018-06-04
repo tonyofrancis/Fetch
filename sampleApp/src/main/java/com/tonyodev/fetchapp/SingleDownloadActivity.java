@@ -98,12 +98,8 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         final String url = Data.sampleUrls[0];
         final String filePath = Data.getSaveDir() + "/movies/" + Data.getNameFromUrl(url);
         request = new Request(url, filePath);
-        fetch.enqueue(request, download -> {
-            // Update your request references with download.getRequest(). The request id and file
-            //may have changed if you selected EnqueueAction.REPLACE_EXISTING
-            request = download.getRequest(); //updated request
-            setTitleView(download.getFile());
-            setProgressView(download.getStatus(), download.getProgress());
+        fetch.enqueue(request, updatedRequest -> {
+            request = updatedRequest;
         }, error -> Timber.d("SingleDownloadActivity Error: %1$s", error.toString()));
     }
 
@@ -157,6 +153,8 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
 
     @Override
     public void onQueued(@NotNull Download download) {
+        setTitleView(download.getFile());
+        setProgressView(download.getStatus(), download.getProgress());
         updateViews(download, 0, 0, null);
     }
 

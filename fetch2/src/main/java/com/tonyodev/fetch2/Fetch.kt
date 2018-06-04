@@ -36,15 +36,14 @@ interface Fetch {
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
      * @param request Download Request
-     * @param func Callback that the enqueued download results will be returned on.
-     *             If using Request Options with Fetch, the download object file and ID values may be different
-     *             from the initial request object file and ID values when enqueuing.
-     *             Update all external references accordingly.
+     * @param func Callback that the enqueued request will be returned on.
+     *             Fetch may update a request depending on the initial request's Enqueue Action.
+     *             Update old request references with this request.
      * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun enqueue(request: Request, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
+    fun enqueue(request: Request, func: Func<Request>? = null, func2: Func<Error>? = null): Fetch
 
     /**
      * Queues a list of requests for downloading. If Fetch fails to enqueue a
@@ -55,15 +54,14 @@ interface Fetch {
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
      * @param requests Request List
-     * @param func Callback that the enqueued download results will be returned on.
-     *             If using Request Options with Fetch, the download object file and ID values may be different
-     *             from the initial request object file and ID values when enqueuing.
-     *             Update all external references accordingly.
+     * @param func Callback that the enqueued request will be returned on.
+     *             Fetch may update a request depending on the initial request's Enqueue Action.
+     *             Update old request references with this request.
      * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun enqueue(requests: List<Request>, func: Func<List<Download>>? = null, func2: Func<Error>? = null): Fetch
+    fun enqueue(requests: List<Request>, func: Func<List<Request>>? = null, func2: Func<Error>? = null): Fetch
 
     /** Pause a queued or downloading download.
      * @param ids ids of downloads to be paused.

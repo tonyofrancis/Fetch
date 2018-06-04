@@ -24,15 +24,13 @@ interface RxFetch : Fetch {
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
      * It would be best to check if Fetch is managing a download before enqueuing.
-     * @param request Download Request. If using Request Options with Fetch,
-     *               the download object file and ID values may be different from the
-     *               initial request object file and ID values when enqueuing.
-     *               Update all external references accordingly.
+     * @param request Download Request. Fetch may update a request depending on the initial request's Enqueue Action.
+     *             Update old request references with the returned request.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return A Convertible object that allows you to get the results as on observable or
      * flowable
      * */
-    fun enqueue(request: Request): Convertible<Download>
+    fun enqueue(request: Request): Convertible<Request>
 
     /**
      * Queues a request list for downloading. If Fetch fails to enqueue a
@@ -44,15 +42,13 @@ interface RxFetch : Fetch {
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
      * It would be best to check if Fetch is managing a download before enqueuing.
-     * @param requests Download Requests. If using Request Options with Fetch,
-     *               the download object file and ID values may be different from the
-     *               initial request object file and ID values when enqueuing.
-     *               Update all external references accordingly.
+     * @param requests Download Requests. Fetch may update a request depending on the initial request's Enqueue Action.
+     *             Update old request references with the returned requests.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return A Convertible object that allows you to get the results as on observable or
      * flowable
      * */
-    fun enqueue(requests: List<Request>): Convertible<List<Download>>
+    fun enqueue(requests: List<Request>): Convertible<List<Request>>
 
     /** Updates and replaces an existing download's groupId, headers, priority and network type information.
      * If the download does not exist and the returned convertible object when converted
