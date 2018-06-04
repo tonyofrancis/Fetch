@@ -80,4 +80,7 @@ interface Download {
      * */
     val enqueueAction: EnqueueAction
 
+    /** Can be used to set your own unique identifier for the request.*/
+    val identifier: Long
+
 }

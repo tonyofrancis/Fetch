@@ -1,13 +1,12 @@
 package com.tonyodev.fetch2
 
+import com.tonyodev.fetch2.util.getUniqueId
+
 /**
  * Use this class to create a request that is used by Fetch to enqueue a download and
  * begin the download process.
  * */
 open class Request constructor(
-        /** Used to identify a download. Must be UNIQUE.*/
-        val id: Int,
-
         /** The url where the file will be downloaded from.*/
         val url: String,
 
@@ -15,13 +14,8 @@ open class Request constructor(
          * downloaded to and saved on disk.*/
         val file: String) : RequestInfo() {
 
-    constructor(
-            /** The url where the file will be downloaded from.*/
-            url: String,
-
-            /** The file eg(/files/download.txt) where the file will be
-             * downloaded to and saved on disk.*/
-            file: String) : this((url.hashCode() * 31) + file.hashCode(), url, file)
+    /** Unique Identifier. Used to identify a download.*/
+    val id: Int = getUniqueId(url, file)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

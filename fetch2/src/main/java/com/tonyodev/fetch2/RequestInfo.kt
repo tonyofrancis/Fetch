@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2.util.DEFAULT_GROUP_ID
+import com.tonyodev.fetch2.util.DEFAULT_UNIQUE_IDENTIFIER
 import com.tonyodev.fetch2.util.defaultNetworkType
 import com.tonyodev.fetch2.util.defaultPriority
 
@@ -11,6 +12,9 @@ import com.tonyodev.fetch2.util.defaultPriority
  * the proper values.
  * */
 open class RequestInfo {
+
+    /** Can be used to set your own unique identifier for the request.*/
+    var identifier: Long = DEFAULT_UNIQUE_IDENTIFIER
 
     /** The group id this download belongs to.*/
     var groupId: Int = DEFAULT_GROUP_ID
@@ -49,6 +53,7 @@ open class RequestInfo {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as RequestInfo
+        if (identifier != other.identifier) return false
         if (groupId != other.groupId) return false
         if (headers != other.headers) return false
         if (priority != other.priority) return false
@@ -59,7 +64,8 @@ open class RequestInfo {
     }
 
     override fun hashCode(): Int {
-        var result = groupId
+        var result = identifier.hashCode()
+        result = 31 * result + groupId
         result = 31 * result + headers.hashCode()
         result = 31 * result + priority.hashCode()
         result = 31 * result + networkType.hashCode()
@@ -69,7 +75,7 @@ open class RequestInfo {
     }
 
     override fun toString(): String {
-        return "RequestInfo(groupId=$groupId, headers=$headers, priority=$priority, " +
+        return "RequestInfo(identifier=$identifier, groupId=$groupId, headers=$headers, priority=$priority, " +
                 "networkType=$networkType, tag=$tag, enqueueAction=$enqueueAction)"
     }
 

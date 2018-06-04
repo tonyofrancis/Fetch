@@ -20,6 +20,7 @@ fun Request.toDownloadInfo(): DownloadInfo {
     downloadInfo.downloaded = 0L
     downloadInfo.tag = tag
     downloadInfo.enqueueAction = enqueueAction
+    downloadInfo.identifier = identifier
     return downloadInfo
 }
 
@@ -40,5 +41,6 @@ fun Download.toDownloadInfo(): DownloadInfo {
     downloadInfo.created = created
     downloadInfo.tag = tag
     downloadInfo.enqueueAction = enqueueAction
+    downloadInfo.identifier = identifier
     return downloadInfo
 }

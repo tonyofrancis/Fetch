@@ -55,11 +55,8 @@ class FetchHandlerImpl(private val namespace: String,
             databaseManager.delete(existingDownload)
         } else if (downloadInfo.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME && existingDownload != null) {
             val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
-            val generatedId = getUniqueId(downloadInfo.url, downloadInfo.file)
             downloadInfo.file = file.absolutePath
-            if (generatedId == downloadInfo.id) {
-                downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
-            }
+            downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
             createFileIfPossible(file)
         }
     }

@@ -33,6 +33,7 @@ fun v1CursorToV2DownloadInfo(cursor: Cursor): DownloadTransferPair {
     downloadInfo.priority = getPriorityFromV1ForV2(priority)
     downloadInfo.error = getErrorFromV1ForV2(error)
     downloadInfo.enqueueAction = EnqueueAction.REPLACE_EXISTING
+    downloadInfo.identifier = downloadInfo.id.toLong()
     return DownloadTransferPair(downloadInfo, id)
 }
 

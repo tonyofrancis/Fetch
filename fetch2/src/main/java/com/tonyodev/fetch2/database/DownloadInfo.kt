@@ -59,6 +59,9 @@ class DownloadInfo : Download {
     @ColumnInfo(name = DownloadDatabase.COLUMN_ENQUEUE_ACTION, typeAffinity = ColumnInfo.INTEGER)
     override var enqueueAction: EnqueueAction = EnqueueAction.REPLACE_EXISTING
 
+    @ColumnInfo(name = DownloadDatabase.COLUMN_IDENTIFIER)
+    override var identifier: Long = DEFAULT_UNIQUE_IDENTIFIER
+
     override val progress: Int
         get() {
             return calculateProgress(downloaded, total)
@@ -66,12 +69,13 @@ class DownloadInfo : Download {
 
     override val request: Request
         get() {
-            val request = Request(id, url, file)
+            val request = Request(url, file)
             request.groupId = group
             request.headers.putAll(headers)
             request.networkType = networkType
             request.priority = priority
             request.enqueueAction = enqueueAction
+            request.identifier = identifier
             return request
         }
 
@@ -98,7 +102,7 @@ class DownloadInfo : Download {
         if (created != other.created) return false
         if (tag != other.tag) return false
         if (enqueueAction != other.enqueueAction) return false
-
+        if (identifier != other.identifier) return false
         return true
     }
 
@@ -118,14 +122,15 @@ class DownloadInfo : Download {
         result = 31 * result + created.hashCode()
         result = 31 * result + (tag?.hashCode() ?: 0)
         result = 31 * result + enqueueAction.hashCode()
+        result = 31 * result + identifier.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file'," +
-                " group=$group, priority=$priority, headers=$headers, downloaded=$downloaded, " +
-                "total=$total, status=$status, error=$error, networkType=$networkType, " +
-                "created=$created, tag=$tag, enqueueAction=$enqueueAction)"
+        return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file', group=$group," +
+                " priority=$priority, headers=$headers, downloaded=$downloaded, total=$total, status=$status," +
+                " error=$error, networkType=$networkType, created=$created, tag=$tag, " +
+                "enqueueAction=$enqueueAction, identifier=$identifier)"
     }
 
 
