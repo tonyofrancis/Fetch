@@ -1,12 +1,14 @@
 package com.tonyodev.fetch2fileserver.transporter
 
-import com.tonyodev.fetch2fileserver.ContentFileRequest
-import com.tonyodev.fetch2fileserver.ContentFileResponse
+import com.tonyodev.fetch2fileserver.FileRequest
+import com.tonyodev.fetch2fileserver.FileResponse
 
 interface ContentFileTransporterWriter {
 
-    fun sendContentFileRequest(contentFileRequest: ContentFileRequest)
-    fun sendContentFileResponse(contentFileResponse: ContentFileResponse)
+    fun sendContentFileRequest(fileRequest: FileRequest)
+
+    fun sendContentFileResponse(fileResponse: FileResponse)
+
     fun sendRawBytes(byteArray: ByteArray, offset: Int, length: Int)
 
 }

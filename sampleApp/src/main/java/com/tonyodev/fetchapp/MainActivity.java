@@ -64,7 +64,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deleteDownloadedFiles() {
-        final String[] namespaces = new String[]{DownloadListActivity.FETCH_NAMESPACE, FailedMultiEnqueueActivity.FETCH_NAMESPACE};
+        final String[] namespaces = new String[]{
+                DownloadListActivity.FETCH_NAMESPACE,
+                FailedMultiEnqueueActivity.FETCH_NAMESPACE,
+                FileServerActivity.FETCH_NAMESPACE };
         for (String namespace : namespaces) {
             final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this).setNamespace(namespace).build();
             Fetch.Impl.getInstance(fetchConfiguration).deleteAll().close();

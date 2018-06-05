@@ -6,7 +6,7 @@ import com.tonyodev.fetch2fileserver.ContentFile
 import java.io.Closeable
 
 class FetchContentFileDatabase(context: Context,
-                               val databaseName: String) : Closeable {
+                               databaseName: String) : Closeable {
 
     private val lock = Any()
 

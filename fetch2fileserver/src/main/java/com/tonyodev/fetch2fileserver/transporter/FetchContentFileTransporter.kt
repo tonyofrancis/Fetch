@@ -1,13 +1,13 @@
 package com.tonyodev.fetch2fileserver.transporter
 
-import com.tonyodev.fetch2fileserver.ContentFileRequest
-import com.tonyodev.fetch2fileserver.ContentFileResponse
-import com.tonyodev.fetch2fileserver.ContentFileResponse.Companion.FIELD_CONNECTION
-import com.tonyodev.fetch2fileserver.ContentFileResponse.Companion.FIELD_CONTENT_LENGTH
-import com.tonyodev.fetch2fileserver.ContentFileResponse.Companion.FIELD_DATE
-import com.tonyodev.fetch2fileserver.ContentFileResponse.Companion.FIELD_MD5
-import com.tonyodev.fetch2fileserver.ContentFileResponse.Companion.FIELD_STATUS
-import com.tonyodev.fetch2fileserver.ContentFileResponse.Companion.FIELD_TYPE
+import com.tonyodev.fetch2fileserver.FileRequest
+import com.tonyodev.fetch2fileserver.FileResponse
+import com.tonyodev.fetch2fileserver.FileResponse.Companion.FIELD_CONNECTION
+import com.tonyodev.fetch2fileserver.FileResponse.Companion.FIELD_CONTENT_LENGTH
+import com.tonyodev.fetch2fileserver.FileResponse.Companion.FIELD_DATE
+import com.tonyodev.fetch2fileserver.FileResponse.Companion.FIELD_MD5
+import com.tonyodev.fetch2fileserver.FileResponse.Companion.FIELD_STATUS
+import com.tonyodev.fetch2fileserver.FileResponse.Companion.FIELD_TYPE
 import org.json.JSONObject
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -51,20 +51,20 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
         }
     }
 
-    override fun receiveContentFileRequest(): ContentFileRequest? {
+    override fun receiveContentFileRequest(): FileRequest? {
         return synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
             val json = JSONObject(dataInput.readUTF())
-            val requestType = json.getInt(ContentFileRequest.FIELD_TYPE)
-            val contentFileId = json.getString(ContentFileRequest.FIELD_CONTENT_FILE_ID)
-            var rangeStart = json.getLong(ContentFileRequest.FIELD_RANGE_START)
-            var rangeEnd = json.getLong(ContentFileRequest.FIELD_RANGE_END)
-            val authorization = json.getString(ContentFileRequest.FIELD_AUTHORIZATION)
-            val client = json.getString(ContentFileRequest.FIELD_CLIENT)
-            val customData = json.getString(ContentFileRequest.FIELD_CUSTOM_DATA)
-            var page = json.getInt(ContentFileRequest.FIELD_PAGE)
-            var size = json.getInt(ContentFileRequest.FIELD_SIZE)
+            val requestType = json.getInt(FileRequest.FIELD_TYPE)
+            val contentFileId = json.getString(FileRequest.FIELD_CONTENT_FILE_ID)
+            var rangeStart = json.getLong(FileRequest.FIELD_RANGE_START)
+            var rangeEnd = json.getLong(FileRequest.FIELD_RANGE_END)
+            val authorization = json.getString(FileRequest.FIELD_AUTHORIZATION)
+            val client = json.getString(FileRequest.FIELD_CLIENT)
+            val customData = json.getString(FileRequest.FIELD_CUSTOM_DATA)
+            var page = json.getInt(FileRequest.FIELD_PAGE)
+            var size = json.getInt(FileRequest.FIELD_SIZE)
             if ((rangeStart < 0L || rangeStart > rangeEnd) && rangeEnd > -1) {
                 rangeStart = 0L
             }
@@ -77,8 +77,8 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
             if (size < -1) {
                 size = -1
             }
-            val persistConnection = json.getBoolean(ContentFileRequest.FIELD_PERSIST_CONNECTION)
-            ContentFileRequest(
+            val persistConnection = json.getBoolean(FileRequest.FIELD_PERSIST_CONNECTION)
+            FileRequest(
                     type = requestType,
                     contentFileId = contentFileId,
                     rangeStart = rangeStart,
@@ -92,16 +92,16 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
         }
     }
 
-    override fun sendContentFileRequest(contentFileRequest: ContentFileRequest) {
+    override fun sendContentFileRequest(fileRequest: FileRequest) {
         synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
-            dataOutput.writeUTF(contentFileRequest.toJsonString)
+            dataOutput.writeUTF(fileRequest.toJsonString)
             dataOutput.flush()
         }
     }
 
-    override fun receiveContentFileResponse(): ContentFileResponse? {
+    override fun receiveContentFileResponse(): FileResponse? {
         return synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
@@ -112,7 +112,7 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
             val date = json.getLong(FIELD_DATE)
             val contentLength = json.getLong(FIELD_CONTENT_LENGTH)
             val md5 = json.getString(FIELD_MD5)
-            ContentFileResponse(
+            FileResponse(
                     status = status,
                     type = requestType,
                     connection = connection,
@@ -122,11 +122,11 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
         }
     }
 
-    override fun sendContentFileResponse(contentFileResponse: ContentFileResponse) {
+    override fun sendContentFileResponse(fileResponse: FileResponse) {
         synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
-            dataOutput.writeUTF(contentFileResponse.toJsonString)
+            dataOutput.writeUTF(fileResponse.toJsonString)
             dataOutput.flush()
         }
     }
@@ -196,6 +196,5 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
             throw Exception("You forgot to call connect before calling this method.")
         }
     }
-
 
 }

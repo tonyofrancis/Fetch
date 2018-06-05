@@ -3,7 +3,7 @@ package com.tonyodev.fetch2fileserver
 import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.FileServerDownloader
 import com.tonyodev.fetch2.util.*
-import com.tonyodev.fetch2fileserver.ContentFileRequest.Companion.TYPE_FILE
+import com.tonyodev.fetch2fileserver.FileRequest.Companion.TYPE_FILE
 import com.tonyodev.fetch2fileserver.transporter.FetchContentFileTransporter
 
 import java.io.OutputStream
@@ -12,6 +12,7 @@ import java.net.InetSocketAddress
 import java.util.*
 
 open class FetchFileServerDownloader @JvmOverloads constructor(
+
         /** The file downloader type used to download a request.
          * The SEQUENTIAL type downloads bytes in sequence.
          * The PARALLEL type downloads bytes in parallel.
@@ -26,7 +27,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
     override fun execute(request: Downloader.Request, interruptMonitor: InterruptMonitor?): Downloader.Response? {
         val headers = request.headers
         val range = getRangeForFetchFileServerRequest(headers["Range"] ?: "bytes=0-")
-        val authorization = headers[ContentFileRequest.FIELD_AUTHORIZATION] ?: ""
+        val authorization = headers[FileRequest.FIELD_AUTHORIZATION] ?: ""
         val port = getFetchFileServerPort(request.url)
         val address = getFetchFileServerHostAddress(request.url)
         val inetSocketAddress = InetSocketAddress(address, port)
@@ -34,24 +35,24 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         var timeoutStop: Long
         val timeoutStart = System.nanoTime()
         transporter.connect(inetSocketAddress)
-        val contentFileRequest = ContentFileRequest(
+        val contentFileRequest = FileRequest(
                 type = TYPE_FILE,
                 contentFileId = getContentFileIdFromUrl(request.url),
                 rangeStart = range.first,
                 rangeEnd = range.second,
                 authorization = authorization,
-                client = headers[ContentFileRequest.FIELD_CLIENT] ?: UUID.randomUUID().toString(),
-                customData = headers[ContentFileRequest.FIELD_CUSTOM_DATA] ?: "",
-                page = headers[ContentFileRequest.FIELD_PAGE]?.toIntOrNull() ?: 0,
-                size = headers[ContentFileRequest.FIELD_SIZE]?.toIntOrNull() ?: 0,
+                client = headers[FileRequest.FIELD_CLIENT] ?: UUID.randomUUID().toString(),
+                customData = headers[FileRequest.FIELD_CUSTOM_DATA] ?: "",
+                page = headers[FileRequest.FIELD_PAGE]?.toIntOrNull() ?: 0,
+                size = headers[FileRequest.FIELD_SIZE]?.toIntOrNull() ?: 0,
                 persistConnection = false)
         transporter.sendContentFileRequest(contentFileRequest)
         while (interruptMonitor?.isInterrupted == false) {
             val serverResponse = transporter.receiveContentFileResponse()
             if (serverResponse != null) {
                 val code = serverResponse.status
-                val isSuccessful = serverResponse.connection == ContentFileResponse.OPEN_CONNECTION &&
-                        serverResponse.type == ContentFileRequest.TYPE_FILE && serverResponse.status == HttpURLConnection.HTTP_PARTIAL
+                val isSuccessful = serverResponse.connection == FileResponse.OPEN_CONNECTION &&
+                        serverResponse.type == FileRequest.TYPE_FILE && serverResponse.status == HttpURLConnection.HTTP_PARTIAL
                 val contentLength = serverResponse.contentLength
                 val inputStream = transporter.getInputStream()
                 val response = Downloader.Response(

@@ -33,16 +33,13 @@ class ContentFile {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-
         other as ContentFile
-
         if (id != other.id) return false
         if (length != other.length) return false
         if (file != other.file) return false
         if (name != other.name) return false
         if (customData != other.customData) return false
         if (md5 != other.md5) return false
-
         return true
     }
 
