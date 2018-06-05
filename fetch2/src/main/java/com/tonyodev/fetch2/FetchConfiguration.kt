@@ -18,7 +18,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val globalNetworkType: NetworkType,
                                              val logger: Logger,
                                              val autoStart: Boolean,
-                                             val retryOnNetworkGain: Boolean) {
+                                             val retryOnNetworkGain: Boolean,
+                                             val fileServerDownloader: FileServerDownloader?) {
 
     /** Used to create an instance of Fetch Configuration.*/
     class Builder(context: Context) {
@@ -34,6 +35,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var logger: Logger = defaultLogger
         private var autoStart = DEFAULT_AUTO_START
         private var retryOnNetworkGain = DEFAULT_RETRY_ON_NETWORK_GAIN
+        private var fileServerDownloader: FileServerDownloader? = null
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -62,6 +64,20 @@ class FetchConfiguration private constructor(val appContext: Context,
          * */
         fun setHttpDownloader(downloader: Downloader): Builder {
             this.httpDownloader = downloader
+            return this
+        }
+
+        /**
+         * Sets the downloader client Fetch will use to perform downloads from a Fetch File Server.
+         * If no downloader is specified. Requests with url beginning with "fetchlocal://" will fail
+         * and the error will specify that no downloader found.
+         * @see com.tonyodev.fetch2.Downloader
+         * @see com.tonyodev.fetch2fileserver.FetchFileServerDownloader
+         * @param downloader Downloader Client for Fetch File Server
+         * @return Builder
+         * */
+        fun setFetchFileServerDownloader(fileServerDownloader: FileServerDownloader): Builder {
+            this.fileServerDownloader = fileServerDownloader
             return this
         }
 
@@ -189,7 +205,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     globalNetworkType = globalNetworkType,
                     logger = prefsLogger,
                     autoStart = autoStart,
-                    retryOnNetworkGain = retryOnNetworkGain)
+                    retryOnNetworkGain = retryOnNetworkGain,
+                    fileServerDownloader = fileServerDownloader)
         }
 
     }
@@ -209,6 +226,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (logger != other.logger) return false
         if (autoStart != other.autoStart) return false
         if (retryOnNetworkGain != other.retryOnNetworkGain) return false
+        if (fileServerDownloader != other.fileServerDownloader) return false
         return true
     }
 
@@ -224,14 +242,16 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + logger.hashCode()
         result = 31 * result + autoStart.hashCode()
         result = 31 * result + retryOnNetworkGain.hashCode()
+        result = 31 * result + (fileServerDownloader?.hashCode() ?: 0)
         return result
     }
 
     override fun toString(): String {
         return "FetchConfiguration(appContext=$appContext, namespace='$namespace', " +
                 "concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis," +
-                " downloadBufferSizeBytes=$downloadBufferSizeBytes, loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader," +
-                " globalNetworkType=$globalNetworkType, logger=$logger, autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain)"
+                " downloadBufferSizeBytes=$downloadBufferSizeBytes, loggingEnabled=$loggingEnabled, " +
+                "httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType, logger=$logger, " +
+                "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, fileServerDownloader=$fileServerDownloader)"
     }
 
 }

@@ -50,6 +50,8 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FETCH_DATABASE_ERROR
     } else if (message.contains(RESPONSE_NOT_SUCCESSFUL, true) || message.contains(FAILED_TO_CONNECT, true)) {
         Error.REQUEST_NOT_SUCCESSFUL
+    } else if (message.contains(INVALID_CONTENT_MD5, true)) {
+        Error.INVALID_CONTENT_MD5
     } else {
         Error.UNKNOWN
     }

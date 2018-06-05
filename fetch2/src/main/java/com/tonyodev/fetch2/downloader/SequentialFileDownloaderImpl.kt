@@ -47,7 +47,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             downloaded = initialDownload.downloaded
             if (!interrupted && !terminated) {
                 val request = getRequest()
-                response = downloader.execute(request)
+                response = downloader.execute(request, interruptMonitor)
                 val isResponseSuccessful = response?.isSuccessful ?: false
                 if (!interrupted && !terminated && response != null && isResponseSuccessful) {
                     total = if (response.contentLength == -1L) {
@@ -77,7 +77,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                                     etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
                                     downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                         }
-                        writeToOutput(input, randomAccessFileOutput, output)
+                        writeToOutput(input, randomAccessFileOutput, output, response)
                     }
                 } else if (response == null && !interrupted && !terminated) {
                     throw FetchException(EMPTY_RESPONSE_BODY,
@@ -159,7 +159,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
 
     private fun writeToOutput(input: BufferedInputStream,
                               randomAccessFileOutput: RandomAccessFile?,
-                              downloaderOutputStream: OutputStream?) {
+                              downloaderOutputStream: OutputStream?,
+                              response: Downloader.Response) {
         var reportingStopTime: Long
         var downloadSpeedStopTime: Long
         var downloadedBytesPerSecond = downloaded
@@ -228,12 +229,16 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             downloadInfo.downloaded = downloaded
             downloadInfo.total = total
             if (!terminated) {
-                delegate?.onProgress(
-                        download = downloadInfo,
-                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                delegate?.onComplete(
-                        download = downloadInfo)
+                if (downloader.verifyContentMD5(response.request, response.md5)) {
+                    delegate?.onProgress(
+                            download = downloadInfo,
+                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                    delegate?.onComplete(
+                            download = downloadInfo)
+                } else {
+                    throw FetchException(INVALID_CONTENT_MD5, FetchException.Code.INVALID_CONTENT_MD5)
+                }
             }
         }
     }
@@ -270,6 +275,13 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             return 0L
         }
         return ceil(averageDownloadedBytesPerSecond).toLong()
+    }
+
+    private val interruptMonitor = object : InterruptMonitor {
+        override val isInterrupted: Boolean
+            get() {
+                return interrupted
+            }
     }
 
 }

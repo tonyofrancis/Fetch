@@ -95,7 +95,8 @@ object FetchModulesBuilder {
                     downloadInfoUpdater = downloadInfoUpdater,
                     fileTempDir = getFileTempDir(fetchConfiguration.appContext),
                     downloadManagerCoordinator = downloadManagerCoordinator,
-                    listenerCoordinator = listenerCoordinator)
+                    listenerCoordinator = listenerCoordinator,
+                    fileServerDownloader = fetchConfiguration.fileServerDownloader)
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,
                     downloadProvider = downloadProvider,

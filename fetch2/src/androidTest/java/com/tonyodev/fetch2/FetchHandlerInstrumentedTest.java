@@ -74,7 +74,7 @@ public class FetchHandlerInstrumentedTest {
         final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator, listenerCoordinator);
+                uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator, listenerCoordinator, null);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handlerWrapper,
                 new DownloadProvider(databaseManager),

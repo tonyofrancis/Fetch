@@ -75,7 +75,17 @@ enum class Error constructor(
 
     /** Indicates that the file belonging to the request has been deleted. The file
      * could have been deleted by an external source.*/
-    FILE_NOT_FOUND(17);
+    FILE_NOT_FOUND(17),
+
+    /** Indicates that the Fetch File Server downloader was not set for the Fetch Client.*/
+    FETCH_FILE_SERVER_DOWNLOADER_NOT_SET(18),
+
+    /** Indicates that the request url is not a valid url to reach a Fetch File Server.*/
+    FETCH_FILE_SERVER_URL_INVALID(19),
+
+    /** Indicates that the downloaded file MD5 does not match the MD5 the server returned
+     * for the content.*/
+    INVALID_CONTENT_MD5(20);
 
     companion object {
 
@@ -99,6 +109,9 @@ enum class Error constructor(
                 15 -> REQUEST_NOT_SUCCESSFUL
                 16 -> UNKNOWN_IO_ERROR
                 17 -> FILE_NOT_FOUND
+                18 -> FETCH_FILE_SERVER_DOWNLOADER_NOT_SET
+                19 -> FETCH_FILE_SERVER_URL_INVALID
+                20 -> INVALID_CONTENT_MD5
                 else -> UNKNOWN
             }
         }

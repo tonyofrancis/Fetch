@@ -1,5 +1,7 @@
 package com.tonyodev.fetch2
 
+import com.tonyodev.fetch2.util.InterruptMonitor
+import com.tonyodev.fetch2.util.getFileMd5String
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
@@ -30,7 +32,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
     protected val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
 
-    override fun execute(request: Downloader.Request): Downloader.Response? {
+    override fun execute(request: Downloader.Request, interruptMonitor: InterruptMonitor?): Downloader.Response? {
         val httpUrl = URL(request.url)
         val client = httpUrl.openConnection() as HttpURLConnection
         client.requestMethod = "GET"
@@ -48,17 +50,20 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         var success = false
         var contentLength = -1L
         var byteStream: InputStream? = null
+        var md5 = ""
         if (isResponseOk(code)) {
             success = true
             contentLength = client.getHeaderField("Content-Length")?.toLong() ?: -1
             byteStream = client.inputStream
+            md5 = client.getHeaderField("Content-MD5") ?: ""
         }
         val response = Downloader.Response(
                 code = code,
                 isSuccessful = success,
                 contentLength = contentLength,
                 byteStream = byteStream,
-                request = request)
+                request = request,
+                md5 = md5)
 
         connections[response] = client
         return response
@@ -109,6 +114,14 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, filePointerOffset: Long) {
 
+    }
+
+    override fun verifyContentMD5(request: Downloader.Request, md5: String): Boolean {
+        if (md5.isEmpty()) {
+            return true
+        }
+        val fileMd5 = getFileMd5String(request.file)
+        return fileMd5?.contentEquals(md5) ?: true
     }
 
     /**

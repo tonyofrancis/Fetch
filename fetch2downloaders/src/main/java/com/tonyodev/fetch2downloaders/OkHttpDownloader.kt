@@ -1,6 +1,8 @@
 package com.tonyodev.fetch2downloaders
 
 import com.tonyodev.fetch2.Downloader
+import com.tonyodev.fetch2.util.InterruptMonitor
+import com.tonyodev.fetch2.util.getFileMd5String
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -38,7 +40,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
             .retryOnConnectionFailure(false)
             .build()
 
-    override fun execute(request: Downloader.Request): Downloader.Response? {
+    override fun execute(request: Downloader.Request, interruptMonitor: InterruptMonitor?): Downloader.Response? {
         val okHttpRequestBuilder = Request.Builder()
                 .url(request.url)
 
@@ -52,13 +54,15 @@ open class OkHttpDownloader @JvmOverloads constructor(
         val success = okHttpResponse.isSuccessful
         val contentLength = okHttpResponse.body()?.contentLength() ?: -1L
         val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
+        val md5 = okHttpResponse.header("Content-MD5") ?: ""
 
         val response = Downloader.Response(
                 code = code,
                 isSuccessful = success,
                 contentLength = contentLength,
                 byteStream = byteStream,
-                request = request)
+                request = request,
+                md5 = md5)
 
         connections[response] = okHttpResponse
         return response
@@ -105,6 +109,14 @@ open class OkHttpDownloader @JvmOverloads constructor(
 
     override fun getFileDownloaderType(request: Downloader.Request): Downloader.FileDownloaderType {
         return fileDownloaderType
+    }
+
+    override fun verifyContentMD5(request: Downloader.Request, md5: String): Boolean {
+        if (md5.isEmpty()) {
+            return true
+        }
+        val fileMd5 = getFileMd5String(request.file)
+        return fileMd5?.contentEquals(md5) ?: true
     }
 
 }

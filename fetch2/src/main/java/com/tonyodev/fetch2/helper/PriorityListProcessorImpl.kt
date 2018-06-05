@@ -7,6 +7,7 @@ import com.tonyodev.fetch2.fetch.HandlerWrapper
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
+import com.tonyodev.fetch2.util.isFetchFileServerUrl
 
 class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerWrapper,
                                             private val downloadProvider: DownloadProvider,
@@ -29,17 +30,22 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
 
     private val priorityIteratorRunnable = Runnable {
         if (canContinueToProcess()) {
-            if (networkInfoProvider.isNetworkAvailable && downloadManager.canAccommodateNewDownload()) {
+            if (downloadManager.canAccommodateNewDownload()) {
                 val priorityList = getPriorityList()
                 for (index in 0..priorityList.lastIndex) {
-                    if (canContinueToProcess()) {
-                        val download = priorityList[index]
+                    val download = priorityList[index]
+                    val isFetchServerRequest = try {
+                        isFetchFileServerUrl(download.url)
+                    } catch (e: Exception) {
+                        false
+                    }
+                    if (canContinueToProcess() && (isFetchServerRequest || networkInfoProvider.isNetworkAvailable)) {
                         val networkType = when {
                             globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
                             download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
                             else -> download.networkType
                         }
-                        if (networkInfoProvider.isOnAllowedNetwork(networkType) && canContinueToProcess()
+                        if ((isFetchServerRequest || networkInfoProvider.isOnAllowedNetwork(networkType)) && canContinueToProcess()
                                 && !downloadManager.contains(download.id)) {
                             downloadManager.start(download)
                         }

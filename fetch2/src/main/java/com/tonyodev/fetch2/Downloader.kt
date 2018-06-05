@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2
 
+import com.tonyodev.fetch2.util.InterruptMonitor
 import java.io.Closeable
 import java.io.InputStream
 import java.io.OutputStream
@@ -22,12 +23,13 @@ interface Downloader : Closeable {
      * the response back to the Fetch FileDownloader for processing. This method
      * is called on a background thread.
      * @param request The request information for the download.
+     * @param interruptMonitor Notifies the downloader that there may be an interruption for the request.
      * @return Response containing the server response code, connection success, content-length
      * and input stream if a connection was successful.
      * For an example:
      * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader.execute
      * */
-    fun execute(request: Request): Response?
+    fun execute(request: Request, interruptMonitor: InterruptMonitor?): Response?
 
     /**
      * This method is called by Fetch to disconnect the connection for the passed in response.
@@ -102,6 +104,16 @@ interface Downloader : Closeable {
     fun getDirectoryForFileDownloaderTypeParallel(request: Request): String?
 
     /**
+     * This method should be used to verify that the download file MD5 matches the
+     * passed in MD5 returned by the server for the content.
+     * @param request the request information for the download.
+     * @param md5 MD5 returned by the server for the content
+     * @return return true if the md5 values match otherwise false. If false is returned,
+     * this indicates that the download files is not correct so the download fails.
+     * */
+    fun verifyContentMD5(request: Request, md5: String): Boolean
+
+    /**
      * A class that contains the information used by the Downloader to create a connection
      * to the server.
      * */
@@ -140,7 +152,10 @@ interface Downloader : Closeable {
             val byteStream: InputStream?,
 
             /** The request that initiated this response.*/
-            val request: Request)
+            val request: Request,
+
+            /** The file md5 value to verify against.*/
+            val md5: String)
 
     /** File Downloading Type used to download each request.*/
     enum class FileDownloaderType {

@@ -3,11 +3,15 @@
 package com.tonyodev.fetch2.util
 
 import android.content.Context
+import android.net.Uri
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.FetchConfiguration
 import com.tonyodev.fetch2.Status
 import java.io.*
+import java.math.BigInteger
+import java.security.DigestInputStream
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -214,4 +218,83 @@ fun createConfigWithNewNamespace(fetchConfiguration: FetchConfiguration,
             .setGlobalNetworkType(fetchConfiguration.globalNetworkType)
             .setLogger(fetchConfiguration.logger)
             .build()
+}
+
+//eg: fetchlocal://192.168.0.1:80/45
+//eg: fetchlocal://192.168.0.1:80/file.txt
+fun isFetchFileServerUrl(url: String): Boolean {
+    return url.startsWith("fetchlocal://")
+            && getFetchFileServerHostAddress(url).isNotEmpty()
+            && getFetchFileServerPort(url) > -1
+}
+
+fun getFetchFileServerPort(url: String): Int {
+    val colonIndex = url.lastIndexOf(":")
+    val modifiedUrl = url.substring(colonIndex + 1, url.length)
+    val firstSeparatorIndex = modifiedUrl.indexOf("/")
+    return if (firstSeparatorIndex == -1) {
+        modifiedUrl.toInt()
+    } else {
+        modifiedUrl.substring(0, firstSeparatorIndex).toInt()
+    }
+}
+
+fun getFetchFileServerHostAddress(url: String): String {
+    val firstIndexOfDoubleSep = url.indexOf("//")
+    val colonIndex = url.lastIndexOf(":")
+    return url.substring(firstIndexOfDoubleSep + 2, colonIndex)
+}
+
+fun getContentFileIdFromUrl(url: String): String {
+    return Uri.parse(url).lastPathSegment
+}
+
+//eg: bytes=10-
+fun getRangeForFetchFileServerRequest(range: String): Pair<Long, Long> {
+    val firstIndex = range.lastIndexOf("=")
+    val lastIndex = range.lastIndexOf("-")
+    val start = range.substring(firstIndex + 1, lastIndex).toLong()
+    val end = try {
+        range.substring(lastIndex + 1, range.length).toLong()
+    } catch (e: Exception) {
+        -1L
+    }
+    return Pair(start, end)
+}
+
+fun getMd5String(bytes: ByteArray, start: Int = 0, length: Int = bytes.size): String {
+    return try {
+        val buffer = ByteArray(8192)
+        val md = MessageDigest.getInstance("MD5")
+        val inputStream = DigestInputStream(ByteArrayInputStream(bytes, start, length), md)
+        inputStream.use { dis ->
+            while (dis.read(buffer) != -1);
+        }
+        var md5: String = BigInteger(1, md.digest()).toString(16)
+        while (md5.length < 32) {
+            md5 = "0$md5"
+        }
+        md5
+    } catch (e: Exception) {
+        ""
+    }
+}
+
+fun getFileMd5String(file: String): String? {
+    val contentFile = File(file)
+    return try {
+        val buffer = ByteArray(8192)
+        val md = MessageDigest.getInstance("MD5")
+        val inputStream = DigestInputStream(FileInputStream(contentFile), md)
+        inputStream.use { dis ->
+            while (dis.read(buffer) != -1);
+        }
+        var md5: String = BigInteger(1, md.digest()).toString(16)
+        while (md5.length < 32) {
+            md5 = "0$md5"
+        }
+        md5
+    } catch (e: Exception) {
+        null
+    }
 }

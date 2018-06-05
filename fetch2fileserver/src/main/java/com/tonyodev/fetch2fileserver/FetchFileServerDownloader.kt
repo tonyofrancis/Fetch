@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2fileserver
 
 import com.tonyodev.fetch2.Downloader
+import com.tonyodev.fetch2.FileServerDownloader
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2fileserver.ContentFileRequest.Companion.TYPE_FILE
 import com.tonyodev.fetch2fileserver.transporter.FetchContentFileTransporter
@@ -10,14 +11,15 @@ import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.util.*
 
-open class FetchFileServerDownloader(
+open class FetchFileServerDownloader @JvmOverloads constructor(
         /** The file downloader type used to download a request.
          * The SEQUENTIAL type downloads bytes in sequence.
          * The PARALLEL type downloads bytes in parallel.
          * */
         private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL,
+
         /** The timeout value in milliseconds when trying to connect to the server. Default is 20_000 milliseconds. */
-        private val timeout: Long = 20_000) : Downloader {
+        private val timeout: Long = 20_000) : FileServerDownloader {
 
     protected val connections: MutableMap<Downloader.Response, FetchContentFileTransporter> = Collections.synchronizedMap(HashMap<Downloader.Response, FetchContentFileTransporter>())
 

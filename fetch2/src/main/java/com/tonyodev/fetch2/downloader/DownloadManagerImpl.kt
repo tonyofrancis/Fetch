@@ -2,7 +2,6 @@ package com.tonyodev.fetch2.downloader
 
 import android.os.Handler
 import com.tonyodev.fetch2.*
-import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.exception.FetchImplementationException
 import com.tonyodev.fetch2.fetch.DownloadManagerCoordinator
@@ -11,6 +10,8 @@ import com.tonyodev.fetch2.helper.FileDownloaderDelegate
 import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.getRequestForDownload
+import com.tonyodev.fetch2.util.isFetchFileServerUrl
+import com.tonyodev.fetch2.util.toDownloadInfo
 import java.util.concurrent.Executors
 
 class DownloadManagerImpl(private val httpDownloader: Downloader,
@@ -24,7 +25,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val downloadInfoUpdater: DownloadInfoUpdater,
                           private val fileTempDir: String,
                           private val downloadManagerCoordinator: DownloadManagerCoordinator,
-                          private val listenerCoordinator: ListenerCoordinator) : DownloadManager {
+                          private val listenerCoordinator: ListenerCoordinator,
+                          private val fileServerDownloader: FileServerDownloader?) : DownloadManager {
 
     private val lock = Object()
     private val executor = Executors.newFixedThreadPool(concurrentLimit)
@@ -37,7 +39,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
         get() = closed
 
     override fun start(download: Download): Boolean {
-        synchronized(lock) {
+        return synchronized(lock) {
             throwExceptionIfClosed()
             if (currentDownloadsMap.containsKey(download.id)) {
                 logger.d("DownloadManager already running download $download")
@@ -48,29 +50,41 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                         "the download queue is full")
                 return false
             }
-            val fileDownloader = getNewFileDownloaderForDownload(download)
-            fileDownloader.delegate = getFileDownloaderDelegate()
-            downloadCounter += 1
-            currentDownloadsMap[download.id] = fileDownloader
-            downloadManagerCoordinator.addFileDownloader(download.id, fileDownloader)
-            return try {
-                val downloadInfo = download as DownloadInfo
-                downloadInfo.status = Status.DOWNLOADING
-                downloadInfoUpdater.update(downloadInfo)
-                executor.execute {
-                    logger.d("DownloadManager starting download $download")
-                    fileDownloader.run()
-                    synchronized(lock) {
-                        if (currentDownloadsMap.containsKey(download.id)) {
-                            currentDownloadsMap.remove(download.id)
-                            downloadCounter -= 1
+            val delegate = getFileDownloaderDelegate()
+            try {
+                val fileDownloader = getNewFileDownloaderForDownload(download)
+                if (fileDownloader != null) {
+                    fileDownloader.delegate = delegate
+                    downloadCounter += 1
+                    currentDownloadsMap[download.id] = fileDownloader
+                    downloadManagerCoordinator.addFileDownloader(download.id, fileDownloader)
+                    try {
+                        executor.execute {
+                            logger.d("DownloadManager starting download $download")
+                            fileDownloader.run()
+                            synchronized(lock) {
+                                if (currentDownloadsMap.containsKey(download.id)) {
+                                    currentDownloadsMap.remove(download.id)
+                                    downloadCounter -= 1
+                                }
+                                downloadManagerCoordinator.removeFileDownloader(download.id)
+                            }
                         }
-                        downloadManagerCoordinator.removeFileDownloader(download.id)
+                        true
+                    } catch (e: Exception) {
+                        logger.e("DownloadManager failed to start download $download", e)
+                        false
                     }
+                } else {
+                    val downloadInfo = download.toDownloadInfo()
+                    downloadInfo.error = Error.FETCH_FILE_SERVER_DOWNLOADER_NOT_SET
+                    delegate.onError(downloadInfo)
+                    false
                 }
-                true
             } catch (e: Exception) {
-                logger.e("DownloadManager failed to start download $download", e)
+                val downloadInfo = download.toDownloadInfo()
+                downloadInfo.error = Error.FETCH_FILE_SERVER_URL_INVALID
+                delegate.onError(downloadInfo)
                 false
             }
         }
@@ -175,23 +189,33 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
         }
     }
 
-    override fun getNewFileDownloaderForDownload(download: Download): FileDownloader {
+    override fun getNewFileDownloaderForDownload(download: Download): FileDownloader? {
         val request = getRequestForDownload(download)
-        return if (httpDownloader.getFileDownloaderType(request) == Downloader.FileDownloaderType.SEQUENTIAL) {
+        return if (!isFetchFileServerUrl(request.url)) {
+            getFileDownloader(request, download, httpDownloader)
+        } else if (fileServerDownloader != null) {
+            getFileDownloader(request, download, fileServerDownloader)
+        } else {
+            null
+        }
+    }
+
+    private fun getFileDownloader(request: Downloader.Request, download: Download, downloader: Downloader): FileDownloader {
+        return if (downloader.getFileDownloaderType(request) == Downloader.FileDownloaderType.SEQUENTIAL) {
             SequentialFileDownloaderImpl(
                     initialDownload = download,
-                    downloader = httpDownloader,
+                    downloader = downloader,
                     progressReportingIntervalMillis = progressReportingIntervalMillis,
                     downloadBufferSizeBytes = downloadBufferSizeBytes,
                     logger = logger,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = retryOnNetworkGain)
         } else {
-            val tempDir = httpDownloader.getDirectoryForFileDownloaderTypeParallel(request)
+            val tempDir = downloader.getDirectoryForFileDownloaderTypeParallel(request)
                     ?: fileTempDir
             ParallelFileDownloaderImpl(
                     initialDownload = download,
-                    downloader = httpDownloader,
+                    downloader = downloader,
                     progressReportingIntervalMillis = progressReportingIntervalMillis,
                     downloadBufferSizeBytes = downloadBufferSizeBytes,
                     logger = logger,
@@ -208,11 +232,6 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                 fetchListener = listenerCoordinator.mainListener,
                 logger = logger,
                 retryOnNetworkGain = retryOnNetworkGain)
-    }
-
-    companion object {
-
-
     }
 
 }

@@ -14,6 +14,6 @@ interface DownloadManager : Closeable {
     fun canAccommodateNewDownload(): Boolean
     fun getActiveDownloadCount(): Int
     fun getDownloads(): List<Download>
-    fun getNewFileDownloaderForDownload(download: Download): FileDownloader
+    fun getNewFileDownloaderForDownload(download: Download): FileDownloader?
     fun getFileDownloaderDelegate(): FileDownloader.Delegate
 }
