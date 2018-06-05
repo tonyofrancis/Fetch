@@ -84,7 +84,7 @@ object FetchModulesBuilder {
 
         init {
             downloadManager = DownloadManagerImpl(
-                    downloader = fetchConfiguration.downloader,
+                    httpDownloader = fetchConfiguration.httpDownloader,
                     concurrentLimit = fetchConfiguration.concurrentLimit,
                     progressReportingIntervalMillis = fetchConfiguration.progressReportingIntervalMillis,
                     downloadBufferSizeBytes = fetchConfiguration.downloadBufferSizeBytes,
@@ -110,7 +110,7 @@ object FetchModulesBuilder {
                     priorityListProcessor = priorityListProcessor,
                     logger = fetchConfiguration.logger,
                     autoStart = fetchConfiguration.autoStart,
-                    downloader = fetchConfiguration.downloader,
+                    httpDownloader = fetchConfiguration.httpDownloader,
                     fileTempDir = getFileTempDir(fetchConfiguration.appContext),
                     listenerCoordinator = listenerCoordinator)
         }

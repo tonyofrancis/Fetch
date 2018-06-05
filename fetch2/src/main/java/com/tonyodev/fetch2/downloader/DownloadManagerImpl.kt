@@ -13,7 +13,7 @@ import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.getRequestForDownload
 import java.util.concurrent.Executors
 
-class DownloadManagerImpl(private val downloader: Downloader,
+class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val concurrentLimit: Int,
                           private val progressReportingIntervalMillis: Long,
                           private val downloadBufferSizeBytes: Int,
@@ -177,21 +177,21 @@ class DownloadManagerImpl(private val downloader: Downloader,
 
     override fun getNewFileDownloaderForDownload(download: Download): FileDownloader {
         val request = getRequestForDownload(download)
-        return if (downloader.getFileDownloaderType(request) == Downloader.FileDownloaderType.SEQUENTIAL) {
+        return if (httpDownloader.getFileDownloaderType(request) == Downloader.FileDownloaderType.SEQUENTIAL) {
             SequentialFileDownloaderImpl(
                     initialDownload = download,
-                    downloader = downloader,
+                    downloader = httpDownloader,
                     progressReportingIntervalMillis = progressReportingIntervalMillis,
                     downloadBufferSizeBytes = downloadBufferSizeBytes,
                     logger = logger,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = retryOnNetworkGain)
         } else {
-            val tempDir = downloader.getDirectoryForFileDownloaderTypeParallel(request)
+            val tempDir = httpDownloader.getDirectoryForFileDownloaderTypeParallel(request)
                     ?: fileTempDir
             ParallelFileDownloaderImpl(
                     initialDownload = download,
-                    downloader = downloader,
+                    downloader = httpDownloader,
                     progressReportingIntervalMillis = progressReportingIntervalMillis,
                     downloadBufferSizeBytes = downloadBufferSizeBytes,
                     logger = logger,

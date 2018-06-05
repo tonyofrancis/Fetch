@@ -44,7 +44,7 @@ public class FetchBuilderTest {
                         .setGlobalNetworkType(networkType)
                         .setDownloadConcurrentLimit(concurrentLimit)
                         .setLogger(logger)
-                        .setDownloader(downloader);
+                        .setHttpDownloader(downloader);
         final FetchConfiguration prefs = builder.build();
         assertEquals(namespace, prefs.getNamespace());
         assertEquals(bufferSize, prefs.getDownloadBufferSizeBytes());
@@ -53,7 +53,7 @@ public class FetchBuilderTest {
         assertEquals(concurrentLimit, prefs.getConcurrentLimit());
         assertEquals(networkType, prefs.getGlobalNetworkType());
         assertEquals(logger, prefs.getLogger());
-        assertEquals(downloader, prefs.getDownloader());
+        assertEquals(downloader, prefs.getHttpDownloader());
     }
 
     @After

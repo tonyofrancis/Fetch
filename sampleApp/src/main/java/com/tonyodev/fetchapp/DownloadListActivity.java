@@ -50,7 +50,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         setUpViews();
         final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
                 .setDownloadConcurrentLimit(4)
-                .setDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))
+                .setHttpDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))
                 .setNamespace(FETCH_NAMESPACE)
                 .build();
         fetch = Fetch.Impl.getInstance(fetchConfiguration);

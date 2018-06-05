@@ -20,7 +20,7 @@ public class App extends Application {
         final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
                 .enableRetryOnNetworkGain(true)
                 .setDownloadConcurrentLimit(3)
-                .setDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))
+                .setHttpDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))
                 .build();
         Fetch.Impl.setDefaultInstanceConfiguration(fetchConfiguration);
     }

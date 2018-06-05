@@ -14,7 +14,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val progressReportingIntervalMillis: Long,
                                              val downloadBufferSizeBytes: Int,
                                              val loggingEnabled: Boolean,
-                                             val downloader: Downloader,
+                                             val httpDownloader: Downloader,
                                              val globalNetworkType: NetworkType,
                                              val logger: Logger,
                                              val autoStart: Boolean,
@@ -29,7 +29,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var progressReportingIntervalMillis = DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS
         private var downloadBufferSizeBytes = DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES
         private var loggingEnabled = DEFAULT_LOGGING_ENABLED
-        private var downloader = defaultDownloader
+        private var httpDownloader = defaultDownloader
         private var globalNetworkType = defaultGlobalNetworkType
         private var logger: Logger = defaultLogger
         private var autoStart = DEFAULT_AUTO_START
@@ -52,16 +52,16 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
-         * Sets the downloader client Fetch will use to perform downloads.
-         * The default downloader uses the HttpUrlConnection client to perform downloads.
+         * Sets the httpDownloader client Fetch will use to perform http downloads.
+         * The default httpDownloader uses the HttpUrlConnection client to perform downloads.
          * @see com.tonyodev.fetch2.Downloader
          * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader
          * @see com.tonyodev.fetch2downloader.OkHttpDownloader
          * @param downloader Downloader Client
          * @return Builder
          * */
-        fun setDownloader(downloader: Downloader): Builder {
-            this.downloader = downloader
+        fun setHttpDownloader(downloader: Downloader): Builder {
+            this.httpDownloader = downloader
             return this
         }
 
@@ -185,7 +185,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                     progressReportingIntervalMillis = progressReportingIntervalMillis,
                     downloadBufferSizeBytes = downloadBufferSizeBytes,
                     loggingEnabled = loggingEnabled,
-                    downloader = downloader,
+                    httpDownloader = httpDownloader,
                     globalNetworkType = globalNetworkType,
                     logger = prefsLogger,
                     autoStart = autoStart,
@@ -204,7 +204,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (progressReportingIntervalMillis != other.progressReportingIntervalMillis) return false
         if (downloadBufferSizeBytes != other.downloadBufferSizeBytes) return false
         if (loggingEnabled != other.loggingEnabled) return false
-        if (downloader != other.downloader) return false
+        if (httpDownloader != other.httpDownloader) return false
         if (globalNetworkType != other.globalNetworkType) return false
         if (logger != other.logger) return false
         if (autoStart != other.autoStart) return false
@@ -219,7 +219,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + progressReportingIntervalMillis.hashCode()
         result = 31 * result + downloadBufferSizeBytes
         result = 31 * result + loggingEnabled.hashCode()
-        result = 31 * result + downloader.hashCode()
+        result = 31 * result + httpDownloader.hashCode()
         result = 31 * result + globalNetworkType.hashCode()
         result = 31 * result + logger.hashCode()
         result = 31 * result + autoStart.hashCode()
@@ -230,7 +230,7 @@ class FetchConfiguration private constructor(val appContext: Context,
     override fun toString(): String {
         return "FetchConfiguration(appContext=$appContext, namespace='$namespace', " +
                 "concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis," +
-                " downloadBufferSizeBytes=$downloadBufferSizeBytes, loggingEnabled=$loggingEnabled, downloader=$downloader," +
+                " downloadBufferSizeBytes=$downloadBufferSizeBytes, loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader," +
                 " globalNetworkType=$globalNetworkType, logger=$logger, autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain)"
     }
 

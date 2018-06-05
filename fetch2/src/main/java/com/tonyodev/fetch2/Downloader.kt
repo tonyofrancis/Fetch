@@ -7,7 +7,7 @@ import java.io.OutputStream
 /**
  * This interface can be implemented by a class to create a
  * custom Downloader that can be used by Fetch for downloading requests.
- * A custom downloader IS great when you want to provide your own
+ * A custom downloader is great when you want to provide your own
  * client for Fetch to use for downloading. Note: You are responsible for freeing up resources created
  * by this class when it is no longer needed. Also, the methods in this interface can be called
  * by multiple threads. You are also responsible for making it thread safe when appropriate.

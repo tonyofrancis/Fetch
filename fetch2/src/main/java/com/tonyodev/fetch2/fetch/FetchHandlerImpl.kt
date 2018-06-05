@@ -18,7 +18,7 @@ class FetchHandlerImpl(private val namespace: String,
                        private val priorityListProcessor: PriorityListProcessor<Download>,
                        private val logger: Logger,
                        private val autoStart: Boolean,
-                       private val downloader: Downloader,
+                       private val httpDownloader: Downloader,
                        private val fileTempDir: String,
                        private val listenerCoordinator: ListenerCoordinator) : FetchHandler {
 
@@ -51,7 +51,7 @@ class FetchHandlerImpl(private val namespace: String,
             if (isDownloading(existingDownload.id)) {
                 downloadManager.cancel(downloadInfo.id)
             }
-            deleteRequestTempFiles(fileTempDir, downloader, existingDownload)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, existingDownload)
             databaseManager.delete(existingDownload)
         } else if (downloadInfo.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME && existingDownload != null) {
             val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
@@ -189,7 +189,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadsList.forEach {
             it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadsList
     }
@@ -206,7 +206,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadInfoList.forEach {
             it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -219,7 +219,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadInfoList.forEach {
             it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -236,7 +236,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadInfoList.forEach {
             it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -261,7 +261,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadsList
     }
@@ -286,7 +286,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -307,7 +307,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -332,7 +332,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
