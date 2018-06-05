@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2downloaders.OkHttpDownloader;
+import com.tonyodev.fetch2fileserver.FetchFileServerDownloader;
 
 import timber.log.Timber;
 
@@ -21,6 +22,7 @@ public class App extends Application {
                 .enableRetryOnNetworkGain(true)
                 .setDownloadConcurrentLimit(3)
                 .setHttpDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))
+                .setFileServerDownloader(new FetchFileServerDownloader(Downloader.FileDownloaderType.PARALLEL))
                 .build();
         Fetch.Impl.setDefaultInstanceConfiguration(fetchConfiguration);
     }

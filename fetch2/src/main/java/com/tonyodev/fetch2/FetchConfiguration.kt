@@ -68,15 +68,13 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
-         * Sets the downloader client Fetch will use to perform downloads from a Fetch File Server.
-         * If no downloader is specified. Requests with url beginning with "fetchlocal://" will fail
-         * and the error will specify that no downloader found.
+         * Sets the downloader client Fetch will use to perform downloads from a TCP File Server.
          * @see com.tonyodev.fetch2.Downloader
-         * @see com.tonyodev.fetch2fileserver.FetchFileServerDownloader
+         * @see com.tonyodev.fetch2.FileServerDownloader
          * @param downloader Downloader Client for Fetch File Server
          * @return Builder
          * */
-        fun setFetchFileServerDownloader(fileServerDownloader: FileServerDownloader): Builder {
+        fun setFileServerDownloader(fileServerDownloader: FileServerDownloader): Builder {
             this.fileServerDownloader = fileServerDownloader
             return this
         }
