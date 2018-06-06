@@ -18,10 +18,11 @@ import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2.util.FetchUtils;
 import com.tonyodev.fetch2fileserver.ContentFile;
 import com.tonyodev.fetch2fileserver.FetchFileServer;
 import com.tonyodev.fetch2fileserver.FetchFileServerDownloader;
-import com.tonyodev.fetch2fileserver.FetchFileServerRequestBuilder;
+import com.tonyodev.fetch2fileserver.FetchFileServerUrlBuilder;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -102,6 +103,10 @@ public class FileServerActivity extends AppCompatActivity {
         contentFile.setName(file.getName());
         contentFile.setId(file.getAbsolutePath().hashCode());
         contentFile.setLength(fileLength);
+        final String fileMd5 = FetchUtils.getFileMd5String(file.getAbsolutePath());
+        if (fileMd5 != null) {
+            contentFile.setMd5(fileMd5);
+        }
         fetchFileServer.addContentFile(contentFile);
         downloadContentFileUsingFetch();
     }
@@ -115,13 +120,14 @@ public class FileServerActivity extends AppCompatActivity {
     }
 
     private Request getRequest() {
-        return new FetchFileServerRequestBuilder()
+        final String url = new FetchFileServerUrlBuilder()
                 .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
-                .setContentIdentifier(CONTENT_PATH)
-                .setAuthorization("password")
-                .setDownloadFile(getFile())
-                .setPriority(Priority.HIGH)
+                .setPath(CONTENT_PATH)
                 .create();
+        final Request request = new Request(url, getFile());
+        request.addHeader("Authorization", "password");
+        request.setPriority(Priority.HIGH);
+        return request;
     }
 
     private String getFile() {
