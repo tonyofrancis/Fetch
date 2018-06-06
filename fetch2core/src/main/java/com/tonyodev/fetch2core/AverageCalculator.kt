@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2.util
+package com.tonyodev.fetch2core
 
 class AverageCalculator @JvmOverloads constructor(
         /**

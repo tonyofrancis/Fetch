@@ -1,7 +1,7 @@
 package com.tonyodev.fetch2fileserver
 
 import android.content.Context
-import com.tonyodev.fetch2.Func
+import com.tonyodev.fetch2core.Func
 import java.net.ServerSocket
 
 /** A lightweight TCP File Server that acts like an HTTP file server

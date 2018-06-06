@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2
 
-import com.tonyodev.fetch2.util.getUniqueId
+import com.tonyodev.fetch2core.getUniqueId
 
 /**
  * Use this class to create a request that is used by Fetch to enqueue a download and

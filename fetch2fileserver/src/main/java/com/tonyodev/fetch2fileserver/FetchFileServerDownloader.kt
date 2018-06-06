@@ -1,8 +1,7 @@
 package com.tonyodev.fetch2fileserver
 
-import com.tonyodev.fetch2.Downloader
-import com.tonyodev.fetch2.FileServerDownloader
-import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.*
+
 import com.tonyodev.fetch2fileserver.transporter.FileRequest.Companion.TYPE_FILE
 import com.tonyodev.fetch2fileserver.transporter.FetchFileResourceTransporter
 import com.tonyodev.fetch2fileserver.transporter.FileRequest
@@ -16,7 +15,7 @@ import java.util.*
 /**
  * This downloader is used by Fetch to download files from a Fetch File Server using the
  * Fetch file server url scheme.
- * @see {@link com.tonyodev.fetch2.Downloader}
+ * @see {@link com.tonyodev.fetch2core.Downloader}
  * */
 open class FetchFileServerDownloader @JvmOverloads constructor(
 

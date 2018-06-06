@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2.database
 
-import com.tonyodev.fetch2.Logger
+import com.tonyodev.fetch2core.Logger
 import com.tonyodev.fetch2.Status
 import java.io.Closeable
 

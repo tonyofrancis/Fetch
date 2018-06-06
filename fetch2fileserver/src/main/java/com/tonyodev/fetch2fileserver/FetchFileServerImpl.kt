@@ -4,9 +4,10 @@ import android.content.Context
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
-import com.tonyodev.fetch2.FetchLogger
-import com.tonyodev.fetch2.Func
-import com.tonyodev.fetch2.util.InterruptMonitor
+
+import com.tonyodev.fetch2core.FetchLogger
+import com.tonyodev.fetch2core.Func
+import com.tonyodev.fetch2core.InterruptMonitor
 import com.tonyodev.fetch2fileserver.database.FetchFileResourceDatabase
 import com.tonyodev.fetch2fileserver.provider.FileResourceProvider
 import com.tonyodev.fetch2fileserver.provider.FileResourceProviderDelegate

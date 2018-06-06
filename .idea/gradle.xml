@@ -9,6 +9,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/fetch2" />
+            <option value="$PROJECT_DIR$/fetch2core" />
             <option value="$PROJECT_DIR$/fetch2downloaders" />
             <option value="$PROJECT_DIR$/fetch2fileserver" />
             <option value="$PROJECT_DIR$/fetch2rx" />

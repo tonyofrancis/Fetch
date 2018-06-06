@@ -1,13 +1,14 @@
 package com.tonyodev.fetch2.downloader
 
 import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Downloader
+import com.tonyodev.fetch2core.Downloader
 import com.tonyodev.fetch2.Error
-import com.tonyodev.fetch2.Logger
+import com.tonyodev.fetch2core.Logger
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromThrowable
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.*
 import java.io.*
 import java.net.HttpURLConnection
 import java.util.concurrent.ExecutorService

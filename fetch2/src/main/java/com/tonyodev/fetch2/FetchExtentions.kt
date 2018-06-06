@@ -1,6 +1,8 @@
 package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2.exception.FetchException
+import com.tonyodev.fetch2core.Func
+import com.tonyodev.fetch2core.Func2
 
 
 /**

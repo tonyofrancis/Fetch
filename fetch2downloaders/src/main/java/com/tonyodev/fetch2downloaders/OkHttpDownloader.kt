@@ -1,8 +1,8 @@
 package com.tonyodev.fetch2downloaders
 
-import com.tonyodev.fetch2.Downloader
-import com.tonyodev.fetch2.util.InterruptMonitor
-import com.tonyodev.fetch2.util.getFileMd5String
+import com.tonyodev.fetch2core.Downloader
+import com.tonyodev.fetch2core.InterruptMonitor
+import com.tonyodev.fetch2core.getFileMd5String
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 /**
  * This downloader uses a OkHttpClient to perform http requests.
  * You can also pass in your custom okHttpClient for this downloader to use.
- * @see {@link com.tonyodev.fetch2.Downloader}
+ * @see {@link com.tonyodev.fetch2core.Downloader}
  * */
 open class OkHttpDownloader @JvmOverloads constructor(
         /** OkHttpClient */

@@ -10,8 +10,11 @@ import com.tonyodev.fetch2.helper.FileDownloaderDelegate
 import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.getRequestForDownload
-import com.tonyodev.fetch2.util.isFetchFileServerUrl
 import com.tonyodev.fetch2.util.toDownloadInfo
+import com.tonyodev.fetch2core.Downloader
+import com.tonyodev.fetch2core.FileServerDownloader
+import com.tonyodev.fetch2core.Logger
+import com.tonyodev.fetch2core.isFetchFileServerUrl
 import java.util.concurrent.Executors
 
 class DownloadManagerImpl(private val httpDownloader: Downloader,

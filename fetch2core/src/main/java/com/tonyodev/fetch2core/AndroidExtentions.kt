@@ -1,5 +1,6 @@
 @file:JvmName("FetchAndroidExtensions")
-package com.tonyodev.fetch2.util
+
+package com.tonyodev.fetch2core
 
 import android.content.Context
 import android.net.ConnectivityManager

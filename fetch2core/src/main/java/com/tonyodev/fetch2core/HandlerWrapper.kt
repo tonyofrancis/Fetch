@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2.fetch
+package com.tonyodev.fetch2core
 
 import android.os.Handler
 import android.os.HandlerThread

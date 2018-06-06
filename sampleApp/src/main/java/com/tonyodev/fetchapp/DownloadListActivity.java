@@ -14,7 +14,7 @@ import android.view.View;
 
 import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Download;
-import com.tonyodev.fetch2.Downloader;
+import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.NetworkType;

@@ -1,7 +1,8 @@
 package com.tonyodev.fetch2
 
-import com.tonyodev.fetch2.util.InterruptMonitor
-import com.tonyodev.fetch2.util.getFileMd5String
+import com.tonyodev.fetch2core.Downloader
+import com.tonyodev.fetch2core.InterruptMonitor
+import com.tonyodev.fetch2core.getFileMd5String
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
@@ -12,7 +13,7 @@ import kotlin.collections.HashMap
 /**
  * The default Downloader used by Fetch for downloading requests.
  * This downloader uses a HttpUrlConnection to perform http requests
- * @see {@link com.tonyodev.fetch2.Downloader}
+ * @see {@link com.tonyodev.fetch2core.Downloader}
  * */
 open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         /**

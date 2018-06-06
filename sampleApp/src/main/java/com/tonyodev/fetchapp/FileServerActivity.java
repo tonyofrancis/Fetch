@@ -12,14 +12,13 @@ import android.widget.Toast;
 
 import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Download;
-import com.tonyodev.fetch2.Downloader;
+import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.FetchListener;
-import com.tonyodev.fetch2.Func;
 import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
-import com.tonyodev.fetch2.util.FetchUtils;
+import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2fileserver.FileResource;
 import com.tonyodev.fetch2fileserver.FetchFileServer;
 import com.tonyodev.fetch2fileserver.FetchFileServerDownloader;
@@ -34,10 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import timber.log.Timber;
 
 
@@ -107,7 +103,7 @@ public class FileServerActivity extends AppCompatActivity {
         fileResource.setName(file.getName());
         fileResource.setId(file.getAbsolutePath().hashCode());
         fileResource.setLength(fileLength);
-        final String fileMd5 = FetchUtils.getFileMd5String(file.getAbsolutePath());
+        final String fileMd5 = FetchCoreUtils.getFileMd5String(file.getAbsolutePath());
         if (fileMd5 != null) {
             fileResource.setMd5(fileMd5);
         }

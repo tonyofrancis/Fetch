@@ -1,8 +1,7 @@
 package com.tonyodev.fetch2fileserver.provider
 
 import android.os.Handler
-import com.tonyodev.fetch2.FetchLogger
-import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.*
 import com.tonyodev.fetch2fileserver.transporter.FileRequest
 import com.tonyodev.fetch2fileserver.transporter.FileResponse
 import com.tonyodev.fetch2fileserver.transporter.FileResponse.Companion.CLOSE_CONNECTION

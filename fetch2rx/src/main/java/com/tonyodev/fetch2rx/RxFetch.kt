@@ -5,6 +5,7 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
 import com.tonyodev.fetch2.util.DEFAULT_INSTANCE_NAMESPACE
+import com.tonyodev.fetch2.Status
 
 /**
  * A light weight file download manager for Android with Rx features.

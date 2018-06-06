@@ -1,6 +1,5 @@
-package com.tonyodev.fetch2
+package com.tonyodev.fetch2core
 
-import com.tonyodev.fetch2.util.InterruptMonitor
 import java.io.Closeable
 import java.io.InputStream
 import java.io.OutputStream

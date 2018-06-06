@@ -1,8 +1,6 @@
-package com.tonyodev.fetch2
+package com.tonyodev.fetch2core
 
 import android.util.Log
-import com.tonyodev.fetch2.util.DEFAULT_LOGGING_ENABLED
-import com.tonyodev.fetch2.util.DEFAULT_TAG
 
 /**
  * The default Fetch Logger.

@@ -6,10 +6,12 @@ import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
-import com.tonyodev.fetch2.fetch.HandlerWrapper
+import com.tonyodev.fetch2core.HandlerWrapper
 import com.tonyodev.fetch2.fetch.ListenerCoordinator
-import com.tonyodev.fetch2.util.FAILED_TO_ENQUEUE_REQUEST
-import com.tonyodev.fetch2.util.DOWNLOAD_NOT_FOUND
+import com.tonyodev.fetch2core.FAILED_TO_ENQUEUE_REQUEST
+import com.tonyodev.fetch2core.DOWNLOAD_NOT_FOUND
+import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2core.Logger
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 

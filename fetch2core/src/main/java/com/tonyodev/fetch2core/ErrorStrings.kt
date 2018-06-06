@@ -1,6 +1,6 @@
 @file:JvmName("FetchErrorStrings")
 
-package com.tonyodev.fetch2.util
+package com.tonyodev.fetch2core
 
 const val DOWNLOAD_NOT_FOUND = "fetch download not found"
 const val FAILED_TO_ENQUEUE_REQUEST = "UNIQUE constraint failed: requests._id (code 1555)"

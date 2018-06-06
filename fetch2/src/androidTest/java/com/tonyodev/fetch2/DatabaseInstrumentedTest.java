@@ -11,6 +11,7 @@ import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.util.FetchDatabaseExtensions;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
+import com.tonyodev.fetch2core.FetchLogger;
 
 import org.junit.After;
 import org.junit.Before;

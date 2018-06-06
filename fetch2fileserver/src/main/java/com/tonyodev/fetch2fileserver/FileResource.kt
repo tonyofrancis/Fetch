@@ -25,8 +25,9 @@ class FileResource {
     /** Custom data that will be sent in the server response to the client if available.*/
     var customData: String = ""
 
-    /** The File Resource md5 checksum string.
-     * If provided, this is sent in the server response to the client.*/
+    /** The File Resource md5 checksum string. If Empty Fetch File Server will generate the md5
+     * checksum when added to a file server instance.
+     * This is sent in the server response to the client.*/
     var md5: String = ""
 
     override fun equals(other: Any?): Boolean {

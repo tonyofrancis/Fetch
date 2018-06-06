@@ -5,6 +5,8 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.FileDownloader
 import com.tonyodev.fetch2.util.defaultNoError
+import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2core.Logger
 
 
 class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdater,

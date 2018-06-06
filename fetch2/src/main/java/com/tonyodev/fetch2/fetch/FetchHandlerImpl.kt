@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.*
 import java.io.File
 import java.util.*
 

@@ -6,6 +6,10 @@ import android.arch.persistence.room.Index
 import android.arch.persistence.room.PrimaryKey
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2.NetworkType
+import com.tonyodev.fetch2.Priority
+import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2core.calculateProgress
 
 
 @Entity(tableName = DownloadDatabase.TABLE_NAME,

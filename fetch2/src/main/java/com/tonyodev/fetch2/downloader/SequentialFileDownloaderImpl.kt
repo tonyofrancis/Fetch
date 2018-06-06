@@ -4,6 +4,7 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.*
 import java.io.*
 import java.net.HttpURLConnection
 import kotlin.math.ceil

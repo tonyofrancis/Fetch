@@ -19,7 +19,10 @@ import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
-import com.tonyodev.fetch2.util.FetchUtils;
+import com.tonyodev.fetch2core.Downloader;
+import com.tonyodev.fetch2core.FetchCoreDefaults;
+import com.tonyodev.fetch2core.FetchCoreUtils;
+import com.tonyodev.fetch2core.FetchLogger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -49,14 +52,14 @@ public class DownloadManagerInstrumentedTest {
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
         databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
         final Downloader client = FetchDefaults.getDefaultDownloader();
-        final long progessInterval = FetchDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
+        final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
-        final String tempDir = FetchUtils.getFileTempDir(appContext);
+        final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
         final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,

@@ -5,10 +5,10 @@ package com.tonyodev.fetchmigrator
 import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import android.support.annotation.WorkerThread
-import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManagerImpl
 import com.tonyodev.fetch2.database.DownloadDatabase
 import com.tonyodev.fetch2.database.DownloadInfo
+import com.tonyodev.fetch2core.FetchLogger
 import com.tonyodev.fetchmigrator.fetch1.DatabaseHelper
 import com.tonyodev.fetchmigrator.fetch1.DownloadTransferPair
 import com.tonyodev.fetchmigrator.helpers.v1CursorToV2DownloadInfo

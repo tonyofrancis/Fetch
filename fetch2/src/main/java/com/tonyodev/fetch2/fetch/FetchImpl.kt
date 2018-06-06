@@ -6,6 +6,10 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
+import com.tonyodev.fetch2core.Func
+import com.tonyodev.fetch2core.Func2
+import com.tonyodev.fetch2core.HandlerWrapper
+import com.tonyodev.fetch2core.Logger
 
 open class FetchImpl constructor(override val namespace: String,
                                  protected val handlerWrapper: HandlerWrapper,

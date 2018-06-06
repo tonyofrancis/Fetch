@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2
+package com.tonyodev.fetch2core
 
 import org.jetbrains.annotations.NotNull
 

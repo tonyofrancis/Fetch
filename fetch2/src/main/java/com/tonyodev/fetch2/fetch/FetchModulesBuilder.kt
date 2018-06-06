@@ -14,7 +14,8 @@ import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.helper.PriorityListProcessorImpl
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
-import com.tonyodev.fetch2.util.getFileTempDir
+import com.tonyodev.fetch2core.HandlerWrapper
+import com.tonyodev.fetch2core.getFileTempDir
 
 object FetchModulesBuilder {
 

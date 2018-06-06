@@ -3,11 +3,13 @@ package com.tonyodev.fetch2.helper
 
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.downloader.DownloadManager
-import com.tonyodev.fetch2.fetch.HandlerWrapper
+import com.tonyodev.fetch2core.HandlerWrapper
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
-import com.tonyodev.fetch2.util.isFetchFileServerUrl
+import com.tonyodev.fetch2.NetworkType
+import com.tonyodev.fetch2core.Logger
+import com.tonyodev.fetch2core.isFetchFileServerUrl
 
 class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerWrapper,
                                             private val downloadProvider: DownloadProvider,

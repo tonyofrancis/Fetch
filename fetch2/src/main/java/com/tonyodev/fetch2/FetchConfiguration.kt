@@ -3,6 +3,7 @@ package com.tonyodev.fetch2
 import android.content.Context
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.*
 
 /**
  * Class used to hold the configuration settings for a Fetch instance.

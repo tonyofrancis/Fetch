@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2fileserver
 
-import com.tonyodev.fetch2.Func
+import com.tonyodev.fetch2core.Func
 
 /** Checks if a File Resource is managed by this instance.
  * @param fileResourceId file resource id

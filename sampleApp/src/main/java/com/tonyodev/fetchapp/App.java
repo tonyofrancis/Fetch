@@ -2,7 +2,7 @@ package com.tonyodev.fetchapp;
 
 import android.app.Application;
 
-import com.tonyodev.fetch2.Downloader;
+import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2downloaders.OkHttpDownloader;
