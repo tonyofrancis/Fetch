@@ -269,10 +269,10 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
         return file
     }
 
-    private fun getRequest(): Downloader.Request {
+    private fun getRequest(): Downloader.ServerRequest {
         val headers = initialDownload.headers.toMutableMap()
         headers["Range"] = "bytes=$downloaded-"
-        return Downloader.Request(
+        return Downloader.ServerRequest(
                 id = initialDownload.id,
                 url = initialDownload.url,
                 headers = headers,

@@ -24,7 +24,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
 
     protected val connections: MutableMap<Downloader.Response, FetchContentFileTransporter> = Collections.synchronizedMap(HashMap<Downloader.Response, FetchContentFileTransporter>())
 
-    override fun execute(request: Downloader.Request, interruptMonitor: InterruptMonitor?): Downloader.Response? {
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
         val headers = request.headers
         val range = getRangeForFetchFileServerRequest(headers["Range"] ?: "bytes=0-")
         val authorization = headers[FileRequest.FIELD_AUTHORIZATION] ?: ""
@@ -92,27 +92,27 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestOutputStream(request: Downloader.Request, filePointerOffset: Long): OutputStream? {
+    override fun getRequestOutputStream(request: Downloader.ServerRequest, filePointerOffset: Long): OutputStream? {
         return null
     }
 
-    override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, filePointerOffset: Long) {
+    override fun seekOutputStreamToPosition(request: Downloader.ServerRequest, outputStream: OutputStream, filePointerOffset: Long) {
 
     }
 
-    override fun getFileSlicingCount(request: Downloader.Request, contentLength: Long): Int? {
+    override fun getFileSlicingCount(request: Downloader.ServerRequest, contentLength: Long): Int? {
         return null
     }
 
-    override fun getFileDownloaderType(request: Downloader.Request): Downloader.FileDownloaderType {
+    override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
         return fileDownloaderType
     }
 
-    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.Request): String? {
+    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.ServerRequest): String? {
         return null
     }
 
-    override fun verifyContentMD5(request: Downloader.Request, md5: String): Boolean {
+    override fun verifyContentMD5(request: Downloader.ServerRequest, md5: String): Boolean {
         if (md5.isEmpty()) {
             return true
         }

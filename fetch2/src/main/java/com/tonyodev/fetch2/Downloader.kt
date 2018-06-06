@@ -29,7 +29,7 @@ interface Downloader : Closeable {
      * For an example:
      * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader.execute
      * */
-    fun execute(request: Request, interruptMonitor: InterruptMonitor?): Response?
+    fun execute(request: ServerRequest, interruptMonitor: InterruptMonitor?): Response?
 
     /**
      * This method is called by Fetch to disconnect the connection for the passed in response.
@@ -57,7 +57,7 @@ interface Downloader : Closeable {
      *         after the disconnect(response) method is called. Can return null. If null,
      *         Fetch will provide the output stream.
      * */
-    fun getRequestOutputStream(request: Request, filePointerOffset: Long): OutputStream?
+    fun getRequestOutputStream(request: ServerRequest, filePointerOffset: Long): OutputStream?
 
     /** This method is called by Fetch for a request using the FileDownloaderType.Parallel type
      * and an output stream was provided for the request. If an output stream was provided,
@@ -73,7 +73,7 @@ interface Downloader : Closeable {
      *                          handled correctly, Fetch will override the file and being writing
      *                          data at the beginning of the file.
      * */
-    fun seekOutputStreamToPosition(request: Request, outputStream: OutputStream, filePointerOffset: Long)
+    fun seekOutputStreamToPosition(request: ServerRequest, outputStream: OutputStream, filePointerOffset: Long)
 
     /**
      * This method is called by Fetch if the FileDownloaderType.Parallel type was set
@@ -83,14 +83,14 @@ interface Downloader : Closeable {
      * @param contentLength the total content length in bytes.
      * @return the slicing size for the request file. Can be null.
      * */
-    fun getFileSlicingCount(request: Request, contentLength: Long): Int?
+    fun getFileSlicingCount(request: ServerRequest, contentLength: Long): Int?
 
     /** This method is called by Fetch to select the FileDownloaderType for each
      * download request. The Default is FileDownloaderType.SEQUENTIAL
      * @param request the request information for the download.
      * @return the FileDownloaderType.
      * */
-    fun getFileDownloaderType(request: Request): FileDownloaderType
+    fun getFileDownloaderType(request: ServerRequest): FileDownloaderType
 
     /**
      * This method is called by Fetch for download requests that are downloading using the
@@ -101,7 +101,7 @@ interface Downloader : Closeable {
      * @param request the request information for the download.
      * @return the directory where the temp files will be stored. Can be null.
      * */
-    fun getDirectoryForFileDownloaderTypeParallel(request: Request): String?
+    fun getDirectoryForFileDownloaderTypeParallel(request: ServerRequest): String?
 
     /**
      * This method should be used to verify that the download file MD5 matches the
@@ -111,13 +111,13 @@ interface Downloader : Closeable {
      * @return return true if the md5 values match otherwise false. If false is returned,
      * this indicates that the download files is not correct so the download fails.
      * */
-    fun verifyContentMD5(request: Request, md5: String): Boolean
+    fun verifyContentMD5(request: ServerRequest, md5: String): Boolean
 
     /**
      * A class that contains the information used by the Downloader to create a connection
      * to the server.
      * */
-    open class Request(
+    open class ServerRequest(
             /** The request id.*/
             val id: Int,
 
@@ -152,7 +152,7 @@ interface Downloader : Closeable {
             val byteStream: InputStream?,
 
             /** The request that initiated this response.*/
-            val request: Request,
+            val request: ServerRequest,
 
             /** The file md5 value to verify against.*/
             val md5: String)

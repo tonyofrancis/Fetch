@@ -207,7 +207,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun getFileSliceList(openingResponseCode: Int, request: Downloader.Request): List<FileSlice> {
+    private fun getFileSliceList(openingResponseCode: Int, request: Downloader.ServerRequest): List<FileSlice> {
         val file = getFile(downloadInfo.file)
         if (!file.exists()) {
             deleteAllTempFiles()
@@ -284,7 +284,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         return "$fileTempDir/$id.meta.txt"
     }
 
-    private fun getChuckInfo(request: Downloader.Request): FileSliceInfo {
+    private fun getChuckInfo(request: Downloader.ServerRequest): FileSliceInfo {
         val fileSliceSize = downloader.getFileSlicingCount(request, total)
                 ?: DEFAULT_FILE_SLICE_NO_LIMIT_SET
         return if (fileSliceSize == DEFAULT_FILE_SLICE_NO_LIMIT_SET) {
@@ -410,7 +410,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun downloadSliceFiles(request: Downloader.Request, fileSlicesDownloadsList: List<FileSlice>) {
+    private fun downloadSliceFiles(request: Downloader.ServerRequest, fileSlicesDownloadsList: List<FileSlice>) {
         actionsCounter = 0
         actionsTotal = fileSlicesDownloadsList.size
         outputStream = downloader.getRequestOutputStream(request, 0)

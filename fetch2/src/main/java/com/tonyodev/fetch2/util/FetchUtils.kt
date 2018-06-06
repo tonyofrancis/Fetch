@@ -119,12 +119,12 @@ fun getFileTempDir(context: Context): String {
 
 fun getRequestForDownload(download: Download,
                           rangeStart: Long = -1,
-                          rangeEnd: Long = -1): Downloader.Request {
+                          rangeEnd: Long = -1): Downloader.ServerRequest {
     val start = if (rangeStart == -1L) 0 else rangeStart
     val end = if (rangeEnd == -1L) "" else rangeEnd.toString()
     val headers = download.headers.toMutableMap()
     headers["Range"] = "bytes=$start-$end"
-    return Downloader.Request(
+    return Downloader.ServerRequest(
             id = download.id,
             url = download.url,
             headers = headers,

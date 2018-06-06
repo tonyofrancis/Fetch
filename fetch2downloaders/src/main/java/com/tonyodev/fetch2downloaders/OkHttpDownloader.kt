@@ -40,7 +40,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
             .retryOnConnectionFailure(false)
             .build()
 
-    override fun execute(request: Downloader.Request, interruptMonitor: InterruptMonitor?): Downloader.Response? {
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
         val okHttpRequestBuilder = Request.Builder()
                 .url(request.url)
 
@@ -91,27 +91,27 @@ open class OkHttpDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestOutputStream(request: Downloader.Request, filePointerOffset: Long): OutputStream? {
+    override fun getRequestOutputStream(request: Downloader.ServerRequest, filePointerOffset: Long): OutputStream? {
         return null
     }
 
-    override fun getFileSlicingCount(request: Downloader.Request, contentLength: Long): Int? {
+    override fun getFileSlicingCount(request: Downloader.ServerRequest, contentLength: Long): Int? {
         return null
     }
 
-    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.Request): String? {
+    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.ServerRequest): String? {
         return null
     }
 
-    override fun seekOutputStreamToPosition(request: Downloader.Request, outputStream: OutputStream, filePointerOffset: Long) {
+    override fun seekOutputStreamToPosition(request: Downloader.ServerRequest, outputStream: OutputStream, filePointerOffset: Long) {
 
     }
 
-    override fun getFileDownloaderType(request: Downloader.Request): Downloader.FileDownloaderType {
+    override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
         return fileDownloaderType
     }
 
-    override fun verifyContentMD5(request: Downloader.Request, md5: String): Boolean {
+    override fun verifyContentMD5(request: Downloader.ServerRequest, md5: String): Boolean {
         if (md5.isEmpty()) {
             return true
         }

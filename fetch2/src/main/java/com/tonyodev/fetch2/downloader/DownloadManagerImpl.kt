@@ -201,7 +201,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
         }
     }
 
-    private fun getFileDownloader(request: Downloader.Request, download: Download, downloader: Downloader): FileDownloader {
+    private fun getFileDownloader(request: Downloader.ServerRequest, download: Download, downloader: Downloader): FileDownloader {
         return if (downloader.getFileDownloaderType(request) == Downloader.FileDownloaderType.SEQUENTIAL) {
             SequentialFileDownloaderImpl(
                     initialDownload = download,
