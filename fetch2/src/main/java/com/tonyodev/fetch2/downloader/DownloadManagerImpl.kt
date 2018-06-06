@@ -26,7 +26,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val fileTempDir: String,
                           private val downloadManagerCoordinator: DownloadManagerCoordinator,
                           private val listenerCoordinator: ListenerCoordinator,
-                          private val fileServerDownloader: FileServerDownloader?) : DownloadManager {
+                          private val fileServerDownloader: FileServerDownloader?,
+                          private val md5CheckingEnabled: Boolean) : DownloadManager {
 
     private val lock = Object()
     private val executor = Executors.newFixedThreadPool(concurrentLimit)
@@ -209,7 +210,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                     downloadBufferSizeBytes = downloadBufferSizeBytes,
                     logger = logger,
                     networkInfoProvider = networkInfoProvider,
-                    retryOnNetworkGain = retryOnNetworkGain)
+                    retryOnNetworkGain = retryOnNetworkGain,
+                    md5CheckingEnabled = md5CheckingEnabled)
         } else {
             val tempDir = downloader.getDirectoryForFileDownloaderTypeParallel(request)
                     ?: fileTempDir
@@ -221,7 +223,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                     logger = logger,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = retryOnNetworkGain,
-                    fileTempDir = tempDir)
+                    fileTempDir = tempDir,
+                    md5CheckingEnabled = md5CheckingEnabled)
         }
     }
 

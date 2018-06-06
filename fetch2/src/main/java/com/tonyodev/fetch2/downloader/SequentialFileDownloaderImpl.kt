@@ -14,7 +14,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                                    private val downloadBufferSizeBytes: Int,
                                    private val logger: Logger,
                                    private val networkInfoProvider: NetworkInfoProvider,
-                                   private val retryOnNetworkGain: Boolean) : FileDownloader {
+                                   private val retryOnNetworkGain: Boolean,
+                                   private val md5CheckingEnabled: Boolean) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -229,15 +230,24 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             downloadInfo.downloaded = downloaded
             downloadInfo.total = total
             if (!terminated) {
-                if (downloader.verifyContentMD5(response.request, response.md5)) {
+                if (md5CheckingEnabled) {
+                    if (downloader.verifyContentMD5(response.request, response.md5)) {
+                        delegate?.onProgress(
+                                download = downloadInfo,
+                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                        delegate?.onComplete(
+                                download = downloadInfo)
+                    } else {
+                        throw FetchException(INVALID_CONTENT_MD5, FetchException.Code.INVALID_CONTENT_MD5)
+                    }
+                } else {
                     delegate?.onProgress(
                             download = downloadInfo,
                             etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
                             downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                     delegate?.onComplete(
                             download = downloadInfo)
-                } else {
-                    throw FetchException(INVALID_CONTENT_MD5, FetchException.Code.INVALID_CONTENT_MD5)
                 }
             }
         }

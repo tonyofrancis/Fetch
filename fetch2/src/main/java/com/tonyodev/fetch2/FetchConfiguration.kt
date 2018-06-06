@@ -19,7 +19,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val logger: Logger,
                                              val autoStart: Boolean,
                                              val retryOnNetworkGain: Boolean,
-                                             val fileServerDownloader: FileServerDownloader?) {
+                                             val fileServerDownloader: FileServerDownloader?,
+                                             val md5CheckingEnabled: Boolean) {
 
     /** Used to create an instance of Fetch Configuration.*/
     class Builder(context: Context) {
@@ -36,6 +37,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var autoStart = DEFAULT_AUTO_START
         private var retryOnNetworkGain = DEFAULT_RETRY_ON_NETWORK_GAIN
         private var fileServerDownloader: FileServerDownloader? = null
+        private var md5CheckEnabled = DEFAULT_MD5_CHECK_ENABLED
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -180,6 +182,17 @@ class FetchConfiguration private constructor(val appContext: Context,
             return this
         }
 
+        /** Allows Fetch to check the fully downloaded file md5 checksum after the download completes
+         * with md5 checksum returned by the server if supported. This check is only ran once.
+         * Default is false
+         * @param md5 md5 checking enabled
+         * @return Builder
+         * */
+        fun enableMd5Check(enabled: Boolean): Builder {
+            this.md5CheckEnabled = enabled
+            return this
+        }
+
         /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
@@ -204,7 +217,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     logger = prefsLogger,
                     autoStart = autoStart,
                     retryOnNetworkGain = retryOnNetworkGain,
-                    fileServerDownloader = fileServerDownloader)
+                    fileServerDownloader = fileServerDownloader,
+                    md5CheckingEnabled = md5CheckEnabled)
         }
 
     }
