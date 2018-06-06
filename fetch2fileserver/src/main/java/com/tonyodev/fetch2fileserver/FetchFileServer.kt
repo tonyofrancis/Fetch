@@ -6,7 +6,7 @@ import java.net.ServerSocket
 
 /** A lightweight TCP File Server that acts like an HTTP file server
  * designed specifically for Android to distribute files from on device to another.
- * The Fetch File Server works in hand with Fetch to download file resources.*/
+ * The Fetch File Server works great with Fetch and the FetchFileResourceDownloader to download file resources.*/
 interface FetchFileServer {
 
     /** File Server Unique id.*/

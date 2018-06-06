@@ -2,11 +2,10 @@ package com.tonyodev.fetch2fileserver.database
 
 import android.arch.persistence.room.*
 import android.content.Context
-import com.tonyodev.fetch2fileserver.FileResource
 import java.io.Closeable
 
-class FetchFileResourceDatabase(context: Context,
-                                databaseName: String) : Closeable {
+class FetchFileResourceInfoDatabase(context: Context,
+                                    databaseName: String) : Closeable {
 
     private val lock = Any()
 
@@ -16,36 +15,36 @@ class FetchFileResourceDatabase(context: Context,
     val isClosed: Boolean
         get() = closed
 
-    private val fileResourceDatabase = Room.databaseBuilder(context,
+    private val fileResourceInfoDatabase = Room.databaseBuilder(context,
             FileResourceInfoDatabase::class.java, databaseName)
             .build()
-    private val fileResourceInfoDao = fileResourceDatabase.fileResourceInfoDao()
+    private val fileResourceInfoDao = fileResourceInfoDatabase.fileResourceInfoDao()
 
-    fun insert(fileResource: FileResource): Long {
+    fun insert(fileResourceInfo: FileResourceInfo): Long {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceInfoDao.insert(fileResource.toFileResourceInfo())
+            return fileResourceInfoDao.insert(fileResourceInfo)
         }
     }
 
-    fun insert(fileResourceList: List<FileResource>): List<Long> {
+    fun insert(fileResourceInfoList: List<FileResourceInfo>): List<Long> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceInfoDao.insert(fileResourceList.map { it.toFileResourceInfo() })
+            return fileResourceInfoDao.insert(fileResourceInfoList)
         }
     }
 
-    fun delete(fileResource: FileResource) {
+    fun delete(fileResourceInfo: FileResourceInfo) {
         synchronized(lock) {
             throwExceptionIfClosed()
-            fileResourceInfoDao.delete(fileResource.toFileResourceInfo())
+            fileResourceInfoDao.delete(fileResourceInfo)
         }
     }
 
-    fun delete(fileResourceList: List<FileResource>) {
+    fun delete(fileResourceInfoList: List<FileResourceInfo>) {
         synchronized(lock) {
             throwExceptionIfClosed()
-            fileResourceInfoDao.delete(fileResourceList.map { it.toFileResourceInfo() })
+            fileResourceInfoDao.delete(fileResourceInfoList)
         }
     }
 
@@ -56,45 +55,45 @@ class FetchFileResourceDatabase(context: Context,
         }
     }
 
-    fun get(): List<FileResource> {
+    fun get(): List<FileResourceInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceInfoDao.get().map { it.toFileResource() }
+            return fileResourceInfoDao.get()
         }
     }
 
-    fun get(id: Long): FileResource? {
+    fun get(id: Long): FileResourceInfo? {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceInfoDao.get(id)?.toFileResource()
+            return fileResourceInfoDao.get(id)
         }
     }
 
-    fun get(ids: List<Long>): List<FileResource> {
+    fun get(ids: List<Long>): List<FileResourceInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceInfoDao.get(ids).map { it.toFileResource() }
+            return fileResourceInfoDao.get(ids)
         }
     }
 
-    fun get(fileName: String): FileResource? {
+    fun get(fileName: String): FileResourceInfo? {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceInfoDao.get(fileName)?.toFileResource()
+            return fileResourceInfoDao.get(fileName)
         }
     }
 
-    private fun getAll(page: Int, size: Int): List<FileResource> {
+    private fun getAll(page: Int, size: Int): List<FileResourceInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
             return if (page == -1 && size == -1) {
-                fileResourceInfoDao.get().map { it.toFileResource() }
+                fileResourceInfoDao.get()
             } else {
                 var offset = 0
                 for (i in 0 until page) {
                     offset += FileResourceInfoDatabase.MAX_PAGE_SIZE
                 }
-                fileResourceInfoDao.getPage(size, offset).map { it.toFileResource() }
+                fileResourceInfoDao.getPage(size, offset)
             }
         }
     }
@@ -122,13 +121,13 @@ class FetchFileResourceDatabase(context: Context,
                 return
             }
             closed = true
-            fileResourceDatabase.close()
+            fileResourceInfoDatabase.close()
         }
     }
 
     private fun throwExceptionIfClosed() {
         if (closed) {
-            throw Exception("FetchFileResourceServerDatabase is closed")
+            throw Exception("FetchFileResourceInfoServerDatabase is closed")
         }
     }
 

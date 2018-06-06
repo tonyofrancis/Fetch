@@ -8,7 +8,11 @@ import android.os.Looper
 import com.tonyodev.fetch2core.FetchLogger
 import com.tonyodev.fetch2core.Func
 import com.tonyodev.fetch2core.InterruptMonitor
-import com.tonyodev.fetch2fileserver.database.FetchFileResourceDatabase
+import com.tonyodev.fetch2core.getFileMd5String
+import com.tonyodev.fetch2fileserver.database.FetchFileResourceInfoDatabase
+import com.tonyodev.fetch2fileserver.database.FileResourceInfo
+import com.tonyodev.fetch2fileserver.database.toFileResource
+import com.tonyodev.fetch2fileserver.database.toFileResourceInfo
 import com.tonyodev.fetch2fileserver.provider.FileResourceProvider
 import com.tonyodev.fetch2fileserver.provider.FileResourceProviderDelegate
 import com.tonyodev.fetch2fileserver.provider.FetchFileResourceProvider
@@ -40,7 +44,7 @@ class FetchFileServerImpl(context: Context,
     private var isTerminated = false
     private var isForcedTerminated = false
     private var isStarted = false
-    private val fileResourceServerDatabase = FetchFileResourceDatabase(context.applicationContext, databaseName)
+    private val fileResourceServerDatabase = FetchFileResourceInfoDatabase(context.applicationContext, databaseName)
     private val ioHandler = {
         val handlerThread = HandlerThread("FetchFileServer - $id")
         handlerThread.start()
@@ -122,17 +126,17 @@ class FetchFileServerImpl(context: Context,
             }
         }
 
-        override fun getFileResource(fileResourceIdentifier: String): FileResource? {
+        override fun getFileResource(fileResourceIdentifier: String): FileResourceInfo? {
             return try {
                 val id: Long = fileResourceIdentifier.toLong()
                 if (id == FileRequest.CATALOG_ID) {
                     val catalog = fileResourceServerDatabase.getRequestedCatalog(-1, -1)
-                    val catalogFileResource = FileResource()
-                    catalogFileResource.id = FileRequest.CATALOG_ID
-                    catalogFileResource.customData = catalog
-                    catalogFileResource.name = "Catalog.json"
-                    catalogFileResource.file = "/Catalog.json"
-                    catalogFileResource
+                    val catalogFileResourceInfo = FileResourceInfo()
+                    catalogFileResourceInfo.id = FileRequest.CATALOG_ID
+                    catalogFileResourceInfo.customData = catalog
+                    catalogFileResourceInfo.name = "Catalog.json"
+                    catalogFileResourceInfo.file = "/Catalog.json"
+                    catalogFileResourceInfo
                 } else {
                     fileResourceServerDatabase.get(id)
                 }
@@ -263,7 +267,10 @@ class FetchFileServerImpl(context: Context,
         synchronized(lock) {
             throwIfTerminated()
             ioHandler.post {
-                fileResourceServerDatabase.insert(fileResource)
+                if (fileResource.md5.isEmpty()) {
+                    fileResource.md5 = getMd5CheckSumForFileResource(fileResource)
+                }
+                fileResourceServerDatabase.insert(fileResource.toFileResourceInfo())
             }
         }
     }
@@ -272,7 +279,12 @@ class FetchFileServerImpl(context: Context,
         synchronized(lock) {
             throwIfTerminated()
             ioHandler.post {
-                fileResourceServerDatabase.insert(fileResources.toList())
+                fileResources.forEach {
+                    if (it.md5.isEmpty()) {
+                        it.md5 = getMd5CheckSumForFileResource(it)
+                    }
+                }
+                fileResourceServerDatabase.insert(fileResources.map { it.toFileResourceInfo() })
             }
         }
     }
@@ -281,7 +293,7 @@ class FetchFileServerImpl(context: Context,
         synchronized(lock) {
             throwIfTerminated()
             ioHandler.post {
-                fileResourceServerDatabase.delete(fileResource)
+                fileResourceServerDatabase.delete(fileResource.toFileResourceInfo())
             }
         }
     }
@@ -299,7 +311,7 @@ class FetchFileServerImpl(context: Context,
         synchronized(lock) {
             throwIfTerminated()
             ioHandler.post {
-                fileResourceServerDatabase.delete(fileResources.toList())
+                fileResourceServerDatabase.delete(fileResources.map { it.toFileResourceInfo() })
             }
         }
     }
@@ -310,7 +322,7 @@ class FetchFileServerImpl(context: Context,
             ioHandler.post {
                 val filesResources = fileResourceServerDatabase.get()
                 mainHandler.post {
-                    func.call(filesResources)
+                    func.call(filesResources.map { it.toFileResource() })
                 }
             }
         }
@@ -338,7 +350,7 @@ class FetchFileServerImpl(context: Context,
             ioHandler.post {
                 val fileResource = fileResourceServerDatabase.get(fileResourceId)
                 mainHandler.post {
-                    func.call(fileResource)
+                    func.call(fileResource?.toFileResource())
                 }
             }
         }
@@ -352,6 +364,10 @@ class FetchFileServerImpl(context: Context,
                 func.call(catalog)
             }
         }
+    }
+
+    private fun getMd5CheckSumForFileResource(fileResource: FileResource): String {
+        return getFileMd5String(fileResource.file) ?: ""
     }
 
     private fun throwIfTerminated() {

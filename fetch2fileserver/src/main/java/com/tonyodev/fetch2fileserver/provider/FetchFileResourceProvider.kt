@@ -2,6 +2,7 @@ package com.tonyodev.fetch2fileserver.provider
 
 import android.os.Handler
 import com.tonyodev.fetch2core.*
+import com.tonyodev.fetch2fileserver.database.toFileResource
 import com.tonyodev.fetch2fileserver.transporter.FileRequest
 import com.tonyodev.fetch2fileserver.transporter.FileResponse
 import com.tonyodev.fetch2fileserver.transporter.FileResponse.Companion.CLOSE_CONNECTION
@@ -67,27 +68,28 @@ class FetchFileResourceProvider(private val client: Socket,
                                     }
                                 }
                                 FileRequest.TYPE_FILE -> {
-                                    val fileResource = fileResourceProviderDelegate.getFileResource(request.fileResourceId)
+                                    val fileResourceInfo = fileResourceProviderDelegate.getFileResource(request.fileResourceId)
                                     if (!interrupted) {
-                                        if (fileResource != null) {
+                                        if (fileResourceInfo != null) {
+                                            val fileResource = fileResourceInfo.toFileResource()
                                             fileInputStream = fileResourceProviderDelegate.getFileInputStream(fileResource, request.rangeStart)
                                             if (fileInputStream == null) {
-                                                if (fileResource.id == FileRequest.CATALOG_ID) {
-                                                    val catalog = fileResource.customData.toByteArray(Charsets.UTF_8)
-                                                    fileResource.length = if (request.rangeEnd == -1L) catalog.size.toLong() else request.rangeEnd
-                                                    fileResource.md5 = getMd5String(catalog)
-                                                    fileInputStream = ByteArrayInputStream(catalog, request.rangeStart.toInt(), fileResource.length.toInt())
+                                                if (fileResourceInfo.id == FileRequest.CATALOG_ID) {
+                                                    val catalog = fileResourceInfo.customData.toByteArray(Charsets.UTF_8)
+                                                    fileResourceInfo.length = if (request.rangeEnd == -1L) catalog.size.toLong() else request.rangeEnd
+                                                    fileResourceInfo.md5 = getMd5String(catalog)
+                                                    fileInputStream = ByteArrayInputStream(catalog, request.rangeStart.toInt(), fileResourceInfo.length.toInt())
                                                 } else {
-                                                    randomAccessFile = RandomAccessFile(fileResource.file, "r")
+                                                    randomAccessFile = RandomAccessFile(fileResourceInfo.file, "r")
                                                     randomAccessFile?.seek(request.rangeStart)
                                                 }
                                             }
                                             if (!interrupted) {
                                                 var reportingStopTime: Long
                                                 val byteArray = ByteArray(FileResourceTransporter.BUFFER_SIZE)
-                                                val contentLength = (if (request.rangeEnd == -1L) fileResource.length else request.rangeEnd) - request.rangeStart
+                                                val contentLength = (if (request.rangeEnd == -1L) fileResourceInfo.length else request.rangeEnd) - request.rangeStart
                                                 var remainderBytes = contentLength
-                                                sendFileResourceResponse(contentLength, fileResource.md5)
+                                                sendFileResourceResponse(contentLength, fileResourceInfo.md5)
                                                 var reportingStartTime = System.nanoTime()
                                                 var read = (fileInputStream?.read(byteArray)
                                                         ?: randomAccessFile?.read(byteArray)) ?: -1

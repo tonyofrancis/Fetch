@@ -4,7 +4,6 @@ import android.arch.persistence.room.ColumnInfo
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.Index
 import android.arch.persistence.room.PrimaryKey
-import com.tonyodev.fetch2fileserver.FileResource
 
 @Entity(tableName = FileResourceInfoDatabase.TABLE_NAME,
         indices = [(Index(value = [FileResourceInfoDatabase.COLUMN_NAME], unique = true)),
@@ -33,7 +32,7 @@ class FileResourceInfo {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        other as FileResource
+        other as FileResourceInfo
         if (id != other.id) return false
         if (length != other.length) return false
         if (file != other.file) return false

@@ -8,8 +8,8 @@ fun FileResource.toFileResourceInfo(): FileResourceInfo {
     fileResourceInfo.customData = customData
     fileResourceInfo.file = file
     fileResourceInfo.length = length
-    fileResourceInfo.md5 = md5
     fileResourceInfo.name = name
+    fileResourceInfo.md5 = md5
     return fileResourceInfo
 }
 
@@ -19,7 +19,7 @@ fun FileResourceInfo.toFileResource(): FileResource {
     fileResource.customData = customData
     fileResource.file = file
     fileResource.length = length
-    fileResource.md5 = md5
     fileResource.name = name
+    fileResource.md5 = md5
     return fileResource
 }
