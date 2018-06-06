@@ -251,6 +251,9 @@ class FetchFileServerImpl(context: Context,
             while (iterator.hasNext()) {
                 iterator.next().interrupt()
             }
+            if (contentFileProviderMap.isEmpty()) {
+                cleanUpServer()
+            }
         } catch (e: Exception) {
             logger.e("FetchFileServer - ${e.message}")
         }

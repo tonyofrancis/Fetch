@@ -60,7 +60,6 @@ public class FileServerActivity extends AppCompatActivity {
                 .setClearDatabaseOnShutdown(true)
                 .setAuthenticator((authorization, fileRequest) -> authorization.equals("password"))
                 .build();
-        fetchFileServer.removeAllContentFiles();
         fetchFileServer.start();
         checkStoragePermission();
     }
