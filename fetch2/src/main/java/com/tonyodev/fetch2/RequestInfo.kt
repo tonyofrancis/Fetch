@@ -1,9 +1,6 @@
 package com.tonyodev.fetch2
 
-import com.tonyodev.fetch2.util.DEFAULT_GROUP_ID
-import com.tonyodev.fetch2.util.DEFAULT_UNIQUE_IDENTIFIER
-import com.tonyodev.fetch2.util.defaultNetworkType
-import com.tonyodev.fetch2.util.defaultPriority
+import com.tonyodev.fetch2.util.*
 
 /**
  * A RequestInfo allows you to update an existing download managed by Fetch.
@@ -47,7 +44,7 @@ open class RequestInfo {
      * same file is already being managed. Default EnqueueAction.REPLACE_EXISTING
      * which will replaces the existing request.
      * */
-    var enqueueAction = EnqueueAction.REPLACE_EXISTING
+    var enqueueAction = defaultEnqueueAction
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

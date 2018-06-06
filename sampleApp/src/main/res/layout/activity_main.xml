@@ -49,6 +49,13 @@
             android:text="@string/multi_fragment" />
 
         <Button
+            android:id="@+id/fileServerButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:text="@string/file_server" />
+
+        <Button
             android:id="@+id/deleteAllButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

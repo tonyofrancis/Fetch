@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 
 public final class Utils {
@@ -74,6 +75,23 @@ public final class Utils {
         } else {
             return context.getString(R.string.download_speed_bytes, downloadedBytesPerSecond);
         }
+    }
+
+    @NonNull
+    public static File createFile(String filePath) {
+        final File file = new File(filePath);
+        if (!file.exists()) {
+            final File parent = file.getParentFile();
+            if (!parent.exists()) {
+                parent.mkdirs();
+            }
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return file;
     }
 
 }

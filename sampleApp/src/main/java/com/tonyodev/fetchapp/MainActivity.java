@@ -54,6 +54,11 @@ public class MainActivity extends AppCompatActivity {
             MainActivity.this.startActivity(intent);
         });
 
+        findViewById(R.id.fileServerButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, FileServerActivity.class);
+            MainActivity.this.startActivity(intent);
+        });
+
         findViewById(R.id.deleteAllButton).setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
