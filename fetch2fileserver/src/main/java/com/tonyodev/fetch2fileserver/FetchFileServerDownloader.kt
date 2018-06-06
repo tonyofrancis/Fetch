@@ -3,8 +3,10 @@ package com.tonyodev.fetch2fileserver
 import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.FileServerDownloader
 import com.tonyodev.fetch2.util.*
-import com.tonyodev.fetch2fileserver.FileRequest.Companion.TYPE_FILE
+import com.tonyodev.fetch2fileserver.transporter.FileRequest.Companion.TYPE_FILE
 import com.tonyodev.fetch2fileserver.transporter.FetchFileResourceTransporter
+import com.tonyodev.fetch2fileserver.transporter.FileRequest
+import com.tonyodev.fetch2fileserver.transporter.FileResponse
 
 import java.io.OutputStream
 import java.net.HttpURLConnection
@@ -46,10 +48,14 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 rangeStart = range.first,
                 rangeEnd = range.second,
                 authorization = authorization,
-                client = headers[FileRequest.FIELD_CLIENT] ?: UUID.randomUUID().toString(),
-                customData = headers[FileRequest.FIELD_CUSTOM_DATA] ?: "",
-                page = headers[FileRequest.FIELD_PAGE]?.toIntOrNull() ?: 0,
-                size = headers[FileRequest.FIELD_SIZE]?.toIntOrNull() ?: 0,
+                client = headers[FileRequest.FIELD_CLIENT]
+                        ?: UUID.randomUUID().toString(),
+                customData = headers[FileRequest.FIELD_CUSTOM_DATA]
+                        ?: "",
+                page = headers[FileRequest.FIELD_PAGE]?.toIntOrNull()
+                        ?: 0,
+                size = headers[FileRequest.FIELD_SIZE]?.toIntOrNull()
+                        ?: 0,
                 persistConnection = false)
         transporter.sendFileRequest(fileRequest)
         while (interruptMonitor?.isInterrupted == false) {

@@ -3,10 +3,10 @@ package com.tonyodev.fetch2fileserver.provider
 import android.os.Handler
 import com.tonyodev.fetch2.FetchLogger
 import com.tonyodev.fetch2.util.*
-import com.tonyodev.fetch2fileserver.FileRequest
-import com.tonyodev.fetch2fileserver.FileResponse
-import com.tonyodev.fetch2fileserver.FileResponse.Companion.CLOSE_CONNECTION
-import com.tonyodev.fetch2fileserver.FileResponse.Companion.OPEN_CONNECTION
+import com.tonyodev.fetch2fileserver.transporter.FileRequest
+import com.tonyodev.fetch2fileserver.transporter.FileResponse
+import com.tonyodev.fetch2fileserver.transporter.FileResponse.Companion.CLOSE_CONNECTION
+import com.tonyodev.fetch2fileserver.transporter.FileResponse.Companion.OPEN_CONNECTION
 import com.tonyodev.fetch2fileserver.transporter.FileResourceTransporter
 import com.tonyodev.fetch2fileserver.transporter.FetchFileResourceTransporter
 import java.io.ByteArrayInputStream
@@ -205,7 +205,8 @@ class FetchFileResourceProvider(private val client: Socket,
 
     private fun sendPingResponse() {
         val response = FileResponse(status = HttpURLConnection.HTTP_OK,
-                type = clientRequest?.type ?: FileRequest.TYPE_PING,
+                type = clientRequest?.type
+                        ?: FileRequest.TYPE_PING,
                 connection = OPEN_CONNECTION,
                 date = Date().time,
                 contentLength = 0)
@@ -214,7 +215,8 @@ class FetchFileResourceProvider(private val client: Socket,
 
     private fun sendInvalidResponse(status: Int) {
         val response = FileResponse(status = status,
-                type = clientRequest?.type ?: FileRequest.TYPE_INVALID,
+                type = clientRequest?.type
+                        ?: FileRequest.TYPE_INVALID,
                 connection = CLOSE_CONNECTION,
                 date = Date().time,
                 contentLength = 0)
@@ -224,7 +226,8 @@ class FetchFileResourceProvider(private val client: Socket,
 
     private fun sendCatalogResponse(contentLength: Long, md5: String) {
         val response = FileResponse(status = HttpURLConnection.HTTP_OK,
-                type = clientRequest?.type ?: FileRequest.TYPE_CATALOG,
+                type = clientRequest?.type
+                        ?: FileRequest.TYPE_CATALOG,
                 connection = OPEN_CONNECTION,
                 date = Date().time,
                 contentLength = contentLength,
@@ -234,7 +237,8 @@ class FetchFileResourceProvider(private val client: Socket,
 
     private fun sendFileResourceResponse(contentLength: Long, md5: String) {
         val response = FileResponse(status = HttpURLConnection.HTTP_PARTIAL,
-                type = clientRequest?.type ?: FileRequest.TYPE_FILE,
+                type = clientRequest?.type
+                        ?: FileRequest.TYPE_FILE,
                 connection = OPEN_CONNECTION,
                 date = Date().time,
                 contentLength = contentLength,

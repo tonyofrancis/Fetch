@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2fileserver
 
 import com.tonyodev.fetch2.util.InterruptMonitor
+import com.tonyodev.fetch2fileserver.transporter.FileRequest
 import com.tonyodev.fetch2fileserver.transporter.FileResourceTransporterWriter
 import java.io.InputStream
 

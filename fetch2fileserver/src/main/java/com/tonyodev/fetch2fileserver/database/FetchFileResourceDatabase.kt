@@ -17,70 +17,70 @@ class FetchFileResourceDatabase(context: Context,
         get() = closed
 
     private val fileResourceDatabase = Room.databaseBuilder(context,
-            FileResourceDatabase::class.java, databaseName)
+            FileResourceInfoDatabase::class.java, databaseName)
             .build()
-    private val fileResourceDao = fileResourceDatabase.fileResourceDao()
+    private val fileResourceInfoDao = fileResourceDatabase.fileResourceInfoDao()
 
     fun insert(fileResource: FileResource): Long {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceDao.insert(fileResource)
+            return fileResourceInfoDao.insert(fileResource.toFileResourceInfo())
         }
     }
 
     fun insert(fileResourceList: List<FileResource>): List<Long> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceDao.insert(fileResourceList)
+            return fileResourceInfoDao.insert(fileResourceList.map { it.toFileResourceInfo() })
         }
     }
 
     fun delete(fileResource: FileResource) {
         synchronized(lock) {
             throwExceptionIfClosed()
-            fileResourceDao.delete(fileResource)
+            fileResourceInfoDao.delete(fileResource.toFileResourceInfo())
         }
     }
 
     fun delete(fileResourceList: List<FileResource>) {
         synchronized(lock) {
             throwExceptionIfClosed()
-            fileResourceDao.delete(fileResourceList)
+            fileResourceInfoDao.delete(fileResourceList.map { it.toFileResourceInfo() })
         }
     }
 
     fun deleteAll() {
         synchronized(lock) {
             throwExceptionIfClosed()
-            fileResourceDao.deleteAll()
+            fileResourceInfoDao.deleteAll()
         }
     }
 
     fun get(): List<FileResource> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceDao.get()
+            return fileResourceInfoDao.get().map { it.toFileResource() }
         }
     }
 
     fun get(id: Long): FileResource? {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceDao.get(id)
+            return fileResourceInfoDao.get(id)?.toFileResource()
         }
     }
 
     fun get(ids: List<Long>): List<FileResource> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceDao.get(ids)
+            return fileResourceInfoDao.get(ids).map { it.toFileResource() }
         }
     }
 
     fun get(fileName: String): FileResource? {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return fileResourceDao.get(fileName)
+            return fileResourceInfoDao.get(fileName)?.toFileResource()
         }
     }
 
@@ -88,13 +88,13 @@ class FetchFileResourceDatabase(context: Context,
         synchronized(lock) {
             throwExceptionIfClosed()
             return if (page == -1 && size == -1) {
-                fileResourceDao.get()
+                fileResourceInfoDao.get().map { it.toFileResource() }
             } else {
                 var offset = 0
                 for (i in 0 until page) {
-                    offset += FileResourceDatabase.MAX_PAGE_SIZE
+                    offset += FileResourceInfoDatabase.MAX_PAGE_SIZE
                 }
-                fileResourceDao.getPage(size, offset)
+                fileResourceInfoDao.getPage(size, offset).map { it.toFileResource() }
             }
         }
     }

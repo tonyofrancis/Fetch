@@ -41,20 +41,20 @@ class FetchFileServerUrlBuilder {
     }
 
     /** Set the file resource identifier. This could be the content file id or content file name.
-     * @param identifier resource identifier
+     * @param fileResourceName resource identifier
      * @return builder
      * */
-    fun setFileResourceIdentifier(identifier: String): FetchFileServerUrlBuilder {
-        this.identifier = identifier
+    fun setFileResourceIdentifier(fileResourceName: String): FetchFileServerUrlBuilder {
+        this.identifier = fileResourceName
         return this
     }
 
     /** Set the file resource id identifier.
-     * @param identifier resource id identifier
+     * @param fileResourceId resource id identifier
      * @return builder
      * */
-    fun setFileResourceIdentifier(identifier: Long): FetchFileServerUrlBuilder {
-        this.identifier = identifier.toString()
+    fun setFileResourceIdentifier(fileResourceId: Long): FetchFileServerUrlBuilder {
+        this.identifier = fileResourceId.toString()
         return this
     }
 

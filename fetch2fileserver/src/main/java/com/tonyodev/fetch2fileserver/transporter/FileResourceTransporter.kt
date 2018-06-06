@@ -1,7 +1,5 @@
 package com.tonyodev.fetch2fileserver.transporter
 
-import com.tonyodev.fetch2fileserver.FileRequest
-import com.tonyodev.fetch2fileserver.FileResponse
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.SocketAddress

@@ -3,15 +3,15 @@ package com.tonyodev.fetch2fileserver.database
 import android.arch.persistence.room.Database
 import android.arch.persistence.room.RoomDatabase
 import com.tonyodev.fetch2fileserver.FileResource
-import com.tonyodev.fetch2fileserver.database.FileResourceDatabase.Companion.DATABASE_VERSION
+import com.tonyodev.fetch2fileserver.database.FileResourceInfoDatabase.Companion.DATABASE_VERSION
 
-@Database(entities = [FileResource::class], version = DATABASE_VERSION, exportSchema = false)
-abstract class FileResourceDatabase : RoomDatabase() {
+@Database(entities = [FileResourceInfo::class], version = DATABASE_VERSION, exportSchema = false)
+abstract class FileResourceInfoDatabase : RoomDatabase() {
 
-    abstract fun fileResourceDao(): FileResourceDao
+    abstract fun fileResourceInfoDao(): FileResourceInfoDao
 
     companion object {
-        const val TABLE_NAME = "fileResource"
+        const val TABLE_NAME = "fileResourceInfo"
         const val COLUMN_ID = "_id"
         const val COLUMN_LENGTH = "_length"
         const val COLUMN_FILE = "_file"
