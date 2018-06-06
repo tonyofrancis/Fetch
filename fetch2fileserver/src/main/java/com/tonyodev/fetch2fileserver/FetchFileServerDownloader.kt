@@ -11,6 +11,11 @@ import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.util.*
 
+/**
+ * This downloader is used by Fetch to download files from a Fetch File Server using the
+ * Fetch file server url scheme.
+ * @see {@link com.tonyodev.fetch2.Downloader}
+ * */
 open class FetchFileServerDownloader @JvmOverloads constructor(
 
         /** The file downloader type used to download a request.

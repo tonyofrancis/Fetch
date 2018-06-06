@@ -4,6 +4,9 @@ import java.lang.StringBuilder
 import java.net.HttpURLConnection
 import java.util.*
 
+/**
+ * Response object sent to the client as JSON.
+ * **/
 data class FileResponse(val status: Int = HttpURLConnection.HTTP_UNSUPPORTED_TYPE,
                         val type: Int = FileRequest.TYPE_INVALID,
                         val connection: Int = CLOSE_CONNECTION,

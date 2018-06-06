@@ -2,6 +2,9 @@ package com.tonyodev.fetch2fileserver
 
 import java.lang.StringBuilder
 
+/**
+ * Request object sent to the Fetch File Server as JSON.
+ **/
 data class FileRequest(val type: Int = TYPE_INVALID,
                        val contentFileId: String = CATALOG_ID.toString(),
                        val rangeStart: Long = 0L,
