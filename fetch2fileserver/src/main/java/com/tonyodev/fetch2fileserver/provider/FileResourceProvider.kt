@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2fileserver.provider
 
-interface ContentFileProvider {
+interface FileResourceProvider {
 
     fun execute()
 

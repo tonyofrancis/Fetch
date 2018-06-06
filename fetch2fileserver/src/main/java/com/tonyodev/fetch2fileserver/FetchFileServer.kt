@@ -23,23 +23,23 @@ interface FetchFileServer {
 
     fun setTransferProgressListener(fetchTransferProgressListener: FetchTransferProgressListener?)
 
-    fun addContentFile(contentFile: ContentFile)
+    fun addFileResource(fileResource: FileResource)
 
-    fun addContentFiles(contentFiles: Collection<ContentFile>)
+    fun addFileResources(fileResources: Collection<FileResource>)
 
-    fun removeContentFile(contentFile: ContentFile)
+    fun removeFileResource(fileResource: FileResource)
 
-    fun removeContentFiles(contentFiles: Collection<ContentFile>)
+    fun removeFileResources(fileResources: Collection<FileResource>)
 
-    fun removeAllContentFiles()
+    fun removeAllFileResources()
 
-    fun containsContentFile(contentId: Int, callback: (Boolean) -> Unit)
+    fun containsFileResource(fileResourceId: Int, callback: (Boolean) -> Unit)
 
-    fun getContentFiles(callback: (List<ContentFile>) -> Unit)
+    fun getFileResources(callback: (List<FileResource>) -> Unit)
 
     fun getFullCatalog(callback: (String) -> Unit)
 
-    fun getContentFile(contentId: Int, callback: (ContentFile?) -> Unit)
+    fun getFileResource(fileResourceId: Int, callback: (FileResource?) -> Unit)
 
     class Builder(private val context: Context) {
 
@@ -49,7 +49,7 @@ interface FetchFileServer {
         private var fileServerAuthenticator: FetchFileServerAuthenticator? = null
         private var fileServerDelegate: FetchFileServerDelegate? = null
         private var transferProgressListener: FetchTransferProgressListener? = null
-        private var contentFileDatabaseName = "LibFetchFileServerDatabaseLib.db"
+        private var fileResourceDatabaseName = "LibFetchFileServerDatabaseLib.db"
 
         fun setServerSocket(serverSocket: ServerSocket): Builder {
             this.serverSocket = serverSocket
@@ -83,21 +83,21 @@ interface FetchFileServer {
 
         fun setFileServerDatabaseName(databaseName: String): Builder {
             if (databaseName.isNotEmpty()) {
-                this.contentFileDatabaseName = databaseName
+                this.fileResourceDatabaseName = databaseName
             }
             return this
         }
 
         fun build(): FetchFileServer {
-            val fetchContentFileServer = FetchFileServerImpl(context = context.applicationContext,
+            val fetchFileServer = FetchFileServerImpl(context = context.applicationContext,
                     serverSocket = serverSocket,
-                    clearContentFileDatabaseOnShutdown = clearDatabaseOnShutdown,
+                    clearFileResourcesDatabaseOnShutdown = clearDatabaseOnShutdown,
                     logger = logger,
-                    databaseName = contentFileDatabaseName)
-            fetchContentFileServer.setAuthenticator(fileServerAuthenticator)
-            fetchContentFileServer.setDelegate(fileServerDelegate)
-            fetchContentFileServer.setTransferProgressListener(transferProgressListener)
-            return fetchContentFileServer
+                    databaseName = fileResourceDatabaseName)
+            fetchFileServer.setAuthenticator(fileServerAuthenticator)
+            fetchFileServer.setDelegate(fileServerDelegate)
+            fetchFileServer.setTransferProgressListener(transferProgressListener)
+            return fetchFileServer
         }
 
     }

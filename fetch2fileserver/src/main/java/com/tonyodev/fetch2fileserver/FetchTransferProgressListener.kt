@@ -4,12 +4,12 @@ package com.tonyodev.fetch2fileserver
  * and reports connected clients content file transfer progress.*/
 interface FetchTransferProgressListener {
 
-    fun onProgress(
-            /* Connected client identifier*/
-            client: String,
-            /** Content file being transferred to client*/
-            contentFile: ContentFile,
-            /** Transfer progress*/
-            progress: Int)
+    /**
+     * Method called to report the progress of a file resource transfer to a client.
+     * @param client Connected client identifier
+     * @param fileResource file resource being transferred to client
+     * @param progress Transfer progress
+     * */
+    fun onProgress(client: String, fileResource: FileResource, progress: Int)
 
 }

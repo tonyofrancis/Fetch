@@ -19,7 +19,7 @@ import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.util.FetchUtils;
-import com.tonyodev.fetch2fileserver.ContentFile;
+import com.tonyodev.fetch2fileserver.FileResource;
 import com.tonyodev.fetch2fileserver.FetchFileServer;
 import com.tonyodev.fetch2fileserver.FetchFileServerDownloader;
 import com.tonyodev.fetch2fileserver.FetchFileServerUrlBuilder;
@@ -90,28 +90,28 @@ public class FileServerActivity extends AppCompatActivity {
                 inputStream.close();
                 outputStream.flush();
                 outputStream.close();
-                addContentFileToServer(file, readBytes);
+                addFileResourceToServer(file, readBytes);
             } catch (IOException exception) {
                 Timber.e(exception);
             }
         }).start();
     }
 
-    private void addContentFileToServer(File file, long fileLength) {
-        final ContentFile contentFile = new ContentFile();
-        contentFile.setFile(file.getAbsolutePath());
-        contentFile.setName(file.getName());
-        contentFile.setId(file.getAbsolutePath().hashCode());
-        contentFile.setLength(fileLength);
+    private void addFileResourceToServer(File file, long fileLength) {
+        final FileResource fileResource = new FileResource();
+        fileResource.setFile(file.getAbsolutePath());
+        fileResource.setName(file.getName());
+        fileResource.setId(file.getAbsolutePath().hashCode());
+        fileResource.setLength(fileLength);
         final String fileMd5 = FetchUtils.getFileMd5String(file.getAbsolutePath());
         if (fileMd5 != null) {
-            contentFile.setMd5(fileMd5);
+            fileResource.setMd5(fileMd5);
         }
-        fetchFileServer.addContentFile(contentFile);
-        downloadContentFileUsingFetch();
+        fetchFileServer.addFileResource(fileResource);
+        downloadFileResourceUsingFetch();
     }
 
-    private void downloadContentFileUsingFetch() {
+    private void downloadFileResourceUsingFetch() {
         fetch.addListener(fetchListener).enqueue(getRequest(), request -> {
             Timber.d(request.toString());
         }, error -> {
@@ -122,7 +122,7 @@ public class FileServerActivity extends AppCompatActivity {
     private Request getRequest() {
         final String url = new FetchFileServerUrlBuilder()
                 .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
-                .setPath(CONTENT_PATH)
+                .setFileResourceIdentifier(CONTENT_PATH)
                 .create();
         final Request request = new Request(url, getFile());
         request.addHeader("Authorization", "password");

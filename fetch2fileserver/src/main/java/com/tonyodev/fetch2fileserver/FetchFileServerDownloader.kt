@@ -4,7 +4,7 @@ import com.tonyodev.fetch2.Downloader
 import com.tonyodev.fetch2.FileServerDownloader
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2fileserver.FileRequest.Companion.TYPE_FILE
-import com.tonyodev.fetch2fileserver.transporter.FetchContentFileTransporter
+import com.tonyodev.fetch2fileserver.transporter.FetchFileResourceTransporter
 
 import java.io.OutputStream
 import java.net.HttpURLConnection
@@ -27,7 +27,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         /** The timeout value in milliseconds when trying to connect to the server. Default is 20_000 milliseconds. */
         private val timeout: Long = 20_000) : FileServerDownloader {
 
-    protected val connections: MutableMap<Downloader.Response, FetchContentFileTransporter> = Collections.synchronizedMap(HashMap<Downloader.Response, FetchContentFileTransporter>())
+    protected val connections: MutableMap<Downloader.Response, FetchFileResourceTransporter> = Collections.synchronizedMap(HashMap<Downloader.Response, FetchFileResourceTransporter>())
 
     override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
         val headers = request.headers
@@ -36,13 +36,13 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         val port = getFetchFileServerPort(request.url)
         val address = getFetchFileServerHostAddress(request.url)
         val inetSocketAddress = InetSocketAddress(address, port)
-        val transporter = FetchContentFileTransporter()
+        val transporter = FetchFileResourceTransporter()
         var timeoutStop: Long
         val timeoutStart = System.nanoTime()
         transporter.connect(inetSocketAddress)
-        val contentFileRequest = FileRequest(
+        val fileRequest = FileRequest(
                 type = TYPE_FILE,
-                contentFileId = getContentFileIdFromUrl(request.url),
+                fileResourceId = getFileResourceIdFromUrl(request.url),
                 rangeStart = range.first,
                 rangeEnd = range.second,
                 authorization = authorization,
@@ -51,9 +51,9 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 page = headers[FileRequest.FIELD_PAGE]?.toIntOrNull() ?: 0,
                 size = headers[FileRequest.FIELD_SIZE]?.toIntOrNull() ?: 0,
                 persistConnection = false)
-        transporter.sendContentFileRequest(contentFileRequest)
+        transporter.sendFileRequest(fileRequest)
         while (interruptMonitor?.isInterrupted == false) {
-            val serverResponse = transporter.receiveContentFileResponse()
+            val serverResponse = transporter.receiveFileResponse()
             if (serverResponse != null) {
                 val code = serverResponse.status
                 val isSuccessful = serverResponse.connection == FileResponse.OPEN_CONNECTION &&
@@ -80,7 +80,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
 
     override fun disconnect(response: Downloader.Response) {
         if (connections.contains(response)) {
-            val transporter = connections[response] as FetchContentFileTransporter
+            val transporter = connections[response] as FetchFileResourceTransporter
             connections.remove(response)
             transporter.close()
         }

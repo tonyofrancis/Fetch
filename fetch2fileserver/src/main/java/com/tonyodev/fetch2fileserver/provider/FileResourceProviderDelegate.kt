@@ -1,15 +1,15 @@
 package com.tonyodev.fetch2fileserver.provider
 
-import com.tonyodev.fetch2fileserver.ContentFile
+import com.tonyodev.fetch2fileserver.FileResource
 import com.tonyodev.fetch2fileserver.FileRequest
 import com.tonyodev.fetch2.util.InterruptMonitor
-import com.tonyodev.fetch2fileserver.transporter.ContentFileTransporterWriter
+import com.tonyodev.fetch2fileserver.transporter.FileResourceTransporterWriter
 import java.io.InputStream
 import java.util.*
 
-interface ContentFileProviderDelegate {
+interface FileResourceProviderDelegate {
 
-    fun getContentFile(contentFileIdentifier: String): ContentFile?
+    fun getFileResource(fileResourceIdentifier: String): FileResource?
 
     fun onFinished(id: UUID)
 
@@ -21,13 +21,13 @@ interface ContentFileProviderDelegate {
 
     fun onClientDisconnected(client: String)
 
-    fun onProgress(client: String, contentFile: ContentFile, progress: Int)
+    fun onProgress(client: String, fileResource: FileResource, progress: Int)
 
     fun getCatalog(page: Int, size: Int): String
 
-    fun getFileInputStream(contentFile: ContentFile, fileOffset: Long): InputStream?
+    fun getFileInputStream(fileResource: FileResource, fileOffset: Long): InputStream?
 
     fun onCustomRequest(client: String, fileRequest: FileRequest,
-                        contentFileTransporterWriter: ContentFileTransporterWriter, interruptMonitor: InterruptMonitor)
+                        fileResourceTransporterWriter: FileResourceTransporterWriter, interruptMonitor: InterruptMonitor)
 
 }

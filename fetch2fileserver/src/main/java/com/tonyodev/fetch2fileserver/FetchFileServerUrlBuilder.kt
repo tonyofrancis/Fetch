@@ -9,7 +9,7 @@ class FetchFileServerUrlBuilder {
 
     private var host = "00:00:00:00"
     private var port = 0
-    private var path = ""
+    private var identifier = ""
 
     /** Set the IP address of the fetch file server
      * @param hostAddress ip address
@@ -40,21 +40,21 @@ class FetchFileServerUrlBuilder {
         return this
     }
 
-    /** Set the content file resource path. This could be the content file id or content file name.
-     * @param path resource path
+    /** Set the file resource identifier. This could be the content file id or content file name.
+     * @param identifier resource identifier
      * @return builder
      * */
-    fun setPath(path: String): FetchFileServerUrlBuilder {
-        this.path = path
+    fun setFileResourceIdentifier(identifier: String): FetchFileServerUrlBuilder {
+        this.identifier = identifier
         return this
     }
 
-    /** Set the content file resource id path.
-     * @param path resource id path
+    /** Set the file resource id identifier.
+     * @param identifier resource id identifier
      * @return builder
      * */
-    fun setPath(path: Long): FetchFileServerUrlBuilder {
-        this.path = path.toString()
+    fun setFileResourceIdentifier(identifier: Long): FetchFileServerUrlBuilder {
+        this.identifier = identifier.toString()
         return this
     }
 
@@ -65,7 +65,7 @@ class FetchFileServerUrlBuilder {
         return Uri.Builder()
                 .scheme(FETCH_URL_SCHEME)
                 .encodedAuthority("$host:$port")
-                .appendPath(path)
+                .appendPath(identifier)
                 .toString()
     }
 

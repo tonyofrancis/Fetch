@@ -6,15 +6,15 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.SocketAddress
 
-interface ContentFileTransporter : ContentFileTransporterWriter {
+interface FileResourceTransporter : FileResourceTransporterWriter {
 
     val isClosed: Boolean
 
     fun connect(socketAddress: SocketAddress)
 
-    fun receiveContentFileRequest(): FileRequest?
+    fun receiveFileRequest(): FileRequest?
 
-    fun receiveContentFileResponse(): FileResponse?
+    fun receiveFileResponse(): FileResponse?
 
     fun readRawBytes(byteArray: ByteArray, offset: Int, length: Int): Int
 

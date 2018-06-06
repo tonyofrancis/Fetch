@@ -2,16 +2,16 @@ package com.tonyodev.fetch2fileserver.database
 
 import android.arch.persistence.room.Database
 import android.arch.persistence.room.RoomDatabase
-import com.tonyodev.fetch2fileserver.ContentFile
-import com.tonyodev.fetch2fileserver.database.ContentFileDatabase.Companion.DATABASE_VERSION
+import com.tonyodev.fetch2fileserver.FileResource
+import com.tonyodev.fetch2fileserver.database.FileResourceDatabase.Companion.DATABASE_VERSION
 
-@Database(entities = [ContentFile::class], version = DATABASE_VERSION, exportSchema = false)
-abstract class ContentFileDatabase : RoomDatabase() {
+@Database(entities = [FileResource::class], version = DATABASE_VERSION, exportSchema = false)
+abstract class FileResourceDatabase : RoomDatabase() {
 
-    abstract fun contentFileDao(): ContentFileDao
+    abstract fun fileResourceDao(): FileResourceDao
 
     companion object {
-        const val TABLE_NAME = "contentFile"
+        const val TABLE_NAME = "fileResource"
         const val COLUMN_ID = "_id"
         const val COLUMN_LENGTH = "_length"
         const val COLUMN_FILE = "_file"

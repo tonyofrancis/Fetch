@@ -3,11 +3,11 @@ package com.tonyodev.fetch2fileserver.transporter
 import com.tonyodev.fetch2fileserver.FileRequest
 import com.tonyodev.fetch2fileserver.FileResponse
 
-interface ContentFileTransporterWriter {
+interface FileResourceTransporterWriter {
 
-    fun sendContentFileRequest(fileRequest: FileRequest)
+    fun sendFileRequest(fileRequest: FileRequest)
 
-    fun sendContentFileResponse(fileResponse: FileResponse)
+    fun sendFileResponse(fileResponse: FileResponse)
 
     fun sendRawBytes(byteArray: ByteArray, offset: Int, length: Int)
 

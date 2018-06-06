@@ -6,7 +6,7 @@ import java.lang.StringBuilder
  * Request object sent to the Fetch File Server as JSON.
  **/
 data class FileRequest(val type: Int = TYPE_INVALID,
-                       val contentFileId: String = CATALOG_ID.toString(),
+                       val fileResourceId: String = CATALOG_ID.toString(),
                        val rangeStart: Long = 0L,
                        val rangeEnd: Long = -1L,
                        val authorization: String = "",
@@ -21,7 +21,7 @@ data class FileRequest(val type: Int = TYPE_INVALID,
             val builder = StringBuilder()
                     .append('{')
                     .append("\"Type\":").append(type).append(',')
-                    .append("\"ContentFileId\":").append("\"$contentFileId\"").append(',')
+                    .append("\"FileResourceId\":").append("\"$fileResourceId\"").append(',')
                     .append("\"RangeStart\":").append(rangeStart).append(',')
                     .append("\"RangeEnd\":").append(rangeEnd).append(',')
                     .append("\"Authorization\":").append("\"$authorization\"").append(',')
@@ -42,7 +42,7 @@ data class FileRequest(val type: Int = TYPE_INVALID,
         const val TYPE_CATALOG = 2
         const val CATALOG_ID = -1L
         const val FIELD_TYPE = "Type"
-        const val FIELD_CONTENT_FILE_ID = "ContentFileId"
+        const val FIELD_FILE_RESOURCE_ID = "FileResourceId"
         const val FIELD_RANGE_START = "RangeStart"
         const val FIELD_RANGE_END = "RangeEnd"
         const val FIELD_AUTHORIZATION = "Authorization"

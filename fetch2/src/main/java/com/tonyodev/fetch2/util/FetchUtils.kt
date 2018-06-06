@@ -245,7 +245,7 @@ fun getFetchFileServerHostAddress(url: String): String {
     return url.substring(firstIndexOfDoubleSep + 2, colonIndex)
 }
 
-fun getContentFileIdFromUrl(url: String): String {
+fun getFileResourceIdFromUrl(url: String): String {
     return Uri.parse(url).lastPathSegment
 }
 

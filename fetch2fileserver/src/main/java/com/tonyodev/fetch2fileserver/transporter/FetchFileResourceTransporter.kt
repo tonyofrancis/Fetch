@@ -16,7 +16,7 @@ import java.io.OutputStream
 import java.net.Socket
 import java.net.SocketAddress
 
-class FetchContentFileTransporter(private val client: Socket = Socket()) : ContentFileTransporter {
+class FetchFileResourceTransporter(private val client: Socket = Socket()) : FileResourceTransporter {
 
 
     private lateinit var dataInput: DataInputStream
@@ -51,13 +51,13 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
         }
     }
 
-    override fun receiveContentFileRequest(): FileRequest? {
+    override fun receiveFileRequest(): FileRequest? {
         return synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
             val json = JSONObject(dataInput.readUTF())
             val requestType = json.getInt(FileRequest.FIELD_TYPE)
-            val contentFileId = json.getString(FileRequest.FIELD_CONTENT_FILE_ID)
+            val fileResourceId = json.getString(FileRequest.FIELD_FILE_RESOURCE_ID)
             var rangeStart = json.getLong(FileRequest.FIELD_RANGE_START)
             var rangeEnd = json.getLong(FileRequest.FIELD_RANGE_END)
             val authorization = json.getString(FileRequest.FIELD_AUTHORIZATION)
@@ -80,7 +80,7 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
             val persistConnection = json.getBoolean(FileRequest.FIELD_PERSIST_CONNECTION)
             FileRequest(
                     type = requestType,
-                    contentFileId = contentFileId,
+                    fileResourceId = fileResourceId,
                     rangeStart = rangeStart,
                     rangeEnd = rangeEnd,
                     authorization = authorization,
@@ -92,7 +92,7 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
         }
     }
 
-    override fun sendContentFileRequest(fileRequest: FileRequest) {
+    override fun sendFileRequest(fileRequest: FileRequest) {
         synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
@@ -101,7 +101,7 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
         }
     }
 
-    override fun receiveContentFileResponse(): FileResponse? {
+    override fun receiveFileResponse(): FileResponse? {
         return synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
@@ -122,7 +122,7 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
         }
     }
 
-    override fun sendContentFileResponse(fileResponse: FileResponse) {
+    override fun sendFileResponse(fileResponse: FileResponse) {
         synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
@@ -186,7 +186,7 @@ class FetchContentFileTransporter(private val client: Socket = Socket()) : Conte
 
     private fun throwExceptionIfClosed() {
         if (closed) {
-            throw Exception("ClientContentFileTransporter is already closed.")
+            throw Exception("FetchFileResourceTransporter is already closed.")
         }
     }
 
