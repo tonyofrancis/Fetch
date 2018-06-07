@@ -259,6 +259,205 @@ rxFetch.getDownloads()
         });
 ```
 
+FetchFileServer
+----------------
+
+Introducing the FetchFileServer. The FetchFileServer is a lightweight TCP File Server that acts like
+an HTTP file server designed specifically to share files between Android devices. You can host file resources
+with the FetchFileServer on one device and have Fetch download Files from the server
+on another device. See sample app for more information. Wiki on Fetch File Server will be
+added in the coming days.
+
+Start using FetchFileServer by adding the gradle dependency to your application's build.gradle file.
+```java
+implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:2.1.0-RC1"
+```
+
+Start a FetchFileServer instance and add resource files that it can server to connected clients.
+```java
+public class TestActivity extends AppCompatActivity {
+
+    FetchFileServer fetchFileServer;
+    
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        fetchFileServer = new FetchFileServer.Builder(this)
+                .build();
+        
+        fetchFileServer.start(); //listen for client connections
+
+        File file = new File("/downloads/testfile.txt");
+        FileResource fileResource = new FileResource();
+        fileResource.setFile(file.getAbsolutePath());
+        fileResource.setLength(file.length());
+        fileResource.setName("testfile.txt");
+        fileResource.setId(UUID.randomUUID().hashCode());
+        
+        fetchFileServer.addFileResource(fileResource);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        fetchFileServer.shutDown(false);
+    }
+}
+```
+
+Download a file from a FetchFileServer using the Fetch. Add the FetchFileServerDownloader
+dependency to you app's build.gradle file.
+```java
+implementation "com.tonyodev.fetch2downloaders:fetch2downloaders:2.1.0-RC1"
+```
+
+Then create an instance of Fetch and enqueue the download.
+
+```java
+public class TestActivity extends AppCompatActivity {
+
+    Fetch fetch;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+                .setFileServerDownloader(new FetchFileServerDownloader()) //have to set the file server downloader
+                .build();
+        fetch = Fetch.Impl.getInstance(fetchConfiguration);
+        fetch.addListener(fetchListener);
+
+        String file = "/downloads/sample.txt";
+        String url = new FetchFileServerUrlBuilder()
+                .setHostInetAddress("127.0.0.1", 68856) //file server ip and port
+                .setFileResourceIdentifier("testfile.txt") //file resource name or id
+                .create();
+        Request request = new Request(url, file);
+        fetch.enqueue(request, request1 -> {
+            //Request enqueued for download
+        }, error -> {
+            //Error while enqueuing download
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        fetch.addListener(fetchListener);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        fetch.removeListener(fetchListener);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        fetch.close();
+    }
+
+    private FetchListener fetchListener = new AbstractFetchListener() {
+        @Override
+        public void onProgress(@NotNull Download download, long etaInMilliSeconds, long downloadedBytesPerSecond) {
+            super.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond);
+            Log.d("TestActivity", "Progress: " + download.getProgress());
+        }
+
+        @Override
+        public void onError(@NotNull Download download) {
+            super.onError(download);
+            Log.d("TestActivity", "Error: " + download.getError().toString());
+        }
+
+        @Override
+        public void onCompleted(@NotNull Download download) {
+            super.onCompleted(download);
+            Log.d("TestActivity", "Completed ");
+        }
+    };
+}
+```
+A FetchFileResourceDownloadTask can also be used to download files from the FetchFile Server.
+Be sure to add the fetch2downloaders module to your dependencies.
+
+```java
+public class TestActivity extends AppCompatActivity {
+
+    FetchFileResourceDownloadTask<File> task;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        task = new FetchFileResourceDownloadTask<File>() {
+            @NotNull
+            @Override
+            public FileResourceRequest getRequest() {
+                FileResourceRequest fileResourceRequest = new FileResourceRequest();
+                fileResourceRequest.setHostAddress("127.0.0.1");
+                fileResourceRequest.setPort(6548);
+                fileResourceRequest.setResourceIdentifier("testfile.txt");
+                fileResourceRequest.addHeader("Authorization", "5adWEDG36FGTTBX23B");
+                return fileResourceRequest;
+            }
+
+            @Override
+            public File doWork(@NotNull InputStream inputStream, long contentLength, @NotNull String md5CheckSum) {
+                File file = new File("/downloads/sample.txt");
+                try {
+                   BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+                   BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file));
+                   byte[] buffer = new byte[1024];
+                   int read;
+                   int bytesRead = 0;
+                   while ((read = bufferedInputStream.read(buffer, 0, 1024)) != -1 && !isCancelled()) { //isCancelled() checks if the task was cancelled.
+                       bufferedOutputStream.write(buffer, 0, read);
+                       bytesRead += read;
+                       setProgress(calculateProgress(bytesRead, contentLength));
+                   }
+                   bufferedInputStream.close();
+                   bufferedOutputStream.flush();
+                   bufferedOutputStream.close();
+               } catch (IOException e) {
+                   e.printStackTrace();
+                }
+                return file;
+            }
+
+            @Override
+            protected void onProgress(int progress) {
+                Log.d("TestActivity", "Progress: " + progress);
+
+            }
+
+            @Override
+            protected void onError(int httpStatusCode, @org.jetbrains.annotations.Nullable Throwable throwable) {
+                Log.d("TestActivity", "Error: " + httpStatusCode);
+            }
+
+            @Override
+            protected void onComplete(File result) {
+                Log.d("TestActivity", "Complete");
+            }
+        };
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        task.execute();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        task.cancel();
+
+    }
+```
+See the sample app for more examples.
+
 Fetch1 Migration
 ----------------
 
