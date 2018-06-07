@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$/fetch2core" />
             <option value="$PROJECT_DIR$/fetch2downloaders" />
             <option value="$PROJECT_DIR$/fetch2fileserver" />
+            <option value="$PROJECT_DIR$/fetch2okhttp" />
             <option value="$PROJECT_DIR$/fetch2rx" />
             <option value="$PROJECT_DIR$/fetchmigrator" />
             <option value="$PROJECT_DIR$/sampleApp" />

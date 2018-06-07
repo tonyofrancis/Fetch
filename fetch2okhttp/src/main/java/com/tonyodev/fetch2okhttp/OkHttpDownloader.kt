@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2downloaders
+package com.tonyodev.fetch2okhttp
 
 import com.tonyodev.fetch2core.Downloader
 import com.tonyodev.fetch2core.InterruptMonitor
