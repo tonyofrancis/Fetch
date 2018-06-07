@@ -46,12 +46,16 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
      * @param httpStatusCode http status code
      * @param throwable throwable when an exception is throw. Can be null
      * */
-    abstract fun onError(httpStatusCode: Int, throwable: Throwable? = null)
+    protected open fun onError(httpStatusCode: Int, throwable: Throwable? = null){
+
+    }
 
     /** Called by the task when the task completed. This method is called on the main thread.
      * @param result result returned by the doWork method.
      * */
-    abstract fun onComplete(result: T)
+    protected open fun onComplete(result: T) {
+        
+    }
 
     /** Executes a task. The task can be reused after it has stopped.*/
     fun execute() {
