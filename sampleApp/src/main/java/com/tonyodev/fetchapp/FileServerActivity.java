@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,9 +53,16 @@ public class FileServerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_file_server);
         textView = findViewById(R.id.textView);
-        final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this).setFileServerDownloader(new FetchFileServerDownloader(Downloader.FileDownloaderType.PARALLEL)).setNamespace(FETCH_NAMESPACE).build();
+
+        final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+                .setFileServerDownloader(new FetchFileServerDownloader(Downloader.FileDownloaderType.PARALLEL))
+                .setNamespace(FETCH_NAMESPACE)
+                .build();
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
-        fetchFileServer = new FetchFileServer.Builder(this).setClearDatabaseOnShutdown(true).setAuthenticator((authorization, fileRequest) -> authorization.equals("password")).build();
+
+        fetchFileServer = new FetchFileServer.Builder(this)
+                .setAuthenticator((authorization, fileRequest) -> authorization.equals("password"))
+                .build();
         fetchFileServer.start();
         checkStoragePermission();
     }
@@ -104,8 +110,10 @@ public class FileServerActivity extends AppCompatActivity {
             fileResource.setMd5(fileMd5);
         }
         fetchFileServer.addFileResource(fileResource);
-        task.execute();
-        //downloadFileResourceUsingFetch();
+
+        //Can download with Fetch or a FetchFileResourceDownloadTask
+        downloadFileResourceUsingFetch();
+        downloadTask.execute();
     }
 
     private void downloadFileResourceUsingFetch() {
@@ -120,14 +128,14 @@ public class FileServerActivity extends AppCompatActivity {
         final String url = new FetchFileServerUrlBuilder()
                 .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
                 .setFileResourceIdentifier(CONTENT_PATH).create();
-        final Request request = new Request(url, getFile());
+        final Request request = new Request(url, getFile("(1)"));
         request.addHeader("Authorization", "password");
         request.setPriority(Priority.HIGH);
         return request;
     }
 
-    private String getFile() {
-        return Data.getSaveDir() + "/data/ " + CONTENT_PATH;
+    private String getFile(final String incrementer) {
+        return Data.getSaveDir() + "/data/ test_file" + incrementer + ".db";
     }
 
     @Override
@@ -140,13 +148,13 @@ public class FileServerActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         fetch.removeListener(fetchListener);
-        task.stop();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         fetch.close();
+        downloadTask.cancel();
         fetchFileServer.shutDown(false);
     }
 
@@ -184,7 +192,7 @@ public class FileServerActivity extends AppCompatActivity {
         }
     }
 
-    private FetchFileResourceDownloadTask task = new FetchFileResourceDownloadTask<File>() {
+    private FetchFileResourceDownloadTask<File> downloadTask = new FetchFileResourceDownloadTask<File>() {
 
         @NotNull
         @Override
@@ -197,17 +205,17 @@ public class FileServerActivity extends AppCompatActivity {
             return fileResourceRequest;
         }
 
-        @org.jetbrains.annotations.Nullable
+        @NotNull
         @Override
         public File doWork(@NotNull InputStream inputStream, long contentLength, @NotNull String md5CheckSum) {
-            Log.d("TonyoTask", "doWork");
-            final File file = Utils.createFile(getFile());
+            Timber.d("TonyoTask doWork");
+            final File file = Utils.createFile(getFile("(2)"));
             try {
                 final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
                 final OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
                 final byte[] buffer = new byte[1024];
                 int read;
-                while (((read = bufferedInputStream.read(buffer, 0, 1024)) != -1) && !isInterrupted()) {
+                while (((read = bufferedInputStream.read(buffer, 0, 1024)) != -1) && !isCancelled()) {
                     outputStream.write(buffer, 0, read);
                 }
                 bufferedInputStream.close();
@@ -221,12 +229,12 @@ public class FileServerActivity extends AppCompatActivity {
 
         @Override
         public void onError(int httpStatusCode, @org.jetbrains.annotations.Nullable Throwable throwable) {
-            Log.d("TonyoTask", "onError");
+            Timber.d("TonyoTask onError");
         }
 
         @Override
-        public void onComplete(@org.jetbrains.annotations.Nullable File result) {
-            Log.d("TonyoTask", "Completed");
+        public void onComplete(@org.jetbrains.annotations.NotNull File result) {
+            Timber.d("TonyoTask Completed");
         }
 
     };

@@ -11,17 +11,39 @@ import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.util.*
 
-abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(val timeout: Long = 20_000) {
+/** Downloader Task used to download a File/FileResource from a Fetch File Server.*/
+abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
+        /** Client timeout in milliseconds. Default is 20_000 milliseconds.*/
+        val timeout: Long = 20_000) {
 
+    /** Called by the task to get the FileResourceRequest used to make the connection between the client
+     * and the Fetch File Server. Called on a background thread.
+     * @return FileResourceRequest
+     * */
     abstract fun getRequest(): FileResourceRequest
 
-    abstract fun doWork(inputStream: InputStream, contentLength: Long, md5CheckSum: String): T?
+    /** Called by the task when the connection to the server is successfully established and
+     * the task is ready to download the content. Called a background thread.
+     * @param inputStream InputStream used to get the content.
+     * @param contentLength the length of the content.
+     * @param md5CheckSum the md5 check sum of the content
+     * @return result.
+     * */
+    abstract fun doWork(inputStream: InputStream, contentLength: Long, md5CheckSum: String): T
 
+    /** Called by the task when an error occurs. The task is interrupted and stopped.
+     * This method is called on the main thread.
+     * @param httpStatusCode http status code
+     * @param throwable throwable when an exception is throw. Can be null
+     * */
     abstract fun onError(httpStatusCode: Int, throwable: Throwable? = null)
 
-    abstract fun onComplete(result: T?)
+    /** Called by the task when the task completed. This method is called on the main thread.
+     * @param result result returned by the doWork method.
+     * */
+    abstract fun onComplete(result: T)
 
-
+    /** Executes a task. The task can be reused after it has stopped.*/
     fun execute() {
         synchronized(lock) {
             if (!isExecutingTask) {
@@ -31,7 +53,8 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(val ti
         }
     }
 
-    fun stop() {
+    /** cancels the task if its currently executing.*/
+    fun cancel() {
         synchronized(lock) {
             if (isExecutingTask) {
                 interrupted = true
@@ -39,21 +62,57 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(val ti
         }
     }
 
-    protected val isInterrupted: Boolean
+    /** Checks if a task is cancelled.*/
+    protected val isCancelled: Boolean
         get() {
             return interrupted
         }
 
-    class FileResourceRequest(var hostAddress: String = "00:00:00:00",
-                              var port: Int = 0,
-                              var resourceIdentifier: String = "",
-                              var headers: MutableMap<String, String> = mutableMapOf()) {
+    /** Class used to make a connection between a client and Fetch file server.*/
+    class FileResourceRequest(
+            /** File server IP Address*/
+            var hostAddress: String = "00:00:00:00",
+            /** File server port. The port the file server is listening for requests on.*/
+            var port: Int = 0,
+            /** FileResource identifier. This can be the FileResource name or id.*/
+            var resourceIdentifier: String = "",
+            /** header information for the request.*/
+            var headers: MutableMap<String, String> = mutableMapOf()) {
 
+        /** Adds a header to the request.
+         * @param key header key
+         * @param value header value
+         * */
         fun addHeader(key: String, value: String) {
             headers[key] = value
         }
-    }
 
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+            other as FileResourceRequest
+            if (hostAddress != other.hostAddress) return false
+            if (port != other.port) return false
+            if (resourceIdentifier != other.resourceIdentifier) return false
+            if (headers != other.headers) return false
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = hostAddress.hashCode()
+            result = 31 * result + port
+            result = 31 * result + resourceIdentifier.hashCode()
+            result = 31 * result + headers.hashCode()
+            return result
+        }
+
+        override fun toString(): String {
+            return "FileResourceRequest(hostAddress='$hostAddress', port=$port, " +
+                    "resourceIdentifier='$resourceIdentifier', headers=$headers)"
+        }
+
+
+    }
 
     /******* Internal ********/
 
@@ -124,11 +183,6 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(val ti
                         onError(HttpURLConnection.HTTP_CLIENT_TIMEOUT)
                     }
                     break
-                }
-            }
-            if (interrupted) {
-                mainHandler.post {
-                    onError(HttpURLConnection.HTTP_UNSUPPORTED_TYPE)
                 }
             }
         } catch (e: Exception) {
