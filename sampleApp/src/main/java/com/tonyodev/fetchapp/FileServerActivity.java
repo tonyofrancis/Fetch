@@ -208,7 +208,7 @@ public class FileServerActivity extends AppCompatActivity {
         @NotNull
         @Override
         public File doWork(@NotNull InputStream inputStream, long contentLength, @NotNull String md5CheckSum) {
-            Timber.d("TonyoTask doWork");
+            Timber.d("Task doWork");
             final File file = Utils.createFile(getFile("(2)"));
             try {
                 final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
@@ -229,12 +229,12 @@ public class FileServerActivity extends AppCompatActivity {
 
         @Override
         public void onError(int httpStatusCode, @org.jetbrains.annotations.Nullable Throwable throwable) {
-            Timber.d("TonyoTask onError");
+            Timber.d("Task onError");
         }
 
         @Override
         public void onComplete(@org.jetbrains.annotations.NotNull File result) {
-            Timber.d("TonyoTask Completed");
+            Timber.d("Task onCompleted");
         }
 
     };
