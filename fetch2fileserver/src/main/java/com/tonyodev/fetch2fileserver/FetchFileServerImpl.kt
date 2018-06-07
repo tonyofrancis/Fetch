@@ -211,7 +211,7 @@ class FetchFileServerImpl(context: Context,
                         logger.e(TAG + "- ${e.message}")
                     }
                     try {
-                        ioHandler.removeCallbacks(null)
+                        ioHandler.removeCallbacksAndMessages(null)
                         ioHandler.looper.quit()
                     } catch (e: Exception) {
                         logger.e(TAG + "- ${e.message}")
@@ -220,7 +220,7 @@ class FetchFileServerImpl(context: Context,
             } else {
                 fileResourceServerDatabase.close()
                 try {
-                    ioHandler.removeCallbacks(null)
+                    ioHandler.removeCallbacksAndMessages(null)
                     ioHandler.looper.quit()
                 } catch (e: Exception) {
                     logger.e(TAG + "- ${e.message}")
