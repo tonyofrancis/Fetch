@@ -1,11 +1,11 @@
-package com.tonyodev.fetch2fileserver.transporter
+package com.tonyodev.fetch2core.transporter
 
-import com.tonyodev.fetch2fileserver.transporter.FileResponse.Companion.FIELD_CONNECTION
-import com.tonyodev.fetch2fileserver.transporter.FileResponse.Companion.FIELD_CONTENT_LENGTH
-import com.tonyodev.fetch2fileserver.transporter.FileResponse.Companion.FIELD_DATE
-import com.tonyodev.fetch2fileserver.transporter.FileResponse.Companion.FIELD_MD5
-import com.tonyodev.fetch2fileserver.transporter.FileResponse.Companion.FIELD_STATUS
-import com.tonyodev.fetch2fileserver.transporter.FileResponse.Companion.FIELD_TYPE
+import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_CONNECTION
+import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_CONTENT_LENGTH
+import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_DATE
+import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_MD5
+import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_STATUS
+import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_TYPE
 import org.json.JSONObject
 import java.io.DataInputStream
 import java.io.DataOutputStream

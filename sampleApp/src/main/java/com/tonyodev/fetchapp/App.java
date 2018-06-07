@@ -6,7 +6,7 @@ import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2downloaders.OkHttpDownloader;
-import com.tonyodev.fetch2fileserver.FetchFileServerDownloader;
+import com.tonyodev.fetch2downloaders.FetchFileServerDownloader;
 
 import timber.log.Timber;
 

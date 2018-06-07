@@ -22,7 +22,7 @@ import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2fileserver.FetchFileResourceDownloadTask;
 import com.tonyodev.fetch2fileserver.FileResource;
 import com.tonyodev.fetch2fileserver.FetchFileServer;
-import com.tonyodev.fetch2fileserver.FetchFileServerDownloader;
+import com.tonyodev.fetch2downloaders.FetchFileServerDownloader;
 import com.tonyodev.fetch2fileserver.FetchFileServerUrlBuilder;
 
 import org.jetbrains.annotations.NotNull;

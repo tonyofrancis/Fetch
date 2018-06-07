@@ -1,11 +1,11 @@
-package com.tonyodev.fetch2fileserver
+package com.tonyodev.fetch2downloaders
 
 import com.tonyodev.fetch2core.*
 
-import com.tonyodev.fetch2fileserver.transporter.FileRequest.Companion.TYPE_FILE
-import com.tonyodev.fetch2fileserver.transporter.FetchFileResourceTransporter
-import com.tonyodev.fetch2fileserver.transporter.FileRequest
-import com.tonyodev.fetch2fileserver.transporter.FileResponse
+import com.tonyodev.fetch2core.transporter.FileRequest.Companion.TYPE_FILE
+import com.tonyodev.fetch2core.transporter.FetchFileResourceTransporter
+import com.tonyodev.fetch2core.transporter.FileRequest
+import com.tonyodev.fetch2core.transporter.FileResponse
 
 import java.io.OutputStream
 import java.net.HttpURLConnection
