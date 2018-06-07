@@ -62,8 +62,8 @@ public class TestActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
-        		.setDownloadConcurrentLimit(3)
-                .build();
+			.setDownloadConcurrentLimit(3)
+            .build();
 
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
 
