@@ -59,9 +59,9 @@ class FetchConfiguration private constructor(val appContext: Context,
         /**
          * Sets the httpDownloader client Fetch will use to perform http downloads.
          * The default httpDownloader uses the HttpUrlConnection client to perform downloads.
-         * @see com.tonyodev.fetch2.Downloader
+         * @see com.tonyodev.fetch2core.Downloader
          * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader
-         * @see com.tonyodev.fetch2downloader.OkHttpDownloader
+         * @see com.tonyodev.fetch2okhttp.OkHttpDownloader
          * @param downloader Downloader Client
          * @return Builder
          * */

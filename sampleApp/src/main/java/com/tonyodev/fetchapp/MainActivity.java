@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
+import com.tonyodev.fetch2fileserver.FetchFileServer;
 import com.tonyodev.fetch2rx.RxFetch;
 
 import java.io.File;
@@ -72,13 +73,18 @@ public class MainActivity extends AppCompatActivity {
         final String[] namespaces = new String[]{
                 DownloadListActivity.FETCH_NAMESPACE,
                 FailedMultiEnqueueActivity.FETCH_NAMESPACE,
-                FileServerActivity.FETCH_NAMESPACE };
+                FileServerActivity.FETCH_NAMESPACE};
         for (String namespace : namespaces) {
             final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this).setNamespace(namespace).build();
             Fetch.Impl.getInstance(fetchConfiguration).deleteAll().close();
         }
         Fetch.Impl.getDefaultInstance().deleteAll().close();
         RxFetch.Impl.getDefaultRxInstance().deleteAll().close();
+        new FetchFileServer.Builder(this)
+                .setFileServerDatabaseName(FileServerActivity.FETCH_NAMESPACE)
+                .setClearDatabaseOnShutdown(true)
+                .build()
+                .shutDown(false);
         try {
             final File fetchDir = new File(Data.getSaveDir());
             Utils.deleteFileAndContents(fetchDir);
