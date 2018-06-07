@@ -1,19 +1,19 @@
 Version 2.1.0-RC1
 This version of Fetch contains many fixes and breaking changes.
-Note: Uses will not lose downloads migrating to this version one the same namespace is set.
+Note: Uses will not lose downloads migrating to this version once the same namespace is set.
 There are no behavioral changes in the way requests are downloaded.
-Changes include method renaming and moving classes into a different package name. New in this
-version of Fetch is the release of the Fetch File Server. See demo in sample app. The wiki for this repo will be updated
+Changes include method renaming and moving classes into a different packages. New in this
+version of Fetch is the release of the FetchFileServer. See demo in sample app. The wiki for this repo will be updated
 over the coming days.
 
 Changes:
 - Logger, Downloader, Func, Func2 and FetchLogger classes moved to com.tonyodev.fetch2core
-- OkHttpDownloader class moved to com.tonyodev.fetch2okhttp. See readme on how to include this module into your project.
+- OkHttpDownloader class moved to com.tonyodev.fetch2okhttp. Add this dependency implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:2.1.0-RC1" to your build.gradle file. 
 - Fetch.Builder and RxFetch.Builder classes has been removed and is replaced with FetchConfiguration.Builder.
 - To get an instance of Fetch call Fetch.Impl.getInstance(fetchConfiguration)
   or RxFetch.Impl.getInstance(fetchConfiguration) to get a new instance.
 - You can now get a default instance of Fetch by calling Fetch.Impl.getDefaultInstance(). Be sure to set
-  the default FetchConfiguration before calling the getDefaultInstance() method. To set the default configuration
+  the default FetchConfiguration at least once before calling the getDefaultInstance() method. To set the default configuration
   call Fetch.Impl.setDefaultInstanceConfiguration(fetchConfiguration)
 - To set a custom Http Downloader for Fetch, call setHttpDownloader(downloader) on the FetchConfiguration.Builder.
 - To set the namespace of a Fetch instance, call setNamespace(namespace) on the FetchConfiguration.Builder.
@@ -24,15 +24,15 @@ Changes:
 - Closing an instance of Fetch no longer causes crashes and releases all resources when appropriate.
 - Fetch Listeners are now held as weak references to reduce memory leaks.
 - Fetch Listener onQueued method has been updated to onQueued(Download download, boolean waitingOnNetwork)
-- New Kotlin friendly methods added to Fetch for queuing requests and querying download information.
+- New Kotlin friendly methods added to Fetch for enqueuing requests and querying download information.
 - Request class now has an enqueueAction field which replaces RequestOptions.
-- RequestOptions enum were removed and replaced with EnqueueAction enum. There are two EnqueueAction types available.
+- RequestOptions enum was removed and replaced with EnqueueAction enum. There are two EnqueueAction types available.
   REPLACE_EXISTING and INCREMENT_FILE_NAME. Each new Request has a default enqueue action of REPLACE_EXISTING
   which will replace any existing request that Fetch is managing with the same File. If INCREMENT_FILE_NAME
   is set on the request, Fetch will auto increment the file name for the request and return the updated
   request in the first callback of the enqueue method. Be sure to update your external request references
   with the updated request.
-- Request class no longer allows you to set the id field of a request. Request class has new field identifier.
+- Request class no longer allows you to set the id field of a request. Request class has new field called identifier.
   Use the identifier(Long) field to set your own unique id to identify a request or download.
 - New enqueueAction and identifier  fields added on Download and Request class.
 - Logging is now enabled by default in Fetch
