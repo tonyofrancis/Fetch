@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,6 +20,7 @@ import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.FetchCoreUtils;
+import com.tonyodev.fetch2fileserver.FetchFileResourceDownloadTask;
 import com.tonyodev.fetch2fileserver.FileResource;
 import com.tonyodev.fetch2fileserver.FetchFileServer;
 import com.tonyodev.fetch2fileserver.FetchFileServerDownloader;
@@ -52,15 +54,9 @@ public class FileServerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_file_server);
         textView = findViewById(R.id.textView);
-        final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
-                .setFileServerDownloader(new FetchFileServerDownloader(Downloader.FileDownloaderType.PARALLEL))
-                .setNamespace(FETCH_NAMESPACE)
-                .build();
+        final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this).setFileServerDownloader(new FetchFileServerDownloader(Downloader.FileDownloaderType.PARALLEL)).setNamespace(FETCH_NAMESPACE).build();
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
-        fetchFileServer = new FetchFileServer.Builder(this)
-                .setClearDatabaseOnShutdown(true)
-                .setAuthenticator((authorization, fileRequest) -> authorization.equals("password"))
-                .build();
+        fetchFileServer = new FetchFileServer.Builder(this).setClearDatabaseOnShutdown(true).setAuthenticator((authorization, fileRequest) -> authorization.equals("password")).build();
         fetchFileServer.start();
         checkStoragePermission();
     }
@@ -108,7 +104,8 @@ public class FileServerActivity extends AppCompatActivity {
             fileResource.setMd5(fileMd5);
         }
         fetchFileServer.addFileResource(fileResource);
-        downloadFileResourceUsingFetch();
+        task.execute();
+        //downloadFileResourceUsingFetch();
     }
 
     private void downloadFileResourceUsingFetch() {
@@ -122,8 +119,7 @@ public class FileServerActivity extends AppCompatActivity {
     private Request getRequest() {
         final String url = new FetchFileServerUrlBuilder()
                 .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
-                .setFileResourceIdentifier(CONTENT_PATH)
-                .create();
+                .setFileResourceIdentifier(CONTENT_PATH).create();
         final Request request = new Request(url, getFile());
         request.addHeader("Authorization", "password");
         request.setPriority(Priority.HIGH);
@@ -144,6 +140,7 @@ public class FileServerActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         fetch.removeListener(fetchListener);
+        task.stop();
     }
 
     @Override
@@ -186,5 +183,52 @@ public class FileServerActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.permission_not_enabled, Toast.LENGTH_LONG).show();
         }
     }
+
+    private FetchFileResourceDownloadTask task = new FetchFileResourceDownloadTask<File>() {
+
+        @NotNull
+        @Override
+        public FileResourceRequest getRequest() {
+            final FileResourceRequest fileResourceRequest = new FileResourceRequest();
+            fileResourceRequest.setHostAddress(fetchFileServer.getAddress());
+            fileResourceRequest.setPort(fetchFileServer.getPort());
+            fileResourceRequest.setResourceIdentifier(CONTENT_PATH);
+            fileResourceRequest.addHeader("Authorization", "password");
+            return fileResourceRequest;
+        }
+
+        @org.jetbrains.annotations.Nullable
+        @Override
+        public File doWork(@NotNull InputStream inputStream, long contentLength, @NotNull String md5CheckSum) {
+            Log.d("TonyoTask", "doWork");
+            final File file = Utils.createFile(getFile());
+            try {
+                final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+                final OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
+                final byte[] buffer = new byte[1024];
+                int read;
+                while (((read = bufferedInputStream.read(buffer, 0, 1024)) != -1) && !isInterrupted()) {
+                    outputStream.write(buffer, 0, read);
+                }
+                bufferedInputStream.close();
+                outputStream.flush();
+                outputStream.close();
+            } catch (IOException exception) {
+                Timber.e(exception);
+            }
+            return file;
+        }
+
+        @Override
+        public void onError(int httpStatusCode, @org.jetbrains.annotations.Nullable Throwable throwable) {
+            Log.d("TonyoTask", "onError");
+        }
+
+        @Override
+        public void onComplete(@org.jetbrains.annotations.Nullable File result) {
+            Log.d("TonyoTask", "Completed");
+        }
+
+    };
 
 }
