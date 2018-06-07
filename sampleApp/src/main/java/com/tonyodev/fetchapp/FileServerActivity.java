@@ -113,7 +113,7 @@ public class FileServerActivity extends AppCompatActivity {
 
         //Can download with Fetch or a FetchFileResourceDownloadTask
         downloadFileResourceUsingFetch();
-        downloadTask.execute();
+        //downloadTask.execute();
     }
 
     private void downloadFileResourceUsingFetch() {
