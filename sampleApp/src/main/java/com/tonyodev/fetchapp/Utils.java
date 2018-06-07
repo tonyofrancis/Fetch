@@ -94,4 +94,16 @@ public final class Utils {
         return file;
     }
 
+    public static int getProgress(long downloaded, long total) {
+        if (total < 1) {
+            return -1;
+        } else if (downloaded < 1) {
+            return 0;
+        } else if (downloaded >= total) {
+            return 100;
+        } else {
+            return (int) (((double) downloaded / (double) total) * 100);
+        }
+    }
+
 }

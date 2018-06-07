@@ -215,9 +215,13 @@ public class FileServerActivity extends AppCompatActivity {
                 final OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
                 final byte[] buffer = new byte[1024];
                 int read;
+                int readBytes = 0;
                 while (((read = bufferedInputStream.read(buffer, 0, 1024)) != -1) && !isCancelled()) {
+                    readBytes += read;
                     outputStream.write(buffer, 0, read);
+                    setProgress(Utils.getProgress(readBytes, contentLength));
                 }
+                setProgress(100);
                 bufferedInputStream.close();
                 outputStream.flush();
                 outputStream.close();
@@ -228,13 +232,24 @@ public class FileServerActivity extends AppCompatActivity {
         }
 
         @Override
+        protected void onProgress(int progress) {
+            final String progressString = "Progress: " + progress + "%";
+            textView.setText(progressString);
+            Timber.d("Download From FileServer Progress: " + progress + "%");
+        }
+
+        @Override
         public void onError(int httpStatusCode, @org.jetbrains.annotations.Nullable Throwable throwable) {
-            Timber.d("Task onError");
+            final String error = "Download From FileServer Error " + httpStatusCode;
+            textView.setText(error);
+            Timber.d(error);
         }
 
         @Override
         public void onComplete(@org.jetbrains.annotations.NotNull File result) {
-            Timber.d("Task onCompleted");
+            final String completed = "Completed Download";
+            textView.setText(completed);
+            Timber.d("Download From FileServer completed");
         }
 
     };

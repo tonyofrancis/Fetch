@@ -34,6 +34,13 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
      * */
     abstract fun doWork(inputStream: InputStream, contentLength: Long, md5CheckSum: String): T
 
+    /** Called by the task to report progress. This method is called on the main thread.
+     * @param progress progress value.
+     * */
+    protected open fun onProgress(progress: Int) {
+
+    }
+
     /** Called by the task when an error occurs. The task is interrupted and stopped.
      * This method is called on the main thread.
      * @param httpStatusCode http status code
@@ -70,6 +77,14 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
         get() {
             return interrupted
         }
+
+    /** Sets the task progress and calls the onProgress method on the main thread
+     * to post the progress update.*/
+    fun setProgress(progress: Int) {
+        mainHandler.post {
+            onProgress(progress)
+        }
+    }
 
     /** Class used to make a connection between a client and Fetch file server.*/
     class FileResourceRequest(
