@@ -219,7 +219,7 @@ Set the OkHttp Downloader for Fetch to use.
 OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
 
 FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
-	..setHttpDownloader(new OkHttpDownloader(okHttpClient))
+	.setHttpDownloader(new OkHttpDownloader(okHttpClient))
 	.build();
 
 Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
