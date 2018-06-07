@@ -2,16 +2,17 @@ package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchListener
+import java.lang.ref.WeakReference
 
 class ListenerCoordinator(val namespace: String) {
 
     private val lock = Any()
-    private val listenerMap = mutableMapOf<Int, MutableSet<FetchListener>>()
+    private val listenerMap = mutableMapOf<Int, MutableSet<WeakReference<FetchListener>>>()
 
     fun addListener(id: Int, fetchListener: FetchListener) {
         synchronized(lock) {
             val set = listenerMap[id] ?: mutableSetOf()
-            set.add(fetchListener)
+            set.add(WeakReference(fetchListener))
             listenerMap[id] = set
         }
     }
@@ -21,8 +22,8 @@ class ListenerCoordinator(val namespace: String) {
             val iterator = listenerMap[id]?.iterator()
             if (iterator != null) {
                 while (iterator.hasNext()) {
-                    val listener = iterator.next()
-                    if (listener == fetchListener) {
+                    val reference = iterator.next()
+                    if (reference.get() == fetchListener) {
                         iterator.remove()
                         break
                     }
@@ -37,7 +38,7 @@ class ListenerCoordinator(val namespace: String) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     it.forEach {
-                        it.onQueued(download)
+                        it.get()?.onQueued(download)
                     }
                 }
             }
@@ -47,7 +48,7 @@ class ListenerCoordinator(val namespace: String) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     it.forEach {
-                        it.onCompleted(download)
+                        it.get()?.onCompleted(download)
                     }
                 }
             }
@@ -57,7 +58,7 @@ class ListenerCoordinator(val namespace: String) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     it.forEach {
-                        it.onError(download)
+                        it.get()?.onError(download)
                     }
                 }
             }
@@ -67,7 +68,7 @@ class ListenerCoordinator(val namespace: String) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     it.forEach {
-                        it.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
+                        it.get()?.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
                     }
                 }
             }
@@ -77,7 +78,7 @@ class ListenerCoordinator(val namespace: String) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     it.forEach {
-                        it.onPaused(download)
+                        it.get()?.onPaused(download)
                     }
                 }
             }
@@ -87,7 +88,7 @@ class ListenerCoordinator(val namespace: String) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     it.forEach {
-                        it.onResumed(download)
+                        it.get()?.onResumed(download)
                     }
                 }
             }
@@ -97,7 +98,7 @@ class ListenerCoordinator(val namespace: String) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     it.forEach {
-                        it.onCancelled(download)
+                        it.get()?.onCancelled(download)
                     }
                 }
             }
@@ -107,7 +108,7 @@ class ListenerCoordinator(val namespace: String) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     it.forEach {
-                        it.onRemoved(download)
+                        it.get()?.onRemoved(download)
                     }
                 }
             }
@@ -117,7 +118,7 @@ class ListenerCoordinator(val namespace: String) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     it.forEach {
-                        it.onDeleted(download)
+                        it.get()?.onDeleted(download)
                     }
                 }
             }

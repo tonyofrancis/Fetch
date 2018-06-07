@@ -16,6 +16,9 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
         /** Client timeout in milliseconds. Default is 20_000 milliseconds.*/
         val timeout: Long = 20_000) {
 
+    /** Task identifier.*/
+    val id = UUID.randomUUID().toString()
+
     /** Called by the task to get the FileResourceRequest used to make the connection between the client
      * and the Fetch File Server. Called on a background thread.
      * @return FileResourceRequest
