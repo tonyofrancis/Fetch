@@ -265,7 +265,7 @@ FetchFileServer
 Introducing the FetchFileServer. The FetchFileServer is a lightweight TCP File Server that acts like
 an HTTP file server designed specifically to share files between Android devices. You can host file resources
 with the FetchFileServer on one device and have Fetch download Files from the server
-on another device. See sample app for more information. Wiki on Fetch File Server will be
+on another device. See sample app for more information. Wiki on FetchFileServer will be
 added in the coming days.
 
 Start using FetchFileServer by adding the gradle dependency to your application's build.gradle file.
@@ -329,7 +329,7 @@ public class TestActivity extends AppCompatActivity {
 
         String file = "/downloads/sample.txt";
         String url = new FetchFileServerUrlBuilder()
-                .setHostInetAddress("127.0.0.1", 68856) //file server ip and port
+                .setHostInetAddress("127.0.0.1", 6886) //file server ip and port
                 .setFileResourceIdentifier("testfile.txt") //file resource name or id
                 .create();
         Request request = new Request(url, file);
@@ -379,7 +379,7 @@ public class TestActivity extends AppCompatActivity {
     };
 }
 ```
-A FetchFileResourceDownloadTask can also be used to download files from the FetchFile Server.
+A FetchFileResourceDownloadTask can also be used to download files from the FetchFileServer.
 Be sure to add the fetch2downloaders module to your dependencies.
 
 ```java
@@ -396,7 +396,7 @@ public class TestActivity extends AppCompatActivity {
             public FileResourceRequest getRequest() {
                 FileResourceRequest fileResourceRequest = new FileResourceRequest();
                 fileResourceRequest.setHostAddress("127.0.0.1");
-                fileResourceRequest.setPort(6548);
+                fileResourceRequest.setPort(6886);
                 fileResourceRequest.setResourceIdentifier("testfile.txt");
                 fileResourceRequest.addHeader("Authorization", "5adWEDG36FGTTBX23B");
                 return fileResourceRequest;
@@ -456,7 +456,6 @@ public class TestActivity extends AppCompatActivity {
 
     }
 ```
-See the sample app for more examples.
 
 Fetch1 Migration
 ----------------
