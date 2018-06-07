@@ -50,66 +50,46 @@ Using Fetch is easy! Just add the Gradle dependency to your application's build.
 implementation "com.tonyodev.fetch2:fetch2:2.0.0-RC22"
 ```
 
-Next, get an instance of Fetch using the builder, and request a download.
+Next, get an instance of Fetch and request a download.
 
 ```java
-public class MainActivity extends AppCompatActivity {
+public class TestActivity extends AppCompatActivity {
 
-    private Fetch mainFetch;
+    private Fetch fetch;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mainFetch = new Fetch.Builder(context, "Main")
-                  .setDownloadConcurrentLimit(4) // Allows Fetch to download 4 downloads in Parallel.
-                  .enableLogging(true)
-                  .build();
+        FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+                .build();
 
-        //Single enqueuing example            
+        fetch = Fetch.Impl.getInstance(fetchConfiguration);
+
+        String url = "http:www.example.com/test.txt";
+        String file = "/downloads/test.txt";
+        
         final Request request = new Request(url, file);
         request.setPriority(Priority.HIGH);
-        request.setNetworkType(NetworkType.WIFI_ONLY);
+        request.setNetworkType(NetworkType.ALL);
         request.addHeader("clientKey", "SD78DF93_3947&MVNGHE1WONG");
-
-        mainFetch.enqueue(request, new Func<Download>() {
-               @Override
-               public void call(Download download) {
-                   //Request successfully Queued for download
-               }
-           }, new Func<Error>() {
-               @Override
-               public void call(Error error) {
-                   //An error occurred when enqueuing a request.
-               }
-           });
-
-        // Multi enqueuing example with group id   
-        final List<Request> requestList = getSampleRequests();
-        final int groupId = "MySampleGroup".hashCode();
-        for(int i = 0; i < requestList.size(); i++) {
-            requestList.get(i).setGroupId(groupId);
-        }
-
-        mainFetch.enqueue(requestList, new Func<List<? extends Download>>() {
-            @Override
-            public void call(List<? extends Download> downloads) {
-                //Successfully enqueued requests.
-            }
-        }, new Func<Error>() {
-            @Override
-            public void call(Error error) {
-                // An error occurred when enqueuing requests.
-            }
+        
+        fetch.enqueue(request, updatedRequest -> {
+            //Request was successfully enqueued for download.
+        }, error -> {
+            //An error occurred enqueuing the request.
         });
+
+    }
 }
 ```
 
-Tracking a download's progress and status is very easy with Fetch. Simply add a FetchListener to your Fetch instance, and the listener will be notified whenever a download's
+Tracking a download's progress and status is very easy with Fetch. 
+Simply add a FetchListener to your Fetch instance, and the listener will be notified whenever a download's
 status or progress changes.
 
 ```java
-final FetchListener fetchListener = new FetchListener() {
+FetchListener fetchListener = new FetchListener() {
     @Override
     public void onQueued(@NotNull Download download) {
         if (request.getId() == download.getId()) {
@@ -124,11 +104,7 @@ final FetchListener fetchListener = new FetchListener() {
 
     @Override
     public void onError(@NotNull Download download) {
-        final Error error = download.getError();
-        final Throwable throwable = error.getThrowable(); //can be null
-        if (error == Error.UNKNOWN && throwable != null) {
-         Log.d("Fetch", "Throwable error", throwable);
-        }
+        Error error = download.getError();
     }
 
     @Override
@@ -136,8 +112,7 @@ final FetchListener fetchListener = new FetchListener() {
         if (request.getId() == download.getId()) {
             updateDownload(download, etaInMilliSeconds);
         }
-        final int progress = download.getProgress();
-        Log.d("Fetch", "Progress Completed :" + progress);
+        int progress = download.getProgress();
     }
 
     @Override
@@ -168,7 +143,7 @@ final FetchListener fetchListener = new FetchListener() {
 
 fetch.addListener(fetchListener);
 
-//Note: Remove listener when done.
+//Remove listener when done.
 fetch.removeListener(fetchListener);
 ```
 
@@ -178,23 +153,14 @@ A download returned by Fetch will have have an id that matches the request id th
 started the download.
 
 ```java
+Request request1 = new Request(url, file);
+Request request2 = new Request(url2, file2);
 
-final Request request1 = new Request(url, file);
-final Request request2 = new Request(url2, file2);
-
-fetch.pause(request.getId());
+fetch.pause(request1.getId());
 
 ...
 
 fetch.resume(request2.getId());
-
-
-...
-
-//You can also pause and resume downloads using the group id the download belongs to.
-int groupId = "AGroup".hashCode();
-fetch.pauseGroup(groupId);
-fetch.resumeGroup(groupId);
 
 ```
 
@@ -218,7 +184,7 @@ fetch.getDownloadsWithStatus(Status.DOWNLOADING, new Func<List<? extends Downloa
 });
 
 // You can also access grouped downloads
-final int groupId = 52687447745;
+int groupId = 52687447745;
 fetch.getDownloadsInGroup(groupId, new Func<List<? extends Download>>() {
 	@Override
   	public void call(List<? extends Download> downloads) {
@@ -246,18 +212,17 @@ to use the OkHttp Downloader instead. You can create your own custom downloaders
 if necessary. See the Java docs for details.
 
 ```java
-implementation "com.tonyodev.fetch2downloaders:fetch2downloaders:2.0.0-RC22"
+implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:2.0.0-RC22"
 ```
 Set the OkHttp Downloader for Fetch to use.
 ```java
-final OkHttpClient okHttpClient = new OkHttpClient.Builder()
-          .build();
+OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
 
-final Fetch fetch = new Fetch.Builder(context, "Main")
-	.setDownloader(new OkHttpDownloader(okHttpClient))
-        .setDownloadConcurrentLimit(4) // Allows Fetch to download 4 downloads in Parallel.
-        .enableLogging(true)
-        .build();
+FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+	..setHttpDownloader(new OkHttpDownloader(okHttpClient))
+	.build();
+
+Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
 ```
 
 RxFetch
@@ -273,10 +238,8 @@ implementation "com.tonyodev.fetch2rx:fetch2rx:2.0.0-RC22"
 RxFetch makes it super easy to enqueue download requests and query downloads using rxJava2 functional methods.
 
 ```java
-final RxFetch rxFetch = new RxFetch.Builder(context, "Main")
-  .setDownloadConcurrentLimit(2)
-  .enableLogging(true)
-  .build();
+FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this).build();
+Rxfetch rxFetch = RxFetch.Impl.getInstance(fetchConfiguration);
 
 rxFetch.getDownloads()
         .asFlowable()
