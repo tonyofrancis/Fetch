@@ -62,6 +62,7 @@ public class TestActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+        		.setDownloadConcurrentLimit(3)
                 .build();
 
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
@@ -91,7 +92,7 @@ status or progress changes.
 ```java
 FetchListener fetchListener = new FetchListener() {
     @Override
-    public void onQueued(@NotNull Download download) {
+    public void onQueued(@NotNull Download download, boolean waitingOnNetwork) {
         if (request.getId() == download.getId()) {
             showDownloadInList(download);
         }
@@ -219,6 +220,7 @@ Set the OkHttp Downloader for Fetch to use.
 OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
 
 FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+	.setDownloadConcurrentLimit(10)
 	.setHttpDownloader(new OkHttpDownloader(okHttpClient))
 	.build();
 
