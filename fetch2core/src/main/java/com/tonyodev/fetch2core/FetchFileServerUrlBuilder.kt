@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2fileserver
+package com.tonyodev.fetch2core
 
 import android.net.Uri
 

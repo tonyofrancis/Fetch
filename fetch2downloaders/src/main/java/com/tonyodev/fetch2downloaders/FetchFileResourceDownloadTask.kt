@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2fileserver
+package com.tonyodev.fetch2downloaders
 
 import android.os.Handler
 import android.os.Looper
@@ -135,7 +135,8 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
                     .setFileResourceIdentifier(serverRequest.resourceIdentifier)
                     .create()
             val headers = serverRequest.headers
-            val range = getRangeForFetchFileServerRequest(headers["Range"] ?: "bytes=0-")
+            val range = getRangeForFetchFileServerRequest(headers["Range"]
+                    ?: "bytes=0-")
             val authorization = headers[FileRequest.FIELD_AUTHORIZATION] ?: ""
             val port = getFetchFileServerPort(url)
             val address = getFetchFileServerHostAddress(url)
