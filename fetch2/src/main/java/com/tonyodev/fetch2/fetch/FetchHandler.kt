@@ -1,15 +1,12 @@
 package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.*
-import com.tonyodev.fetch2.provider.ListenerProvider
 import java.io.Closeable
 
 /**
- * This handler class handles all tasks and operations of Fetch.
+ * This handlerWrapper class handles all tasks and operations of Fetch.
  * */
 interface FetchHandler : Closeable {
-
-    val fetchListenerProvider: ListenerProvider
 
     fun init()
     fun enqueue(request: Request): Download

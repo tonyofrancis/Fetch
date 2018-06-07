@@ -1,13 +1,14 @@
 package com.tonyodev.fetch2.downloader
 
 import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Downloader
+import com.tonyodev.fetch2core.Downloader
 import com.tonyodev.fetch2.Error
-import com.tonyodev.fetch2.Logger
+import com.tonyodev.fetch2core.Logger
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromThrowable
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.*
 import java.io.*
 import java.net.HttpURLConnection
 import java.util.concurrent.ExecutorService
@@ -21,7 +22,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                  private val logger: Logger,
                                  private val networkInfoProvider: NetworkInfoProvider,
                                  private val retryOnNetworkGain: Boolean,
-                                 private val fileTempDir: String) : FileDownloader {
+                                 private val fileTempDir: String,
+                                 private val md5CheckingEnabled: Boolean) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -74,7 +76,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         var openingResponse: Downloader.Response? = null
         try {
             val openingRequest = getRequestForDownload(initialDownload)
-            openingResponse = downloader.execute(openingRequest)
+            openingResponse = downloader.execute(openingRequest, interruptMonitor)
             if (!interrupted && !terminated && openingResponse?.isSuccessful == true) {
                 total = openingResponse.contentLength
                 if (total > 0) {
@@ -102,13 +104,26 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         if (!interrupted && !terminated) {
                             throwExceptionIfFound()
                             completedDownload = true
-                            delegate?.onProgress(
-                                    download = downloadInfo,
-                                    etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                            delegate?.onComplete(
-                                    download = downloadInfo)
                             deleteAllTempFiles()
+                            if (md5CheckingEnabled) {
+                                if (downloader.verifyContentMD5(openingResponse.request, openingResponse.md5)) {
+                                    delegate?.onProgress(
+                                            download = downloadInfo,
+                                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                    delegate?.onComplete(
+                                            download = downloadInfo)
+                                } else {
+                                    throw FetchException(INVALID_CONTENT_MD5, FetchException.Code.INVALID_CONTENT_MD5)
+                                }
+                            } else {
+                                delegate?.onProgress(
+                                        download = downloadInfo,
+                                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                delegate?.onComplete(
+                                        download = downloadInfo)
+                            }
                         }
                         if (!completedDownload) {
                             downloadInfo.downloaded = downloaded
@@ -193,7 +208,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun getFileSliceList(openingResponseCode: Int, request: Downloader.Request): List<FileSlice> {
+    private fun getFileSliceList(openingResponseCode: Int, request: Downloader.ServerRequest): List<FileSlice> {
         val file = getFile(downloadInfo.file)
         if (!file.exists()) {
             deleteAllTempFiles()
@@ -270,7 +285,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         return "$fileTempDir/$id.meta.txt"
     }
 
-    private fun getChuckInfo(request: Downloader.Request): FileSliceInfo {
+    private fun getChuckInfo(request: Downloader.ServerRequest): FileSliceInfo {
         val fileSliceSize = downloader.getFileSlicingCount(request, total)
                 ?: DEFAULT_FILE_SLICE_NO_LIMIT_SET
         return if (fileSliceSize == DEFAULT_FILE_SLICE_NO_LIMIT_SET) {
@@ -396,7 +411,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun downloadSliceFiles(request: Downloader.Request, fileSlicesDownloadsList: List<FileSlice>) {
+    private fun downloadSliceFiles(request: Downloader.ServerRequest, fileSlicesDownloadsList: List<FileSlice>) {
         actionsCounter = 0
         actionsTotal = fileSlicesDownloadsList.size
         outputStream = downloader.getRequestOutputStream(request, 0)
@@ -410,7 +425,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                     val downloadRequest = getRequestForDownload(downloadInfo, fileSlice.startBytes + fileSlice.downloaded)
                     var downloadResponse: Downloader.Response? = null
                     try {
-                        downloadResponse = downloader.execute(downloadRequest)
+                        downloadResponse = downloader.execute(downloadRequest, interruptMonitor)
                         if (!terminated && !interrupted && downloadResponse?.isSuccessful == true) {
                             var reportingStopTime: Long
                             val buffer = ByteArray(downloadBufferSizeBytes)
@@ -504,6 +519,13 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         synchronized(lock) {
             actionsCounter += 1
         }
+    }
+
+    private val interruptMonitor = object : InterruptMonitor {
+        override val isInterrupted: Boolean
+            get() {
+                return interrupted
+            }
     }
 
     private fun throwExceptionIfFound() {

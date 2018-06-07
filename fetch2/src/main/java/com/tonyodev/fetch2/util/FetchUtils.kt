@@ -2,14 +2,11 @@
 
 package com.tonyodev.fetch2.util
 
-import android.content.Context
 import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Downloader
+import com.tonyodev.fetch2core.Downloader
+import com.tonyodev.fetch2.FetchConfiguration
 import com.tonyodev.fetch2.Status
-import java.io.*
-import java.util.concurrent.TimeUnit
-import kotlin.math.abs
-import kotlin.math.ceil
+import com.tonyodev.fetch2core.getFile
 
 
 fun canPauseDownload(download: Download): Boolean {
@@ -44,134 +41,19 @@ fun canCancelDownload(download: Download): Boolean {
     }
 }
 
-fun calculateProgress(downloaded: Long, total: Long): Int {
-    return when {
-        total < 1 -> -1
-        downloaded < 1 -> 0
-        downloaded >= total -> 100
-        else -> ((downloaded.toDouble() / total.toDouble()) * 100).toInt()
-    }
-}
-
-fun calculateEstimatedTimeRemainingInMilliseconds(downloadedBytes: Long,
-                                                  totalBytes: Long,
-                                                  downloadedBytesPerSecond: Long): Long {
-    return when {
-        totalBytes < 1 -> -1
-        downloadedBytes < 1 -> -1
-        downloadedBytesPerSecond < 1 -> -1
-        else -> {
-            val seconds = (totalBytes - downloadedBytes).toDouble() / downloadedBytesPerSecond.toDouble()
-            return abs(ceil(seconds)).toLong() * 1000
-        }
-    }
-}
-
-fun hasIntervalTimeElapsed(nanoStartTime: Long, nanoStopTime: Long,
-                           progressIntervalMilliseconds: Long): Boolean {
-    return TimeUnit.NANOSECONDS
-            .toMillis(nanoStopTime - nanoStartTime) >= progressIntervalMilliseconds
-}
-
-fun getUniqueId(url: String, file: String): Int {
-    return (url.hashCode() * 31) + file.hashCode()
-}
-
-fun getIncrementedFileIfOriginalExists(originalPath: String): File {
-    var file = File(originalPath)
-    var counter = 0
-    if (file.exists()) {
-        val parentPath = "${file.parent}/"
-        val extension = file.extension
-        val fileName: String = file.nameWithoutExtension
-        while (file.exists()) {
-            ++counter
-            val newFileName = "$fileName ($counter) "
-            file = File("$parentPath$newFileName.$extension")
-        }
-    }
-    return file
-}
-
-fun createFileIfPossible(file: File) {
-    try {
-        if (!file.exists()) {
-            if (file.parentFile != null && !file.parentFile.exists()) {
-                if (file.parentFile.mkdirs()) {
-                    file.createNewFile()
-                }
-            } else {
-                file.createNewFile()
-            }
-        }
-    } catch (e: IOException) {
-    }
-}
-
-fun getFileTempDir(context: Context): String {
-    return "${context.filesDir.absoluteFile}/_fetchData/temp"
-}
-
 fun getRequestForDownload(download: Download,
                           rangeStart: Long = -1,
-                          rangeEnd: Long = -1): Downloader.Request {
+                          rangeEnd: Long = -1): Downloader.ServerRequest {
     val start = if (rangeStart == -1L) 0 else rangeStart
     val end = if (rangeEnd == -1L) "" else rangeEnd.toString()
     val headers = download.headers.toMutableMap()
     headers["Range"] = "bytes=$start-$end"
-    return Downloader.Request(
+    return Downloader.ServerRequest(
             id = download.id,
             url = download.url,
             headers = headers,
             file = download.file,
             tag = download.tag)
-}
-
-fun getFile(filePath: String): File {
-    val file = File(filePath)
-    if (!file.exists()) {
-        if (file.parentFile != null && !file.parentFile.exists()) {
-            if (file.parentFile.mkdirs()) {
-                file.createNewFile()
-            }
-        } else {
-            file.createNewFile()
-        }
-    }
-    return file
-}
-
-fun writeTextToFile(filePath: String, text: String) {
-    val file = getFile(filePath)
-    if (file.exists()) {
-        val bufferedWriter = BufferedWriter(FileWriter(file))
-        try {
-            bufferedWriter.write(text)
-        } catch (e: Exception) {
-        } finally {
-            try {
-                bufferedWriter.close()
-            } catch (e: Exception) {
-            }
-        }
-    }
-}
-
-fun getSingleLineTextFromFile(filePath: String): String? {
-    val file = getFile(filePath)
-    if (file.exists()) {
-        val bufferedReader = BufferedReader(FileReader(file))
-        try {
-            return bufferedReader.readLine()
-        } catch (e: Exception) {
-        } finally {
-            try {
-                bufferedReader.close()
-            } catch (e: Exception) {
-            }
-        }
-    }
-    return null
 }
 
 fun deleteRequestTempFiles(fileTempDir: String,
@@ -197,4 +79,20 @@ fun deleteRequestTempFiles(fileTempDir: String,
     } catch (e: Exception) {
 
     }
+}
+
+fun createConfigWithNewNamespace(fetchConfiguration: FetchConfiguration,
+                                 namespace: String): FetchConfiguration {
+    return FetchConfiguration.Builder(fetchConfiguration.appContext)
+            .setNamespace(namespace)
+            .enableAutoStart(fetchConfiguration.autoStart)
+            .enableLogging(fetchConfiguration.loggingEnabled)
+            .enableRetryOnNetworkGain(fetchConfiguration.retryOnNetworkGain)
+            .setDownloadBufferSize(fetchConfiguration.downloadBufferSizeBytes)
+            .setHttpDownloader(fetchConfiguration.httpDownloader)
+            .setDownloadConcurrentLimit(fetchConfiguration.concurrentLimit)
+            .setProgressReportingInterval(fetchConfiguration.progressReportingIntervalMillis)
+            .setGlobalNetworkType(fetchConfiguration.globalNetworkType)
+            .setLogger(fetchConfiguration.logger)
+            .build()
 }

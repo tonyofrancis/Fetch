@@ -1,31 +1,36 @@
 package com.tonyodev.fetch2.downloader
 
 import android.os.Handler
-import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Downloader
-import com.tonyodev.fetch2.Logger
-import com.tonyodev.fetch2.RequestOptions
+import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.exception.FetchImplementationException
+import com.tonyodev.fetch2.fetch.DownloadManagerCoordinator
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater
 import com.tonyodev.fetch2.helper.FileDownloaderDelegate
-import com.tonyodev.fetch2.provider.ListenerProvider
+import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.getRequestForDownload
+import com.tonyodev.fetch2.util.toDownloadInfo
+import com.tonyodev.fetch2core.Downloader
+import com.tonyodev.fetch2core.FileServerDownloader
+import com.tonyodev.fetch2core.Logger
+import com.tonyodev.fetch2core.isFetchFileServerUrl
 import java.util.concurrent.Executors
 
-class DownloadManagerImpl(private val downloader: Downloader,
+class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val concurrentLimit: Int,
                           private val progressReportingIntervalMillis: Long,
                           private val downloadBufferSizeBytes: Int,
                           private val logger: Logger,
                           private val networkInfoProvider: NetworkInfoProvider,
                           private val retryOnNetworkGain: Boolean,
-                          private val fetchListenerProvider: ListenerProvider,
                           private val uiHandler: Handler,
                           private val downloadInfoUpdater: DownloadInfoUpdater,
-                          private val requestOptions: Set<RequestOptions>,
-                          private val fileTempDir: String) : DownloadManager {
+                          private val fileTempDir: String,
+                          private val downloadManagerCoordinator: DownloadManagerCoordinator,
+                          private val listenerCoordinator: ListenerCoordinator,
+                          private val fileServerDownloader: FileServerDownloader?,
+                          private val md5CheckingEnabled: Boolean) : DownloadManager {
 
     private val lock = Object()
     private val executor = Executors.newFixedThreadPool(concurrentLimit)
@@ -38,7 +43,7 @@ class DownloadManagerImpl(private val downloader: Downloader,
         get() = closed
 
     override fun start(download: Download): Boolean {
-        synchronized(lock) {
+        return synchronized(lock) {
             throwExceptionIfClosed()
             if (currentDownloadsMap.containsKey(download.id)) {
                 logger.d("DownloadManager already running download $download")
@@ -49,24 +54,41 @@ class DownloadManagerImpl(private val downloader: Downloader,
                         "the download queue is full")
                 return false
             }
-            val fileDownloader = getNewFileDownloaderForDownload(download)
-            fileDownloader.delegate = getFileDownloaderDelegate()
-            downloadCounter += 1
-            currentDownloadsMap[download.id] = fileDownloader
-            return try {
-                executor.execute {
-                    logger.d("DownloadManager starting download $download")
-                    fileDownloader.run()
-                    synchronized(lock) {
-                        if (currentDownloadsMap.containsKey(download.id)) {
-                            currentDownloadsMap.remove(download.id)
-                            downloadCounter -= 1
+            val delegate = getFileDownloaderDelegate()
+            try {
+                val fileDownloader = getNewFileDownloaderForDownload(download)
+                if (fileDownloader != null) {
+                    fileDownloader.delegate = delegate
+                    downloadCounter += 1
+                    currentDownloadsMap[download.id] = fileDownloader
+                    downloadManagerCoordinator.addFileDownloader(download.id, fileDownloader)
+                    try {
+                        executor.execute {
+                            logger.d("DownloadManager starting download $download")
+                            fileDownloader.run()
+                            synchronized(lock) {
+                                if (currentDownloadsMap.containsKey(download.id)) {
+                                    currentDownloadsMap.remove(download.id)
+                                    downloadCounter -= 1
+                                }
+                                downloadManagerCoordinator.removeFileDownloader(download.id)
+                            }
                         }
+                        true
+                    } catch (e: Exception) {
+                        logger.e("DownloadManager failed to start download $download", e)
+                        false
                     }
+                } else {
+                    val downloadInfo = download.toDownloadInfo()
+                    downloadInfo.error = Error.FETCH_FILE_SERVER_DOWNLOADER_NOT_SET
+                    delegate.onError(downloadInfo)
+                    false
                 }
-                true
             } catch (e: Exception) {
-                logger.e("DownloadManager failed to start download $download", e)
+                val downloadInfo = download.toDownloadInfo()
+                downloadInfo.error = Error.FETCH_FILE_SERVER_URL_INVALID
+                delegate.onError(downloadInfo)
                 false
             }
         }
@@ -83,9 +105,11 @@ class DownloadManagerImpl(private val downloader: Downloader,
                 }
                 currentDownloadsMap.remove(id)
                 downloadCounter -= 1
+                downloadManagerCoordinator.removeFileDownloader(id)
                 logger.d("DownloadManager cancelled download ${fileDownloader.download}")
                 true
             } else {
+                downloadManagerCoordinator.interruptDownload(id)
                 false
             }
         }
@@ -99,29 +123,29 @@ class DownloadManagerImpl(private val downloader: Downloader,
     }
 
     private fun cancelAllDownloads() {
-        currentDownloadsMap.iterator().forEach {
-            it.value.interrupted = true
-            while (!it.value.terminated) {
+        downloadManagerCoordinator.getFileDownloaderList().iterator().forEach {
+            it.interrupted = true
+            while (!it.terminated) {
                 //Wait until download runnable terminates
             }
-            logger.d("DownloadManager cancelled download ${it.value.download}")
+            downloadManagerCoordinator.removeFileDownloader(it.download.id)
+            logger.d("DownloadManager cancelled download ${it.download}")
         }
         currentDownloadsMap.clear()
         downloadCounter = 0
     }
 
-    override fun terminateAllDownloads() {
+    private fun terminateAllDownloads() {
         currentDownloadsMap.iterator().forEach {
             it.value.terminated = true
+            while (!it.value.terminated) {
+                //Wait until download runnable terminates
+            }
             logger.d("DownloadManager terminated download ${it.value.download}")
+            downloadManagerCoordinator.removeFileDownloader(it.key)
         }
         currentDownloadsMap.clear()
         downloadCounter = 0
-        try {
-            downloader.close()
-        } catch (e: Exception) {
-            logger.e("DownloadManager closing downloader", e)
-        }
     }
 
     override fun close() {
@@ -138,15 +162,13 @@ class DownloadManagerImpl(private val downloader: Downloader,
 
     override fun contains(id: Int): Boolean {
         synchronized(lock) {
-            throwExceptionIfClosed()
-            return currentDownloadsMap.containsKey(id)
+            return !isClosed && downloadManagerCoordinator.containsFileDownloader(id)
         }
     }
 
     override fun canAccommodateNewDownload(): Boolean {
         synchronized(lock) {
-            throwExceptionIfClosed()
-            return downloadCounter < concurrentLimit
+            return !closed && downloadCounter < concurrentLimit
         }
     }
 
@@ -171,8 +193,18 @@ class DownloadManagerImpl(private val downloader: Downloader,
         }
     }
 
-    override fun getNewFileDownloaderForDownload(download: Download): FileDownloader {
+    override fun getNewFileDownloaderForDownload(download: Download): FileDownloader? {
         val request = getRequestForDownload(download)
+        return if (!isFetchFileServerUrl(request.url)) {
+            getFileDownloader(request, download, httpDownloader)
+        } else if (fileServerDownloader != null) {
+            getFileDownloader(request, download, fileServerDownloader)
+        } else {
+            null
+        }
+    }
+
+    private fun getFileDownloader(request: Downloader.ServerRequest, download: Download, downloader: Downloader): FileDownloader {
         return if (downloader.getFileDownloaderType(request) == Downloader.FileDownloaderType.SEQUENTIAL) {
             SequentialFileDownloaderImpl(
                     initialDownload = download,
@@ -181,7 +213,8 @@ class DownloadManagerImpl(private val downloader: Downloader,
                     downloadBufferSizeBytes = downloadBufferSizeBytes,
                     logger = logger,
                     networkInfoProvider = networkInfoProvider,
-                    retryOnNetworkGain = retryOnNetworkGain)
+                    retryOnNetworkGain = retryOnNetworkGain,
+                    md5CheckingEnabled = md5CheckingEnabled)
         } else {
             val tempDir = downloader.getDirectoryForFileDownloaderTypeParallel(request)
                     ?: fileTempDir
@@ -193,7 +226,8 @@ class DownloadManagerImpl(private val downloader: Downloader,
                     logger = logger,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = retryOnNetworkGain,
-                    fileTempDir = tempDir)
+                    fileTempDir = tempDir,
+                    md5CheckingEnabled = md5CheckingEnabled)
         }
     }
 
@@ -201,12 +235,9 @@ class DownloadManagerImpl(private val downloader: Downloader,
         return FileDownloaderDelegate(
                 downloadInfoUpdater = downloadInfoUpdater,
                 uiHandler = uiHandler,
-                fetchListener = fetchListenerProvider.mainListener,
+                fetchListener = listenerCoordinator.mainListener,
                 logger = logger,
-                retryOnNetworkGain = retryOnNetworkGain,
-                requestOptions = requestOptions,
-                downloader = downloader,
-                fileTempDir = fileTempDir)
+                retryOnNetworkGain = retryOnNetworkGain)
     }
 
 }

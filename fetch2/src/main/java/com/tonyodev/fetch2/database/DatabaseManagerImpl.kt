@@ -4,7 +4,7 @@ import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.content.Context
 import android.database.sqlite.SQLiteException
-import com.tonyodev.fetch2.Logger
+import com.tonyodev.fetch2core.Logger
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
@@ -14,7 +14,6 @@ import com.tonyodev.fetch2.util.sanitize
 
 class DatabaseManagerImpl constructor(context: Context,
                                       private val namespace: String,
-                                      override val isMemoryDatabase: Boolean,
                                       override val logger: Logger,
                                       migrations: Array<Migration>) : DatabaseManager {
 
@@ -27,14 +26,8 @@ class DatabaseManagerImpl constructor(context: Context,
         get() = closed
 
     private val requestDatabase = {
-        val builder = if (isMemoryDatabase) {
-            logger.d("Init in memory database named $namespace")
-            Room.inMemoryDatabaseBuilder(context, DownloadDatabase::class.java)
-        } else {
-            logger.d("Init file based database named $namespace.db")
-            Room.databaseBuilder(context, DownloadDatabase::class.java,
-                    "$namespace.db")
-        }
+        val builder = Room.databaseBuilder(context, DownloadDatabase::class.java,
+                "$namespace.db")
         builder.addMigrations(*migrations)
         builder.build()
     }()
@@ -214,7 +207,7 @@ class DatabaseManagerImpl constructor(context: Context,
 
     private fun throwExceptionIfClosed() {
         if (closed) {
-            throw FetchImplementationException("database is closed",
+            throw FetchImplementationException("$namespace database is closed",
                     FetchException.Code.CLOSED)
         }
     }

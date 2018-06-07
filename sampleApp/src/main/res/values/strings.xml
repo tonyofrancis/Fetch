@@ -25,6 +25,7 @@
     <string name="queued">QUEUED</string>
     <string name="status_unknown">Status Unknown</string>
     <string name="delete_all_files">Delete Downloaded Files</string>
+    <string name="file_server">FETCH FILE SERVER DEMO</string>
     <string name="downloaded_files_deleted">Downloads Files Deleted</string>
     <string name="game_download_error">An error occurred, could not get game files.</string>
     <string name="failed_multi_enqueue">Failed Multi Enqueue Demo</string>

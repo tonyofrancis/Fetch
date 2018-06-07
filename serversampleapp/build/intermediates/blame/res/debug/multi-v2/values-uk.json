@@ -1,0 +1,36 @@
+{
+    "logs": [
+        {
+            "outputFile": "/Users/tonyofrancis/Git/Fetch/serversampleapp/build/intermediates/incremental/mergeDebugResources/merged.dir/values-uk/values-uk.xml",
+            "map": [
+                {
+                    "source": "/Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/appcompat-v7-27.1.1.aar/2ea5461fe3607969f37b5c909d590190/res/values-uk/values-uk.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,215,317,423,509,617,735,814,894,975,1081,1188,1286,1394,1500,1609,1779,1879",
+                        "endColumns": "109,101,105,85,107,117,78,79,80,105,106,97,107,105,108,169,99,80",
+                        "endOffsets": "210,312,418,504,612,730,809,889,970,1076,1183,1281,1389,1495,1604,1774,1874,1955"
+                    }
+                },
+                {
+                    "source": "/Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-compat-27.1.1.aar/a5cd056445abc472d7a7ceb300a10766/res/values-uk/values-uk.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "100",
+                        "endOffsets": "151"
+                    },
+                    "to": {
+                        "startLines": "20",
+                        "startColumns": "4",
+                        "startOffsets": "1960",
+                        "endColumns": "100",
+                        "endOffsets": "2056"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -4,15 +4,22 @@ package com.tonyodev.fetch2.helper
 import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.downloader.DownloadManager
+import com.tonyodev.fetch2core.HandlerWrapper
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
+import com.tonyodev.fetch2.NetworkType
+import com.tonyodev.fetch2.fetch.ListenerCoordinator
+import com.tonyodev.fetch2core.Logger
+import com.tonyodev.fetch2core.isFetchFileServerUrl
 
-class PriorityListProcessorImpl constructor(private val handler: Handler,
+class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerWrapper,
                                             private val downloadProvider: DownloadProvider,
                                             private val downloadManager: DownloadManager,
                                             private val networkInfoProvider: NetworkInfoProvider,
-                                            private val logger: Logger)
+                                            private val logger: Logger,
+                                            private val uiHandler: Handler,
+                                            private val listenerCoordinator: ListenerCoordinator)
     : PriorityListProcessor<Download> {
 
     private val lock = Object()
@@ -29,17 +36,28 @@ class PriorityListProcessorImpl constructor(private val handler: Handler,
 
     private val priorityIteratorRunnable = Runnable {
         if (canContinueToProcess()) {
-            if (networkInfoProvider.isNetworkAvailable && downloadManager.canAccommodateNewDownload()) {
+            if (downloadManager.canAccommodateNewDownload()) {
                 val priorityList = getPriorityList()
                 for (index in 0..priorityList.lastIndex) {
-                    if (canContinueToProcess()) {
-                        val download = priorityList[index]
+                    val download = priorityList[index]
+                    val isFetchServerRequest = try {
+                        isFetchFileServerUrl(download.url)
+                    } catch (e: Exception) {
+                        false
+                    }
+                    if (canContinueToProcess() && (isFetchServerRequest || networkInfoProvider.isNetworkAvailable)) {
                         val networkType = when {
                             globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
                             download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
                             else -> download.networkType
                         }
-                        if (networkInfoProvider.isOnAllowedNetwork(networkType) && canContinueToProcess()
+                        val properNetworkCondition = networkInfoProvider.isOnAllowedNetwork(networkType)
+                        if (!properNetworkCondition) {
+                            uiHandler.post {
+                                listenerCoordinator.mainListener.onQueued(download, true)
+                            }
+                        }
+                        if ((isFetchServerRequest || properNetworkCondition) && canContinueToProcess()
                                 && !downloadManager.contains(download.id)) {
                             downloadManager.start(download)
                         }
@@ -105,11 +123,11 @@ class PriorityListProcessorImpl constructor(private val handler: Handler,
     }
 
     private fun registerPriorityIterator() {
-        handler.postDelayed(priorityIteratorRunnable, PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS)
+        handlerWrapper.postDelayed(priorityIteratorRunnable, PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS)
     }
 
     private fun unregisterPriorityIterator() {
-        handler.removeCallbacks(priorityIteratorRunnable)
+        handlerWrapper.removeCallbacks(priorityIteratorRunnable)
     }
 
 }

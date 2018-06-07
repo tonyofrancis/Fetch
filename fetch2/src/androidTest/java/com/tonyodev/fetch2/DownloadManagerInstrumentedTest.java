@@ -13,12 +13,16 @@ import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
+import com.tonyodev.fetch2.fetch.DownloadManagerCoordinator;
+import com.tonyodev.fetch2.fetch.ListenerCoordinator;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
-import com.tonyodev.fetch2.provider.ListenerProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
-import com.tonyodev.fetch2.util.FetchUtils;
+import com.tonyodev.fetch2core.Downloader;
+import com.tonyodev.fetch2core.FetchCoreDefaults;
+import com.tonyodev.fetch2core.FetchCoreUtils;
+import com.tonyodev.fetch2core.FetchLogger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -26,8 +30,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -48,22 +50,22 @@ public class DownloadManagerInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace,
-                true, fetchLogger, migrations);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
         final Downloader client = FetchDefaults.getDefaultDownloader();
-        final long progessInterval = FetchDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
+        final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
-        final ListenerProvider listenerProvider = new ListenerProvider();
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
-        final Set<RequestOptions> requestOptions = new HashSet<>();
-        final String tempDir = FetchUtils.getFileTempDir(appContext);
+        final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
+        final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                listenerProvider, uiHandler, downloadInfoUpdater, requestOptions, tempDir);
+                uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
+                listenerCoordinator, null, false);
     }
 
     @After

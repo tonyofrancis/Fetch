@@ -12,6 +12,9 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.tonyodev.fetch2.Fetch;
+import com.tonyodev.fetch2.FetchConfiguration;
+import com.tonyodev.fetch2fileserver.FetchFileServer;
+import com.tonyodev.fetch2rx.RxFetch;
 
 import java.io.File;
 
@@ -27,55 +30,41 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mainView = findViewById(R.id.activity_main);
 
-        findViewById(R.id.singleDemoButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent intent = new Intent(MainActivity.this, SingleDownloadActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
+        findViewById(R.id.singleDemoButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, SingleDownloadActivity.class);
+            MainActivity.this.startActivity(intent);
         });
 
-        findViewById(R.id.downloadListButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent intent = new Intent(MainActivity.this, DownloadListActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
+        findViewById(R.id.downloadListButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, DownloadListActivity.class);
+            MainActivity.this.startActivity(intent);
         });
 
-        findViewById(R.id.gameFilesButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent intent = new Intent(MainActivity.this, GameFilesActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
+        findViewById(R.id.gameFilesButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, GameFilesActivity.class);
+            MainActivity.this.startActivity(intent);
         });
 
-        findViewById(R.id.multiEnqueueButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent intent = new Intent(MainActivity.this, FailedMultiEnqueueActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
+        findViewById(R.id.multiEnqueueButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, FailedMultiEnqueueActivity.class);
+            MainActivity.this.startActivity(intent);
         });
 
-        findViewById(R.id.multiFragmentButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent intent = new Intent(MainActivity.this, FragmentActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
+        findViewById(R.id.multiFragmentButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, FragmentActivity.class);
+            MainActivity.this.startActivity(intent);
         });
 
-        findViewById(R.id.deleteAllButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}
-                            , STORAGE_PERMISSION_CODE);
-                } else {
-                    deleteDownloadedFiles();
-                }
+        findViewById(R.id.fileServerButton).setOnClickListener(v -> {
+            final Intent intent = new Intent(MainActivity.this, FileServerActivity.class);
+            MainActivity.this.startActivity(intent);
+        });
+
+        findViewById(R.id.deleteAllButton).setOnClickListener(v -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
+            } else {
+                deleteDownloadedFiles();
             }
         });
     }
@@ -83,35 +72,35 @@ public class MainActivity extends AppCompatActivity {
     private void deleteDownloadedFiles() {
         final String[] namespaces = new String[]{
                 DownloadListActivity.FETCH_NAMESPACE,
-                FailedMultiEnqueueActivity.FETCH_NAMESPACE
-        };
+                FailedMultiEnqueueActivity.FETCH_NAMESPACE,
+                FileServerActivity.FETCH_NAMESPACE};
         for (String namespace : namespaces) {
-            final Fetch fetch = ((App) getApplication()).getNewFetchInstance(namespace);
-            fetch.deleteAll();
-            fetch.close();
+            final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this).setNamespace(namespace).build();
+            Fetch.Impl.getInstance(fetchConfiguration).deleteAll().close();
         }
-        ((App) getApplication()).getAppFetchInstance().deleteAll();
-        ((App) getApplication()).getRxFetch().deleteAll();
+        Fetch.Impl.getDefaultInstance().deleteAll().close();
+        RxFetch.Impl.getDefaultRxInstance().deleteAll().close();
+        new FetchFileServer.Builder(this)
+                .setFileServerDatabaseName(FileServerActivity.FETCH_NAMESPACE)
+                .setClearDatabaseOnShutdown(true)
+                .build()
+                .shutDown(false);
         try {
             final File fetchDir = new File(Data.getSaveDir());
             Utils.deleteFileAndContents(fetchDir);
-            Toast.makeText(MainActivity.this,
-                    R.string.downloaded_files_deleted, Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, R.string.downloaded_files_deleted, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             deleteDownloadedFiles();
         } else {
-            Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_INDEFINITE)
-                    .show();
+            Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_INDEFINITE).show();
         }
     }
 }

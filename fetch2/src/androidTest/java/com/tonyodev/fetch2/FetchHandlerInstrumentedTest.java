@@ -14,17 +14,22 @@ import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
+import com.tonyodev.fetch2.fetch.DownloadManagerCoordinator;
 import com.tonyodev.fetch2.fetch.FetchHandler;
 import com.tonyodev.fetch2.fetch.FetchHandlerImpl;
+import com.tonyodev.fetch2core.Downloader;
+import com.tonyodev.fetch2core.FetchCoreDefaults;
+import com.tonyodev.fetch2core.FetchCoreUtils;
+import com.tonyodev.fetch2core.FetchLogger;
+import com.tonyodev.fetch2core.HandlerWrapper;
+import com.tonyodev.fetch2.fetch.ListenerCoordinator;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
 import com.tonyodev.fetch2.helper.PriorityListProcessor;
 import com.tonyodev.fetch2.helper.PriorityListProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
-import com.tonyodev.fetch2.provider.ListenerProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
-import com.tonyodev.fetch2.util.FetchUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,9 +37,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -55,36 +58,38 @@ public class FetchHandlerInstrumentedTest {
         appContext = InstrumentationRegistry.getTargetContext();
         final HandlerThread handlerThread = new HandlerThread("test");
         handlerThread.start();
-        final Handler handler = new Handler(handlerThread.getLooper());
         final String namespace = "fetch2DatabaseTest";
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final Boolean autoStart = true;
         final Migration[] migrations = DownloadDatabase.getMigrations();
-        databaseManager = new DatabaseManagerImpl(appContext, namespace,
-                true, fetchLogger, migrations);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
+        final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace);
         final Downloader client = FetchDefaults.getDefaultDownloader();
-        final long progessInterval = FetchDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
+        final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
-        final ListenerProvider listenerProvider = new ListenerProvider();
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
-        final Set<RequestOptions> requestOptions = new HashSet<>();
-        final String tempDir = FetchUtils.getFileTempDir(appContext);
+        final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
+        final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                listenerProvider, uiHandler, downloadInfoUpdater, requestOptions, tempDir);
+                uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
+                listenerCoordinator, null, false);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
-                handler,
+                handlerWrapper,
                 new DownloadProvider(databaseManager),
                 downloadManager,
                 new NetworkInfoProvider(appContext),
-                fetchLogger);
+                fetchLogger,
+                uiHandler,
+                listenerCoordinator);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
-                priorityListProcessorImpl, listenerProvider, handler, fetchLogger, autoStart,
-                requestOptions, client, tempDir);
+                priorityListProcessorImpl, fetchLogger, autoStart,
+                client, tempDir, listenerCoordinator);
     }
 
     @Test
@@ -545,32 +550,6 @@ public class FetchHandlerInstrumentedTest {
             assertTrue(downloadInfoList.contains(download));
             assertEquals(group, download.getGroup());
         }
-    }
-
-    @Test
-    public void addListener() throws Exception {
-        final AbstractFetchListener abstractFetchListener = new AbstractFetchListener() {
-
-        };
-        fetchHandler.addListener(abstractFetchListener);
-        final boolean hasListener = fetchHandler.getFetchListenerProvider()
-                .getListeners().contains(abstractFetchListener);
-        assertTrue(hasListener);
-    }
-
-    @Test
-    public void removeListener() throws Exception {
-        final AbstractFetchListener abstractFetchListener = new AbstractFetchListener() {
-
-        };
-        fetchHandler.addListener(abstractFetchListener);
-        final boolean hasListener = fetchHandler.getFetchListenerProvider()
-                .getListeners().contains(abstractFetchListener);
-        assertTrue(hasListener);
-        fetchHandler.removeListener(abstractFetchListener);
-        final boolean doesNotHaveListener = fetchHandler.getFetchListenerProvider()
-                .getListeners().contains(abstractFetchListener);
-        assertFalse(doesNotHaveListener);
     }
 
     @After

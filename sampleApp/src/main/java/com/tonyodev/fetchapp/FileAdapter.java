@@ -83,54 +83,42 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         switch (status) {
             case COMPLETED: {
                 holder.actionButton.setText(R.string.view);
-                holder.actionButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            Toast.makeText(context, "Downloaded Path:" +
-                                    downloadData.download.getFile(), Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                        final File file = new File(downloadData.download.getFile());
-                        final Uri uri = Uri.fromFile(file);
-                        final Intent share = new Intent(Intent.ACTION_VIEW);
-                        share.setDataAndType(uri, Utils.getMimeType(context, uri));
-                        context.startActivity(share);
+                holder.actionButton.setOnClickListener(view -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        Toast.makeText(context, "Downloaded Path:" +
+                                downloadData.download.getFile(), Toast.LENGTH_LONG).show();
+                        return;
                     }
+                    final File file = new File(downloadData.download.getFile());
+                    final Uri uri1 = Uri.fromFile(file);
+                    final Intent share = new Intent(Intent.ACTION_VIEW);
+                    share.setDataAndType(uri1, Utils.getMimeType(context, uri1));
+                    context.startActivity(share);
                 });
                 break;
             }
             case FAILED: {
                 holder.actionButton.setText(R.string.retry);
-                holder.actionButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        holder.actionButton.setEnabled(false);
-                        actionListener.onRetryDownload(downloadData.download.getId());
-                    }
+                holder.actionButton.setOnClickListener(view -> {
+                    holder.actionButton.setEnabled(false);
+                    actionListener.onRetryDownload(downloadData.download.getId());
                 });
                 break;
             }
             case PAUSED: {
                 holder.actionButton.setText(R.string.resume);
-                holder.actionButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        holder.actionButton.setEnabled(false);
-                        actionListener.onResumeDownload(downloadData.download.getId());
-                    }
+                holder.actionButton.setOnClickListener(view -> {
+                    holder.actionButton.setEnabled(false);
+                    actionListener.onResumeDownload(downloadData.download.getId());
                 });
                 break;
             }
             case DOWNLOADING:
             case QUEUED: {
                 holder.actionButton.setText(R.string.pause);
-                holder.actionButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        holder.actionButton.setEnabled(false);
-                        actionListener.onPauseDownload(downloadData.download.getId());
-                    }
+                holder.actionButton.setOnClickListener(view -> {
+                    holder.actionButton.setEnabled(false);
+                    actionListener.onPauseDownload(downloadData.download.getId());
                 });
                 break;
             }
@@ -140,23 +128,20 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         }
 
         //Set delete action
-        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                final Uri uri = Uri.parse(downloadData.download.getUrl());
-                new AlertDialog.Builder(context)
-                        .setMessage(context.getString(R.string.delete_title, uri.getLastPathSegment()))
-                        .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                actionListener.onRemoveDownload(downloadData.download.getId());
-                            }
-                        })
-                        .setNegativeButton(R.string.cancel, null)
-                        .show();
+        holder.itemView.setOnLongClickListener(v -> {
+            final Uri uri12 = Uri.parse(downloadData.download.getUrl());
+            new AlertDialog.Builder(context)
+                    .setMessage(context.getString(R.string.delete_title, uri12.getLastPathSegment()))
+                    .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            actionListener.onRemoveDownload(downloadData.download.getId());
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
 
-                return true;
-            }
+            return true;
         });
 
     }

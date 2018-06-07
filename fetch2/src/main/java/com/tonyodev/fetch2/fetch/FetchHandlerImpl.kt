@@ -1,30 +1,30 @@
 package com.tonyodev.fetch2.fetch
 
-import android.os.Build
-import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
-import com.tonyodev.fetch2.provider.ListenerProvider
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.*
 import java.io.File
+import java.util.*
 
 /**
- * This handler class handles all tasks and operations of Fetch.
+ * This handlerWrapper class handles all tasks and operations of Fetch.
  * */
 class FetchHandlerImpl(private val namespace: String,
                        private val databaseManager: DatabaseManager,
                        private val downloadManager: DownloadManager,
                        private val priorityListProcessor: PriorityListProcessor<Download>,
-                       override val fetchListenerProvider: ListenerProvider,
-                       private val handler: Handler,
                        private val logger: Logger,
                        private val autoStart: Boolean,
-                       private val requestOptions: Set<RequestOptions>,
-                       private val downloader: Downloader,
-                       private val fileTempDir: String) : FetchHandler {
+                       private val httpDownloader: Downloader,
+                       private val fileTempDir: String,
+                       private val listenerCoordinator: ListenerCoordinator) : FetchHandler {
+
+    private val listenerId = UUID.randomUUID().hashCode()
+    private val listenerSet = mutableSetOf<FetchListener>()
 
     @Volatile
     private var isTerminating = false
@@ -47,102 +47,23 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
-        var doAutoIncrementFileNameCheck = true
-        when {
-        //Jump in here if any request options pertain to enqueuing a request
-            requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
-                    || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
-                    || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_ID)
-                    || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_ID)
-                    || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FILE)
-                    || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_FILE) -> {
-                //If any options pertain to id, do a database query based on id. If match found cancel download.
-                var existingDownloadInfoWithId: DownloadInfo? = null
-                if (requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
-                        || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
-                        || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_ID)
-                        || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_ID)) {
-                    existingDownloadInfoWithId = databaseManager.get(downloadInfo.id)
-                    if (existingDownloadInfoWithId != null) {
-                        cancelDownload(existingDownloadInfoWithId.id)
-                        existingDownloadInfoWithId = databaseManager.get(downloadInfo.id)
-                    }
-                }
-                //If any options pertain to file, do a database query based on file. If match found cancel download.
-                var existingDownloadInfoWithFile: DownloadInfo? = null
-                if (requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
-                        || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
-                        || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FILE)
-                        || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_FILE)) {
-                    existingDownloadInfoWithFile = databaseManager.getByFile(downloadInfo.file)
-                    if (existingDownloadInfoWithFile != null) {
-                        cancelDownload(existingDownloadInfoWithFile.id)
-                        existingDownloadInfoWithFile = databaseManager.getByFile(downloadInfo.file)
-                    }
-                }
-                //If less damaging(do not delete existing file) option exist jump in here
-                if (requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_ID)
-                        || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
-                        || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FILE)) {
-                    val download: DownloadInfo? = existingDownloadInfoWithFile
-                            ?: existingDownloadInfoWithId
-                    if (download != null) {
-                        downloadInfo.downloaded = download.downloaded
-                        downloadInfo.total = download.total
-                        if (download.status == Status.COMPLETED) {
-                            downloadInfo.status = download.status
-                        }
-                        doAutoIncrementFileNameCheck = false
-                    } else {
-                        doAutoIncrementFileNameCheck = true
-                    }
-                } else {
-                    doAutoIncrementFileNameCheck = true
-                }
-                //Delete found records if they exist
-                if (existingDownloadInfoWithFile != null) {
-                    databaseManager.delete(existingDownloadInfoWithFile)
-                    deleteRequestTempFiles(
-                            fileTempDir,
-                            downloader,
-                            existingDownloadInfoWithFile)
-                }
-                if (existingDownloadInfoWithId != null) {
-                    databaseManager.delete(existingDownloadInfoWithId)
-                    deleteRequestTempFiles(
-                            fileTempDir,
-                            downloader,
-                            existingDownloadInfoWithId)
-                }
+        val existingDownload = databaseManager.getByFile(downloadInfo.file)
+        if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
+            if (isDownloading(existingDownload.id)) {
+                downloadManager.cancel(downloadInfo.id)
             }
-        }
-        if (doAutoIncrementFileNameCheck) {
-            updateFileForDownloadInfoIfNeeded(downloadInfo)
-        }
-    }
-
-    private fun updateFileForDownloadInfoIfNeeded(downloadInfo: DownloadInfo) {
-        updateFileForDownloadInfoIfNeeded(listOf(downloadInfo))
-    }
-
-    private fun updateFileForDownloadInfoIfNeeded(downloadInfoList: List<DownloadInfo>) {
-        if (requestOptions.contains(RequestOptions.ADD_AUTO_INCREMENT_TO_FILE_ON_ENQUEUE)
-                || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)) {
-            downloadInfoList.forEach { downloadInfo ->
-                val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
-                val generatedId = getUniqueId(downloadInfo.url, downloadInfo.file)
-                downloadInfo.file = file.absolutePath
-                if (generatedId == downloadInfo.id) {
-                    downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
-                }
-                createFileIfPossible(file)
-            }
+            deleteRequestTempFiles(fileTempDir, httpDownloader, existingDownload)
+            databaseManager.delete(existingDownload)
+        } else if (downloadInfo.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME && existingDownload != null) {
+            val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
+            downloadInfo.file = file.absolutePath
+            downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
+            createFileIfPossible(file)
         }
     }
 
     override fun enqueue(requests: List<Request>): List<Download> {
-        val requestsList = prepareRequestListForEnqueue(requests)
-        val downloadInfoList = requestsList.map {
+        val downloadInfoList = requests.map {
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
             downloadInfo.status = Status.QUEUED
@@ -157,23 +78,6 @@ class FetchHandlerImpl(private val namespace: String,
                 }
         startPriorityQueueIfNotStarted()
         return results
-    }
-
-    private fun prepareRequestListForEnqueue(requests: List<Request>): List<Request> {
-        var sequence = requests.asSequence()
-        if (requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
-                || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
-                || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_ID)
-                || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_ID)) {
-            sequence = sequence.distinctBy { it.id }
-        }
-        if (requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE)
-                || requestOptions.contains(RequestOptions.REPLACE_ALL_ON_ENQUEUE_WHERE_UNIQUE_FRESH)
-                || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FILE)
-                || requestOptions.contains(RequestOptions.REPLACE_ON_ENQUEUE_FRESH_FILE)) {
-            sequence = sequence.distinctBy { it.file }
-        }
-        return sequence.toList()
     }
 
     override fun pause(ids: IntArray): List<Download> {
@@ -286,7 +190,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadsList.forEach {
             it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadsList
     }
@@ -303,7 +207,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadInfoList.forEach {
             it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -316,7 +220,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadInfoList.forEach {
             it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -333,7 +237,7 @@ class FetchHandlerImpl(private val namespace: String,
         val removedStatus = Status.REMOVED
         downloadInfoList.forEach {
             it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -358,7 +262,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadsList
     }
@@ -383,7 +287,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -404,7 +308,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -429,7 +333,7 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
-            deleteRequestTempFiles(fileTempDir, downloader, it)
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
         return downloadInfoList
     }
@@ -536,6 +440,7 @@ class FetchHandlerImpl(private val namespace: String,
                 downloadInfo.headers = requestInfo.headers
                 downloadInfo.priority = requestInfo.priority
                 downloadInfo.networkType = requestInfo.networkType
+                downloadInfo.enqueueAction = requestInfo.enqueueAction
                 databaseManager.update(downloadInfo)
                 return downloadInfo
             }
@@ -583,23 +488,13 @@ class FetchHandlerImpl(private val namespace: String,
             return
         }
         isTerminating = true
-        fetchListenerProvider.listeners.clear()
-        priorityListProcessor.stop()
-        downloadManager.terminateAllDownloads()
-        handler.post {
-            try {
-                downloadManager.close()
-                databaseManager.close()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                    handler.looper.quitSafely()
-                } else {
-                    handler.looper.quit()
-                }
-            } catch (e: Exception) {
-                logger.e("FetchHandler", e)
-            }
+        listenerSet.iterator().forEach {
+            listenerCoordinator.removeListener(listenerId, it)
         }
-        FetchModulesBuilder.removeActiveFetchHandlerNamespaceInstance(namespace)
+        listenerSet.clear()
+        priorityListProcessor.stop()
+        downloadManager.close()
+        FetchModulesBuilder.removeNamespaceInstanceReference(namespace)
     }
 
     override fun setGlobalNetworkType(networkType: NetworkType) {
@@ -617,20 +512,23 @@ class FetchHandlerImpl(private val namespace: String,
 
     override fun addListener(listener: FetchListener) {
         startPriorityQueueIfNotStarted()
-        fetchListenerProvider.listeners.add(listener)
+        listenerSet.add(listener)
+        listenerCoordinator.addListener(listenerId, listener)
         logger.d("Added listener $listener")
     }
 
     override fun removeListener(listener: FetchListener) {
         startPriorityQueueIfNotStarted()
-        val iterator = fetchListenerProvider.listeners.iterator()
+        val iterator = listenerSet.iterator()
         while (iterator.hasNext()) {
-            if (iterator.next() == listener) {
-                logger.d("Removed listener $listener")
+            val fetchListener = iterator.next()
+            if (fetchListener == listener) {
                 iterator.remove()
+                logger.d("Removed listener $listener")
                 break
             }
         }
+        listenerCoordinator.removeListener(listenerId, listener)
     }
 
     override fun isDownloading(id: Int): Boolean {

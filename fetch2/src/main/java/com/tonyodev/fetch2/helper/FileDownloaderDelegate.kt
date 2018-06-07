@@ -5,18 +5,15 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.FileDownloader
 import com.tonyodev.fetch2.util.defaultNoError
-import com.tonyodev.fetch2.util.deleteRequestTempFiles
-import java.io.File
+import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2core.Logger
 
 
 class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdater,
                              private val uiHandler: Handler,
                              private val fetchListener: FetchListener,
                              private val logger: Logger,
-                             private val retryOnNetworkGain: Boolean,
-                             private val requestOptions: Set<RequestOptions>,
-                             private val downloader: Downloader,
-                             private val fileTempDir: String) : FileDownloader.Delegate {
+                             private val retryOnNetworkGain: Boolean) : FileDownloader.Delegate {
 
     override fun onStarted(download: Download, etaInMilliseconds: Long, downloadedBytesPerSecond: Long) {
         val downloadInfo = download as DownloadInfo
@@ -56,21 +53,11 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                 downloadInfo.error = defaultNoError
                 downloadInfoUpdater.update(downloadInfo)
                 uiHandler.post {
-                    fetchListener.onQueued(downloadInfo)
+                    fetchListener.onQueued(downloadInfo, true)
                 }
             } else {
                 downloadInfo.status = Status.FAILED
-                when {
-                    requestOptions.contains(RequestOptions.AUTO_REMOVE_ON_FAILED) -> {
-                        deleteDownloadInfo(downloadInfo)
-                    }
-                    requestOptions.contains(RequestOptions.AUTO_REMOVE_ON_FAILED_DELETE_FILE) -> {
-                        deleteDownloadInfo(downloadInfo, true)
-                    }
-                    else -> {
-                        downloadInfoUpdater.update(downloadInfo)
-                    }
-                }
+                downloadInfoUpdater.update(downloadInfo)
                 uiHandler.post {
                     fetchListener.onError(downloadInfo)
                 }
@@ -84,17 +71,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         val downloadInfo = download as DownloadInfo
         downloadInfo.status = Status.COMPLETED
         try {
-            when {
-                requestOptions.contains(RequestOptions.AUTO_REMOVE_ON_COMPLETED) -> {
-                    deleteDownloadInfo(downloadInfo)
-                }
-                requestOptions.contains(RequestOptions.AUTO_REMOVE_ON_COMPLETED_DELETE_FILE) -> {
-                    deleteDownloadInfo(downloadInfo, true)
-                }
-                else -> {
-                    downloadInfoUpdater.update(downloadInfo)
-                }
-            }
+            downloadInfoUpdater.update(downloadInfo)
             uiHandler.post {
                 fetchListener.onCompleted(downloadInfo)
             }
@@ -110,15 +87,6 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
             downloadInfoUpdater.updateFileBytesInfoAndStatusOnly(downloadInfo)
         } catch (e: Exception) {
             logger.e("DownloadManagerDelegate", e)
-        }
-    }
-
-    private fun deleteDownloadInfo(downloadInfo: DownloadInfo, deleteFile: Boolean = false) {
-        val file = File(downloadInfo.file)
-        downloadInfoUpdater.deleteDownload(downloadInfo)
-        if (deleteFile && file.exists()) {
-            file.delete()
-            deleteRequestTempFiles(fileTempDir, downloader, downloadInfo)
         }
     }
 

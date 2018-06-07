@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.tonyodev.fetch2.Fetch;
+import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.Request;
 
 import java.util.ArrayList;
@@ -23,9 +24,11 @@ public class FailedMultiEnqueueActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_multi_enqueue);
         final View mainView = findViewById(R.id.activity_main);
-
-        fetch = ((App) getApplication()).getNewFetchInstance(FETCH_NAMESPACE);
-        fetch.deleteAll();
+        final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+                .setNamespace(FETCH_NAMESPACE)
+                .build();
+        fetch = Fetch.Impl.getInstance(fetchConfiguration)
+                .deleteAll();
 
         final List<Request> requests = new ArrayList<>();
         final String url = "https://www.notdownloadable.com/test.txt";

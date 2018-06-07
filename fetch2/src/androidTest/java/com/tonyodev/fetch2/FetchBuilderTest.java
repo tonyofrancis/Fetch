@@ -4,8 +4,7 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.tonyodev.fetch2.fetch.FetchBuilder;
-import com.tonyodev.fetch2.fetch.FetchBuilderPrefs;
+import com.tonyodev.fetch2core.FetchLogger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -38,17 +37,17 @@ public class FetchBuilderTest {
         final FetchLogger logger = new FetchLogger();
         final HttpUrlConnectionDownloader downloader = new HttpUrlConnectionDownloader();
         final boolean enableInMemoryDatabase = true;
-        final FetchBuilder<Fetch.Builder, Fetch> builder =
-                new Fetch.Builder(appContext, namespace)
+        final FetchConfiguration.Builder builder =
+                new FetchConfiguration.Builder(appContext)
+                        .setNamespace(namespace)
                         .setDownloadBufferSize(bufferSize)
                         .enableLogging(loggingEnabled)
                         .setProgressReportingInterval(progressInterval)
                         .setGlobalNetworkType(networkType)
                         .setDownloadConcurrentLimit(concurrentLimit)
-                        .enabledInMemoryDatabase(enableInMemoryDatabase)
                         .setLogger(logger)
-                        .setDownloader(downloader);
-        final FetchBuilderPrefs prefs = builder.getBuilderPrefs();
+                        .setHttpDownloader(downloader);
+        final FetchConfiguration prefs = builder.build();
         assertEquals(namespace, prefs.getNamespace());
         assertEquals(bufferSize, prefs.getDownloadBufferSizeBytes());
         assertEquals(loggingEnabled, prefs.getLoggingEnabled());
@@ -56,8 +55,7 @@ public class FetchBuilderTest {
         assertEquals(concurrentLimit, prefs.getConcurrentLimit());
         assertEquals(networkType, prefs.getGlobalNetworkType());
         assertEquals(logger, prefs.getLogger());
-        assertEquals(downloader, prefs.getDownloader());
-        assertEquals(enableInMemoryDatabase, prefs.getInMemoryDatabaseEnabled());
+        assertEquals(downloader, prefs.getHttpDownloader());
     }
 
     @After

@@ -1,11 +1,11 @@
 package com.tonyodev.fetch2.database
 
 import android.arch.persistence.room.TypeConverter
-import com.tonyodev.fetch2.Error
+import com.tonyodev.fetch2.*
+import com.tonyodev.fetch2.util.EMPTY_JSON_OBJECT_STRING
 import com.tonyodev.fetch2.NetworkType
 import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Status
-import com.tonyodev.fetch2.util.EMPTY_JSON_OBJECT_STRING
 import org.json.JSONObject
 
 class Converter {
@@ -71,6 +71,16 @@ class Converter {
     @TypeConverter
     fun toNetworkTypeValue(networkType: NetworkType): Int {
         return networkType.value
+    }
+
+    @TypeConverter
+    fun toEnqueueActionValue(enqueueAction: EnqueueAction): Int {
+        return enqueueAction.value
+    }
+
+    @TypeConverter
+    fun fromEnqueueActionValue(value: Int): EnqueueAction {
+        return EnqueueAction.valueOf(value)
     }
 
 }
