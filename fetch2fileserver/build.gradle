@@ -61,7 +61,7 @@ dependencies {
     kapt "android.arch.persistence.room:compiler:$room_version"
     api "android.arch.persistence.room:runtime:$room_version"
 
-    implementation project(':fetch2core')
+    api project(':fetch2core')
 
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "com.android.support.test:runner:$test_runner_version"
