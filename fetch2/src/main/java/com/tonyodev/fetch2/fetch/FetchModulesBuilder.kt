@@ -104,7 +104,9 @@ object FetchModulesBuilder {
                     downloadProvider = downloadProvider,
                     downloadManager = downloadManager,
                     networkInfoProvider = networkInfoProvider,
-                    logger = fetchConfiguration.logger)
+                    logger = fetchConfiguration.logger,
+                    uiHandler = uiHandler,
+                    listenerCoordinator = listenerCoordinator)
             priorityListProcessor.globalNetworkType = fetchConfiguration.globalNetworkType
             fetchHandler = FetchHandlerImpl(
                     namespace = fetchConfiguration.namespace,

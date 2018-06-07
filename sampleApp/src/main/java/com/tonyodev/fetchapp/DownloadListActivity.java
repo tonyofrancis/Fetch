@@ -99,7 +99,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
 
     private final FetchListener fetchListener = new AbstractFetchListener() {
         @Override
-        public void onQueued(@NotNull Download download) {
+        public void onQueued(@NotNull Download download, boolean waitingOnNetwork) {
             fileAdapter.addDownload(download);
             fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }

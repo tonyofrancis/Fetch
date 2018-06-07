@@ -63,7 +63,7 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     @Override
-    public void onQueued(@NotNull Download download) {
+    public void onQueued(@NotNull Download download, boolean waitingOnNetwork) {
         updateProgressForDownload(download);
     }
 

@@ -152,7 +152,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     @Override
-    public void onQueued(@NotNull Download download) {
+    public void onQueued(@NotNull Download download, boolean waitingOnNetwork) {
         setTitleView(download.getFile());
         setProgressView(download.getStatus(), download.getProgress());
         updateViews(download, 0, 0, null);

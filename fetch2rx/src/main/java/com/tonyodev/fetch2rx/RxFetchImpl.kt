@@ -39,7 +39,7 @@ open class RxFetchImpl(namespace: String,
                         try {
                             download = fetchHandler.enqueue(it)
                             uiHandler.post {
-                                listenerCoordinator.mainListener.onQueued(download)
+                                listenerCoordinator.mainListener.onQueued(download, false)
                                 logger.d("Queued $download for download")
                             }
                         } catch (e: Exception) {
@@ -64,7 +64,7 @@ open class RxFetchImpl(namespace: String,
                             downloads = fetchHandler.enqueue(it)
                             uiHandler.post {
                                 downloads.forEach {
-                                    listenerCoordinator.mainListener.onQueued(it)
+                                    listenerCoordinator.mainListener.onQueued(it, false)
                                     logger.d("Queued $it for download")
                                 }
                             }

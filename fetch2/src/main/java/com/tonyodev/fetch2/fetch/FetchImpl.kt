@@ -42,7 +42,7 @@ open class FetchImpl constructor(override val namespace: String,
                         }
                     }
                     uiHandler.post {
-                        listenerCoordinator.mainListener.onQueued(download)
+                        listenerCoordinator.mainListener.onQueued(download, false)
                         logger.d("Queued $download for download")
                     }
                 } catch (e: Exception) {
@@ -72,7 +72,7 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                     uiHandler.post {
                         downloads.forEach {
-                            listenerCoordinator.mainListener.onQueued(it)
+                            listenerCoordinator.mainListener.onQueued(it, false)
                             logger.d("Queued $it for download")
                         }
                     }
@@ -429,7 +429,7 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Queued $it for download")
-                            listenerCoordinator.mainListener.onQueued(it)
+                            listenerCoordinator.mainListener.onQueued(it, false)
                         }
                     }
                 } catch (e: FetchException) {

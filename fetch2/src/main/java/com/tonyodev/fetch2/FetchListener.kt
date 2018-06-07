@@ -11,8 +11,11 @@ interface FetchListener {
      * Status.QUEUED.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
+     * @param waitingOnNetwork Indicates that the download was queued because it is waiting on
+     * the right network condition. For example: Waiting on internet access to be restored or
+     * waiting for a Wifi connection.
      * */
-    fun onQueued(download: Download)
+    fun onQueued(download: Download, waitingOnNetwork: Boolean)
 
     /** Called when a download completes. The status of the download will be Status.COMPLETED.
      * @param download An immutable object which contains a current snapshot of all the information

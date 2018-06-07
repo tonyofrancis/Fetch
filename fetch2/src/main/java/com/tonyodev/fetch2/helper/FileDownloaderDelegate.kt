@@ -53,7 +53,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                 downloadInfo.error = defaultNoError
                 downloadInfoUpdater.update(downloadInfo)
                 uiHandler.post {
-                    fetchListener.onQueued(downloadInfo)
+                    fetchListener.onQueued(downloadInfo, true)
                 }
             } else {
                 downloadInfo.status = Status.FAILED

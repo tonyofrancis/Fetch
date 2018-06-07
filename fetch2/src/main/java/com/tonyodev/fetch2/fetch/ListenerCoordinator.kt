@@ -34,11 +34,11 @@ class ListenerCoordinator(val namespace: String) {
 
     val mainListener: FetchListener = object : FetchListener {
 
-        override fun onQueued(download: Download) {
+        override fun onQueued(download: Download, waitingOnNetwork: Boolean) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     it.forEach {
-                        it.get()?.onQueued(download)
+                        it.get()?.onQueued(download, waitingOnNetwork)
                     }
                 }
             }

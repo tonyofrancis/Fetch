@@ -123,8 +123,8 @@ public class FragmentActivity extends AppCompatActivity {
     private final FetchListener fetchListener = new AbstractFetchListener() {
 
         @Override
-        public void onQueued(@NotNull Download download) {
-            super.onQueued(download);
+        public void onQueued(@NotNull Download download, boolean waitingOnNetwork) {
+            super.onQueued(download, waitingOnNetwork);
             setRequestForFragments(download);
         }
 

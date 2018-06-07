@@ -84,7 +84,9 @@ public class FetchHandlerInstrumentedTest {
                 new DownloadProvider(databaseManager),
                 downloadManager,
                 new NetworkInfoProvider(appContext),
-                fetchLogger);
+                fetchLogger,
+                uiHandler,
+                listenerCoordinator);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
                 priorityListProcessorImpl, fetchLogger, autoStart,
                 client, tempDir, listenerCoordinator);
