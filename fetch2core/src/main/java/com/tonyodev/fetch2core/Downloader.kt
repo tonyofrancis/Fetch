@@ -131,7 +131,10 @@ interface Downloader : Closeable {
             val file: String,
 
             /** The tag associated with this request.*/
-            val tag: String?)
+            val tag: String?,
+
+            /** The identifier associated with this request*/
+            val identifier: Long)
 
     /**
      * A class that contains the server response information used by Fetch

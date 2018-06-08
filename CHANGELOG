@@ -1,3 +1,6 @@
+Version 2.1.0-RC2
+- Added missing identifier field on Downloader.Request class.
+
 Version 2.1.0-RC1
 This version of Fetch contains many fixes and breaking changes.
 Note: Uses will not lose downloads migrating to this version once the same namespace is set.
