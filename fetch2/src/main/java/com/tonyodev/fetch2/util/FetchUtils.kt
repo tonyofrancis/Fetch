@@ -53,7 +53,8 @@ fun getRequestForDownload(download: Download,
             url = download.url,
             headers = headers,
             file = download.file,
-            tag = download.tag)
+            tag = download.tag,
+            identifier = download.identifier)
 }
 
 fun deleteRequestTempFiles(fileTempDir: String,
