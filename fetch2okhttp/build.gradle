@@ -60,10 +60,9 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "com.android.support:appcompat-v7:$android_support_version"
+
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api "com.squareup.okhttp3:okhttp:$okhttp_version"
-
     api project(':fetch2core')
 
     testImplementation "junit:junit:$junit_version"
