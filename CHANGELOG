@@ -1,3 +1,6 @@
+Version 2.1.0-RC3
+- Removed used AppCompat Dependency on library modules.
+
 Version 2.1.0-RC2
 - Added missing identifier field on Downloader.Request class.
 
