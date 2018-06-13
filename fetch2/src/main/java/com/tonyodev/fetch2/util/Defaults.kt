@@ -20,6 +20,7 @@ const val DEFAULT_RETRY_ON_NETWORK_GAIN = true
 const val DEFAULT_FILE_SLICE_NO_LIMIT_SET = -1
 const val DEFAULT_INSTANCE_NAMESPACE = "LibGlobalFetchLib"
 const val DEFAULT_MD5_CHECK_ENABLED = false
+const val DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED = false
 val defaultEmptyHeaderMap = mapOf<String, String>()
 val defaultNetworkType = NetworkType.ALL
 val defaultGlobalNetworkType = NetworkType.GLOBAL_OFF

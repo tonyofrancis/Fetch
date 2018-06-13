@@ -1,3 +1,8 @@
+Version 2.1.0-RC4
+- Added new method enableListenerNotifyOnAttached(enabled) to FetchConfiguration.Builder class.
+  This option allows Fetch to notify the newly attached listeners of the download status
+  of all downloads managed by the namespace. Default is false.
+
 Version 2.1.0-RC3
 - Removed used AppCompat Dependency on library modules.
 

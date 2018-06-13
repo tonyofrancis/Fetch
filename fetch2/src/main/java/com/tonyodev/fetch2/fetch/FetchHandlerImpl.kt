@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2.fetch
 
+import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
@@ -21,7 +22,9 @@ class FetchHandlerImpl(private val namespace: String,
                        private val autoStart: Boolean,
                        private val httpDownloader: Downloader,
                        private val fileTempDir: String,
-                       private val listenerCoordinator: ListenerCoordinator) : FetchHandler {
+                       private val listenerCoordinator: ListenerCoordinator,
+                       private val enableListenerNotifyOnAttached: Boolean,
+                       private val uiHandler: Handler) : FetchHandler {
 
     private val listenerId = UUID.randomUUID().hashCode()
     private val listenerSet = mutableSetOf<FetchListener>()
@@ -514,6 +517,40 @@ class FetchHandlerImpl(private val namespace: String,
         startPriorityQueueIfNotStarted()
         listenerSet.add(listener)
         listenerCoordinator.addListener(listenerId, listener)
+        if (enableListenerNotifyOnAttached) {
+            val downloads = databaseManager.get()
+            downloads.forEach {
+                uiHandler.post {
+                    when (it.status) {
+                        Status.COMPLETED -> {
+                            listener.onCompleted(it)
+                        }
+                        Status.FAILED -> {
+                            listener.onError(it)
+                        }
+                        Status.CANCELLED -> {
+                            listener.onCancelled(it)
+                        }
+                        Status.DELETED -> {
+                            listener.onDeleted(it)
+                        }
+                        Status.PAUSED -> {
+                            listener.onPaused(it)
+                        }
+                        Status.QUEUED -> {
+                            listener.onQueued(it, false)
+                        }
+                        Status.REMOVED -> {
+                            listener.onRemoved(it)
+                        }
+                        Status.DOWNLOADING -> {
+                        }
+                        Status.NONE -> {
+                        }
+                    }
+                }
+            }
+        }
         logger.d("Added listener $listener")
     }
 

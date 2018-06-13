@@ -117,7 +117,9 @@ object FetchModulesBuilder {
                     autoStart = fetchConfiguration.autoStart,
                     httpDownloader = fetchConfiguration.httpDownloader,
                     fileTempDir = getFileTempDir(fetchConfiguration.appContext),
-                    listenerCoordinator = listenerCoordinator)
+                    listenerCoordinator = listenerCoordinator,
+                    enableListenerNotifyOnAttached = fetchConfiguration.enableListenerNotifyOnAttached,
+                    uiHandler = uiHandler)
         }
 
     }
