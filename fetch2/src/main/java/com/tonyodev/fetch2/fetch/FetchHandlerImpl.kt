@@ -23,7 +23,6 @@ class FetchHandlerImpl(private val namespace: String,
                        private val httpDownloader: Downloader,
                        private val fileTempDir: String,
                        private val listenerCoordinator: ListenerCoordinator,
-                       private val enableListenerNotifyOnAttached: Boolean,
                        private val uiHandler: Handler) : FetchHandler {
 
     private val listenerId = UUID.randomUUID().hashCode()
@@ -513,11 +512,11 @@ class FetchHandlerImpl(private val namespace: String,
         logger.enabled = enabled
     }
 
-    override fun addListener(listener: FetchListener) {
+    override fun addListener(listener: FetchListener, notify: Boolean) {
         startPriorityQueueIfNotStarted()
         listenerSet.add(listener)
         listenerCoordinator.addListener(listenerId, listener)
-        if (enableListenerNotifyOnAttached) {
+        if (notify) {
             val downloads = databaseManager.get()
             downloads.forEach {
                 uiHandler.post {

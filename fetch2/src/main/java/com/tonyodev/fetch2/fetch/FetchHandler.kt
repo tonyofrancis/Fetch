@@ -38,7 +38,7 @@ interface FetchHandler : Closeable {
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<Download>
     fun setGlobalNetworkType(networkType: NetworkType)
     fun enableLogging(enabled: Boolean)
-    fun addListener(listener: FetchListener)
+    fun addListener(listener: FetchListener, notify: Boolean)
     fun removeListener(listener: FetchListener)
     fun isDownloading(id: Int): Boolean
     fun cancelDownload(id: Int): Boolean

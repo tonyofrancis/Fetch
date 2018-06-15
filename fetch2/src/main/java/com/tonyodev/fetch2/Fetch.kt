@@ -5,6 +5,7 @@ import android.content.Context
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
+import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_INSTANCE_NAMESPACE
 import com.tonyodev.fetch2core.GLOBAL_FETCH_CONFIGURATION_NOT_SET
 import com.tonyodev.fetch2.util.createConfigWithNewNamespace
@@ -292,6 +293,15 @@ interface Fetch {
      * @return Instance
      * */
     fun addListener(listener: FetchListener): Fetch
+
+    /** Attaches a FetchListener to this instance of Fetch.
+     * @param listener Fetch Listener
+     * @param notify Allows Fetch to notify the newly attached listener instantly of the download status
+     * of all downloads managed by the namespace. Default is false.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun addListener(listener: FetchListener, notify: Boolean = DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED): Fetch
 
     /** Detaches a FetchListener from this instance of Fetch.
      * @param listener Fetch Listener
