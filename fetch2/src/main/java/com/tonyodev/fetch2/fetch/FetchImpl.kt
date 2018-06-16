@@ -574,6 +574,23 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun getDownloadsByRequestIdentifier(identifier: Long, func: Func<List<Download>>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val downloads = fetchHandler.getDownloadsByRequestIdentifier(identifier)
+                    uiHandler.post {
+                        func.call(downloads)
+                    }
+                } catch (e: FetchException) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                }
+            }
+            return this
+        }
+    }
+
     override fun addListener(listener: FetchListener): Fetch {
         return addListener(listener, DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED)
     }

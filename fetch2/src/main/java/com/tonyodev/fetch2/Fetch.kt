@@ -287,6 +287,15 @@ interface Fetch {
      * */
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status, func: Func<List<Download>>): Fetch
 
+    /**
+     * Gets all downloads containing the identifier.
+     * @param identifier identifier.
+     * @param func Callback that the results will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun getDownloadsByRequestIdentifier(identifier: Long, func: Func<List<Download>>): Fetch
+
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener
      * @throws FetchException if this instance of Fetch has been closed.

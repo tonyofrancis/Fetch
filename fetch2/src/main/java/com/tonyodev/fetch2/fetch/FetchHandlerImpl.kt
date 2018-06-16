@@ -485,6 +485,11 @@ class FetchHandlerImpl(private val namespace: String,
         return databaseManager.getDownloadsInGroupWithStatus(groupId, status)
     }
 
+    override fun getDownloadsByRequestIdentifier(identifier: Long): List<Download> {
+        startPriorityQueueIfNotStarted()
+        return databaseManager.getDownloadsByRequestIdentifier(identifier)
+    }
+
     override fun close() {
         if (isTerminating) {
             return

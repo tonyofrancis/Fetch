@@ -117,6 +117,15 @@ interface RxFetch : Fetch {
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): Convertible<List<Download>>
 
     /**
+     * Gets all downloads containing the identifier.
+     * @param identifier identifier.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return A Convertible object that allows you to get the results as on observable or
+     * flowable
+     * */
+    fun getDownloadsByRequestIdentifier(identifier: Long): Convertible<List<Download>>
+
+    /**
      * RX Fetch implementation class. Use this Singleton to get instances of RxFetch or Fetch.
      * */
     companion object Impl {

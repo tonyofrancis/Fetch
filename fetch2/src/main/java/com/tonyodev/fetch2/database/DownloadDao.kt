@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_CREATED
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_FILE
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_GROUP
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_ID
+import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_IDENTIFIER
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_PRIORITY
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_STATUS
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.TABLE_NAME
@@ -58,5 +59,8 @@ interface DownloadDao {
 
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_STATUS = :status ORDER BY $COLUMN_PRIORITY DESC, $COLUMN_CREATED ASC")
     fun getPendingDownloadsSorted(status: Status): List<DownloadInfo>
+
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_IDENTIFIER = :identifier")
+    fun getDownloadsByRequestIdentifier(identifier: Long): List<DownloadInfo>
 
 }

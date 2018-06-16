@@ -36,6 +36,7 @@ interface FetchHandler : Closeable {
     fun getDownloadsInGroup(id: Int): List<Download>
     fun getDownloadsWithStatus(status: Status): List<Download>
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<Download>
+    fun getDownloadsByRequestIdentifier(identifier: Long): List<Download>
     fun setGlobalNetworkType(networkType: NetworkType)
     fun enableLogging(enabled: Boolean)
     fun addListener(listener: FetchListener, notify: Boolean)

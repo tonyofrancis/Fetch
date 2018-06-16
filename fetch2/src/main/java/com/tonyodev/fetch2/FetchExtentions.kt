@@ -175,3 +175,18 @@ fun Fetch.getDownloadsInGroupWithStatus(groupId: Int, status: Status, func: (Lis
         }
     })
 }
+
+/**
+ * Gets all downloads containing the identifier.
+ * @param identifier identifier.
+ * @param func Callback that the results will be returned on.
+ * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
+ * */
+fun Fetch.getDownloadsByRequestIdentifier(identifier: Long, func: (List<Download>) -> Unit): Fetch {
+    return getDownloadsByRequestIdentifier(identifier, object : Func<List<Download>> {
+        override fun call(t: List<Download>) {
+            func(t)
+        }
+    })
+}

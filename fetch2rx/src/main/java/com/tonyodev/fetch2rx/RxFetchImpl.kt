@@ -192,6 +192,21 @@ open class RxFetchImpl(namespace: String,
         }
     }
 
+    override fun getDownloadsByRequestIdentifier(identifier: Long): Convertible<List<Download>> {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            val flowable = Flowable.just(identifier)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloadsByRequestIdentifier(identifier)
+                        Flowable.just(downloads)
+                    }
+                    .observeOn(uiSceduler)
+            return Convertible(flowable)
+        }
+    }
+
     companion object {
 
         @JvmStatic
