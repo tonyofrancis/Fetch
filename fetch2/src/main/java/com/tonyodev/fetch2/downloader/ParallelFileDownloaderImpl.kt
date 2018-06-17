@@ -421,7 +421,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
         for (fileSlice in fileSlicesDownloadsList) {
             if (!interrupted && !terminated) {
-                executorService?.execute({
+                executorService?.execute {
                     val downloadRequest = getRequestForDownload(downloadInfo, fileSlice.startBytes + fileSlice.downloaded)
                     var downloadResponse: Downloader.Response? = null
                     try {
@@ -494,7 +494,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         }
                         incrementActionCompletedCount()
                     }
-                })
+                }
             }
         }
     }
