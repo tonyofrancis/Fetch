@@ -118,7 +118,6 @@ object FetchModulesBuilder {
                     httpDownloader = fetchConfiguration.httpDownloader,
                     fileTempDir = getFileTempDir(fetchConfiguration.appContext),
                     listenerCoordinator = listenerCoordinator,
-                    enableListenerNotifyOnAttached = fetchConfiguration.enableListenerNotifyOnAttached,
                     uiHandler = uiHandler)
         }
 

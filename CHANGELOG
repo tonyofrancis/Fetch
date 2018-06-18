@@ -1,3 +1,19 @@
+Version 2.1.0-RC6
+- Added new method onServerResponse(request: ServerRequest, response: Response) on Downloader class
+- Added new property responseHeaders on Downloader.Response class
+
+Version 2.1.0-RC5
+- Removed enableListenerNotifyOnAttached on FetchConfiguration listener. Added new method on Fetch class
+  called addListener(fetchListener, notify) instead.
+  This option allows Fetch to notify the newly attached listener instantly of the download status
+  of all downloads managed by the namespace. Default is false.
+- Added new Fetch and RxFetch method getDownloadsByRequestIdentifier(identifier: Long). Use request.identifier field.
+- Added new convenience method on FetchConfiguration class called getNewFetchInstanceFromConfiguration which
+  returns a newly created instance of Fetch.
+- Updated Kotlin plugin version to 1.2.50
+- Updated other library dependencies.
+- Bug Fixes
+
 Version 2.1.0-RC4
 - Added new method enableListenerNotifyOnAttached(enabled) to FetchConfiguration.Builder class.
   This option allows Fetch to notify the newly attached listeners of the download status

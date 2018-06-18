@@ -183,6 +183,15 @@ class DatabaseManagerImpl constructor(context: Context,
         }
     }
 
+    override fun getDownloadsByRequestIdentifier(identifier: Long): List<DownloadInfo> {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            val downloads = requestDatabase.requestDao().getDownloadsByRequestIdentifier(identifier)
+            sanitize(downloads)
+            return downloads
+        }
+    }
+
     override fun getPendingDownloadsSorted(): List<DownloadInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()

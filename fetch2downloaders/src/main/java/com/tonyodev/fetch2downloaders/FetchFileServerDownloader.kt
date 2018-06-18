@@ -6,6 +6,7 @@ import com.tonyodev.fetch2core.transporter.FileRequest.Companion.TYPE_FILE
 import com.tonyodev.fetch2core.transporter.FetchFileResourceTransporter
 import com.tonyodev.fetch2core.transporter.FileRequest
 import com.tonyodev.fetch2core.transporter.FileResponse
+import org.json.JSONObject
 
 import java.io.OutputStream
 import java.net.HttpURLConnection
@@ -65,13 +66,34 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         serverResponse.type == FileRequest.TYPE_FILE && serverResponse.status == HttpURLConnection.HTTP_PARTIAL
                 val contentLength = serverResponse.contentLength
                 val inputStream = transporter.getInputStream()
+
+                val headerResponse = mutableMapOf<String, List<String>>()
+                try {
+                    val json = JSONObject(serverResponse.toJsonString)
+                    json.keys().forEach {
+                        headerResponse[it] = listOf(json.get(it).toString())
+                    }
+                } catch (e: Exception) {
+
+                }
+                onServerResponse(request, Downloader.Response(
+                        code = code,
+                        isSuccessful = isSuccessful,
+                        contentLength = contentLength,
+                        byteStream = null,
+                        request = request,
+                        md5 = serverResponse.md5,
+                        responseHeaders = headerResponse))
+
                 val response = Downloader.Response(
                         code = code,
                         isSuccessful = isSuccessful,
                         contentLength = contentLength,
                         byteStream = inputStream,
                         request = request,
-                        md5 = serverResponse.md5)
+                        md5 = serverResponse.md5,
+                        responseHeaders = headerResponse)
+
                 connections[response] = transporter
                 return response
             }
@@ -130,4 +152,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         return fileMd5?.contentEquals(md5) ?: true
     }
 
+    override fun onServerResponse(request: Downloader.ServerRequest, response: Downloader.Response) {
+
+    }
 }

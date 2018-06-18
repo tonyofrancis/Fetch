@@ -21,8 +21,15 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val autoStart: Boolean,
                                              val retryOnNetworkGain: Boolean,
                                              val fileServerDownloader: FileServerDownloader?,
-                                             val md5CheckingEnabled: Boolean,
-                                             val enableListenerNotifyOnAttached: Boolean) {
+                                             val md5CheckingEnabled: Boolean) {
+
+    /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
+    * for Fetch.Impl.getInstance(fetchConfiguration)
+    * @return new Fetch instance
+    * */
+    fun getNewFetchInstanceFromConfiguration(): Fetch {
+        return Fetch.getInstance(this)
+    }
 
     /** Used to create an instance of Fetch Configuration.*/
     class Builder(context: Context) {
@@ -40,7 +47,6 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var retryOnNetworkGain = DEFAULT_RETRY_ON_NETWORK_GAIN
         private var fileServerDownloader: FileServerDownloader? = null
         private var md5CheckEnabled = DEFAULT_MD5_CHECK_ENABLED
-        private var enableListenerNotifyOnAttached = DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -197,17 +203,6 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
-         * Allows Fetch to notify the newly attached listeners of the download status
-         * of all downloads managed by the namespace. Default is false.
-         * @param enabled true or false
-         * @return Builder
-         * */
-        fun enableListenerNotifyOnAttached(enabled: Boolean): Builder {
-            this.enableListenerNotifyOnAttached = enabled
-            return this
-        }
-
-        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -232,8 +227,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                     autoStart = autoStart,
                     retryOnNetworkGain = retryOnNetworkGain,
                     fileServerDownloader = fileServerDownloader,
-                    md5CheckingEnabled = md5CheckEnabled,
-                    enableListenerNotifyOnAttached = enableListenerNotifyOnAttached)
+                    md5CheckingEnabled = md5CheckEnabled)
         }
 
     }
@@ -254,6 +248,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (autoStart != other.autoStart) return false
         if (retryOnNetworkGain != other.retryOnNetworkGain) return false
         if (fileServerDownloader != other.fileServerDownloader) return false
+        if (md5CheckingEnabled != other.md5CheckingEnabled) return false
         return true
     }
 
@@ -270,6 +265,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + autoStart.hashCode()
         result = 31 * result + retryOnNetworkGain.hashCode()
         result = 31 * result + (fileServerDownloader?.hashCode() ?: 0)
+        result = 31 * result + md5CheckingEnabled.hashCode()
         return result
     }
 
@@ -278,7 +274,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                 "concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis," +
                 " downloadBufferSizeBytes=$downloadBufferSizeBytes, loggingEnabled=$loggingEnabled, " +
                 "httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType, logger=$logger, " +
-                "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, fileServerDownloader=$fileServerDownloader)"
+                "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
+                "fileServerDownloader=$fileServerDownloader, md5CheckingEnabled=$md5CheckingEnabled)"
     }
 
 }
