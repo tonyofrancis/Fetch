@@ -1,3 +1,7 @@
+Version 2.1.0-RC6
+- Added new method onServerResponse(request: ServerRequest, response: Response) on Downloader class
+- Added new property responseHeaders on Downloader.Response class
+
 Version 2.1.0-RC5
 - Removed enableListenerNotifyOnAttached on FetchConfiguration listener. Added new method on Fetch class
   called addListener(fetchListener, notify) instead.
