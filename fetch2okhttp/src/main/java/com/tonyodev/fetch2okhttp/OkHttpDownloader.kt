@@ -55,6 +55,23 @@ open class OkHttpDownloader @JvmOverloads constructor(
         val contentLength = okHttpResponse.body()?.contentLength() ?: -1L
         val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
         val md5 = okHttpResponse.header("Content-MD5") ?: ""
+        val responseHeaders = mutableMapOf<String, List<String>>()
+
+        val okResponseHeaders = okHttpResponse.headers()
+        for (i in 0 until okResponseHeaders.size()) {
+            val key = okResponseHeaders.name(i)
+            val values = okResponseHeaders.values(key)
+            responseHeaders[key] = values
+        }
+
+        onServerResponse(request, Downloader.Response(
+                code = code,
+                isSuccessful = success,
+                contentLength = contentLength,
+                byteStream = null,
+                request = request,
+                md5 = md5,
+                responseHeaders = responseHeaders))
 
         val response = Downloader.Response(
                 code = code,
@@ -62,7 +79,8 @@ open class OkHttpDownloader @JvmOverloads constructor(
                 contentLength = contentLength,
                 byteStream = byteStream,
                 request = request,
-                md5 = md5)
+                md5 = md5,
+                responseHeaders = responseHeaders)
 
         connections[response] = okHttpResponse
         return response
@@ -119,4 +137,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
         return fileMd5?.contentEquals(md5) ?: true
     }
 
+    override fun onServerResponse(request: Downloader.ServerRequest, response: Downloader.Response) {
+
+    }
 }

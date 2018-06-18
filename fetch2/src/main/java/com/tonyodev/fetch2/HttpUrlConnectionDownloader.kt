@@ -58,13 +58,24 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
             byteStream = client.inputStream
             md5 = client.getHeaderField("Content-MD5") ?: ""
         }
+
+        onServerResponse(request, Downloader.Response(
+                code = code,
+                isSuccessful = success,
+                contentLength = contentLength,
+                byteStream = null,
+                request = request,
+                md5 = md5,
+                responseHeaders = client.headerFields))
+
         val response = Downloader.Response(
                 code = code,
                 isSuccessful = success,
                 contentLength = contentLength,
                 byteStream = byteStream,
                 request = request,
-                md5 = md5)
+                md5 = md5,
+                responseHeaders = client.headerFields)
 
         connections[response] = client
         return response
@@ -123,6 +134,10 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         }
         val fileMd5 = getFileMd5String(request.file)
         return fileMd5?.contentEquals(md5) ?: true
+    }
+
+    override fun onServerResponse(request: Downloader.ServerRequest, response: Downloader.Response) {
+
     }
 
     /**
