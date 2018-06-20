@@ -86,6 +86,7 @@ class FetchHandlerImpl(private val namespace: String,
         val downloadInfo = completedDownload.toDownloadInfo()
         downloadInfo.namespace = namespace
         downloadInfo.status = Status.COMPLETED
+        prepareCompletedDownloadInfoForEnqueue(downloadInfo)
         databaseManager.insert(downloadInfo)
         startPriorityQueueIfNotStarted()
         return downloadInfo
@@ -96,6 +97,7 @@ class FetchHandlerImpl(private val namespace: String,
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
             downloadInfo.status = Status.COMPLETED
+            prepareCompletedDownloadInfoForEnqueue(downloadInfo)
             downloadInfo
         }
         val results = databaseManager.insert(downloadInfoList)
@@ -106,6 +108,17 @@ class FetchHandlerImpl(private val namespace: String,
                 }
         startPriorityQueueIfNotStarted()
         return results
+    }
+
+    private fun prepareCompletedDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
+        val existingDownload = databaseManager.getByFile(downloadInfo.file)
+        if (existingDownload != null) {
+            if (isDownloading(existingDownload.id)) {
+                downloadManager.cancel(downloadInfo.id)
+            }
+            deleteRequestTempFiles(fileTempDir, httpDownloader, existingDownload)
+            databaseManager.delete(existingDownload)
+        }
     }
 
     override fun pause(ids: IntArray): List<Download> {

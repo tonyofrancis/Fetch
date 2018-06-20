@@ -15,10 +15,7 @@ open class CompletedDownload {
     var group: Int = 0
 
     /** The file size of the download in bytes.*/
-    var total: Long = 0
-
-    /** The amount of bytes downloaded.*/
-    var downloaded: Long = 0
+    var fileByteSize: Long = 0
 
     /** The download request header information.*/
     var headers: Map<String, String> = emptyMap()
@@ -39,8 +36,6 @@ open class CompletedDownload {
         if (url != other.url) return false
         if (file != other.file) return false
         if (group != other.group) return false
-        if (total != other.total) return false
-        if (downloaded != other.downloaded) return false
         if (headers != other.headers) return false
         if (tag != other.tag) return false
         if (identifier != other.identifier) return false
@@ -52,8 +47,6 @@ open class CompletedDownload {
         var result = url.hashCode()
         result = 31 * result + file.hashCode()
         result = 31 * result + group
-        result = 31 * result + total.hashCode()
-        result = 31 * result + downloaded.hashCode()
         result = 31 * result + headers.hashCode()
         result = 31 * result + (tag?.hashCode() ?: 0)
         result = 31 * result + identifier.hashCode()
@@ -62,9 +55,8 @@ open class CompletedDownload {
     }
 
     override fun toString(): String {
-        return "CompletedDownload(url='$url', file='$file', group=$group, total=$total, " +
-                "downloaded=$downloaded, headers=$headers, tag=$tag, identifier=$identifier," +
-                " created=$created)"
+        return "CompletedDownload(url='$url', file='$file', group=$group, " +
+                "headers=$headers, tag=$tag, identifier=$identifier, created=$created)"
     }
 
 }

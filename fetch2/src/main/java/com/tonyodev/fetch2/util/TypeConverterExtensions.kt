@@ -53,8 +53,8 @@ fun CompletedDownload.toDownloadInfo(): DownloadInfo {
     downloadInfo.group = group
     downloadInfo.priority = Priority.NORMAL
     downloadInfo.headers = headers.toMap()
-    downloadInfo.downloaded = downloaded
-    downloadInfo.total = total
+    downloadInfo.downloaded = fileByteSize
+    downloadInfo.total = fileByteSize
     downloadInfo.status = Status.COMPLETED
     downloadInfo.networkType = NetworkType.ALL
     downloadInfo.error = Error.NONE
