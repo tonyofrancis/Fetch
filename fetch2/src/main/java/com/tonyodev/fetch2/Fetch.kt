@@ -5,6 +5,7 @@ import android.content.Context
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
+import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_INSTANCE_NAMESPACE
 import com.tonyodev.fetch2core.GLOBAL_FETCH_CONFIGURATION_NOT_SET
 import com.tonyodev.fetch2.util.createConfigWithNewNamespace
@@ -286,6 +287,15 @@ interface Fetch {
      * */
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status, func: Func<List<Download>>): Fetch
 
+    /**
+     * Gets all downloads containing the identifier.
+     * @param identifier identifier.
+     * @param func Callback that the results will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun getDownloadsByRequestIdentifier(identifier: Long, func: Func<List<Download>>): Fetch
+
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener
      * @throws FetchException if this instance of Fetch has been closed.
@@ -293,12 +303,43 @@ interface Fetch {
      * */
     fun addListener(listener: FetchListener): Fetch
 
+    /** Attaches a FetchListener to this instance of Fetch.
+     * @param listener Fetch Listener
+     * @param notify Allows Fetch to notify the newly attached listener instantly of the download status
+     * of all downloads managed by the namespace. Default is false.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun addListener(listener: FetchListener, notify: Boolean = DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED): Fetch
+
     /** Detaches a FetchListener from this instance of Fetch.
      * @param listener Fetch Listener
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
     fun removeListener(listener: FetchListener): Fetch
+
+    /**
+     * Adds a completed download to Fetch for management. If Fetch is already managing another download with the same file as this completed download's
+     * file, Fetch will replace the already managed download with this completed download.
+     * @param completedDownload Completed Download
+     * @param func Callback that the added download will be returned on.
+     * @param func2 Callback that is called when adding the completed download fails. An error is returned.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun addCompletedDownload(completedDownload: CompletedDownload, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
+
+    /**
+     * Adds a list of completed downloads to Fetch for management. If Fetch is already managing another download with the same file as this completed download's
+     * file, Fetch will replace the already managed download with this completed download.
+     * @param completedDownloads Completed Downloads list
+     * @param func Callback that the added downloads list will be returned on.
+     * @param func2 Callback that is called when adding the completed downloads fails. An error is returned.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, func: Func<List<Download>>? = null, func2: Func<Error>? = null): Fetch
 
     /**
      * Enable or disable logging.

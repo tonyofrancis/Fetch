@@ -175,3 +175,60 @@ fun Fetch.getDownloadsInGroupWithStatus(groupId: Int, status: Status, func: (Lis
         }
     })
 }
+
+/**
+ * Gets all downloads containing the identifier.
+ * @param identifier identifier.
+ * @param func Callback that the results will be returned on.
+ * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
+ * */
+fun Fetch.getDownloadsByRequestIdentifier(identifier: Long, func: (List<Download>) -> Unit): Fetch {
+    return getDownloadsByRequestIdentifier(identifier, object : Func<List<Download>> {
+        override fun call(t: List<Download>) {
+            func(t)
+        }
+    })
+}
+
+/**
+ * Adds a completed download to Fetch for management.
+ * @param completedDownload Completed Download
+ * @param func Callback that the added download will be returned on.
+ * @param func2 Callback that is called when adding the completed download fails. An error is returned.
+ * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
+ * */
+fun Fetch.addCompletedDownload(completedDownload: CompletedDownload, func: ((Download) -> Unit)?, func2: ((Error) -> Unit)?): Fetch {
+    return addCompletedDownload(completedDownload, object : Func<Download> {
+        override fun call(t: Download) {
+            func?.invoke(t)
+        }
+    }, object : Func<Error> {
+        override fun call(t: Error) {
+            func2?.invoke(t)
+        }
+    })
+}
+
+/**
+ * Adds a list of completed downloads to Fetch for management.
+ * @param completedDownloads Completed Downloads list
+ * @param func Callback that the added downloads list will be returned on.
+ * @param func2 Callback that is called when adding the completed downloads fails. An error is returned.
+ * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
+ * */
+fun Fetch.addCompletedDownload(completedDownloads: List<CompletedDownload>, func: ((List<Download>) -> Unit)?, func2: ((Error) -> Unit)?): Fetch {
+    return addCompletedDownloads(completedDownloads, object : Func<List<Download>> {
+        override fun call(t: List<Download>) {
+            func?.invoke(t)
+        }
+    }, object : Func<Error> {
+        override fun call(t: Error) {
+            func2?.invoke(t)
+        }
+    })
+}
+
+

@@ -23,7 +23,7 @@ interface Downloader : Closeable {
      * is called on a background thread.
      * @param request The request information for the download.
      * @param interruptMonitor Notifies the downloader that there may be an interruption for the request.
-     * @return Response containing the server response code, connection success, content-length
+     * @return Response containing the server response code, headers, connection success, content-length,
      * and input stream if a connection was successful.
      * For an example:
      * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader.execute
@@ -33,8 +33,8 @@ interface Downloader : Closeable {
     /**
      * This method is called by Fetch to disconnect the connection for the passed in response.
      * Perform any clean against the passed in response. This method is called on a background thread.
-     * @param response A response that was returned by the execute method.
-     * For an example:
+     * @param response Response containing the server response code, headers, connection success, content-length,
+     * and input stream if a connection was successful.
      * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader.disconnect
      * */
     fun disconnect(response: Response)
@@ -113,6 +113,14 @@ interface Downloader : Closeable {
     fun verifyContentMD5(request: ServerRequest, md5: String): Boolean
 
     /**
+     * Notifies the downloader of the server response for a request. This method is called on a background thread.
+     * @param request The request information for the download.
+     * @param response Response containing the server response code, headers, connection success, content-length,
+     * and input stream if a connection was successful.
+     * */
+    fun onServerResponse(request: ServerRequest, response: Response)
+
+    /**
      * A class that contains the information used by the Downloader to create a connection
      * to the server.
      * */
@@ -157,7 +165,10 @@ interface Downloader : Closeable {
             val request: ServerRequest,
 
             /** The file md5 value to verify against.*/
-            val md5: String)
+            val md5: String,
+
+            /** Server Response Headers */
+            val responseHeaders: Map<String, List<String>>)
 
     /** File Downloading Type used to download each request.*/
     enum class FileDownloaderType {

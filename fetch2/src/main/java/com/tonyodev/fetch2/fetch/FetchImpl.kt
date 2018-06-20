@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
+import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2core.Func
 import com.tonyodev.fetch2core.Func2
 import com.tonyodev.fetch2core.HandlerWrapper
@@ -573,11 +574,93 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
-    override fun addListener(listener: FetchListener): Fetch {
+    override fun getDownloadsByRequestIdentifier(identifier: Long, func: Func<List<Download>>): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                fetchHandler.addListener(listener)
+                try {
+                    val downloads = fetchHandler.getDownloadsByRequestIdentifier(identifier)
+                    uiHandler.post {
+                        func.call(downloads)
+                    }
+                } catch (e: FetchException) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                }
+            }
+            return this
+        }
+    }
+
+    override fun addCompletedDownload(completedDownload: CompletedDownload, func: Func<Download>?, func2: Func<Error>?): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val download = fetchHandler.enqueueCompletedDownload(completedDownload)
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(download)
+                        }
+                    }
+                    uiHandler.post {
+                        listenerCoordinator.mainListener.onCompleted(download)
+                        logger.d("Added CompletedDownload $download")
+                    }
+                } catch (e: Exception) {
+                    logger.e("Failed to add CompletedDownload $completedDownload", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
+                }
+            }
+            return this
+        }
+    }
+
+    override fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val downloads = fetchHandler.enqueueCompletedDownloads(completedDownloads)
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(downloads)
+                        }
+                    }
+                    uiHandler.post {
+                        downloads.forEach {
+                            listenerCoordinator.mainListener.onCompleted(it)
+                            logger.d("Added CompletedDownload $it")
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.e("Failed to add CompletedDownload list $completedDownloads")
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
+                }
+
+            }
+            return this
+        }
+    }
+
+    override fun addListener(listener: FetchListener): Fetch {
+        return addListener(listener, DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED)
+    }
+
+    override fun addListener(listener: FetchListener, notify: Boolean): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                fetchHandler.addListener(listener, notify)
             }
             return this
         }

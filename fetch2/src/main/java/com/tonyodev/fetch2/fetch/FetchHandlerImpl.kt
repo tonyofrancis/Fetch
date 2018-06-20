@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2.fetch
 
+import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
@@ -21,7 +22,8 @@ class FetchHandlerImpl(private val namespace: String,
                        private val autoStart: Boolean,
                        private val httpDownloader: Downloader,
                        private val fileTempDir: String,
-                       private val listenerCoordinator: ListenerCoordinator) : FetchHandler {
+                       private val listenerCoordinator: ListenerCoordinator,
+                       private val uiHandler: Handler) : FetchHandler {
 
     private val listenerId = UUID.randomUUID().hashCode()
     private val listenerSet = mutableSetOf<FetchListener>()
@@ -78,6 +80,45 @@ class FetchHandlerImpl(private val namespace: String,
                 }
         startPriorityQueueIfNotStarted()
         return results
+    }
+
+    override fun enqueueCompletedDownload(completedDownload: CompletedDownload): Download {
+        val downloadInfo = completedDownload.toDownloadInfo()
+        downloadInfo.namespace = namespace
+        downloadInfo.status = Status.COMPLETED
+        prepareCompletedDownloadInfoForEnqueue(downloadInfo)
+        databaseManager.insert(downloadInfo)
+        startPriorityQueueIfNotStarted()
+        return downloadInfo
+    }
+
+    override fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download> {
+        val downloadInfoList = completedDownloads.map {
+            val downloadInfo = it.toDownloadInfo()
+            downloadInfo.namespace = namespace
+            downloadInfo.status = Status.COMPLETED
+            prepareCompletedDownloadInfoForEnqueue(downloadInfo)
+            downloadInfo
+        }
+        val results = databaseManager.insert(downloadInfoList)
+                .filter { it.second }
+                .map {
+                    logger.d("Enqueued CompletedDownload ${it.first}")
+                    it.first
+                }
+        startPriorityQueueIfNotStarted()
+        return results
+    }
+
+    private fun prepareCompletedDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
+        val existingDownload = databaseManager.getByFile(downloadInfo.file)
+        if (existingDownload != null) {
+            if (isDownloading(existingDownload.id)) {
+                downloadManager.cancel(downloadInfo.id)
+            }
+            deleteRequestTempFiles(fileTempDir, httpDownloader, existingDownload)
+            databaseManager.delete(existingDownload)
+        }
     }
 
     override fun pause(ids: IntArray): List<Download> {
@@ -483,6 +524,11 @@ class FetchHandlerImpl(private val namespace: String,
         return databaseManager.getDownloadsInGroupWithStatus(groupId, status)
     }
 
+    override fun getDownloadsByRequestIdentifier(identifier: Long): List<Download> {
+        startPriorityQueueIfNotStarted()
+        return databaseManager.getDownloadsByRequestIdentifier(identifier)
+    }
+
     override fun close() {
         if (isTerminating) {
             return
@@ -510,10 +556,44 @@ class FetchHandlerImpl(private val namespace: String,
         logger.enabled = enabled
     }
 
-    override fun addListener(listener: FetchListener) {
+    override fun addListener(listener: FetchListener, notify: Boolean) {
         startPriorityQueueIfNotStarted()
         listenerSet.add(listener)
         listenerCoordinator.addListener(listenerId, listener)
+        if (notify) {
+            val downloads = databaseManager.get()
+            downloads.forEach {
+                uiHandler.post {
+                    when (it.status) {
+                        Status.COMPLETED -> {
+                            listener.onCompleted(it)
+                        }
+                        Status.FAILED -> {
+                            listener.onError(it)
+                        }
+                        Status.CANCELLED -> {
+                            listener.onCancelled(it)
+                        }
+                        Status.DELETED -> {
+                            listener.onDeleted(it)
+                        }
+                        Status.PAUSED -> {
+                            listener.onPaused(it)
+                        }
+                        Status.QUEUED -> {
+                            listener.onQueued(it, false)
+                        }
+                        Status.REMOVED -> {
+                            listener.onRemoved(it)
+                        }
+                        Status.DOWNLOADING -> {
+                        }
+                        Status.NONE -> {
+                        }
+                    }
+                }
+            }
+        }
         logger.d("Added listener $listener")
     }
 

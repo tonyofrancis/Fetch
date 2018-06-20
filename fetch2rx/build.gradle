@@ -54,12 +54,10 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "com.android.support:appcompat-v7:$android_support_version"
-    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
+    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api "io.reactivex.rxjava2:rxandroid:$rxAndroid2_version"
     api "io.reactivex.rxjava2:rxjava:$rxJava2_version"
-
     api project(':fetch2')
 
     testImplementation "junit:junit:$junit_version"
