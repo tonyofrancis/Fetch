@@ -82,6 +82,32 @@ class FetchHandlerImpl(private val namespace: String,
         return results
     }
 
+    override fun enqueueCompletedDownload(completedDownload: CompletedDownload): Download {
+        val downloadInfo = completedDownload.toDownloadInfo()
+        downloadInfo.namespace = namespace
+        downloadInfo.status = Status.COMPLETED
+        databaseManager.insert(downloadInfo)
+        startPriorityQueueIfNotStarted()
+        return downloadInfo
+    }
+
+    override fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download> {
+        val downloadInfoList = completedDownloads.map {
+            val downloadInfo = it.toDownloadInfo()
+            downloadInfo.namespace = namespace
+            downloadInfo.status = Status.COMPLETED
+            downloadInfo
+        }
+        val results = databaseManager.insert(downloadInfoList)
+                .filter { it.second }
+                .map {
+                    logger.d("Enqueued CompletedDownload ${it.first}")
+                    it.first
+                }
+        startPriorityQueueIfNotStarted()
+        return results
+    }
+
     override fun pause(ids: IntArray): List<Download> {
         startPriorityQueueIfNotStarted()
         ids.forEach {

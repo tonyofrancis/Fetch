@@ -2,9 +2,9 @@
 
 package com.tonyodev.fetch2.util
 
-import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Request
+import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DownloadInfo
+import com.tonyodev.fetch2core.getUniqueId
 
 fun Request.toDownloadInfo(): DownloadInfo {
     val downloadInfo = DownloadInfo()
@@ -41,6 +41,26 @@ fun Download.toDownloadInfo(): DownloadInfo {
     downloadInfo.created = created
     downloadInfo.tag = tag
     downloadInfo.enqueueAction = enqueueAction
+    downloadInfo.identifier = identifier
+    return downloadInfo
+}
+
+fun CompletedDownload.toDownloadInfo(): DownloadInfo {
+    val downloadInfo = DownloadInfo()
+    downloadInfo.id = getUniqueId(url, file)
+    downloadInfo.url = url
+    downloadInfo.file = file
+    downloadInfo.group = group
+    downloadInfo.priority = Priority.NORMAL
+    downloadInfo.headers = headers.toMap()
+    downloadInfo.downloaded = downloaded
+    downloadInfo.total = total
+    downloadInfo.status = Status.COMPLETED
+    downloadInfo.networkType = NetworkType.ALL
+    downloadInfo.error = Error.NONE
+    downloadInfo.created = created
+    downloadInfo.tag = tag
+    downloadInfo.enqueueAction = EnqueueAction.REPLACE_EXISTING
     downloadInfo.identifier = identifier
     return downloadInfo
 }
