@@ -1,3 +1,7 @@
+Version 2.1.0-RC7
+- Added new Fetch methods addCompletedDownload(completedDownload, callback, callback) and addCompletedDownloads(completedDownloadsList, callback, callback).
+  These methods allows you to add a completed download to Fetch for management. Associated methods were also added for RxFetch.
+
 Version 2.1.0-RC6
 - Added new method onServerResponse(request: ServerRequest, response: Response) on Downloader class
 - Added new property responseHeaders on Downloader.Response class
