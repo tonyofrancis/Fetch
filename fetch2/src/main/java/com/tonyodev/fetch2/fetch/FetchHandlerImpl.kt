@@ -51,7 +51,7 @@ class FetchHandlerImpl(private val namespace: String,
 
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
         val existingDownload = databaseManager.getByFile(downloadInfo.file)
-        if (downloadInfo.enqueueAction == EnqueueAction.THROW_ERROR_IF_EXISTING && existingDownload != null) {
+        if (downloadInfo.enqueueAction == EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING && existingDownload != null) {
             throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST, FetchException.Code.REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
         } else if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
             if (isDownloading(existingDownload.id)) {
