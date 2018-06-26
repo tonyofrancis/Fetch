@@ -51,6 +51,26 @@ interface RxFetch : Fetch {
      * */
     fun enqueue(requests: List<Request>): Convertible<List<Request>>
 
+    /**
+     * Adds a completed download to Fetch for management. If Fetch is already managing another download with the same file as this completed download's
+     * file, Fetch will replace the already managed download with this completed download.
+     * @param completedDownload Completed Download
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return A Convertible object that allows you to get the result as on observable or
+     * flowable
+     * */
+    fun addCompletedDownload(completedDownload: CompletedDownload): Convertible<Download>
+
+    /**
+     * Adds a list of completed downloads to Fetch for management. If Fetch is already managing another download with the same file as this completed download's
+     * file, Fetch will replace the already managed download with this completed download.
+     * @param completedDownloads Completed Downloads list
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return A Convertible object that allows you to get the results as on observable or
+     * flowable
+     * */
+    fun addCompletedDownloads(completedDownloads: List<CompletedDownload>): Convertible<List<Download>>
+
     /** Updates and replaces an existing download's groupId, headers, priority and network type information.
      * If the download does not exist and the returned convertible object when converted
      * to an observable or flowable and subscribed to, will throw an exception indicating the

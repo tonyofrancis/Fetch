@@ -11,6 +11,8 @@ interface FetchHandler : Closeable {
     fun init()
     fun enqueue(request: Request): Download
     fun enqueue(requests: List<Request>): List<Download>
+    fun enqueueCompletedDownload(completedDownload: CompletedDownload): Download
+    fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download>
     fun pause(ids: IntArray): List<Download>
     fun pausedGroup(id: Int): List<Download>
     fun freeze()

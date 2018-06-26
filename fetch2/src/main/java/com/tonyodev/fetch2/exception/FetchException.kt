@@ -18,7 +18,8 @@ open class FetchException constructor(message: String,
         INVALID_STATUS,
         DOWNLOAD_NOT_FOUND,
         GLOBAL_CONFIGURATION_NOT_SET,
-        INVALID_CONTENT_MD5
+        INVALID_CONTENT_MD5,
+        REQUEST_WITH_FILE_PATH_ALREADY_EXIST;
     }
 
 }

@@ -5,6 +5,7 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
+import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
@@ -50,7 +51,9 @@ class FetchHandlerImpl(private val namespace: String,
 
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
         val existingDownload = databaseManager.getByFile(downloadInfo.file)
-        if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
+        if (downloadInfo.enqueueAction == EnqueueAction.THROW_ERROR_IF_EXISTING && existingDownload != null) {
+            throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST, FetchException.Code.REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+        } else if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
             if (isDownloading(existingDownload.id)) {
                 downloadManager.cancel(downloadInfo.id)
             }
@@ -80,6 +83,45 @@ class FetchHandlerImpl(private val namespace: String,
                 }
         startPriorityQueueIfNotStarted()
         return results
+    }
+
+    override fun enqueueCompletedDownload(completedDownload: CompletedDownload): Download {
+        val downloadInfo = completedDownload.toDownloadInfo()
+        downloadInfo.namespace = namespace
+        downloadInfo.status = Status.COMPLETED
+        prepareCompletedDownloadInfoForEnqueue(downloadInfo)
+        databaseManager.insert(downloadInfo)
+        startPriorityQueueIfNotStarted()
+        return downloadInfo
+    }
+
+    override fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download> {
+        val downloadInfoList = completedDownloads.map {
+            val downloadInfo = it.toDownloadInfo()
+            downloadInfo.namespace = namespace
+            downloadInfo.status = Status.COMPLETED
+            prepareCompletedDownloadInfoForEnqueue(downloadInfo)
+            downloadInfo
+        }
+        val results = databaseManager.insert(downloadInfoList)
+                .filter { it.second }
+                .map {
+                    logger.d("Enqueued CompletedDownload ${it.first}")
+                    it.first
+                }
+        startPriorityQueueIfNotStarted()
+        return results
+    }
+
+    private fun prepareCompletedDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
+        val existingDownload = databaseManager.getByFile(downloadInfo.file)
+        if (existingDownload != null) {
+            if (isDownloading(existingDownload.id)) {
+                downloadManager.cancel(downloadInfo.id)
+            }
+            deleteRequestTempFiles(fileTempDir, httpDownloader, existingDownload)
+            databaseManager.delete(existingDownload)
+        }
     }
 
     override fun pause(ids: IntArray): List<Download> {

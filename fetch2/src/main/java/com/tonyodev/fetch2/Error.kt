@@ -65,7 +65,11 @@ enum class Error constructor(
      * Ids must be unique.*/
     REQUEST_WITH_ID_ALREADY_EXIST(13),
 
-    /** Error 14 no longer needed by Fetch. removed*/
+    /** Indicates that a request in the Fetch database already has this file path. File Paths
+     * have to be unique for each request. This limitation maintains consistency and prevents data lose.
+     * Fetch cannot write data to two different downloads with the same file path.
+     * */
+    REQUEST_WITH_FILE_PATH_ALREADY_EXIST(14),
 
     /** Indicates that unsuccessful response was returned by the server. */
     REQUEST_NOT_SUCCESSFUL(15),
