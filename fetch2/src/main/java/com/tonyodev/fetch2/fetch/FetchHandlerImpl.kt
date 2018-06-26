@@ -5,6 +5,7 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
+import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
@@ -50,7 +51,9 @@ class FetchHandlerImpl(private val namespace: String,
 
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
         val existingDownload = databaseManager.getByFile(downloadInfo.file)
-        if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
+        if (downloadInfo.enqueueAction == EnqueueAction.THROW_ERROR_IF_EXISTING && existingDownload != null) {
+            throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST, FetchException.Code.REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+        } else if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
             if (isDownloading(existingDownload.id)) {
                 downloadManager.cancel(downloadInfo.id)
             }

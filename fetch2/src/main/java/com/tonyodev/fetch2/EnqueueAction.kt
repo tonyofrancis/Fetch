@@ -12,7 +12,10 @@ enum class EnqueueAction(val value: Int) {
 
     /** Appends a numeric value to the file name and increments it accordingly
      * Example: text.txt, text(1).txt, text(2).txt.*/
-    INCREMENT_FILE_NAME(1);
+    INCREMENT_FILE_NAME(1),
+
+    /** An error is thrown if an existing request/download is found with the same filename.*/
+    THROW_ERROR_IF_EXISTING(2);
 
     companion object {
 
@@ -20,6 +23,7 @@ enum class EnqueueAction(val value: Int) {
         fun valueOf(value: Int): EnqueueAction {
             return when (value) {
                 1 -> INCREMENT_FILE_NAME
+                2 -> THROW_ERROR_IF_EXISTING
                 else -> REPLACE_EXISTING
             }
         }

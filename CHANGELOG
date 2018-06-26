@@ -1,3 +1,7 @@
+Version 2.1.0-RC8
+- Added new Enqueue Action option: EnqueueAction.THROW_ERROR_IF_EXISTING. See java docs for details.
+- Added Error option : Error.REQUEST_WITH_FILE_PATH_ALREADY_EXIST
+
 Version 2.1.0-RC7
 - Added new Fetch methods addCompletedDownload(completedDownload, callback, callback) and addCompletedDownloads(completedDownloadsList, callback, callback).
   These methods allows you to add a completed download to Fetch for management. Associated methods were also added for RxFetch.
