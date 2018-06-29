@@ -71,17 +71,17 @@ interface RxFetch : Fetch {
      * */
     fun addCompletedDownloads(completedDownloads: List<CompletedDownload>): Convertible<List<Download>>
 
-    /** Updates and replaces an existing download's groupId, headers, priority and network type information.
-     * If the download does not exist and the returned convertible object when converted
-     * to an observable or flowable and subscribed to, will throw an exception indicating the
-     * error.
-     * @see com.tonyodev.fetch2.RequestInfo for more details.
-     * @param id Id of existing download
-     * @param requestInfo Request Info object
+    /** Updates an existing request.
+     * @see com.tonyodev.fetch2.Request for more details.
+     * @param oldRequestId Id of existing request/download
+     * @param newRequest Request object
+     * @param func Successful callback that the download will be returned on.
+     * @param func2 Failed callback that the error will be returned on.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return A Convertible object that allows you to get the results as on observable or
-     * flowable*/
-    fun updateRequest(id: Int, requestInfo: RequestInfo): Convertible<Download>
+     * flowable
+     * */
+    fun updateRequest(oldRequestId: Int, newRequest: Request): Convertible<Download>
 
     /**
      * Gets all downloads managed by this instance of Fetch.
