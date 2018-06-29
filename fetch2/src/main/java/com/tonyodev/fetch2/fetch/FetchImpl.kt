@@ -441,13 +441,13 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
-    override fun updateRequest(id: Int, requestInfo: RequestInfo, func: Func<Download>?,
+    override fun updateRequest(oldRequestId: Int, newRequest: Request, func: Func<Download>?,
                                func2: Func<Error>?): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val download = fetchHandler.updateRequest(id, requestInfo)
+                    val download = fetchHandler.updateRequest(oldRequestId, newRequest)
                     if (download != null && func != null) {
                         uiHandler.post {
                             func.call(download)
@@ -459,7 +459,7 @@ open class FetchImpl constructor(override val namespace: String,
                         }
                     }
                 } catch (e: Exception) {
-                    logger.e("Failed to update request with id $id", e)
+                    logger.e("Failed to update request with id $oldRequestId", e)
                     val error = getErrorFromMessage(e.message)
                     if (func2 != null) {
                         uiHandler.post {

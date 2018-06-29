@@ -128,7 +128,7 @@ open class RxFetchImpl(namespace: String,
         }
     }
 
-    override fun updateRequest(id: Int, requestInfo: RequestInfo): Convertible<Download> {
+    override fun updateRequest(oldRequestId: Int, newRequest: Request): Convertible<Download> {
         synchronized(lock) {
             throwExceptionIfClosed()
             val flowable = Flowable.just(Object())
@@ -137,7 +137,7 @@ open class RxFetchImpl(namespace: String,
                         throwExceptionIfClosed()
                         val download: Download?
                         try {
-                            download = fetchHandler.updateRequest(id, requestInfo)
+                            download = fetchHandler.updateRequest(oldRequestId, newRequest)
                         } catch (e: Exception) {
                             throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
                         }

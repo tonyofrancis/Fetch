@@ -217,17 +217,16 @@ interface Fetch {
      * */
     fun retry(vararg ids: Int): Fetch
 
-    /** Updates and replaces an existing download's groupId, headers, priority and network
-     * type information.
-     * @see com.tonyodev.fetch2.RequestInfo for more details.
-     * @param id Id of existing download
-     * @param requestInfo Request Info object
+    /** Updates an existing request.
+     * @see com.tonyodev.fetch2.Request for more details.
+     * @param oldRequestId Id of existing request/download
+     * @param newRequest Request object
      * @param func Successful callback that the download will be returned on.
      * @param func2 Failed callback that the error will be returned on.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun updateRequest(id: Int, requestInfo: RequestInfo, func: Func<Download>? = null,
+    fun updateRequest(oldRequestId: Int, newRequest: Request, func: Func<Download>? = null,
                       func2: Func<Error>? = null): Fetch
 
     /**

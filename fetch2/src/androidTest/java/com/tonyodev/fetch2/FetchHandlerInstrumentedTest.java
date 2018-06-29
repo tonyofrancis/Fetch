@@ -430,10 +430,10 @@ public class FetchHandlerInstrumentedTest {
 
         final int groupId = 1245;
         final Priority priority = Priority.LOW;
-        final RequestInfo requestInfo = new RequestInfo();
-        requestInfo.setGroupId(groupId);
-        requestInfo.setPriority(priority);
-        fetchHandler.updateRequest(download.getId(), requestInfo);
+        final Request request1 = new Request(request.getUrl(), request.getFile());
+        request1.setGroupId(groupId);
+        request1.setPriority(priority);
+        fetchHandler.updateRequest(download.getId(), request1);
 
         final Download downloadInfo = fetchHandler.getDownload(download.getId());
         assertNotNull(downloadInfo);

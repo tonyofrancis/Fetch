@@ -471,23 +471,26 @@ class FetchHandlerImpl(private val namespace: String,
         }
     }
 
-    override fun updateRequest(id: Int, requestInfo: RequestInfo): Download? {
-        startPriorityQueueIfNotStarted()
-        var downloadInfo = databaseManager.get(id)
-        if (downloadInfo != null) {
-            if (isDownloading(id)) {
-                cancelDownload(id)
+    override fun updateRequest(oldRequestId: Int, newRequest: Request): Download? {
+        val oldDownloadInfo = databaseManager.get(oldRequestId)
+        if (oldDownloadInfo != null) {
+            val newDownloadInfo = newRequest.toDownloadInfo()
+            newDownloadInfo.status = Status.QUEUED
+            newDownloadInfo.namespace = namespace
+            val enqueueAction = newDownloadInfo.enqueueAction
+            if (enqueueAction == EnqueueAction.REPLACE_EXISTING) {
+                if (newRequest.file == oldDownloadInfo.file) {
+                    newDownloadInfo.downloaded = oldDownloadInfo.downloaded
+                    newDownloadInfo.total = oldDownloadInfo.total
+                }
+                remove(intArrayOf(oldRequestId))
+            } else {
+                delete(intArrayOf(oldRequestId))
             }
-            downloadInfo = databaseManager.get(id)
-            if (downloadInfo != null) {
-                downloadInfo.group = requestInfo.groupId
-                downloadInfo.headers = requestInfo.headers
-                downloadInfo.priority = requestInfo.priority
-                downloadInfo.networkType = requestInfo.networkType
-                downloadInfo.enqueueAction = requestInfo.enqueueAction
-                databaseManager.update(downloadInfo)
-                return downloadInfo
-            }
+            prepareDownloadInfoForEnqueue(newDownloadInfo)
+            startPriorityQueueIfNotStarted()
+            databaseManager.insert(newDownloadInfo)
+            return newDownloadInfo
         }
         return null
     }
