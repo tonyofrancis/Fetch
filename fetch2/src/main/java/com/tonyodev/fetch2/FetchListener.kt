@@ -1,5 +1,7 @@
 package com.tonyodev.fetch2
 
+import com.tonyodev.fetch2core.DownloadBlock
+
 /**
  * Listener used by Fetch to report the different statuses and changes of the downloads
  * managed by Fetch
@@ -37,6 +39,18 @@ interface FetchListener {
      * about a specific download managed by Fetch.
      * */
     fun onError(download: Download)
+
+    /** Called several times to report the progress of a download block belonging to a download.
+     * The status of the download will be Status.DOWNLOADING. A download may be downloaded using
+     * several downloading blocks if using the Parallel File Downloader. The Sequential Downloader
+     * only uses 1 downloading block. See Downloader class documentation for more information.
+     * Note: This method is called on a background thread.
+     * @param download An immutable object which contains a current snapshot of all the information
+     * about a specific download managed by Fetch.
+     * @param downloadBlock download's downloading block information.
+     * @param totalBlocks total downloading blocks for a download.
+     * */
+    fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int)
 
     /** Called several times to report the progress of a download when downloading.
      * The status of the download will be Status.DOWNLOADING.

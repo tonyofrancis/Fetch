@@ -72,6 +72,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private var randomAccessFileOutput: RandomAccessFile? = null
 
+    private var totalDownloadBlocks = 0
+
     override fun run() {
         var openingResponse: Downloader.Response? = null
         try {
@@ -81,6 +83,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 total = openingResponse.contentLength
                 if (total > 0) {
                     fileSlices = getFileSliceList(openingResponse.code, openingRequest)
+                    totalDownloadBlocks = fileSlices.size
                     try {
                         downloader.disconnect(openingResponse)
                     } catch (e: Exception) {
@@ -94,6 +97,15 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                 download = downloadInfo,
                                 etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
                                 downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                        fileSlices.forEach {
+                            val downloadBlock = DownloadBlockInfo()
+                            downloadBlock.downloadId = it.id
+                            downloadBlock.blockPosition = it.position
+                            downloadBlock.downloadedBytes = it.downloaded
+                            downloadBlock.startByte = it.startBytes
+                            downloadBlock.endByte = it.endBytes
+                            delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                        }
                         if (sliceFileDownloadsList.isNotEmpty()) {
                             executorService = Executors.newFixedThreadPool(sliceFileDownloadsList.size)
                         }
@@ -422,6 +434,12 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         for (fileSlice in fileSlicesDownloadsList) {
             if (!interrupted && !terminated) {
                 executorService?.execute {
+                    val downloadBlock = DownloadBlockInfo()
+                    downloadBlock.downloadId = fileSlice.id
+                    downloadBlock.blockPosition = fileSlice.position
+                    downloadBlock.downloadedBytes = fileSlice.downloaded
+                    downloadBlock.startByte = fileSlice.startBytes
+                    downloadBlock.endByte = fileSlice.endBytes
                     val downloadRequest = getRequestForDownload(downloadInfo, fileSlice.startBytes + fileSlice.downloaded)
                     var downloadResponse: Downloader.Response? = null
                     try {
@@ -463,6 +481,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                             reportingStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
                                     if (hasReportingTimeElapsed) {
                                         saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded)
+                                        downloadBlock.downloadedBytes = fileSlice.downloaded
+                                        delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                                         reportingStartTime = System.nanoTime()
                                     }
                                     if (read != -1) {
@@ -472,6 +492,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                 }
                             }
                             saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded)
+                            downloadBlock.downloadedBytes = fileSlice.downloaded
+                            delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                         } else if (downloadResponse == null && !interrupted && !terminated) {
                             throw FetchException(EMPTY_RESPONSE_BODY,
                                     FetchException.Code.EMPTY_RESPONSE_BODY)

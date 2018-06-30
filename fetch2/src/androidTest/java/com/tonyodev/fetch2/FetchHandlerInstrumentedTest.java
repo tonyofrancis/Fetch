@@ -71,6 +71,7 @@ public class FetchHandlerInstrumentedTest {
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
+        final HandlerWrapper downloadBlockHandler = new HandlerWrapper("DownloadBlockHandler");
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
@@ -78,7 +79,7 @@ public class FetchHandlerInstrumentedTest {
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
-                listenerCoordinator, null, false);
+                listenerCoordinator, null, false, downloadBlockHandler);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handlerWrapper,
                 new DownloadProvider(databaseManager),

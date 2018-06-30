@@ -26,10 +26,11 @@ object FetchModulesBuilder {
         return synchronized(lock) {
             val holder = holderMap[fetchConfiguration.namespace]
             val modules = if (holder != null) {
-                Modules(fetchConfiguration, holder.handlerWrapper, holder.databaseManager,
+                Modules(fetchConfiguration, holder.handlerWrapper, holder.downloadBlockHandlerWrapper, holder.databaseManager,
                         holder.downloadManagerCoordinator, holder.listenerCoordinator)
             } else {
                 val newHandlerWrapper = HandlerWrapper(fetchConfiguration.namespace)
+                val newDownloadBlockHandlerWrapper = HandlerWrapper("${fetchConfiguration.namespace}-DownloadBlockHandler")
                 val newDatabaseManager = DatabaseManagerImpl(
                         context = fetchConfiguration.appContext,
                         namespace = fetchConfiguration.namespace,
@@ -37,10 +38,11 @@ object FetchModulesBuilder {
                         migrations = DownloadDatabase.getMigrations())
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
                 val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace)
-                val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager,
+                val newModules = Modules(fetchConfiguration, newHandlerWrapper,
+                        newDownloadBlockHandlerWrapper, newDatabaseManager,
                         downloadManagerCoordinator, listenerCoordinator)
                 holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager,
-                        downloadManagerCoordinator, listenerCoordinator)
+                        downloadManagerCoordinator, listenerCoordinator, newDownloadBlockHandlerWrapper)
                 newModules
             }
             modules.handlerWrapper.incrementUsageCounter()
@@ -55,6 +57,7 @@ object FetchModulesBuilder {
                 holder.handlerWrapper.decrementUsageCounter()
                 if (holder.handlerWrapper.usageCount() == 0) {
                     holder.handlerWrapper.close()
+                    holder.downloadBlockHandlerWrapper.close()
                     holder.listenerCoordinator.clearAll()
                     holder.databaseManager.close()
                     holder.downloadManagerCoordinator.clearAll()
@@ -67,10 +70,12 @@ object FetchModulesBuilder {
     data class Holder(val handlerWrapper: HandlerWrapper,
                       val databaseManager: DatabaseManager,
                       val downloadManagerCoordinator: DownloadManagerCoordinator,
-                      val listenerCoordinator: ListenerCoordinator)
+                      val listenerCoordinator: ListenerCoordinator,
+                      val downloadBlockHandlerWrapper: HandlerWrapper)
 
     class Modules constructor(val fetchConfiguration: FetchConfiguration,
                               val handlerWrapper: HandlerWrapper,
+                              downloadBlockHandlerWrapper: HandlerWrapper,
                               databaseManager: DatabaseManager,
                               downloadManagerCoordinator: DownloadManagerCoordinator,
                               val listenerCoordinator: ListenerCoordinator) {
@@ -98,7 +103,8 @@ object FetchModulesBuilder {
                     downloadManagerCoordinator = downloadManagerCoordinator,
                     listenerCoordinator = listenerCoordinator,
                     fileServerDownloader = fetchConfiguration.fileServerDownloader,
-                    md5CheckingEnabled = fetchConfiguration.md5CheckingEnabled)
+                    md5CheckingEnabled = fetchConfiguration.md5CheckingEnabled,
+                    downloadBlockHandlerWrapper = downloadBlockHandlerWrapper)
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,
                     downloadProvider = downloadProvider,

@@ -17,6 +17,7 @@ import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.Status;
+import com.tonyodev.fetch2core.DownloadBlock;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,6 +171,11 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     @Override
     public void onError(@NotNull Download download) {
         updateViews(download, 0, 0, download.getError());
+    }
+
+    @Override
+    public void onDownloadBlockUpdated(@NotNull Download download, @NotNull DownloadBlock downloadBlock, int totalBlocks) {
+
     }
 
     @Override

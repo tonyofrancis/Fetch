@@ -2,6 +2,7 @@ package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchListener
+import com.tonyodev.fetch2core.DownloadBlock
 import java.lang.ref.WeakReference
 
 class ListenerCoordinator(val namespace: String) {
@@ -69,6 +70,16 @@ class ListenerCoordinator(val namespace: String) {
                 listenerMap.values.forEach {
                     it.forEach {
                         it.get()?.onError(download)
+                    }
+                }
+            }
+        }
+
+        override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int) {
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.get()?.onDownloadBlockUpdated(download, downloadBlock, totalBlocks)
                     }
                 }
             }

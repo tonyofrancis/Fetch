@@ -1,6 +1,7 @@
 Version 2.1.0-RC12
 - Added new Status. Status.Added
 - Added new FetchListener method onAdded(download)
+- Added new FetchListener method onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int)
 
 Version 2.1.0-RC11
 - Fixed Database Migration issue that caused crash.
