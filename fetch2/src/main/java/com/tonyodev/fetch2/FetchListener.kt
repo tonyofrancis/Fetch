@@ -7,6 +7,13 @@ package com.tonyodev.fetch2
  * */
 interface FetchListener {
 
+    /** Called when a new download is added to Fetch. The status of the download will be
+     * Status.ADDED.
+     * @param download An immutable object which contains a current snapshot of all the information
+     * about a specific download managed by Fetch.
+     * */
+    fun onAdded(download: Download)
+
     /** Called when a new download is queued for download. The status of the download will be
      * Status.QUEUED.
      * @param download An immutable object which contains a current snapshot of all the information

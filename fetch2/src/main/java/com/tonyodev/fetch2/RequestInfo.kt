@@ -51,7 +51,7 @@ open class RequestInfo {
      * the downloading queue immediately after enqueue to be processed with its turn arrives
      * The default value is true.
      * If true, the download will have a status of Status.QUEUED. If false, the download will have a status
-     * of Status.NONE.
+     * of Status.ADDED.
      * */
     var downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
 

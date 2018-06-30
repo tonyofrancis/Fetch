@@ -45,7 +45,7 @@ class FetchHandlerImpl(private val namespace: String,
         downloadInfo.status = if (request.downloadOnEnqueue) {
             Status.QUEUED
         } else {
-            Status.NONE
+            Status.ADDED
         }
         prepareDownloadInfoForEnqueue(downloadInfo)
         databaseManager.insert(downloadInfo)
@@ -78,7 +78,7 @@ class FetchHandlerImpl(private val namespace: String,
             downloadInfo.status = if (it.downloadOnEnqueue) {
                 Status.QUEUED
             } else {
-                Status.NONE
+                Status.ADDED
             }
             prepareDownloadInfoForEnqueue(downloadInfo)
             downloadInfo
@@ -486,7 +486,7 @@ class FetchHandlerImpl(private val namespace: String,
             newDownloadInfo.status = if (newRequest.downloadOnEnqueue) {
                 Status.QUEUED
             } else {
-                Status.NONE
+                Status.ADDED
             }
             newDownloadInfo.namespace = namespace
             val enqueueAction = newDownloadInfo.enqueueAction
@@ -606,8 +606,10 @@ class FetchHandlerImpl(private val namespace: String,
                         }
                         Status.DOWNLOADING -> {
                         }
+                        Status.ADDED -> {
+                            listener.onAdded(it)
+                        }
                         Status.NONE -> {
-                            listener.onQueued(it, false)
                         }
                     }
                 }

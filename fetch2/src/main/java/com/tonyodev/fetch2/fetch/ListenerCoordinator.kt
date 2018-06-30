@@ -34,6 +34,16 @@ class ListenerCoordinator(val namespace: String) {
 
     val mainListener: FetchListener = object : FetchListener {
 
+        override fun onAdded(download: Download) {
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    it.forEach {
+                        it.get()?.onAdded(download)
+                    }
+                }
+            }
+        }
+
         override fun onQueued(download: Download, waitingOnNetwork: Boolean) {
             synchronized(lock) {
                 listenerMap.values.forEach {

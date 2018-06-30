@@ -114,6 +114,10 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
                 progressTextView.setText(R.string.queued);
                 break;
             }
+            case ADDED: {
+                progressTextView.setText(R.string.added);
+                break;
+            }
             case DOWNLOADING:
             case COMPLETED: {
                 if (progress == -1) {
@@ -198,4 +202,10 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         updateViews(download, 0, 0, null);
     }
 
+    @Override
+    public void onAdded(@NotNull Download download) {
+        setTitleView(download.getFile());
+        setProgressView(download.getStatus(), download.getProgress());
+        updateViews(download, 0, 0, null);
+    }
 }
