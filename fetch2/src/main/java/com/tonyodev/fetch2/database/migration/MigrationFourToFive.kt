@@ -7,7 +7,7 @@ class MigrationFourToFive : Migration(4, 5) {
 
     override fun migrate(database: SupportSQLiteDatabase) {
         database.execSQL("ALTER TABLE '${DownloadDatabase.TABLE_NAME}' "
-                + "ADD COLUMN '${DownloadDatabase.COLUMN_DOWNLOAD_ON_ENQUEUE}' INTEGER DEFAULT 1")
+                + "ADD COLUMN '${DownloadDatabase.COLUMN_DOWNLOAD_ON_ENQUEUE}' INTEGER NOT NULL DEFAULT 1")
     }
 
 }
