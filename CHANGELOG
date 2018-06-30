@@ -1,3 +1,22 @@
+Version 2.1.0-RC11
+- Fixed Database Migration issue that caused crash.
+- Added new field downloadOnEnqueue on Request and Download class.
+  Use: Action used by Fetch when enqueuing a request to determine if to place the new request in
+  the downloading queue immediately after enqueue to be processed with its turn arrives.
+  The default value is true. If true, the download will have a status of Status.QUEUED.
+  If false, the download will have a status of Status.NONE.
+
+Version 2.1.0-RC10
+- Updated Fetch.updateRequest method.
+
+Version 2.1.0-RC9
+- Renamed enqueue option EnqueueAction.THROW_ERROR_IF_EXISTING to EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING
+  to better reflect the action intention.
+
+Version 2.1.0-RC8
+- Added new Enqueue Action option: EnqueueAction.THROW_ERROR_IF_EXISTING. See java docs for details.
+- Added Error option : Error.REQUEST_WITH_FILE_PATH_ALREADY_EXIST
+
 Version 2.1.0-RC7
 - Added new Fetch methods addCompletedDownload(completedDownload, callback, callback) and addCompletedDownloads(completedDownloadsList, callback, callback).
   These methods allows you to add a completed download to Fetch for management. Associated methods were also added for RxFetch.

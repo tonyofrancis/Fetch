@@ -5,6 +5,7 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
+import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
@@ -41,7 +42,11 @@ class FetchHandlerImpl(private val namespace: String,
     override fun enqueue(request: Request): Download {
         val downloadInfo = request.toDownloadInfo()
         downloadInfo.namespace = namespace
-        downloadInfo.status = Status.QUEUED
+        downloadInfo.status = if (request.downloadOnEnqueue) {
+            Status.QUEUED
+        } else {
+            Status.NONE
+        }
         prepareDownloadInfoForEnqueue(downloadInfo)
         databaseManager.insert(downloadInfo)
         startPriorityQueueIfNotStarted()
@@ -50,7 +55,9 @@ class FetchHandlerImpl(private val namespace: String,
 
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
         val existingDownload = databaseManager.getByFile(downloadInfo.file)
-        if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
+        if (downloadInfo.enqueueAction == EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING && existingDownload != null) {
+            throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST, FetchException.Code.REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+        } else if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
             if (isDownloading(existingDownload.id)) {
                 downloadManager.cancel(downloadInfo.id)
             }
@@ -68,7 +75,11 @@ class FetchHandlerImpl(private val namespace: String,
         val downloadInfoList = requests.map {
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
-            downloadInfo.status = Status.QUEUED
+            downloadInfo.status = if (it.downloadOnEnqueue) {
+                Status.QUEUED
+            } else {
+                Status.NONE
+            }
             prepareDownloadInfoForEnqueue(downloadInfo)
             downloadInfo
         }
@@ -468,23 +479,30 @@ class FetchHandlerImpl(private val namespace: String,
         }
     }
 
-    override fun updateRequest(id: Int, requestInfo: RequestInfo): Download? {
-        startPriorityQueueIfNotStarted()
-        var downloadInfo = databaseManager.get(id)
-        if (downloadInfo != null) {
-            if (isDownloading(id)) {
-                cancelDownload(id)
+    override fun updateRequest(oldRequestId: Int, newRequest: Request): Download? {
+        val oldDownloadInfo = databaseManager.get(oldRequestId)
+        if (oldDownloadInfo != null) {
+            val newDownloadInfo = newRequest.toDownloadInfo()
+            newDownloadInfo.status = if (newRequest.downloadOnEnqueue) {
+                Status.QUEUED
+            } else {
+                Status.NONE
             }
-            downloadInfo = databaseManager.get(id)
-            if (downloadInfo != null) {
-                downloadInfo.group = requestInfo.groupId
-                downloadInfo.headers = requestInfo.headers
-                downloadInfo.priority = requestInfo.priority
-                downloadInfo.networkType = requestInfo.networkType
-                downloadInfo.enqueueAction = requestInfo.enqueueAction
-                databaseManager.update(downloadInfo)
-                return downloadInfo
+            newDownloadInfo.namespace = namespace
+            val enqueueAction = newDownloadInfo.enqueueAction
+            if (enqueueAction == EnqueueAction.REPLACE_EXISTING) {
+                if (newRequest.file == oldDownloadInfo.file) {
+                    newDownloadInfo.downloaded = oldDownloadInfo.downloaded
+                    newDownloadInfo.total = oldDownloadInfo.total
+                }
+                remove(intArrayOf(oldRequestId))
+            } else {
+                delete(intArrayOf(oldRequestId))
             }
+            prepareDownloadInfoForEnqueue(newDownloadInfo)
+            startPriorityQueueIfNotStarted()
+            databaseManager.insert(newDownloadInfo)
+            return newDownloadInfo
         }
         return null
     }
@@ -589,6 +607,7 @@ class FetchHandlerImpl(private val namespace: String,
                         Status.DOWNLOADING -> {
                         }
                         Status.NONE -> {
+                            listener.onQueued(it, false)
                         }
                     }
                 }

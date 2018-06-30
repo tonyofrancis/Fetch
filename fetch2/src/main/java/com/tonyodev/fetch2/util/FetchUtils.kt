@@ -19,6 +19,7 @@ fun canPauseDownload(download: Download): Boolean {
 
 fun canResumeDownload(download: Download): Boolean {
     return when (download.status) {
+        Status.NONE,
         Status.PAUSED -> true
         else -> false
     }
@@ -26,6 +27,7 @@ fun canResumeDownload(download: Download): Boolean {
 
 fun canRetryDownload(download: Download): Boolean {
     return when (download.status) {
+        Status.NONE,
         Status.FAILED,
         Status.CANCELLED -> true
         else -> false
@@ -35,7 +37,6 @@ fun canRetryDownload(download: Download): Boolean {
 fun canCancelDownload(download: Download): Boolean {
     return when (download.status) {
         Status.COMPLETED,
-        Status.NONE,
         Status.FAILED -> false
         else -> true
     }

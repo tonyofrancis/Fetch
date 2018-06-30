@@ -60,19 +60,18 @@ fun Fetch.enqueue(requests: List<Request>, func: ((List<Request>) -> Unit)?, fun
     })
 }
 
-/** Updates and replaces an existing download's groupId, headers, priority and network
- * type information.
- * @see com.tonyodev.fetch2.RequestInfo for more details.
- * @param id Id of existing download
- * @param requestInfo Request Info object
+/** Updates an existing request.
+ * @see com.tonyodev.fetch2.Request for more details.
+ * @param oldRequestId Id of existing download
+ * @param newRequest Request Info object
  * @param func Successful callback that the download will be returned on.
  * @param func2 Failed callback that the error will be returned on.
  * @throws FetchException if this instance of Fetch has been closed.
  * @return Instance
  * */
-fun Fetch.updateRequest(id: Int, requestInfo: RequestInfo, func: ((Download) -> Unit)?,
+fun Fetch.updateRequest(oldRequestId: Int, newRequest: Request, func: ((Download) -> Unit)?,
                         func2: ((Error) -> Unit)?): Fetch {
-    return updateRequest(id, requestInfo, object : Func<Download> {
+    return updateRequest(oldRequestId, newRequest, object : Func<Download> {
         override fun call(t: Download) {
             func?.invoke(t)
         }
