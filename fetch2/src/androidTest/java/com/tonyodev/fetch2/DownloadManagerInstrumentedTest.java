@@ -23,6 +23,7 @@ import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.FetchCoreDefaults;
 import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FetchLogger;
+import com.tonyodev.fetch2core.HandlerWrapper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -58,6 +59,7 @@ public class DownloadManagerInstrumentedTest {
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
+        final HandlerWrapper handlerWrapper = new HandlerWrapper("DownloadBlockHandler");
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
@@ -65,7 +67,7 @@ public class DownloadManagerInstrumentedTest {
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
-                listenerCoordinator, null, false);
+                listenerCoordinator, null, false, handlerWrapper);
     }
 
     @After

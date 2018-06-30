@@ -11,10 +11,7 @@ import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.getRequestForDownload
 import com.tonyodev.fetch2.util.toDownloadInfo
-import com.tonyodev.fetch2core.Downloader
-import com.tonyodev.fetch2core.FileServerDownloader
-import com.tonyodev.fetch2core.Logger
-import com.tonyodev.fetch2core.isFetchFileServerUrl
+import com.tonyodev.fetch2core.*
 import java.util.concurrent.Executors
 
 class DownloadManagerImpl(private val httpDownloader: Downloader,
@@ -30,7 +27,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val downloadManagerCoordinator: DownloadManagerCoordinator,
                           private val listenerCoordinator: ListenerCoordinator,
                           private val fileServerDownloader: FileServerDownloader?,
-                          private val md5CheckingEnabled: Boolean) : DownloadManager {
+                          private val md5CheckingEnabled: Boolean,
+                          private val downloadBlockHandlerWrapper: HandlerWrapper) : DownloadManager {
 
     private val lock = Object()
     private val executor = Executors.newFixedThreadPool(concurrentLimit)
@@ -237,7 +235,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                 uiHandler = uiHandler,
                 fetchListener = listenerCoordinator.mainListener,
                 logger = logger,
-                retryOnNetworkGain = retryOnNetworkGain)
+                retryOnNetworkGain = retryOnNetworkGain,
+                downloadBlockHandlerWrapper = downloadBlockHandlerWrapper)
     }
 
 }

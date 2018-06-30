@@ -31,7 +31,10 @@ enum class Status constructor(val value: Int) {
     REMOVED(7),
 
     /** Indicates when a download has been deleted and is no longer managed by Fetch.*/
-    DELETED(8);
+    DELETED(8),
+
+    /** Indicates when a download has been Added to Fetcj for management.*/
+    ADDED(9);
 
     companion object {
 
@@ -47,6 +50,7 @@ enum class Status constructor(val value: Int) {
                 6 -> FAILED
                 7 -> REMOVED
                 8 -> DELETED
+                9 -> ADDED
                 else -> NONE
             }
         }

@@ -43,8 +43,12 @@ open class FetchImpl constructor(override val namespace: String,
                         }
                     }
                     uiHandler.post {
-                        listenerCoordinator.mainListener.onQueued(download, false)
-                        logger.d("Queued $download for download")
+                        listenerCoordinator.mainListener.onAdded(download)
+                        logger.d("Added Download $download")
+                        if (download.status == Status.QUEUED) {
+                            listenerCoordinator.mainListener.onQueued(download, false)
+                            logger.d("Queued $download for download")
+                        }
                     }
                 } catch (e: Exception) {
                     logger.e("Failed to enqueue request $request", e)
@@ -73,8 +77,12 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                     uiHandler.post {
                         downloads.forEach {
-                            listenerCoordinator.mainListener.onQueued(it, false)
-                            logger.d("Queued $it for download")
+                            listenerCoordinator.mainListener.onAdded(it)
+                            logger.d("Added $it")
+                            if (it.status == Status.QUEUED) {
+                                listenerCoordinator.mainListener.onQueued(it, false)
+                                logger.d("Queued $it for download")
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -168,6 +176,8 @@ open class FetchImpl constructor(override val namespace: String,
                     val downloads = fetchHandler.resume(ids)
                     uiHandler.post {
                         downloads.forEach {
+                            logger.d("Queued download $it")
+                            listenerCoordinator.mainListener.onQueued(it, false)
                             logger.d("Resumed download $it")
                             listenerCoordinator.mainListener.onResumed(it)
                         }

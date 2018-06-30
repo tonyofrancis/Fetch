@@ -17,6 +17,7 @@ import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.Status;
+import com.tonyodev.fetch2core.DownloadBlock;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +115,10 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
                 progressTextView.setText(R.string.queued);
                 break;
             }
+            case ADDED: {
+                progressTextView.setText(R.string.added);
+                break;
+            }
             case DOWNLOADING:
             case COMPLETED: {
                 if (progress == -1) {
@@ -169,6 +174,11 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     @Override
+    public void onDownloadBlockUpdated(@NotNull Download download, @NotNull DownloadBlock downloadBlock, int totalBlocks) {
+
+    }
+
+    @Override
     public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
         updateViews(download, etaInMilliseconds, downloadedBytesPerSecond, null);
     }
@@ -198,4 +208,10 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         updateViews(download, 0, 0, null);
     }
 
+    @Override
+    public void onAdded(@NotNull Download download) {
+        setTitleView(download.getFile());
+        setProgressView(download.getStatus(), download.getProgress());
+        updateViews(download, 0, 0, null);
+    }
 }

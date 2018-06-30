@@ -13,6 +13,7 @@ import android.widget.TextView;
 import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2core.DownloadBlock;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -24,8 +25,7 @@ public class ProgressFragment extends Fragment implements FetchListener {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_progress, container, false);
     }
 
@@ -78,6 +78,11 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     @Override
+    public void onDownloadBlockUpdated(@NotNull Download download, @NotNull DownloadBlock downloadBlock, int totalBlocks) {
+
+    }
+
+    @Override
     public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
         updateProgressForDownload(download);
     }
@@ -107,4 +112,8 @@ public class ProgressFragment extends Fragment implements FetchListener {
         updateProgressForDownload(download);
     }
 
+    @Override
+    public void onAdded(@NotNull Download download) {
+        updateProgressForDownload(download);
+    }
 }

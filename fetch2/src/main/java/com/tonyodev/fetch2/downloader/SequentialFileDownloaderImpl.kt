@@ -31,6 +31,13 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
     private var downloadInfo = initialDownload.toDownloadInfo()
     private var averageDownloadedBytesPerSecond = 0.0
     private val movingAverageCalculator = AverageCalculator(5)
+    private val downloadBlock = {
+        val downloadBlock = DownloadBlockInfo()
+        downloadBlock.blockPosition = 1
+        downloadBlock.downloadId = initialDownload.id
+        downloadBlock
+    }()
+    private val totalDownloadBlocks = 1
 
     override val download: Download
         get () {
@@ -73,6 +80,9 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         input = BufferedInputStream(response.byteStream, downloadBufferSizeBytes)
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
+                        downloadBlock.downloadedBytes = downloaded
+                        downloadBlock.startByte = seekPosition
+                        downloadBlock.endByte = total
                         if (!terminated) {
                             delegate?.onStarted(
                                     download = downloadInfo,
@@ -95,7 +105,10 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             if (!completedDownload) {
                 downloadInfo.downloaded = downloaded
                 downloadInfo.total = total
+                downloadBlock.downloadedBytes = downloaded
+                downloadBlock.endByte = total
                 if (!terminated) {
+                    delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                     delegate?.onProgress(
                             download = downloadInfo,
                             etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
@@ -128,6 +141,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 downloadInfo.downloaded = downloaded
                 downloadInfo.total = total
                 downloadInfo.error = error
+                downloadBlock.downloadedBytes = downloaded
+                downloadBlock.endByte = total
                 if (!terminated) {
                     delegate?.onError(download = downloadInfo)
                 }
@@ -178,6 +193,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 downloaded += read
                 downloadInfo.downloaded = downloaded
                 downloadInfo.total = total
+                downloadBlock.downloadedBytes = downloaded
+                downloadBlock.endByte = total
                 downloadSpeedStopTime = System.nanoTime()
                 val downloadSpeedCheckTimeElapsed = hasIntervalTimeElapsed(downloadSpeedStartTime,
                         downloadSpeedStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
@@ -206,6 +223,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         delegate?.saveDownloadProgress(downloadInfo)
                     }
                     if (!terminated) {
+                        downloadBlock.downloadedBytes = downloaded
+                        delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                         delegate?.onProgress(
                                 download = downloadInfo,
                                 etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
@@ -230,9 +249,12 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             completedDownload = true
             downloadInfo.downloaded = downloaded
             downloadInfo.total = total
+            downloadBlock.downloadedBytes = downloaded
+            downloadBlock.endByte = total
             if (!terminated) {
                 if (md5CheckingEnabled) {
                     if (downloader.verifyContentMD5(response.request, response.md5)) {
+                        delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                         delegate?.onProgress(
                                 download = downloadInfo,
                                 etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
@@ -243,6 +265,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         throw FetchException(INVALID_CONTENT_MD5, FetchException.Code.INVALID_CONTENT_MD5)
                     }
                 } else {
+                    delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                     delegate?.onProgress(
                             download = downloadInfo,
                             etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,

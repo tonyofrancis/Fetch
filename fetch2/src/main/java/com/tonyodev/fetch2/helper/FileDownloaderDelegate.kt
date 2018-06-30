@@ -6,6 +6,8 @@ import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.FileDownloader
 import com.tonyodev.fetch2.util.defaultNoError
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.HandlerWrapper
 import com.tonyodev.fetch2core.Logger
 
 
@@ -13,7 +15,8 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                              private val uiHandler: Handler,
                              private val fetchListener: FetchListener,
                              private val logger: Logger,
-                             private val retryOnNetworkGain: Boolean) : FileDownloader.Delegate {
+                             private val retryOnNetworkGain: Boolean,
+                             private val downloadBlockHandlerWrapper: HandlerWrapper) : FileDownloader.Delegate {
 
     override fun onStarted(download: Download, etaInMilliseconds: Long, downloadedBytesPerSecond: Long) {
         val downloadInfo = download as DownloadInfo
@@ -43,6 +46,23 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         } catch (e: Exception) {
             logger.e("DownloadManagerDelegate", e)
         }
+    }
+
+    private val downloadBlockProgressRunnable = object : DownloadBlockReportingRunnable() {
+        override fun run() {
+            try {
+                fetchListener.onDownloadBlockUpdated(download, downloadBlock, totalBlocks)
+            } catch (e: Exception) {
+                logger.e("DownloadManagerDelegate", e)
+            }
+        }
+    }
+
+    override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int) {
+        downloadBlockProgressRunnable.download = download
+        downloadBlockProgressRunnable.downloadBlock = downloadBlock
+        downloadBlockProgressRunnable.totalBlocks = totalBlocks
+        downloadBlockHandlerWrapper.post(downloadBlockProgressRunnable)
     }
 
     override fun onError(download: Download) {

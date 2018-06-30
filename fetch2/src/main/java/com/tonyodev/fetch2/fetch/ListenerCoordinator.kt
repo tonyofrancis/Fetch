@@ -2,6 +2,7 @@ package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchListener
+import com.tonyodev.fetch2core.DownloadBlock
 import java.lang.ref.WeakReference
 
 class ListenerCoordinator(val namespace: String) {
@@ -34,11 +35,33 @@ class ListenerCoordinator(val namespace: String) {
 
     val mainListener: FetchListener = object : FetchListener {
 
+        override fun onAdded(download: Download) {
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onAdded(download)
+                        }
+                    }
+                }
+            }
+        }
+
         override fun onQueued(download: Download, waitingOnNetwork: Boolean) {
             synchronized(lock) {
                 listenerMap.values.forEach {
-                    it.forEach {
-                        it.get()?.onQueued(download, waitingOnNetwork)
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onQueued(download, waitingOnNetwork)
+                        }
                     }
                 }
             }
@@ -47,8 +70,14 @@ class ListenerCoordinator(val namespace: String) {
         override fun onCompleted(download: Download) {
             synchronized(lock) {
                 listenerMap.values.forEach {
-                    it.forEach {
-                        it.get()?.onCompleted(download)
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onCompleted(download)
+                        }
                     }
                 }
             }
@@ -57,8 +86,30 @@ class ListenerCoordinator(val namespace: String) {
         override fun onError(download: Download) {
             synchronized(lock) {
                 listenerMap.values.forEach {
-                    it.forEach {
-                        it.get()?.onError(download)
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onError(download)
+                        }
+                    }
+                }
+            }
+        }
+
+        override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int) {
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onDownloadBlockUpdated(download, downloadBlock, totalBlocks)
+                        }
                     }
                 }
             }
@@ -67,8 +118,14 @@ class ListenerCoordinator(val namespace: String) {
         override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
             synchronized(lock) {
                 listenerMap.values.forEach {
-                    it.forEach {
-                        it.get()?.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
+                        }
                     }
                 }
             }
@@ -77,8 +134,14 @@ class ListenerCoordinator(val namespace: String) {
         override fun onPaused(download: Download) {
             synchronized(lock) {
                 listenerMap.values.forEach {
-                    it.forEach {
-                        it.get()?.onPaused(download)
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onPaused(download)
+                        }
                     }
                 }
             }
@@ -87,8 +150,14 @@ class ListenerCoordinator(val namespace: String) {
         override fun onResumed(download: Download) {
             synchronized(lock) {
                 listenerMap.values.forEach {
-                    it.forEach {
-                        it.get()?.onResumed(download)
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onResumed(download)
+                        }
                     }
                 }
             }
@@ -97,8 +166,14 @@ class ListenerCoordinator(val namespace: String) {
         override fun onCancelled(download: Download) {
             synchronized(lock) {
                 listenerMap.values.forEach {
-                    it.forEach {
-                        it.get()?.onCancelled(download)
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onCancelled(download)
+                        }
                     }
                 }
             }
@@ -107,8 +182,14 @@ class ListenerCoordinator(val namespace: String) {
         override fun onRemoved(download: Download) {
             synchronized(lock) {
                 listenerMap.values.forEach {
-                    it.forEach {
-                        it.get()?.onRemoved(download)
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onRemoved(download)
+                        }
                     }
                 }
             }
@@ -117,8 +198,14 @@ class ListenerCoordinator(val namespace: String) {
         override fun onDeleted(download: Download) {
             synchronized(lock) {
                 listenerMap.values.forEach {
-                    it.forEach {
-                        it.get()?.onDeleted(download)
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onDeleted(download)
+                        }
                     }
                 }
             }

@@ -39,8 +39,12 @@ open class RxFetchImpl(namespace: String,
                         try {
                             download = fetchHandler.enqueue(it)
                             uiHandler.post {
-                                listenerCoordinator.mainListener.onQueued(download, false)
-                                logger.d("Queued $download for download")
+                                listenerCoordinator.mainListener.onAdded(download)
+                                logger.d("Added Download $download")
+                                if (download.status == Status.QUEUED) {
+                                    listenerCoordinator.mainListener.onQueued(download, false)
+                                    logger.d("Queued $download for download")
+                                }
                             }
                         } catch (e: Exception) {
                             throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
@@ -64,8 +68,12 @@ open class RxFetchImpl(namespace: String,
                             downloads = fetchHandler.enqueue(it)
                             uiHandler.post {
                                 downloads.forEach {
-                                    listenerCoordinator.mainListener.onQueued(it, false)
-                                    logger.d("Queued $it for download")
+                                    listenerCoordinator.mainListener.onAdded(it)
+                                    logger.d("Added $it")
+                                    if (it.status == Status.QUEUED) {
+                                        listenerCoordinator.mainListener.onQueued(it, false)
+                                        logger.d("Queued $it for download")
+                                    }
                                 }
                             }
                         } catch (e: Exception) {
