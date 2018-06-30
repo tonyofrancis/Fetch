@@ -46,6 +46,15 @@ open class RequestInfo {
      * */
     var enqueueAction = defaultEnqueueAction
 
+    /**
+     * Action used by Fetch when enqueuing a request to determine if to place the new request in
+     * the downloading queue immediately after enqueue to be processed with its turn arrives
+     * The default value is true.
+     * If true, the download will have a status of Status.QUEUED. If false, the download will have a status
+     * of Status.NONE.
+     * */
+    var downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -57,6 +66,7 @@ open class RequestInfo {
         if (networkType != other.networkType) return false
         if (tag != other.tag) return false
         if (enqueueAction != other.enqueueAction) return false
+        if (downloadOnEnqueue != other.downloadOnEnqueue) return false
         return true
     }
 
@@ -68,12 +78,13 @@ open class RequestInfo {
         result = 31 * result + networkType.hashCode()
         result = 31 * result + (tag?.hashCode() ?: 0)
         result = 31 * result + enqueueAction.hashCode()
+        result = 31 * result + downloadOnEnqueue.hashCode()
         return result
     }
 
     override fun toString(): String {
         return "RequestInfo(identifier=$identifier, groupId=$groupId, headers=$headers, priority=$priority, " +
-                "networkType=$networkType, tag=$tag, enqueueAction=$enqueueAction)"
+                "networkType=$networkType, tag=$tag, enqueueAction=$enqueueAction, downloadOnEnqueue=$downloadOnEnqueue)"
     }
 
 }

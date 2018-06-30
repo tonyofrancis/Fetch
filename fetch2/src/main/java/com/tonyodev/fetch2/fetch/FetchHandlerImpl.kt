@@ -42,7 +42,11 @@ class FetchHandlerImpl(private val namespace: String,
     override fun enqueue(request: Request): Download {
         val downloadInfo = request.toDownloadInfo()
         downloadInfo.namespace = namespace
-        downloadInfo.status = Status.QUEUED
+        downloadInfo.status = if (request.downloadOnEnqueue) {
+            Status.QUEUED
+        } else {
+            Status.NONE
+        }
         prepareDownloadInfoForEnqueue(downloadInfo)
         databaseManager.insert(downloadInfo)
         startPriorityQueueIfNotStarted()
@@ -71,7 +75,11 @@ class FetchHandlerImpl(private val namespace: String,
         val downloadInfoList = requests.map {
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
-            downloadInfo.status = Status.QUEUED
+            downloadInfo.status = if (it.downloadOnEnqueue) {
+                Status.QUEUED
+            } else {
+                Status.NONE
+            }
             prepareDownloadInfoForEnqueue(downloadInfo)
             downloadInfo
         }
@@ -475,7 +483,11 @@ class FetchHandlerImpl(private val namespace: String,
         val oldDownloadInfo = databaseManager.get(oldRequestId)
         if (oldDownloadInfo != null) {
             val newDownloadInfo = newRequest.toDownloadInfo()
-            newDownloadInfo.status = Status.QUEUED
+            newDownloadInfo.status = if (newRequest.downloadOnEnqueue) {
+                Status.QUEUED
+            } else {
+                Status.NONE
+            }
             newDownloadInfo.namespace = namespace
             val enqueueAction = newDownloadInfo.enqueueAction
             if (enqueueAction == EnqueueAction.REPLACE_EXISTING) {
@@ -595,6 +607,7 @@ class FetchHandlerImpl(private val namespace: String,
                         Status.DOWNLOADING -> {
                         }
                         Status.NONE -> {
+                            listener.onQueued(it, false)
                         }
                     }
                 }

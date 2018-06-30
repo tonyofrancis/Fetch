@@ -83,4 +83,13 @@ interface Download {
     /** Can be used to set your own unique identifier for the request.*/
     val identifier: Long
 
+    /**
+     * Action used by Fetch when enqueuing a request to determine if to place the new request in
+     * the downloading queue immediately after enqueue to be processed with its turn arrives
+     * The default value is true.
+     * If true, the download will have a status of Status.QUEUED. If false, the download will have a status
+     * of Status.NONE.
+     * */
+    val downloadOnEnqueue: Boolean
+
 }
