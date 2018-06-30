@@ -45,6 +45,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             return downloadInfo
         }
 
+    @Volatile
     private var downloaded = 0L
 
     private var total = -1L
@@ -64,6 +65,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private val lock = Object()
 
+    @Volatile
     private var throwable: Throwable? = null
 
     private var fileSlices = emptyList<FileSlice>()
@@ -114,6 +116,13 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
                         if (!interrupted && !terminated) {
+                            var fileSlicesTotal = 0L
+                            fileSlices.forEach {
+                                fileSlicesTotal += it.downloaded
+                            }
+                            if (fileSlicesTotal != total) {
+                                throwable = FetchException(DOWNLOAD_INCOMPLETE, FetchException.Code.DOWNLOAD_INCOMPLETE)
+                            }
                             throwExceptionIfFound()
                             completedDownload = true
                             deleteAllTempFiles()
