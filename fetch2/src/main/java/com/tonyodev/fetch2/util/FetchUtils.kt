@@ -6,8 +6,8 @@ import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2core.Downloader
 import com.tonyodev.fetch2.FetchConfiguration
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2core.GET_REQUEST_METHOD
 import com.tonyodev.fetch2core.getFile
-
 
 fun canPauseDownload(download: Download): Boolean {
     return when (download.status) {
@@ -43,9 +43,14 @@ fun canCancelDownload(download: Download): Boolean {
     }
 }
 
+fun getRequestForDownload(download: Download, requestMethod: String = GET_REQUEST_METHOD): Downloader.ServerRequest {
+    return getRequestForDownload(download, -1, -1, requestMethod)
+}
+
 fun getRequestForDownload(download: Download,
                           rangeStart: Long = -1,
-                          rangeEnd: Long = -1): Downloader.ServerRequest {
+                          rangeEnd: Long = -1,
+                          requestMethod: String = GET_REQUEST_METHOD): Downloader.ServerRequest {
     val start = if (rangeStart == -1L) 0 else rangeStart
     val end = if (rangeEnd == -1L) "" else rangeEnd.toString()
     val headers = download.headers.toMutableMap()
@@ -56,7 +61,8 @@ fun getRequestForDownload(download: Download,
             headers = headers,
             file = download.file,
             tag = download.tag,
-            identifier = download.identifier)
+            identifier = download.identifier,
+            requestMethod = requestMethod)
 }
 
 fun deleteRequestTempFiles(fileTempDir: String,

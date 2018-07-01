@@ -8,6 +8,7 @@ import okhttp3.Request
 import okhttp3.Response
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.HttpURLConnection
 import java.util.Collections
 import java.util.concurrent.TimeUnit
 
@@ -43,6 +44,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
     override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
         val okHttpRequestBuilder = Request.Builder()
                 .url(request.url)
+                .method(request.requestMethod, null)
 
         request.headers.entries.forEach {
             okHttpRequestBuilder.addHeader(it.key, it.value)
@@ -52,17 +54,23 @@ open class OkHttpDownloader @JvmOverloads constructor(
         val okHttpResponse = client.newCall(okHttpRequest).execute()
         val code = okHttpResponse.code()
         val success = okHttpResponse.isSuccessful
-        val contentLength = okHttpResponse.body()?.contentLength() ?: -1L
+        var contentLength = okHttpResponse.body()?.contentLength() ?: -1L
         val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
         val md5 = okHttpResponse.header("Content-MD5") ?: ""
         val responseHeaders = mutableMapOf<String, List<String>>()
-
         val okResponseHeaders = okHttpResponse.headers()
         for (i in 0 until okResponseHeaders.size()) {
             val key = okResponseHeaders.name(i)
             val values = okResponseHeaders.values(key)
             responseHeaders[key] = values
         }
+
+        if (contentLength < 1) {
+            contentLength = responseHeaders["Content-Length"]?.firstOrNull()?.toLong() ?: -1L
+        }
+
+        val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
+                responseHeaders["Accept-Ranges"]?.firstOrNull() == "bytes"
 
         onServerResponse(request, Downloader.Response(
                 code = code,
@@ -71,7 +79,8 @@ open class OkHttpDownloader @JvmOverloads constructor(
                 byteStream = null,
                 request = request,
                 md5 = md5,
-                responseHeaders = responseHeaders))
+                responseHeaders = responseHeaders,
+                acceptsRanges = acceptsRanges))
 
         val response = Downloader.Response(
                 code = code,
@@ -80,7 +89,8 @@ open class OkHttpDownloader @JvmOverloads constructor(
                 byteStream = byteStream,
                 request = request,
                 md5 = md5,
-                responseHeaders = responseHeaders)
+                responseHeaders = responseHeaders,
+                acceptsRanges = acceptsRanges)
 
         connections[response] = okHttpResponse
         return response

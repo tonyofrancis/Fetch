@@ -10,7 +10,6 @@ import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
 import java.io.*
-import java.net.HttpURLConnection
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.ceil
@@ -79,12 +78,12 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     override fun run() {
         var openingResponse: Downloader.Response? = null
         try {
-            val openingRequest = getRequestForDownload(initialDownload)
+            val openingRequest = getRequestForDownload(initialDownload, HEAD_REQUEST_METHOD)
             openingResponse = downloader.execute(openingRequest, interruptMonitor)
             if (!interrupted && !terminated && openingResponse?.isSuccessful == true) {
                 total = openingResponse.contentLength
                 if (total > 0) {
-                    fileSlices = getFileSliceList(openingResponse.code, openingRequest)
+                    fileSlices = getFileSliceList(openingResponse.acceptsRanges, openingRequest)
                     totalDownloadBlocks = fileSlices.size
                     try {
                         downloader.disconnect(openingResponse)
@@ -229,13 +228,13 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         }
     }
 
-    private fun getFileSliceList(openingResponseCode: Int, request: Downloader.ServerRequest): List<FileSlice> {
+    private fun getFileSliceList(acceptsRanges: Boolean, request: Downloader.ServerRequest): List<FileSlice> {
         val file = getFile(downloadInfo.file)
         if (!file.exists()) {
             deleteAllTempFiles()
         }
         val previousSliceSize = getPreviousSliceCount(downloadInfo.id)
-        return if (openingResponseCode == HttpURLConnection.HTTP_PARTIAL) {
+        return if (acceptsRanges) {
             val fileSliceInfo = getChuckInfo(request)
             if (previousSliceSize != fileSliceInfo.slicingCount) {
                 deleteAllTempFiles()
@@ -285,9 +284,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     private fun getPreviousSliceCount(id: Int): Int {
         var sliceCount = -1
         try {
-            if (!terminated && !interrupted) {
-                sliceCount = getSingleLineTextFromFile(getMetaFilePath(id))?.toInt() ?: -1
-            }
+            sliceCount = getSingleLineTextFromFile(getMetaFilePath(id))?.toInt() ?: -1
         } catch (e: Exception) {
         }
         return sliceCount
@@ -295,9 +292,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private fun saveCurrentSliceCount(id: Int, SliceCount: Int) {
         try {
-            if (!terminated && !interrupted) {
-                writeTextToFile(getMetaFilePath(id), SliceCount.toString())
-            }
+            writeTextToFile(getMetaFilePath(id), SliceCount.toString())
         } catch (e: Exception) {
         }
     }
@@ -337,11 +332,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private fun deleteTempFile(id: Int, position: Int) {
         try {
-            if (!interrupted && !terminated) {
-                val textFile = getFile(getDownloadedInfoFilePath(id, position))
-                if (textFile.exists()) {
-                    textFile.delete()
-                }
+            val textFile = getFile(getDownloadedInfoFilePath(id, position))
+            if (textFile.exists()) {
+                textFile.delete()
             }
         } catch (e: Exception) {
         }
@@ -349,11 +342,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private fun deleteMetaFile(id: Int) {
         try {
-            if (!terminated && !interrupted) {
-                val textFile = getFile(getMetaFilePath(id))
-                if (textFile.exists()) {
-                    textFile.delete()
-                }
+            val textFile = getFile(getMetaFilePath(id))
+            if (textFile.exists()) {
+                textFile.delete()
             }
         } catch (e: Exception) {
         }
@@ -362,9 +353,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     private fun getSavedDownloadedInfo(id: Int, position: Int): Long {
         var downloaded = 0L
         try {
-            if (!terminated && !interrupted) {
-                downloaded = getSingleLineTextFromFile(getDownloadedInfoFilePath(id, position))?.toLong() ?: 0L
-            }
+            downloaded = getSingleLineTextFromFile(getDownloadedInfoFilePath(id, position))?.toLong() ?: 0L
         } catch (e: Exception) {
         }
         return downloaded
@@ -533,15 +522,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     private fun deleteAllTempFiles() {
         try {
             for (fileSlice in fileSlices) {
-                if (!interrupted && !terminated) {
-                    deleteTempFile(fileSlice.id, fileSlice.position)
-                } else {
-                    break
-                }
+                deleteTempFile(fileSlice.id, fileSlice.position)
             }
-            if (!interrupted && !terminated) {
-                deleteMetaFile(downloadInfo.id)
-            }
+            deleteMetaFile(downloadInfo.id)
         } catch (e: Exception) {
         }
     }

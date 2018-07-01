@@ -12,6 +12,12 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.ceil
 
+const val GET_REQUEST_METHOD = "GET"
+
+const val HEAD_REQUEST_METHOD = "HEAD"
+
+const val POST_REQUEST_METHOD = "POST"
+
 fun calculateProgress(downloaded: Long, total: Long): Int {
     return when {
         total < 1 -> -1

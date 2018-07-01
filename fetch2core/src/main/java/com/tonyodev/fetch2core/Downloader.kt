@@ -142,7 +142,10 @@ interface Downloader : Closeable {
             val tag: String?,
 
             /** The identifier associated with this request*/
-            val identifier: Long)
+            val identifier: Long,
+
+            /** Request Method. GET, HEAD or POST*/
+            val requestMethod: String)
 
     /**
      * A class that contains the server response information used by Fetch
@@ -168,7 +171,10 @@ interface Downloader : Closeable {
             val md5: String,
 
             /** Server Response Headers */
-            val responseHeaders: Map<String, List<String>>)
+            val responseHeaders: Map<String, List<String>>,
+
+            /** Details if the server accepts byte ranges*/
+            val acceptsRanges: Boolean)
 
     /** File Downloading Type used to download each request.*/
     enum class FileDownloaderType {
