@@ -1,3 +1,8 @@
+Version 2.1.0-RC13
+- Added new Fetch method getDownloadBlocks(downloadId: Int, func: Func<List<DownloadBlock>>): Fetch
+- Parallel downloader bug fixes
+- Downloader improvements
+
 Version 2.1.0-RC12
 - Added new Status. Status.Added
 - Added new FetchListener method onAdded(download)
