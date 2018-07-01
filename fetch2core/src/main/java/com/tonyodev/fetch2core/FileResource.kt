@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2fileserver
+package com.tonyodev.fetch2core
 
 /** File Resource used by Fetch File Server to server content data.
  * */

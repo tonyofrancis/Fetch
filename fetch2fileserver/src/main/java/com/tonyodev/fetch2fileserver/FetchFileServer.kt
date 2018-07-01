@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2fileserver
 
 import android.content.Context
+import com.tonyodev.fetch2core.FileResource
 import com.tonyodev.fetch2core.Func
 import java.net.ServerSocket
 

@@ -2,7 +2,6 @@ package com.tonyodev.fetch2fileserver.database
 
 import android.arch.persistence.room.Database
 import android.arch.persistence.room.RoomDatabase
-import com.tonyodev.fetch2fileserver.FileResource
 import com.tonyodev.fetch2fileserver.database.FileResourceInfoDatabase.Companion.DATABASE_VERSION
 
 @Database(entities = [FileResourceInfo::class], version = DATABASE_VERSION, exportSchema = false)

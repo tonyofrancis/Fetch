@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2fileserver.database
 
-import com.tonyodev.fetch2fileserver.FileResource
+import com.tonyodev.fetch2core.FileResource
 
 fun FileResource.toFileResourceInfo(): FileResourceInfo {
     val fileResourceInfo = FileResourceInfo()
