@@ -6,12 +6,9 @@ import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
-import com.tonyodev.fetch2core.HandlerWrapper
 import com.tonyodev.fetch2.fetch.ListenerCoordinator
-import com.tonyodev.fetch2core.FAILED_TO_ENQUEUE_REQUEST
-import com.tonyodev.fetch2core.DOWNLOAD_NOT_FOUND
 import com.tonyodev.fetch2.Status
-import com.tonyodev.fetch2core.Logger
+import com.tonyodev.fetch2core.*
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 
@@ -258,6 +255,21 @@ open class RxFetchImpl(namespace: String,
                     .flatMap {
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.getDownloadsByRequestIdentifier(identifier)
+                        Flowable.just(downloads)
+                    }
+                    .observeOn(uiSceduler)
+            return Convertible(flowable)
+        }
+    }
+
+    override fun getDownloadBlocks(downloadId: Int): Convertible<List<DownloadBlock>> {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            val flowable = Flowable.just(downloadId)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloadBlocks(downloadId)
                         Flowable.just(downloads)
                     }
                     .observeOn(uiSceduler)

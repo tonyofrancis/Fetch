@@ -3,11 +3,10 @@
 package com.tonyodev.fetch2.util
 
 import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2core.Downloader
 import com.tonyodev.fetch2.FetchConfiguration
 import com.tonyodev.fetch2.Status
-import com.tonyodev.fetch2core.GET_REQUEST_METHOD
-import com.tonyodev.fetch2core.getFile
+import com.tonyodev.fetch2core.*
+import kotlin.math.ceil
 
 fun canPauseDownload(download: Download): Boolean {
     return when (download.status) {
@@ -81,12 +80,102 @@ fun deleteRequestTempFiles(fileTempDir: String,
                     try {
                         tempFile.delete()
                     } catch (e: Exception) {
+
                     }
                 }
             }
         }
     } catch (e: Exception) {
 
+    }
+}
+
+fun getPreviousSliceCount(id: Int, fileTempDir: String): Int {
+    var sliceCount = -1
+    try {
+        sliceCount = getSingleLineTextFromFile(getMetaFilePath(id, fileTempDir))?.toInt() ?: -1
+    } catch (e: Exception) {
+
+    }
+    return sliceCount
+}
+
+fun getMetaFilePath(id: Int, fileTempDir: String): String {
+    return "$fileTempDir/$id.meta.txt"
+}
+
+fun saveCurrentSliceCount(id: Int, SliceCount: Int, fileTempDir: String) {
+    try {
+        writeTextToFile(getMetaFilePath(id, fileTempDir), SliceCount.toString())
+    } catch (e: Exception) {
+
+    }
+}
+
+fun getDownloadedInfoFilePath(id: Int, position: Int, fileTempDir: String): String {
+    return "$fileTempDir/$id.$position.txt"
+}
+
+fun deleteTempFile(id: Int, position: Int, fileTempDir: String) {
+    try {
+        val textFile = getFile(getDownloadedInfoFilePath(id, position, fileTempDir))
+        if (textFile.exists()) {
+            textFile.delete()
+        }
+    } catch (e: Exception) {
+
+    }
+}
+
+fun deleteMetaFile(id: Int, fileTempDir: String) {
+    try {
+        val textFile = getFile(getMetaFilePath(id, fileTempDir))
+        if (textFile.exists()) {
+            textFile.delete()
+        }
+    } catch (e: Exception) {
+
+    }
+}
+
+fun getSavedDownloadedInfo(id: Int, position: Int, fileTempDir: String): Long {
+    var downloaded = 0L
+    try {
+        downloaded = getSingleLineTextFromFile(getDownloadedInfoFilePath(id, position, fileTempDir))?.toLong() ?: 0L
+    } catch (e: Exception) {
+
+    }
+    return downloaded
+}
+
+fun saveDownloadedInfo(id: Int, position: Int, downloaded: Long, fileTempDir: String) {
+    try {
+        writeTextToFile(getDownloadedInfoFilePath(id, position, fileTempDir), downloaded.toString())
+    } catch (e: Exception) {
+
+    }
+}
+
+fun getFileSliceInfo(fileSliceSize: Int, totalBytes: Long): FileSliceInfo {
+    return if (fileSliceSize == DEFAULT_FILE_SLICE_NO_LIMIT_SET) {
+        val fileSizeInMb = totalBytes.toFloat() / 1024F * 1024F
+        val fileSizeInGb = totalBytes.toFloat() / 1024F * 1024F * 1024F
+        when {
+            fileSizeInGb >= 1F -> {
+                val slices = 6
+                val bytesPerSlice = ceil((totalBytes.toFloat() / slices.toFloat())).toLong()
+                FileSliceInfo(slices, bytesPerSlice)
+            }
+            fileSizeInMb >= 1F -> {
+                val slices = 4
+                val bytesPerSlice = ceil((totalBytes.toFloat() / slices.toFloat())).toLong()
+                FileSliceInfo(slices, bytesPerSlice)
+            }
+            else -> FileSliceInfo(2, totalBytes)
+        }
+    } else {
+        val bytesPerSlice = ceil((totalBytes.toFloat() / fileSliceSize.toFloat())).toLong()
+        return FileSliceInfo(fileSliceSize, bytesPerSlice)
     }
 }
 

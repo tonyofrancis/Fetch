@@ -124,7 +124,6 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             }
                             throwExceptionIfFound()
                             completedDownload = true
-                            deleteAllTempFiles()
                             if (md5CheckingEnabled) {
                                 if (downloader.verifyContentMD5(openingResponse.request, openingResponse.md5)) {
                                     delegate?.onProgress(
@@ -233,13 +232,13 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         if (!file.exists()) {
             deleteAllTempFiles()
         }
-        val previousSliceSize = getPreviousSliceCount(downloadInfo.id)
+        val previousSliceSize = getPreviousSliceCount(downloadInfo.id, fileTempDir)
         return if (acceptsRanges) {
             val fileSliceInfo = getChuckInfo(request)
             if (previousSliceSize != fileSliceInfo.slicingCount) {
                 deleteAllTempFiles()
             }
-            saveCurrentSliceCount(downloadInfo.id, fileSliceInfo.slicingCount)
+            saveCurrentSliceCount(downloadInfo.id, fileSliceInfo.slicingCount, fileTempDir)
             var counterBytes = 0L
             val fileSlices = mutableListOf<FileSlice>()
             for (position in 1..fileSliceInfo.slicingCount) {
@@ -256,7 +255,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             position = position,
                             startBytes = startBytes,
                             endBytes = endBytes,
-                            downloaded = getSavedDownloadedInfo(downloadInfo.id, position)
+                            downloaded = getSavedDownloadedInfo(downloadInfo.id, position, fileTempDir)
                     )
                     downloaded += fileSlice.downloaded
                     fileSlices.add(fileSlice)
@@ -269,101 +268,22 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             if (previousSliceSize != 1) {
                 deleteAllTempFiles()
             }
-            saveCurrentSliceCount(downloadInfo.id, 1)
+            saveCurrentSliceCount(downloadInfo.id, 1, fileTempDir)
             val fileSlice = FileSlice(
                     id = downloadInfo.id,
                     position = 1,
                     startBytes = 0,
                     endBytes = total,
-                    downloaded = getSavedDownloadedInfo(downloadInfo.id, 1))
+                    downloaded = getSavedDownloadedInfo(downloadInfo.id, 1, fileTempDir))
             downloaded += fileSlice.downloaded
             listOf(fileSlice)
         }
     }
 
-    private fun getPreviousSliceCount(id: Int): Int {
-        var sliceCount = -1
-        try {
-            sliceCount = getSingleLineTextFromFile(getMetaFilePath(id))?.toInt() ?: -1
-        } catch (e: Exception) {
-        }
-        return sliceCount
-    }
-
-    private fun saveCurrentSliceCount(id: Int, SliceCount: Int) {
-        try {
-            writeTextToFile(getMetaFilePath(id), SliceCount.toString())
-        } catch (e: Exception) {
-        }
-    }
-
-    private fun getMetaFilePath(id: Int): String {
-        return "$fileTempDir/$id.meta.txt"
-    }
-
     private fun getChuckInfo(request: Downloader.ServerRequest): FileSliceInfo {
         val fileSliceSize = downloader.getFileSlicingCount(request, total)
                 ?: DEFAULT_FILE_SLICE_NO_LIMIT_SET
-        return if (fileSliceSize == DEFAULT_FILE_SLICE_NO_LIMIT_SET) {
-            val fileSizeInMb = total.toFloat() / 1024F * 1024F
-            val fileSizeInGb = total.toFloat() / 1024F * 1024F * 1024F
-            when {
-                fileSizeInGb >= 1F -> {
-                    val slices = 6
-                    val bytesPerSlice = ceil((total.toFloat() / slices.toFloat())).toLong()
-                    FileSliceInfo(slices, bytesPerSlice)
-                }
-                fileSizeInMb >= 1F -> {
-                    val slices = 4
-                    val bytesPerSlice = ceil((total.toFloat() / slices.toFloat())).toLong()
-                    FileSliceInfo(slices, bytesPerSlice)
-                }
-                else -> FileSliceInfo(2, total)
-            }
-        } else {
-            val bytesPerSlice = ceil((total.toFloat() / fileSliceSize.toFloat())).toLong()
-            return FileSliceInfo(fileSliceSize, bytesPerSlice)
-        }
-    }
-
-    private fun getDownloadedInfoFilePath(id: Int, position: Int): String {
-        return "$fileTempDir/$id.$position.txt"
-    }
-
-    private fun deleteTempFile(id: Int, position: Int) {
-        try {
-            val textFile = getFile(getDownloadedInfoFilePath(id, position))
-            if (textFile.exists()) {
-                textFile.delete()
-            }
-        } catch (e: Exception) {
-        }
-    }
-
-    private fun deleteMetaFile(id: Int) {
-        try {
-            val textFile = getFile(getMetaFilePath(id))
-            if (textFile.exists()) {
-                textFile.delete()
-            }
-        } catch (e: Exception) {
-        }
-    }
-
-    private fun getSavedDownloadedInfo(id: Int, position: Int): Long {
-        var downloaded = 0L
-        try {
-            downloaded = getSingleLineTextFromFile(getDownloadedInfoFilePath(id, position))?.toLong() ?: 0L
-        } catch (e: Exception) {
-        }
-        return downloaded
-    }
-
-    private fun saveDownloadedInfo(id: Int, position: Int, downloaded: Long) {
-        try {
-            writeTextToFile(getDownloadedInfoFilePath(id, position), downloaded.toString())
-        } catch (e: Exception) {
-        }
+        return getFileSliceInfo(fileSliceSize, total)
     }
 
     private fun getAverageDownloadedBytesPerSecond(): Long {
@@ -478,7 +398,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
                                             reportingStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
                                     if (hasReportingTimeElapsed) {
-                                        saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded)
+                                        saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded, fileTempDir)
                                         downloadBlock.downloadedBytes = fileSlice.downloaded
                                         delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                                         reportingStartTime = System.nanoTime()
@@ -489,7 +409,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     }
                                 }
                             }
-                            saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded)
+                            saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded, fileTempDir)
                             downloadBlock.downloadedBytes = fileSlice.downloaded
                             delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                         } else if (downloadResponse == null && !interrupted && !terminated) {
@@ -522,9 +442,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     private fun deleteAllTempFiles() {
         try {
             for (fileSlice in fileSlices) {
-                deleteTempFile(fileSlice.id, fileSlice.position)
+                deleteTempFile(fileSlice.id, fileSlice.position, fileTempDir)
             }
-            deleteMetaFile(downloadInfo.id)
+            deleteMetaFile(downloadInfo.id, fileTempDir)
         } catch (e: Exception) {
         }
     }
@@ -547,20 +467,6 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         if (exception != null) {
             throw exception
         }
-    }
-
-    data class FileSliceInfo(val slicingCount: Int, val bytesPerFileSlice: Long)
-
-    data class FileSlice(val id: Int = 0,
-                         val position: Int = 0,
-                         val startBytes: Long = 0L,
-                         val endBytes: Long = 0L,
-                         var downloaded: Long = 0L) {
-
-        val isDownloaded: Boolean
-            get() {
-                return startBytes + downloaded == endBytes
-            }
     }
 
 }

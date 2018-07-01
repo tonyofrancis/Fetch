@@ -239,4 +239,15 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                 downloadBlockHandlerWrapper = downloadBlockHandlerWrapper)
     }
 
+    override fun getDownloadFileTempDir(download: Download): String {
+        val request = getRequestForDownload(download)
+        return if (fileServerDownloader != null && isFetchFileServerUrl(request.url)) {
+            fileServerDownloader.getDirectoryForFileDownloaderTypeParallel(request)
+                    ?: fileTempDir
+        } else {
+            httpDownloader.getDirectoryForFileDownloaderTypeParallel(request)
+                    ?: fileTempDir
+        }
+    }
+
 }

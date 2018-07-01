@@ -7,10 +7,7 @@ import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
-import com.tonyodev.fetch2core.Func
-import com.tonyodev.fetch2core.Func2
-import com.tonyodev.fetch2core.HandlerWrapper
-import com.tonyodev.fetch2core.Logger
+import com.tonyodev.fetch2core.*
 
 open class FetchImpl constructor(override val namespace: String,
                                  protected val handlerWrapper: HandlerWrapper,
@@ -681,6 +678,23 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 fetchHandler.removeListener(listener)
+            }
+            return this
+        }
+    }
+
+    override fun getDownloadBlocks(downloadId: Int, func: Func<List<DownloadBlock>>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val downloadBlocksList = fetchHandler.getDownloadBlocks(downloadId)
+                    uiHandler.post {
+                        func.call(downloadBlocksList)
+                    }
+                } catch (e: FetchException) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                }
             }
             return this
         }

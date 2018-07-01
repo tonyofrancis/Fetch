@@ -6,6 +6,8 @@ import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
 import com.tonyodev.fetch2.util.DEFAULT_INSTANCE_NAMESPACE
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.Func
 
 /**
  * A light weight file download manager for Android with Rx features.
@@ -144,6 +146,16 @@ interface RxFetch : Fetch {
      * flowable
      * */
     fun getDownloadsByRequestIdentifier(identifier: Long): Convertible<List<Download>>
+
+    /**
+     * Gets the list of download blocks belonging to a download. List may be empty if
+     * blocks could not be found for the download id or download has never been processed.
+     * @param downloadId: Download ID
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return A Convertible object that allows you to get the results as on observable or
+     * flowable
+     * */
+    fun getDownloadBlocks(downloadId: Int): Convertible<List<DownloadBlock>>
 
     /**
      * RX Fetch implementation class. Use this Singleton to get instances of RxFetch or Fetch.
