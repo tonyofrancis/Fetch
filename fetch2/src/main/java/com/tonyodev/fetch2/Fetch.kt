@@ -9,6 +9,7 @@ import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_INSTANCE_NAMESPACE
 import com.tonyodev.fetch2core.GLOBAL_FETCH_CONFIGURATION_NOT_SET
 import com.tonyodev.fetch2.util.createConfigWithNewNamespace
+import com.tonyodev.fetch2core.DownloadBlock
 import com.tonyodev.fetch2core.Func
 import com.tonyodev.fetch2core.Func2
 
@@ -339,6 +340,16 @@ interface Fetch {
      * @return Instance
      * */
     fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, func: Func<List<Download>>? = null, func2: Func<Error>? = null): Fetch
+
+    /**
+     * Gets the list of download blocks belonging to a download. List may be empty if
+     * blocks could not be found for the download id or download has never been processed.
+     * @param downloadId: Download ID
+     * @param func Callback the results will be returned on
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun getDownloadBlocks(downloadId: Int, func: Func<List<DownloadBlock>>): Fetch
 
     /**
      * Enable or disable logging.

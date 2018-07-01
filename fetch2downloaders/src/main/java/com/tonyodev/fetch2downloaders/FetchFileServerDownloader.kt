@@ -67,15 +67,19 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 val contentLength = serverResponse.contentLength
                 val inputStream = transporter.getInputStream()
 
-                val headerResponse = mutableMapOf<String, List<String>>()
+                val responseHeaders = mutableMapOf<String, List<String>>()
                 try {
                     val json = JSONObject(serverResponse.toJsonString)
                     json.keys().forEach {
-                        headerResponse[it] = listOf(json.get(it).toString())
+                        responseHeaders[it] = listOf(json.get(it).toString())
                     }
                 } catch (e: Exception) {
 
                 }
+
+                val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
+                        responseHeaders["Accept-Ranges"]?.firstOrNull() == "bytes"
+
                 onServerResponse(request, Downloader.Response(
                         code = code,
                         isSuccessful = isSuccessful,
@@ -83,7 +87,8 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         byteStream = null,
                         request = request,
                         md5 = serverResponse.md5,
-                        responseHeaders = headerResponse))
+                        responseHeaders = responseHeaders,
+                        acceptsRanges = acceptsRanges))
 
                 val response = Downloader.Response(
                         code = code,
@@ -92,7 +97,8 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         byteStream = inputStream,
                         request = request,
                         md5 = serverResponse.md5,
-                        responseHeaders = headerResponse)
+                        responseHeaders = responseHeaders,
+                        acceptsRanges = acceptsRanges)
 
                 connections[response] = transporter
                 return response

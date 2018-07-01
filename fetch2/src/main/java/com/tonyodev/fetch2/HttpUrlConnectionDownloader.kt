@@ -36,7 +36,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
         val httpUrl = URL(request.url)
         val client = httpUrl.openConnection() as HttpURLConnection
-        client.requestMethod = "GET"
+        client.requestMethod = request.requestMethod
         client.readTimeout = connectionPrefs.readTimeout
         client.connectTimeout = connectionPrefs.connectTimeout
         client.useCaches = connectionPrefs.usesCache
@@ -58,6 +58,10 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
             byteStream = client.inputStream
             md5 = client.getHeaderField("Content-MD5") ?: ""
         }
+        val responseHeaders = client.headerFields
+
+        val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
+                responseHeaders["Accept-Ranges"]?.firstOrNull() == "bytes"
 
         onServerResponse(request, Downloader.Response(
                 code = code,
@@ -66,7 +70,8 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 byteStream = null,
                 request = request,
                 md5 = md5,
-                responseHeaders = client.headerFields))
+                responseHeaders = responseHeaders,
+                acceptsRanges = acceptsRanges))
 
         val response = Downloader.Response(
                 code = code,
@@ -75,7 +80,8 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 byteStream = byteStream,
                 request = request,
                 md5 = md5,
-                responseHeaders = client.headerFields)
+                responseHeaders = responseHeaders,
+                acceptsRanges = acceptsRanges)
 
         connections[response] = client
         return response

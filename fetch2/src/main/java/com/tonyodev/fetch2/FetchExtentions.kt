@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2.exception.FetchException
+import com.tonyodev.fetch2core.DownloadBlock
 import com.tonyodev.fetch2core.Func
 import com.tonyodev.fetch2core.Func2
 
@@ -226,6 +227,22 @@ fun Fetch.addCompletedDownload(completedDownloads: List<CompletedDownload>, func
     }, object : Func<Error> {
         override fun call(t: Error) {
             func2?.invoke(t)
+        }
+    })
+}
+
+/**
+ * Gets the list of download blocks belonging to a download. List may be empty if
+ * blocks could not be found for the download id or download has never been processed.
+ * @param downloadId: Download ID
+ * @param func Callback the results will be returned on
+ * @throws FetchException if this instance of Fetch has been closed.
+ * @return Instance
+ * */
+fun Fetch.getDownloadBlocks(downloadId: Int, func: (List<DownloadBlock>) -> Unit): Fetch {
+    return getDownloadBlocks(downloadId, object : Func<List<DownloadBlock>> {
+        override fun call(t: List<DownloadBlock>) {
+            func(t)
         }
     })
 }

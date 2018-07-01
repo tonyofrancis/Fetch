@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.*
+import com.tonyodev.fetch2core.DownloadBlock
 import java.io.Closeable
 
 /**
@@ -45,5 +46,6 @@ interface FetchHandler : Closeable {
     fun removeListener(listener: FetchListener)
     fun isDownloading(id: Int): Boolean
     fun cancelDownload(id: Int): Boolean
+    fun getDownloadBlocks(downloadId: Int): List<DownloadBlock>
 
 }

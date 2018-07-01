@@ -547,6 +547,50 @@ class FetchHandlerImpl(private val namespace: String,
         return databaseManager.getDownloadsByRequestIdentifier(identifier)
     }
 
+    override fun getDownloadBlocks(downloadId: Int): List<DownloadBlock> {
+        startPriorityQueueIfNotStarted()
+        val download = databaseManager.get(downloadId)
+        return if (download != null) {
+            val fileTempDir = downloadManager.getDownloadFileTempDir(download)
+            val fileSliceInfo = getFileSliceInfo(getPreviousSliceCount(download.id, fileTempDir), download.total)
+            when {
+                download.total < 1 -> listOf()
+                fileSliceInfo.slicingCount < 2 -> {
+                    val downloadBlockInfo = DownloadBlockInfo()
+                    downloadBlockInfo.downloadId = download.id
+                    downloadBlockInfo.blockPosition = 1
+                    downloadBlockInfo.startByte = 0
+                    downloadBlockInfo.endByte = download.total
+                    downloadBlockInfo.downloadedBytes = download.downloaded
+                    listOf(downloadBlockInfo)
+                }
+                else -> {
+                    var counterBytes = 0L
+                    val downloadBlocksList = mutableListOf<DownloadBlockInfo>()
+                    for (position in 1..fileSliceInfo.slicingCount) {
+                        val startBytes = counterBytes
+                        val endBytes = if (fileSliceInfo.slicingCount == position) {
+                            download.total
+                        } else {
+                            counterBytes + fileSliceInfo.bytesPerFileSlice
+                        }
+                        counterBytes = endBytes
+                        val downloadBlockInfo = DownloadBlockInfo()
+                        downloadBlockInfo.downloadId = download.id
+                        downloadBlockInfo.blockPosition = position
+                        downloadBlockInfo.startByte = startBytes
+                        downloadBlockInfo.endByte = endBytes
+                        downloadBlockInfo.downloadedBytes = getSavedDownloadedInfo(download.id, position, fileTempDir)
+                        downloadBlocksList.add(downloadBlockInfo)
+                    }
+                    downloadBlocksList
+                }
+            }
+        } else {
+            listOf()
+        }
+    }
+
     override fun close() {
         if (isTerminating) {
             return
