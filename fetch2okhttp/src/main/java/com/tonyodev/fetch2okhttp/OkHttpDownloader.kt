@@ -2,12 +2,12 @@ package com.tonyodev.fetch2okhttp
 
 import com.tonyodev.fetch2core.Downloader
 import com.tonyodev.fetch2core.InterruptMonitor
+import com.tonyodev.fetch2core.OutputResourceWrapper
 import com.tonyodev.fetch2core.getFileMd5String
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.InputStream
-import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.util.Collections
 import java.util.concurrent.TimeUnit
@@ -119,7 +119,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestOutputStream(request: Downloader.ServerRequest, filePointerOffset: Long): OutputStream? {
+    override fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper? {
         return null
     }
 
@@ -129,10 +129,6 @@ open class OkHttpDownloader @JvmOverloads constructor(
 
     override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.ServerRequest): String? {
         return null
-    }
-
-    override fun seekOutputStreamToPosition(request: Downloader.ServerRequest, outputStream: OutputStream, filePointerOffset: Long) {
-
     }
 
     override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
@@ -150,4 +146,5 @@ open class OkHttpDownloader @JvmOverloads constructor(
     override fun onServerResponse(request: Downloader.ServerRequest, response: Downloader.Response) {
 
     }
+
 }

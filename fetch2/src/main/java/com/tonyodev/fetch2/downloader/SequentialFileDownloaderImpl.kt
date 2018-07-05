@@ -47,8 +47,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
         }
 
     override fun run() {
-        var randomAccessFileOutput: RandomAccessFile? = null
-        var output: OutputStream? = null
+        var outputResourceWrapper: OutputResourceWrapper? = null
         var input: BufferedInputStream? = null
         var response: Downloader.Response? = null
         try {
@@ -71,11 +70,34 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         logger.d("FileDownloader starting Download $download")
                         0L
                     }
-                    output = downloader.getRequestOutputStream(request, seekPosition)
-                    if (output == null) {
-                        randomAccessFileOutput = RandomAccessFile(file, "rw")
-                        randomAccessFileOutput.seek(seekPosition)
+                    outputResourceWrapper = downloader.getRequestOutputResourceWrapper(request)
+                    if (outputResourceWrapper == null) {
+                        outputResourceWrapper = object : OutputResourceWrapper() {
+
+                            private val randomAccessFile = RandomAccessFile(file, "rw")
+
+                            init {
+                                randomAccessFile.seek(seekPosition)
+                            }
+
+                            override fun write(byteArray: ByteArray, offSet: Int, length: Int) {
+                                randomAccessFile.write(byteArray, offSet, length)
+                            }
+
+                            override fun setWriteOffset(offset: Long) {
+                                randomAccessFile.seek(offset)
+                            }
+
+                            override fun flush() {
+
+                            }
+
+                            override fun close() {
+                                randomAccessFile.close()
+                            }
+                        }
                     }
+                    outputResourceWrapper.setWriteOffset(seekPosition)
                     if (!interrupted && !terminated) {
                         input = BufferedInputStream(response.byteStream, downloadBufferSizeBytes)
                         downloadInfo.downloaded = downloaded
@@ -89,7 +111,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                                     etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
                                     downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                         }
-                        writeToOutput(input, randomAccessFileOutput, output, response)
+                        writeToOutput(input, outputResourceWrapper, response)
                     }
                 } else if (response == null && !interrupted && !terminated) {
                     throw FetchException(EMPTY_RESPONSE_BODY,
@@ -149,11 +171,6 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             }
         } finally {
             try {
-                randomAccessFileOutput?.close()
-            } catch (e: Exception) {
-                logger.e("FileDownloader", e)
-            }
-            try {
                 input?.close()
             } catch (e: Exception) {
                 logger.e("FileDownloader", e)
@@ -166,7 +183,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 }
             }
             try {
-                output?.close()
+                outputResourceWrapper?.close()
             } catch (e: Exception) {
                 logger.e("FileDownloader", e)
             }
@@ -175,8 +192,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
     }
 
     private fun writeToOutput(input: BufferedInputStream,
-                              randomAccessFileOutput: RandomAccessFile?,
-                              downloaderOutputStream: OutputStream?,
+                              outputResourceWrapper: OutputResourceWrapper?,
                               response: Downloader.Response) {
         var reportingStopTime: Long
         var downloadSpeedStopTime: Long
@@ -187,8 +203,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
 
         var read = input.read(buffer, 0, downloadBufferSizeBytes)
         while (!interrupted && !terminated && read != -1) {
-            randomAccessFileOutput?.write(buffer, 0, read)
-            downloaderOutputStream?.write(buffer, 0, read)
+            outputResourceWrapper?.write(buffer, 0, read)
             if (!terminated) {
                 downloaded += read
                 downloadInfo.downloaded = downloaded
@@ -240,7 +255,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             }
         }
         try {
-            downloaderOutputStream?.flush()
+            outputResourceWrapper?.flush()
         } catch (e: IOException) {
             logger.e("FileDownloader", e)
         }
