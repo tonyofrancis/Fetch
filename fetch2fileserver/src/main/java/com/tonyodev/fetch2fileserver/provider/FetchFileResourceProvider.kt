@@ -36,7 +36,7 @@ class FetchFileResourceProvider(private val client: Socket,
     }
 
     override fun execute() {
-        Thread({
+        Thread {
             try {
                 while (persistConnection && !interrupted) {
                     ioHandler.postDelayed(persistentRunnable, 600000)
@@ -169,7 +169,7 @@ class FetchFileResourceProvider(private val client: Socket,
                     logger.e("FetchFileServerProvider - ${e.message}")
                 }
             }
-        }).start()
+        }.start()
     }
 
     private fun cleanFileStreams() {
