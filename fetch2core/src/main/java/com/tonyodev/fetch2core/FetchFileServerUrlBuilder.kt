@@ -69,6 +69,10 @@ class FetchFileServerUrlBuilder {
                 .toString()
     }
 
+    override fun toString(): String {
+        return create()
+    }
+
     companion object {
 
         /** Fetch File Server Url Scheme*/
