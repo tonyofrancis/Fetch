@@ -7,10 +7,18 @@ import org.json.JSONObject
 import java.io.InputStream
 import java.io.InputStreamReader
 
-open class FetchFileResourceCatalogDownloadTask @JvmOverloads constructor(private val hostAddress: String,
-                                                                          private val port: Int,
-                                                                          private val authorizationToken: String = "",
-                                                                          private val headers: Map<String, String> = mapOf())
+/**
+ * Use this task to get all the FileResource items hosted by a FetchFileServer instance.
+ * */
+open class FileResourceCatalogDownloadTask @JvmOverloads constructor(
+        /* File Server host ip address*/
+        private val hostAddress: String,
+        /** File Server port */
+        private val port: Int,
+        /** Authorization token*/
+        private val authorizationToken: String = "",
+        /** Headers*/
+        private val headers: Map<String, String> = mapOf())
     : FetchFileResourceDownloadTask<List<FileResource>>() {
 
     override fun getRequest(): FileResourceRequest {

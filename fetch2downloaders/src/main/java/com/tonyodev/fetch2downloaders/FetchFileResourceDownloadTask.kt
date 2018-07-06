@@ -41,10 +41,10 @@ abstract class FetchFileResourceDownloadTask<T> {
 
     /** Called by the task when an error occurs. The task is interrupted and stopped.
      * This method is called on the main thread.
-     * @param httpStatusCode http status code
+     * @param httpStatusCode http status code. Can be null
      * @param throwable throwable when an exception is throw. Can be null
      * */
-    protected open fun onError(httpStatusCode: Int, throwable: Throwable? = null) {
+    protected open fun onError(httpStatusCode: Int?, throwable: Throwable? = null) {
 
     }
 
@@ -217,7 +217,7 @@ abstract class FetchFileResourceDownloadTask<T> {
             }
         } catch (e: Exception) {
             mainHandler.post {
-                onError(HttpURLConnection.HTTP_UNSUPPORTED_TYPE, e)
+                onError(null, e)
             }
         } finally {
             cleanUpTask()
