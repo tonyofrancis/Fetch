@@ -77,7 +77,7 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             if (!isStarted && !isTerminated) {
                 isStarted = true
-                Thread({
+                Thread {
                     while (!isTerminated) {
                         try {
                             val client = serverSocket.accept()
@@ -95,7 +95,7 @@ class FetchFileServerImpl(context: Context,
                         }
                     }
                     cleanUpServer()
-                }).start()
+                }.start()
             }
         }
     }
