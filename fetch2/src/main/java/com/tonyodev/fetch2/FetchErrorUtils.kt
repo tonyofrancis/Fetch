@@ -2,7 +2,7 @@
 
 package com.tonyodev.fetch2
 
-import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.*
 import java.io.IOException
 import java.net.SocketTimeoutException
 
@@ -22,10 +22,10 @@ fun getErrorFromThrowable(throwable: Throwable): Error {
 fun getErrorFromMessage(message: String?): Error {
     return if (message == null || message.isEmpty()) {
         Error.UNKNOWN
+    } else if (message.equals(REQUEST_WITH_FILE_PATH_ALREADY_EXIST, true)) {
+        Error.REQUEST_WITH_FILE_PATH_ALREADY_EXIST
     } else if (message.contains(UNIQUE_ID_DATABASE)) {
         Error.REQUEST_WITH_ID_ALREADY_EXIST
-    } else if (message.contains(UNIQUE_FILE_PATH_DATABASE)) {
-        Error.REQUEST_WITH_FILE_PATH_ALREADY_EXIST
     } else if (message.equals(EMPTY_RESPONSE_BODY, true)) {
         Error.EMPTY_RESPONSE_FROM_SERVER
     } else if (message.equals(FNC, ignoreCase = true) || message.equals(ENOENT, ignoreCase = true)) {
@@ -50,10 +50,12 @@ fun getErrorFromMessage(message: String?): Error {
         Error.DOWNLOAD_NOT_FOUND
     } else if (message.equals(FETCH_DATABASE_ERROR, true)) {
         Error.FETCH_DATABASE_ERROR
-    } else if (message.contains(FETCH_ALREADY_EXIST, true)) {
-        Error.FETCH_ALREADY_EXIST
     } else if (message.contains(RESPONSE_NOT_SUCCESSFUL, true) || message.contains(FAILED_TO_CONNECT, true)) {
         Error.REQUEST_NOT_SUCCESSFUL
+    } else if (message.contains(INVALID_CONTENT_MD5, true)) {
+        Error.INVALID_CONTENT_MD5
+    } else if (message.contains(DOWNLOAD_INCOMPLETE, true)) {
+        Error.UNKNOWN_IO_ERROR
     } else {
         Error.UNKNOWN
     }

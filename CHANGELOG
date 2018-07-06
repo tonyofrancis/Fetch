@@ -1,3 +1,134 @@
+Version 2.1.0-RC13
+- Added new Fetch method getDownloadBlocks(downloadId: Int, func: Func<List<DownloadBlock>>): Fetch
+- Parallel downloader bug fixes
+- Downloader improvements
+
+Version 2.1.0-RC12
+- Added new Status. Status.Added
+- Added new FetchListener method onAdded(download)
+- Added new FetchListener method onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int)
+- Bug Fixes
+
+Version 2.1.0-RC11
+- Fixed Database Migration issue that caused crash.
+- Added new field downloadOnEnqueue on Request and Download class.
+  Use: Action used by Fetch when enqueuing a request to determine if to place the new request in
+  the downloading queue immediately after enqueue to be processed with its turn arrives.
+  The default value is true. If true, the download will have a status of Status.QUEUED.
+  If false, the download will have a status of Status.ADDED.
+
+Version 2.1.0-RC10
+- Updated Fetch.updateRequest method.
+
+Version 2.1.0-RC9
+- Renamed enqueue option EnqueueAction.THROW_ERROR_IF_EXISTING to EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING
+  to better reflect the action intention.
+
+Version 2.1.0-RC8
+- Added new Enqueue Action option: EnqueueAction.THROW_ERROR_IF_EXISTING. See java docs for details.
+- Added Error option : Error.REQUEST_WITH_FILE_PATH_ALREADY_EXIST
+
+Version 2.1.0-RC7
+- Added new Fetch methods addCompletedDownload(completedDownload, callback, callback) and addCompletedDownloads(completedDownloadsList, callback, callback).
+  These methods allows you to add a completed download to Fetch for management. Associated methods were also added for RxFetch.
+
+Version 2.1.0-RC6
+- Added new method onServerResponse(request: ServerRequest, response: Response) on Downloader class
+- Added new property responseHeaders on Downloader.Response class
+
+Version 2.1.0-RC5
+- Removed enableListenerNotifyOnAttached on FetchConfiguration listener. Added new method on Fetch class
+  called addListener(fetchListener, notify) instead.
+  This option allows Fetch to notify the newly attached listener instantly of the download status
+  of all downloads managed by the namespace. Default is false.
+- Added new Fetch and RxFetch method getDownloadsByRequestIdentifier(identifier: Long). Use request.identifier field.
+- Added new convenience method on FetchConfiguration class called getNewFetchInstanceFromConfiguration which
+  returns a newly created instance of Fetch.
+- Updated Kotlin plugin version to 1.2.50
+- Updated other library dependencies.
+- Bug Fixes
+
+Version 2.1.0-RC4
+- Added new method enableListenerNotifyOnAttached(enabled) to FetchConfiguration.Builder class.
+  This option allows Fetch to notify the newly attached listeners of the download status
+  of all downloads managed by the namespace. Default is false.
+
+Version 2.1.0-RC3
+- Removed used AppCompat Dependency on library modules.
+
+Version 2.1.0-RC2
+- Added missing identifier field on Downloader.Request class.
+
+Version 2.1.0-RC1
+This version of Fetch contains many fixes and breaking changes.
+Note: Uses will not lose downloads migrating to this version once the same namespace is set.
+There are no behavioral changes in the way requests are downloaded.
+Changes include method renaming and moving classes into a different packages. New in this
+version of Fetch is the release of the FetchFileServer. See demo in sample app. The wiki for this repo will be updated
+over the coming days.
+
+Changes:
+- Logger, Downloader, Func, Func2 and FetchLogger classes moved to com.tonyodev.fetch2core
+- OkHttpDownloader class moved to com.tonyodev.fetch2okhttp. Add this dependency implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:2.1.0-RC1" to your build.gradle file. 
+- Fetch.Builder and RxFetch.Builder classes has been removed and is replaced with FetchConfiguration.Builder.
+- To get an instance of Fetch call Fetch.Impl.getInstance(fetchConfiguration)
+  or RxFetch.Impl.getInstance(fetchConfiguration) to get a new instance.
+- You can now get a default instance of Fetch by calling Fetch.Impl.getDefaultInstance(). Be sure to set
+  the default FetchConfiguration at least once before calling the getDefaultInstance() method. To set the default configuration
+  call Fetch.Impl.setDefaultInstanceConfiguration(fetchConfiguration)
+- To set a custom Http Downloader for Fetch, call setHttpDownloader(downloader) on the FetchConfiguration.Builder.
+- To set the namespace of a Fetch instance, call setNamespace(namespace) on the FetchConfiguration.Builder.
+- New method enableMd5Check(enabled) on the FetchConfiguration.Builder. If supported by the server, Fetch will check
+  the md5 checksum after a download completes and will report errors if the md5 checksum does not match.
+- You can now have multiple instance with the same namespace. All Fetch instances with the same namespace will
+  be updated automatically.
+- Closing an instance of Fetch no longer causes crashes and releases all resources when appropriate.
+- Fetch Listeners are now held as weak references to reduce memory leaks.
+- Fetch Listener onQueued method has been updated to onQueued(Download download, boolean waitingOnNetwork)
+- New Kotlin friendly methods added to Fetch for enqueuing requests and querying download information.
+- Request class now has an enqueueAction field which replaces RequestOptions.
+- RequestOptions enum was removed and replaced with EnqueueAction enum. There are two EnqueueAction types available.
+  REPLACE_EXISTING and INCREMENT_FILE_NAME. Each new Request has a default enqueue action of REPLACE_EXISTING
+  which will replace any existing request that Fetch is managing with the same File. If INCREMENT_FILE_NAME
+  is set on the request, Fetch will auto increment the file name for the request and return the updated
+  request in the first callback of the enqueue method. Be sure to update your external request references
+  with the updated request.
+- Request class no longer allows you to set the id field of a request. Request class has new field called identifier.
+  Use the identifier(Long) field to set your own unique id to identify a request or download.
+- New enqueueAction and identifier  fields added on Download and Request class.
+- Logging is now enabled by default in Fetch
+- Fetch Error 12 and 14 removed. No longer needed because of EnqueueAction simplicity.
+
+FetchFileServer
+- Introducing the FetchFileServer. The FetchFileServer is a lightweight TCP File Server that acts like
+  an HTTP file server designed specifically to share files between Android devices. You can host file resources
+  with the FetchFileServer on one device and have Fetch download Files from the server
+  on another device. See sample app for more information. Wiki on Fetch File Server will be
+  added in the coming days.
+- To download files from a FetchFileServer using Fetch, set a custom file server downloader on the
+  FetchConfiguration.Builder class by calling the setFileServerDownloader(fileServerDownloader) method.
+  The com.tonyodev.fetch2downloads package already contains a custom downloader called
+  FetchFileServerDownloader that you can use and extend.
+- You can also use the FetchFileServer without having to use Fetch to download files hosted by the
+  file server. See the FetchFileResourceDownloadTask class inside the com.tonyodev.fetch2downloads
+  package for more details.
+
+Version 2.0.0-RC22
+- Bug fix for progress reporting on Parallel downloads
+
+Version 2.0.0-RC21
+- Bug fix for status reporting on Parallel downloads
+
+Version 2.0.0-RC20
+- Added New FileDownloader types. Parallel and Sequential Downloaders.
+  a)Parallel downloader slices a download in multiple parts allowing for faster download.
+    This downloader processes the download over several background threads. Use the parallel downloader when system resources are not constrained.
+  b)Sequential downloader is the default downloader, and processes a download request Sequentially.
+    The download is processed on a single background thread. The Downloader is Generally Fast.
+  See the Downloader.kt java docs for more information.
+
+- Bug fixes
+
 Version 2.0.0-RC19
 - Added new RequestOptions for Fetch. Fixed RequestOptions from RC18. See the Java documents and sample app for more information.
 - Bug fixes

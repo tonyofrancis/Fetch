@@ -55,6 +55,7 @@ fun DatabaseManager.sanitize(downloads: List<DownloadInfo>, initializing: Boolea
                     changedDownloadsList.add(downloadInfo)
                 }
             }
+            Status.ADDED,
             Status.NONE,
             Status.DELETED -> {
             }

@@ -1,7 +1,10 @@
+
 [![Build Status](https://travis-ci.org/tonyofrancis/Fetch.svg?branch=v2)](https://travis-ci.org/tonyofrancis/Fetch)
-[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch2/images/download.svg?version=2.0.0-RC19) ](https://bintray.com/tonyofrancis/maven/fetch2/2.0.0-RC19/link)
+[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch2/images/download.svg?version=2.1.0-RC13) ](https://bintray.com/tonyofrancis/maven/fetch2/2.1.0-RC13/link)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Networking-blue.svg?style=flat)](https://android-arsenal.com/details/1/5196)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tonyofrancis/Fetch/blob/master/LICENSE)
+
+![ScreenShot](https://github.com/tonyofrancis/Fetch/blob/v2/full_logo.png)
 
 Overview
 --------
@@ -45,71 +48,52 @@ How to use Fetch
 Using Fetch is easy! Just add the Gradle dependency to your application's build.gradle file.
 
 ```java
-implementation "com.tonyodev.fetch2:fetch2:2.0.0-RC19"
+implementation "com.tonyodev.fetch2:fetch2:2.1.0-RC13"
 ```
 
-Next, get an instance of Fetch using the builder, and request a download.
+Next, get an instance of Fetch and request a download.
 
 ```java
-public class MainActivity extends AppCompatActivity {
+public class TestActivity extends AppCompatActivity {
 
-    private Fetch mainFetch;
+    private Fetch fetch;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mainFetch = new Fetch.Builder(context, "Main")
-                  .setDownloadConcurrentLimit(4) // Allows Fetch to download 4 downloads in Parallel.
-                  .enableLogging(true)
-                  .build();
+ FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+                .setDownloadConcurrentLimit(3)
+                .build();
 
-        //Single enqueuing example            
+        fetch = Fetch.Impl.getInstance(fetchConfiguration);
+
+        String url = "http:www.example.com/test.txt";
+        String file = "/downloads/test.txt";
+        
         final Request request = new Request(url, file);
         request.setPriority(Priority.HIGH);
-        request.setNetworkType(NetworkType.WIFI_ONLY);
+        request.setNetworkType(NetworkType.ALL);
         request.addHeader("clientKey", "SD78DF93_3947&MVNGHE1WONG");
-
-        mainFetch.enqueue(request, new Func<Download>() {
-               @Override
-               public void call(Download download) {
-                   //Request successfully Queued for download
-               }
-           }, new Func<Error>() {
-               @Override
-               public void call(Error error) {
-                   //An error occurred when enqueuing a request.
-               }
-           });
-
-        // Multi enqueuing example with group id   
-        final List<Request> requestList = getSampleRequests();
-        final int groupId = "MySampleGroup".hashCode();
-        for(int i = 0; i < requestList.size(); i++) {
-            requestList.get(i).setGroupId(groupId);
-        }
-
-        mainFetch.enqueue(requestList, new Func<List<? extends Download>>() {
-            @Override
-            public void call(List<? extends Download> downloads) {
-                //Successfully enqueued requests.
-            }
-        }, new Func<Error>() {
-            @Override
-            public void call(Error error) {
-                // An error occurred when enqueuing requests.
-            }
+        
+        fetch.enqueue(request, updatedRequest -> {
+            //Request was successfully enqueued for download.
+        }, error -> {
+            //An error occurred enqueuing the request.
         });
+
+    }
 }
 ```
 
-Tracking a download's progress and status is very easy with Fetch. Simply add a FetchListener to your Fetch instance, and the listener will be notified whenever a download's
+Tracking a download's progress and status is very easy with Fetch. 
+Simply add a FetchListener to your Fetch instance, and the listener will be notified whenever a download's
 status or progress changes.
 
 ```java
-final FetchListener fetchListener = new FetchListener() {
+FetchListener fetchListener = new FetchListener() {
     @Override
-    public void onQueued(@NotNull Download download) {
+    public void onQueued(@NotNull Download download, boolean waitingOnNetwork) {
         if (request.getId() == download.getId()) {
             showDownloadInList(download);
         }
@@ -122,11 +106,7 @@ final FetchListener fetchListener = new FetchListener() {
 
     @Override
     public void onError(@NotNull Download download) {
-        final Error error = download.getError();
-        final Throwable throwable = error.getThrowable(); //can be null
-        if (error == Error.UNKNOWN && throwable != null) {
-         Log.d("Fetch", "Throwable error", throwable);
-        }
+        Error error = download.getError();
     }
 
     @Override
@@ -134,8 +114,7 @@ final FetchListener fetchListener = new FetchListener() {
         if (request.getId() == download.getId()) {
             updateDownload(download, etaInMilliSeconds);
         }
-        final int progress = download.getProgress();
-        Log.d("Fetch", "Progress Completed :" + progress);
+        int progress = download.getProgress();
     }
 
     @Override
@@ -166,7 +145,7 @@ final FetchListener fetchListener = new FetchListener() {
 
 fetch.addListener(fetchListener);
 
-//Note: Remove listener when done.
+//Remove listener when done.
 fetch.removeListener(fetchListener);
 ```
 
@@ -176,23 +155,14 @@ A download returned by Fetch will have have an id that matches the request id th
 started the download.
 
 ```java
+Request request1 = new Request(url, file);
+Request request2 = new Request(url2, file2);
 
-final Request request1 = new Request(url, file);
-final Request request2 = new Request(url2, file2);
-
-fetch.pause(request.getId());
+fetch.pause(request1.getId());
 
 ...
 
 fetch.resume(request2.getId());
-
-
-...
-
-//You can also pause and resume downloads using the group id the download belongs to.
-int groupId = "AGroup".hashCode();
-fetch.pauseGroup(groupId);
-fetch.resumeGroup(groupId);
 
 ```
 
@@ -216,7 +186,7 @@ fetch.getDownloadsWithStatus(Status.DOWNLOADING, new Func<List<? extends Downloa
 });
 
 // You can also access grouped downloads
-final int groupId = 52687447745;
+int groupId = 52687447745;
 fetch.getDownloadsInGroup(groupId, new Func<List<? extends Download>>() {
 	@Override
   	public void call(List<? extends Download> downloads) {
@@ -244,18 +214,18 @@ to use the OkHttp Downloader instead. You can create your own custom downloaders
 if necessary. See the Java docs for details.
 
 ```java
-implementation "com.tonyodev.fetch2downloaders:fetch2downloaders:2.0.0-RC19"
+implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:2.1.0-RC13"
 ```
 Set the OkHttp Downloader for Fetch to use.
 ```java
-final OkHttpClient okHttpClient = new OkHttpClient.Builder()
-          .build();
+OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
 
-final Fetch fetch = new Fetch.Builder(context, "Main")
-	.setDownloader(new OkHttpDownloader(okHttpClient))
-        .setDownloadConcurrentLimit(4) // Allows Fetch to download 4 downloads in Parallel.
-        .enableLogging(true)
-        .build();
+FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+	.setDownloadConcurrentLimit(10)
+	.setHttpDownloader(new OkHttpDownloader(okHttpClient))
+	.build();
+
+Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
 ```
 
 RxFetch
@@ -265,16 +235,14 @@ If you would like to take advantage of RxJava2 features when using Fetch,
 add the following gradle dependency to your application's build.gradle file.
 
 ```java
-implementation "com.tonyodev.fetch2rx:fetch2rx:2.0.0-RC19"
+implementation "com.tonyodev.fetch2rx:fetch2rx:2.1.0-RC13"
 ```
 
 RxFetch makes it super easy to enqueue download requests and query downloads using rxJava2 functional methods.
 
 ```java
-final RxFetch rxFetch = new RxFetch.Builder(context, "Main")
-  .setDownloadConcurrentLimit(2)
-  .enableLogging(true)
-  .build();
+FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this).build();
+Rxfetch rxFetch = RxFetch.Impl.getInstance(fetchConfiguration);
 
 rxFetch.getDownloads()
         .asFlowable()
@@ -292,12 +260,210 @@ rxFetch.getDownloads()
         });
 ```
 
+FetchFileServer
+----------------
+
+Introducing the FetchFileServer. The FetchFileServer is a lightweight TCP File Server that acts like
+an HTTP file server designed specifically to share files between Android devices. You can host file resources
+with the FetchFileServer on one device and have Fetch download Files from the server
+on another device. See sample app for more information. Wiki on FetchFileServer will be
+added in the coming days.
+
+Start using FetchFileServer by adding the gradle dependency to your application's build.gradle file.
+```java
+implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:2.1.0-RC13"
+```
+
+Start a FetchFileServer instance and add resource files that it can server to connected clients.
+```java
+public class TestActivity extends AppCompatActivity {
+
+    FetchFileServer fetchFileServer;
+    
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        fetchFileServer = new FetchFileServer.Builder(this)
+                .build();
+        
+        fetchFileServer.start(); //listen for client connections
+
+        File file = new File("/downloads/testfile.txt");
+        FileResource fileResource = new FileResource();
+        fileResource.setFile(file.getAbsolutePath());
+        fileResource.setLength(file.length());
+        fileResource.setName("testfile.txt");
+        fileResource.setId(UUID.randomUUID().hashCode());
+        
+        fetchFileServer.addFileResource(fileResource);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        fetchFileServer.shutDown(false);
+    }
+}
+```
+
+Download a file from a FetchFileServer using the Fetch. Add the FetchFileServerDownloader
+dependency to you app's build.gradle file.
+```java
+implementation "com.tonyodev.fetch2downloaders:fetch2downloaders:2.1.0-RC13"
+```
+
+Then create an instance of Fetch and enqueue the download.
+
+```java
+public class TestActivity extends AppCompatActivity {
+
+    Fetch fetch;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+                .setFileServerDownloader(new FetchFileServerDownloader()) //have to set the file server downloader
+                .build();
+        fetch = Fetch.Impl.getInstance(fetchConfiguration);
+        fetch.addListener(fetchListener);
+
+        String file = "/downloads/sample.txt";
+        String url = new FetchFileServerUrlBuilder()
+                .setHostInetAddress("127.0.0.1", 6886) //file server ip and port
+                .setFileResourceIdentifier("testfile.txt") //file resource name or id
+                .create();
+        Request request = new Request(url, file);
+        fetch.enqueue(request, request1 -> {
+            //Request enqueued for download
+        }, error -> {
+            //Error while enqueuing download
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        fetch.addListener(fetchListener);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        fetch.removeListener(fetchListener);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        fetch.close();
+    }
+
+    private FetchListener fetchListener = new AbstractFetchListener() {
+        @Override
+        public void onProgress(@NotNull Download download, long etaInMilliSeconds, long downloadedBytesPerSecond) {
+            super.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond);
+            Log.d("TestActivity", "Progress: " + download.getProgress());
+        }
+
+        @Override
+        public void onError(@NotNull Download download) {
+            super.onError(download);
+            Log.d("TestActivity", "Error: " + download.getError().toString());
+        }
+
+        @Override
+        public void onCompleted(@NotNull Download download) {
+            super.onCompleted(download);
+            Log.d("TestActivity", "Completed ");
+        }
+    };
+}
+```
+A FetchFileResourceDownloadTask can also be used to download files from the FetchFileServer.
+Be sure to add the fetch2downloaders module to your dependencies.
+
+```java
+public class TestActivity extends AppCompatActivity {
+
+    FetchFileResourceDownloadTask<File> task;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        task = new FetchFileResourceDownloadTask<File>() {
+            @NotNull
+            @Override
+            public FileResourceRequest getRequest() {
+                FileResourceRequest fileResourceRequest = new FileResourceRequest();
+                fileResourceRequest.setHostAddress("127.0.0.1");
+                fileResourceRequest.setPort(6886);
+                fileResourceRequest.setResourceIdentifier("testfile.txt");
+                fileResourceRequest.addHeader("Authorization", "5adWEDG36FGTTBX23B");
+                return fileResourceRequest;
+            }
+
+            @Override
+            public File doWork(@NotNull InputStream inputStream, long contentLength, @NotNull String md5CheckSum) {
+                File file = new File("/downloads/sample.txt");
+                try {
+                   BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+                   BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file));
+                   byte[] buffer = new byte[1024];
+                   int read;
+                   int bytesRead = 0;
+                   while ((read = bufferedInputStream.read(buffer, 0, 1024)) != -1 && !isCancelled()) { //isCancelled() checks if the task was cancelled.
+                       bufferedOutputStream.write(buffer, 0, read);
+                       bytesRead += read;
+                       setProgress(calculateProgress(bytesRead, contentLength));
+                   }
+                   bufferedInputStream.close();
+                   bufferedOutputStream.flush();
+                   bufferedOutputStream.close();
+               } catch (IOException e) {
+                   e.printStackTrace();
+                }
+                return file;
+            }
+
+            @Override
+            protected void onProgress(int progress) {
+                Log.d("TestActivity", "Progress: " + progress);
+
+            }
+
+            @Override
+            protected void onError(int httpStatusCode, @org.jetbrains.annotations.Nullable Throwable throwable) {
+                Log.d("TestActivity", "Error: " + httpStatusCode);
+            }
+
+            @Override
+            protected void onComplete(File result) {
+                Log.d("TestActivity", "Complete");
+            }
+        };
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        task.execute();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        task.cancel();
+
+    }
+```
+
 Fetch1 Migration
 ----------------
 
 Migrate downloads from Fetch1 to Fetch2 using the migration assistant. Add the following gradle dependency to your application's build.gradle file.
 ```java
-implementation "com.tonyodev.fetchmigrator:fetchmigrator:2.0.0-RC19"
+implementation "com.tonyodev.fetchmigrator:fetchmigrator:2.1.0-RC13"
 ```
 
 Then run the Migrator.

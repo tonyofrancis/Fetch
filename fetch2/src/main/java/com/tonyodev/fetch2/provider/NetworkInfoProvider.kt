@@ -2,8 +2,8 @@ package com.tonyodev.fetch2.provider
 
 import android.content.Context
 import com.tonyodev.fetch2.NetworkType
-import com.tonyodev.fetch2.util.isNetworkAvailable
-import com.tonyodev.fetch2.util.isOnWiFi
+import com.tonyodev.fetch2core.isNetworkAvailable
+import com.tonyodev.fetch2core.isOnWiFi
 
 
 class NetworkInfoProvider constructor(private val context: Context) {

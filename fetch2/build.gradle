@@ -61,10 +61,11 @@ android {
 }
 
 dependencies {
-    implementation "com.android.support:appcompat-v7:$android_support_version"
+
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     kapt "android.arch.persistence.room:compiler:$room_version"
     api "android.arch.persistence.room:runtime:$room_version"
+    api project(':fetch2core')
 
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "com.android.support.test:runner:$test_runner_version"

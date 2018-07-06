@@ -1,5 +1,7 @@
 package com.tonyodev.fetch2
 
+import com.tonyodev.fetch2core.DownloadBlock
+
 /**
  * An abstract FetchListener used by Fetch to report the different statuses and changes of the downloads
  * managed by Fetch.
@@ -7,12 +9,24 @@ package com.tonyodev.fetch2
  * */
 abstract class AbstractFetchListener : FetchListener {
 
+    /** Called when a new download is added to Fetch. The status of the download will be
+     * Status.ADDED.
+     * @param download An immutable object which contains a current snapshot of all the information
+     * about a specific download managed by Fetch.
+     * */
+    override fun onAdded(download: Download) {
+
+    }
+
     /** Called when a new download is queued for download. The status of the download will be
      * Status.QUEUED.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
+     * @param waitingOnNetwork Indicates that the download was queued because it is waiting on
+     * the right network condition. For example: Waiting on internet access to be restored or
+     * waiting for a Wifi connection.
      * */
-    override fun onQueued(download: Download) {
+    override fun onQueued(download: Download, waitingOnNetwork: Boolean) {
 
     }
 
@@ -31,6 +45,20 @@ abstract class AbstractFetchListener : FetchListener {
      * about a specific download managed by Fetch.
      * */
     override fun onError(download: Download) {
+
+    }
+
+    /** Called several times to report the progress of a download block belonging to a download.
+     * The status of the download will be Status.DOWNLOADING. A download may be downloaded using
+     * several downloading blocks if using the Parallel File Downloader. The Sequential Downloader
+     * only uses 1 downloading block. See Downloader class documentation for more information.
+     * Note: This method is called on a background thread.
+     * @param download An immutable object which contains a current snapshot of all the information
+     * about a specific download managed by Fetch.
+     * @param downloadBlock download's downloading block information.
+     * @param totalBlocks total downloading blocks for a download.
+     * */
+    override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int) {
 
     }
 

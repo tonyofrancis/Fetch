@@ -4,13 +4,12 @@ import android.arch.persistence.room.ColumnInfo
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.Index
 import android.arch.persistence.room.PrimaryKey
-import com.tonyodev.fetch2.Download
+import com.tonyodev.fetch2.*
+import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2.NetworkType
 import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Status
-import com.tonyodev.fetch2.Error
-import com.tonyodev.fetch2.NetworkType
-import com.tonyodev.fetch2.Request
-import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.calculateProgress
 
 
 @Entity(tableName = DownloadDatabase.TABLE_NAME,
@@ -19,47 +18,56 @@ import com.tonyodev.fetch2.util.*
 class DownloadInfo : Download {
 
     @PrimaryKey
-    @ColumnInfo(name = DownloadDatabase.COLUMN_ID)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_ID, typeAffinity = ColumnInfo.INTEGER)
     override var id: Int = 0
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_NAMESPACE)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_NAMESPACE, typeAffinity = ColumnInfo.TEXT)
     override var namespace: String = ""
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_URL)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_URL, typeAffinity = ColumnInfo.TEXT)
     override var url: String = ""
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_FILE)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_FILE, typeAffinity = ColumnInfo.TEXT)
     override var file: String = ""
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_GROUP)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_GROUP, typeAffinity = ColumnInfo.INTEGER)
     override var group: Int = 0
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_PRIORITY)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_PRIORITY, typeAffinity = ColumnInfo.INTEGER)
     override var priority: Priority = defaultPriority
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_HEADERS)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_HEADERS,typeAffinity = ColumnInfo.TEXT)
     override var headers: Map<String, String> = defaultEmptyHeaderMap
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_DOWNLOADED)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_DOWNLOADED, typeAffinity = ColumnInfo.INTEGER)
     override var downloaded: Long = 0L
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_TOTAL)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_TOTAL, typeAffinity = ColumnInfo.INTEGER)
     override var total: Long = -1L
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_STATUS)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_STATUS, typeAffinity = ColumnInfo.INTEGER)
     override var status: Status = defaultStatus
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_ERROR)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_ERROR, typeAffinity = ColumnInfo.INTEGER)
     override var error: Error = defaultNoError
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_NETWORK_TYPE)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_NETWORK_TYPE, typeAffinity = ColumnInfo.INTEGER)
     override var networkType: NetworkType = defaultNetworkType
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_CREATED)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_CREATED, typeAffinity = ColumnInfo.INTEGER)
     override var created: Long = System.nanoTime()
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_TAG)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_TAG, typeAffinity = ColumnInfo.TEXT)
     override var tag: String? = null
+
+    @ColumnInfo(name = DownloadDatabase.COLUMN_ENQUEUE_ACTION, typeAffinity = ColumnInfo.INTEGER)
+    override var enqueueAction: EnqueueAction = EnqueueAction.REPLACE_EXISTING
+
+    @ColumnInfo(name = DownloadDatabase.COLUMN_IDENTIFIER, typeAffinity = ColumnInfo.INTEGER)
+    override var identifier: Long = DEFAULT_UNIQUE_IDENTIFIER
+
+    @ColumnInfo(name = DownloadDatabase.COLUMN_DOWNLOAD_ON_ENQUEUE, typeAffinity = ColumnInfo.INTEGER)
+    override var downloadOnEnqueue: Boolean = DEFAULT_DOWNLOAD_ON_ENQUEUE
 
     override val progress: Int
         get() {
@@ -68,11 +76,14 @@ class DownloadInfo : Download {
 
     override val request: Request
         get() {
-            val request = Request(id, url, file)
+            val request = Request(url, file)
             request.groupId = group
             request.headers.putAll(headers)
             request.networkType = networkType
             request.priority = priority
+            request.enqueueAction = enqueueAction
+            request.identifier = identifier
+            request.downloadOnEnqueue = downloadOnEnqueue
             return request
         }
 
@@ -83,9 +94,7 @@ class DownloadInfo : Download {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-
         other as DownloadInfo
-
         if (id != other.id) return false
         if (namespace != other.namespace) return false
         if (url != other.url) return false
@@ -100,7 +109,9 @@ class DownloadInfo : Download {
         if (networkType != other.networkType) return false
         if (created != other.created) return false
         if (tag != other.tag) return false
-
+        if (enqueueAction != other.enqueueAction) return false
+        if (identifier != other.identifier) return false
+        if (downloadOnEnqueue != other.downloadOnEnqueue) return false
         return true
     }
 
@@ -119,13 +130,18 @@ class DownloadInfo : Download {
         result = 31 * result + networkType.hashCode()
         result = 31 * result + created.hashCode()
         result = 31 * result + (tag?.hashCode() ?: 0)
+        result = 31 * result + enqueueAction.hashCode()
+        result = 31 * result + identifier.hashCode()
+        result = 31 * result + downloadOnEnqueue.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "Download(id=$id, namespace='$namespace', url='$url', file='$file', group=$group," +
+        return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file', group=$group," +
                 " priority=$priority, headers=$headers, downloaded=$downloaded, total=$total, status=$status," +
-                " error=$error, networkType=$networkType, created=$created, tag=$tag)"
+                " error=$error, networkType=$networkType, created=$created, tag=$tag, " +
+                "enqueueAction=$enqueueAction, identifier=$identifier, downloadOnEnqueue=$downloadOnEnqueue)"
     }
+
 
 }

@@ -11,14 +11,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
 
-import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Error;
+import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchListener;
-import com.tonyodev.fetch2.Func;
-import com.tonyodev.fetch2.Func2;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.Status;
+import com.tonyodev.fetch2core.DownloadBlock;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +35,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     private TextView etaTextView;
     private TextView downloadSpeedTextView;
 
-    @Nullable
     private Request request;
-
     private Fetch fetch;
 
     @Override
@@ -50,7 +47,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         titleTextView = findViewById(R.id.titleTextView);
         etaTextView = findViewById(R.id.etaTextView);
         downloadSpeedTextView = findViewById(R.id.downloadSpeedTextView);
-        fetch = ((App) getApplication()).getAppFetchInstance();
+        fetch = Fetch.Impl.getDefaultInstance();
         checkStoragePermission();
     }
 
@@ -61,12 +58,9 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         fetch.addListener(this);
         if (request != null) {
             //Refresh the screen with the downloaded data. So we perform a download query
-            fetch.getDownload(request.getId(), new Func2<Download>() {
-                @Override
-                public void call(@Nullable Download download) {
-                    if (download != null) {
-                        setProgressView(download.getStatus(), download.getProgress());
-                    }
+            fetch.getDownload(request.getId(), download -> {
+                if (download != null) {
+                    setProgressView(download.getStatus(), download.getProgress());
                 }
             });
         }
@@ -78,46 +72,36 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         fetch.removeListener(this);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        fetch.close();
+    }
+
     private void checkStoragePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}
-                    , STORAGE_PERMISSION_CODE);
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
         } else {
             enqueueDownload();
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             enqueueDownload();
         } else {
-            Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_LONG)
-                    .show();
+            Snackbar.make(mainView, R.string.permission_not_enabled, Snackbar.LENGTH_LONG).show();
         }
     }
 
     private void enqueueDownload() {
         final String url = Data.sampleUrls[0];
-        final String filePath = Data.getSaveDir() + "/movies/buckbunny_singleDownloadActivity.m4v";
-        final Request initialRequest = new Request(url, filePath);
-        fetch.enqueue(initialRequest, new Func<Download>() {
-            @Override
-            public void call(@NotNull Download download) {
-                //If we are using Request Options with Fetch, the download.getRequest() object ID and File values may be different
-                // from the initialRequest. It's always best to update your request references with download.getRequest()
-                request = download.getRequest(); //updated request
-                setTitleView(download.getFile());
-                setProgressView(download.getStatus(), download.getProgress());
-            }
-        }, new Func<Error>() {
-            @Override
-            public void call(@NotNull Error error) {
-                Timber.d("SingleDownloadActivity Error: %1$s", error.toString());
-            }
-        });
+        final String filePath = Data.getSaveDir() + "/movies/" + Data.getNameFromUrl(url);
+        request = new Request(url, filePath);
+        fetch.enqueue(request, updatedRequest -> {
+            request = updatedRequest;
+        }, error -> Timber.d("SingleDownloadActivity Error: %1$s", error.toString()));
     }
 
     private void setTitleView(@NonNull final String fileName) {
@@ -131,13 +115,16 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
                 progressTextView.setText(R.string.queued);
                 break;
             }
+            case ADDED: {
+                progressTextView.setText(R.string.added);
+                break;
+            }
             case DOWNLOADING:
             case COMPLETED: {
                 if (progress == -1) {
                     progressTextView.setText(R.string.downloading);
                 } else {
-                    final String progressString = getResources()
-                            .getString(R.string.percent_progress, progress);
+                    final String progressString = getResources().getString(R.string.percent_progress, progress);
                     progressTextView.setText(progressString);
                 }
                 break;
@@ -150,25 +137,18 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     private void showDownloadErrorSnackBar(@NotNull Error error) {
-        final Snackbar snackbar = Snackbar.make(mainView, "Download Failed: ErrorCode: "
-                + error, Snackbar.LENGTH_INDEFINITE);
-        snackbar.setAction(R.string.retry, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (request != null) {
-                    fetch.retry(request.getId());
-                    snackbar.dismiss();
-                }
-            }
+        final Snackbar snackbar = Snackbar.make(mainView, "Download Failed: ErrorCode: " + error, Snackbar.LENGTH_INDEFINITE);
+        snackbar.setAction(R.string.retry, v -> {
+            fetch.retry(request.getId());
+            snackbar.dismiss();
         });
         snackbar.show();
     }
 
     private void updateViews(@NotNull Download download, long etaInMillis, long downloadedBytesPerSecond, @Nullable Error error) {
-        if (request != null && request.getId() == download.getId()) {
+        if (request.getId() == download.getId()) {
             setProgressView(download.getStatus(), download.getProgress());
-            etaTextView.setText(Utils
-                    .getETAString(this, etaInMillis));
+            etaTextView.setText(Utils.getETAString(this, etaInMillis));
             downloadSpeedTextView.setText(Utils.getDownloadSpeedString(this, downloadedBytesPerSecond));
             if (error != null) {
                 showDownloadErrorSnackBar(download.getError());
@@ -177,7 +157,9 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     @Override
-    public void onQueued(@NotNull Download download) {
+    public void onQueued(@NotNull Download download, boolean waitingOnNetwork) {
+        setTitleView(download.getFile());
+        setProgressView(download.getStatus(), download.getProgress());
         updateViews(download, 0, 0, null);
     }
 
@@ -189,6 +171,11 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     @Override
     public void onError(@NotNull Download download) {
         updateViews(download, 0, 0, download.getError());
+    }
+
+    @Override
+    public void onDownloadBlockUpdated(@NotNull Download download, @NotNull DownloadBlock downloadBlock, int totalBlocks) {
+
     }
 
     @Override
@@ -221,4 +208,10 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         updateViews(download, 0, 0, null);
     }
 
+    @Override
+    public void onAdded(@NotNull Download download) {
+        setTitleView(download.getFile());
+        setProgressView(download.getStatus(), download.getProgress());
+        updateViews(download, 0, 0, null);
+    }
 }

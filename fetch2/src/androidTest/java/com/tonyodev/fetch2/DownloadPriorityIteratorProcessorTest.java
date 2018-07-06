@@ -13,11 +13,17 @@ import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
+import com.tonyodev.fetch2.fetch.DownloadManagerCoordinator;
+import com.tonyodev.fetch2core.Downloader;
+import com.tonyodev.fetch2core.FetchCoreDefaults;
+import com.tonyodev.fetch2core.FetchCoreUtils;
+import com.tonyodev.fetch2core.FetchLogger;
+import com.tonyodev.fetch2core.HandlerWrapper;
+import com.tonyodev.fetch2.fetch.ListenerCoordinator;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
 import com.tonyodev.fetch2.helper.PriorityListProcessor;
 import com.tonyodev.fetch2.helper.PriorityListProcessorImpl;
 import com.tonyodev.fetch2.provider.DownloadProvider;
-import com.tonyodev.fetch2.provider.ListenerProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 
@@ -25,9 +31,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -42,31 +45,34 @@ public class DownloadPriorityIteratorProcessorTest {
         final Context appContext = InstrumentationRegistry.getTargetContext();
         final HandlerThread handlerThread = new HandlerThread("test");
         handlerThread.start();
-        final Handler handler = new Handler(handlerThread.getLooper());
         final String namespace = "fetch2DatabaseTest";
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final Migration[] migrations = DownloadDatabase.getMigrations();
-        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace,
-                true, fetchLogger, migrations);
+        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
         final Downloader client = FetchDefaults.getDefaultDownloader();
-        final long progessInterval = FetchDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
+        final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
-        final ListenerProvider listenerProvider = new ListenerProvider();
         final Handler uiHandler = new Handler(Looper.getMainLooper());
+        final HandlerWrapper handlerWrapper = new HandlerWrapper("DownloadBlockHandler");
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
-        final Set<RequestOptions> requestOptions = new HashSet<>();
+        final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
+        final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                listenerProvider, uiHandler, downloadInfoUpdater, requestOptions);
+                uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
+                listenerCoordinator, null, false, handlerWrapper);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
-                handler,
+                new HandlerWrapper(namespace),
                 new DownloadProvider(databaseManager),
                 downloadManager,
                 new NetworkInfoProvider(appContext),
-                fetchLogger);
+                fetchLogger,
+                uiHandler,
+                listenerCoordinator);
     }
 
     @Test

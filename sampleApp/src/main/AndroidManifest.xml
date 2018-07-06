@@ -23,10 +23,12 @@
         </activity>
         <activity android:name=".FragmentActivity" />
         <activity android:name=".DownloadListActivity" />
-        <activity android:name=".GameFilesActivity"
-            android:screenOrientation="landscape"/>
+        <activity
+            android:name=".GameFilesActivity"
+            android:screenOrientation="landscape" />
         <activity android:name=".SingleDownloadActivity" />
         <activity android:name=".FailedMultiEnqueueActivity" />
+        <activity android:name=".FileServerActivity" />
     </application>
 
 </manifest>

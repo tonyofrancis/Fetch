@@ -2,6 +2,7 @@
     <string name="app_name">Fetch Demo</string>
     <string name="pause">PAUSE</string>
     <string name="resume">RESUME</string>
+    <string name="download">Download</string>
     <string name="permission_not_enabled">Please enable the Write External Storage Permission</string>
     <string name="delete_files">Delete Downloads test files from the file system and try again.</string>
     <string name="delete_title">Are you sure you want to delete %1$s?</string>
@@ -23,8 +24,10 @@
     <string name="percent_progress">%1$d%%</string>
     <string name="downloading">downloading…</string>
     <string name="queued">QUEUED</string>
+    <string name="added">ADDED</string>
     <string name="status_unknown">Status Unknown</string>
     <string name="delete_all_files">Delete Downloaded Files</string>
+    <string name="file_server">FETCH FILE SERVER DEMO</string>
     <string name="downloaded_files_deleted">Downloads Files Deleted</string>
     <string name="game_download_error">An error occurred, could not get game files.</string>
     <string name="failed_multi_enqueue">Failed Multi Enqueue Demo</string>

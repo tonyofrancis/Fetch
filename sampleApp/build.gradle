@@ -24,8 +24,8 @@ android {
         applicationId "com.tonyodev.fetchapp"
         minSdkVersion library_min_version
         targetSdkVersion library_target_version
-        versionCode 7
-        versionName "2.5"
+        versionCode 8
+        versionName "2.6"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -40,8 +40,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
@@ -57,10 +57,12 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxjava:$rxJava2_version"
     implementation "com.jakewharton.timber:timber:$timber_version"
 
+    implementation project(':fetch2okhttp')
     implementation project(':fetch2downloaders')
     implementation project(':fetch2rx')
     implementation project(':fetch2')
     implementation project(':fetchmigrator')
+    implementation project(':fetch2fileserver')
 
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "com.android.support.test:runner:$test_runner_version"

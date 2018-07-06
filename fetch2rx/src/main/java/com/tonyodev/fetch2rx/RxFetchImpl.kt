@@ -6,26 +6,26 @@ import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
-import com.tonyodev.fetch2.provider.ListenerProvider
-import com.tonyodev.fetch2.util.FAILED_TO_ENQUEUE_REQUEST
-import com.tonyodev.fetch2.util.DOWNLOAD_NOT_FOUND
+import com.tonyodev.fetch2.fetch.ListenerCoordinator
+import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2core.*
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 
 
 open class RxFetchImpl(namespace: String,
-                       handler: Handler,
+                       handlerWrapper: HandlerWrapper,
                        uiHandler: Handler,
                        fetchHandler: FetchHandler,
-                       fetchListenerProvider: ListenerProvider,
-                       logger: Logger)
-    : FetchImpl(namespace, handler, uiHandler,
-        fetchHandler, fetchListenerProvider, logger), RxFetch {
+                       logger: Logger,
+                       listenerCoordinator: ListenerCoordinator)
+    : FetchImpl(namespace, handlerWrapper, uiHandler,
+        fetchHandler, logger, listenerCoordinator), RxFetch {
 
-    protected val scheduler = AndroidSchedulers.from(handler.looper)
+    protected val scheduler = AndroidSchedulers.from(handlerWrapper.getLooper())
     protected val uiSceduler = AndroidSchedulers.mainThread()
 
-    override fun enqueue(request: Request): Convertible<Download> {
+    override fun enqueue(request: Request): Convertible<Request> {
         synchronized(lock) {
             throwExceptionIfClosed()
             val flowable = Flowable.just(request)
@@ -36,20 +36,24 @@ open class RxFetchImpl(namespace: String,
                         try {
                             download = fetchHandler.enqueue(it)
                             uiHandler.post {
-                                fetchListenerProvider.mainListener.onQueued(download)
-                                logger.d("Queued $download for download")
+                                listenerCoordinator.mainListener.onAdded(download)
+                                logger.d("Added Download $download")
+                                if (download.status == Status.QUEUED) {
+                                    listenerCoordinator.mainListener.onQueued(download, false)
+                                    logger.d("Queued $download for download")
+                                }
                             }
                         } catch (e: Exception) {
                             throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
                         }
-                        Flowable.just(download)
+                        Flowable.just(download.request)
                     }
                     .observeOn(uiSceduler)
             return Convertible(flowable)
         }
     }
 
-    override fun enqueue(requests: List<Request>): Convertible<List<Download>> {
+    override fun enqueue(requests: List<Request>): Convertible<List<Request>> {
         synchronized(lock) {
             throwExceptionIfClosed()
             val flowable = Flowable.just(requests)
@@ -61,8 +65,62 @@ open class RxFetchImpl(namespace: String,
                             downloads = fetchHandler.enqueue(it)
                             uiHandler.post {
                                 downloads.forEach {
-                                    fetchListenerProvider.mainListener.onQueued(it)
-                                    logger.d("Queued $it for download")
+                                    listenerCoordinator.mainListener.onAdded(it)
+                                    logger.d("Added $it")
+                                    if (it.status == Status.QUEUED) {
+                                        listenerCoordinator.mainListener.onQueued(it, false)
+                                        logger.d("Queued $it for download")
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
+                        }
+                        Flowable.just(downloads.map { it.request })
+                    }
+                    .observeOn(uiSceduler)
+            return Convertible(flowable)
+        }
+    }
+
+    override fun addCompletedDownload(completedDownload: CompletedDownload): Convertible<Download> {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            val flowable = Flowable.just(completedDownload)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val download: Download
+                        try {
+                            download = fetchHandler.enqueueCompletedDownload(it)
+                            uiHandler.post {
+                                listenerCoordinator.mainListener.onCompleted(download)
+                                logger.d("Added CompletedDownload $download")
+                            }
+                        } catch (e: Exception) {
+                            throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
+                        }
+                        Flowable.just(download)
+                    }
+                    .observeOn(uiSceduler)
+            return Convertible(flowable)
+        }
+    }
+
+    override fun addCompletedDownloads(completedDownloads: List<CompletedDownload>): Convertible<List<Download>> {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            val flowable = Flowable.just(completedDownloads)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val downloads: List<Download>
+                        try {
+                            downloads = fetchHandler.enqueueCompletedDownloads(it)
+                            uiHandler.post {
+                                downloads.forEach {
+                                    listenerCoordinator.mainListener.onCompleted(it)
+                                    logger.d("Added CompletedDownload $it")
                                 }
                             }
                         } catch (e: Exception) {
@@ -75,7 +133,7 @@ open class RxFetchImpl(namespace: String,
         }
     }
 
-    override fun updateRequest(id: Int, requestInfo: RequestInfo): Convertible<Download> {
+    override fun updateRequest(oldRequestId: Int, newRequest: Request): Convertible<Download> {
         synchronized(lock) {
             throwExceptionIfClosed()
             val flowable = Flowable.just(Object())
@@ -84,7 +142,7 @@ open class RxFetchImpl(namespace: String,
                         throwExceptionIfClosed()
                         val download: Download?
                         try {
-                            download = fetchHandler.updateRequest(id, requestInfo)
+                            download = fetchHandler.updateRequest(oldRequestId, newRequest)
                         } catch (e: Exception) {
                             throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
                         }
@@ -135,8 +193,8 @@ open class RxFetchImpl(namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         throwExceptionIfClosed()
-                        val download = fetchHandler.getDownload(it) ?:
-                                throw FetchException(DOWNLOAD_NOT_FOUND)
+                        val download = fetchHandler.getDownload(it)
+                                ?: throw FetchException(DOWNLOAD_NOT_FOUND)
                         Flowable.just(download)
                     }
                     .observeOn(uiSceduler)
@@ -189,17 +247,47 @@ open class RxFetchImpl(namespace: String,
         }
     }
 
+    override fun getDownloadsByRequestIdentifier(identifier: Long): Convertible<List<Download>> {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            val flowable = Flowable.just(identifier)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloadsByRequestIdentifier(identifier)
+                        Flowable.just(downloads)
+                    }
+                    .observeOn(uiSceduler)
+            return Convertible(flowable)
+        }
+    }
+
+    override fun getDownloadBlocks(downloadId: Int): Convertible<List<DownloadBlock>> {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            val flowable = Flowable.just(downloadId)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloadBlocks(downloadId)
+                        Flowable.just(downloads)
+                    }
+                    .observeOn(uiSceduler)
+            return Convertible(flowable)
+        }
+    }
+
     companion object {
 
         @JvmStatic
         fun newInstance(modules: Modules): RxFetchImpl {
             return RxFetchImpl(
-                    namespace = modules.prefs.namespace,
-                    handler = modules.handler,
+                    namespace = modules.fetchConfiguration.namespace,
+                    handlerWrapper = modules.handlerWrapper,
                     uiHandler = modules.uiHandler,
                     fetchHandler = modules.fetchHandler,
-                    fetchListenerProvider = modules.fetchListenerProvider,
-                    logger = modules.prefs.logger)
+                    logger = modules.fetchConfiguration.logger,
+                    listenerCoordinator = modules.listenerCoordinator)
         }
 
     }

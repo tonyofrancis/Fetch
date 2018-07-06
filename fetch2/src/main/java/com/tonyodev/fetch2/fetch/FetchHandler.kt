@@ -1,19 +1,19 @@
 package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.*
-import com.tonyodev.fetch2.provider.ListenerProvider
+import com.tonyodev.fetch2core.DownloadBlock
 import java.io.Closeable
 
 /**
- * This handler class handles all tasks and operations of Fetch.
+ * This handlerWrapper class handles all tasks and operations of Fetch.
  * */
 interface FetchHandler : Closeable {
-
-    val fetchListenerProvider: ListenerProvider
 
     fun init()
     fun enqueue(request: Request): Download
     fun enqueue(requests: List<Request>): List<Download>
+    fun enqueueCompletedDownload(completedDownload: CompletedDownload): Download
+    fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download>
     fun pause(ids: IntArray): List<Download>
     fun pausedGroup(id: Int): List<Download>
     fun freeze()
@@ -32,18 +32,20 @@ interface FetchHandler : Closeable {
     fun cancelGroup(id: Int): List<Download>
     fun cancelAll(): List<Download>
     fun retry(ids: IntArray): List<Download>
-    fun updateRequest(id: Int, requestInfo: RequestInfo): Download?
+    fun updateRequest(oldRequestId: Int, newRequest: Request): Download?
     fun getDownloads(): List<Download>
     fun getDownload(id: Int): Download?
     fun getDownloads(idList: List<Int>): List<Download>
     fun getDownloadsInGroup(id: Int): List<Download>
     fun getDownloadsWithStatus(status: Status): List<Download>
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<Download>
+    fun getDownloadsByRequestIdentifier(identifier: Long): List<Download>
     fun setGlobalNetworkType(networkType: NetworkType)
     fun enableLogging(enabled: Boolean)
-    fun addListener(listener: FetchListener)
+    fun addListener(listener: FetchListener, notify: Boolean)
     fun removeListener(listener: FetchListener)
     fun isDownloading(id: Int): Boolean
     fun cancelDownload(id: Int): Boolean
+    fun getDownloadBlocks(downloadId: Int): List<DownloadBlock>
 
 }

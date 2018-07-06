@@ -1,0 +1,146 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:2:1-29:12
+MERGED from [:fetch2fileserver] /Users/tonyofrancis/Git/Fetch/fetch2fileserver/build/intermediates/manifests/full/debug/AndroidManifest.xml:2:1-12:12
+MERGED from [:fetch2] /Users/tonyofrancis/Git/Fetch/fetch2/build/intermediates/manifests/full/debug/AndroidManifest.xml:2:1-15:12
+MERGED from [com.android.support:appcompat-v7:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/appcompat-v7-27.1.1.aar/2ea5461fe3607969f37b5c909d590190/AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support.constraint:constraint-layout:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/constraint-layout-1.1.0.aar/51abaa825fad32d90faa6629211ee05e/AndroidManifest.xml:2:1-11:12
+MERGED from [com.android.support:support-fragment:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-fragment-27.1.1.aar/cb7b71a886e79cd3bbc1953a24b43fdc/AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support:animated-vector-drawable:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/animated-vector-drawable-27.1.1.aar/9c0b1eda37cccd2e679cc8ee5dca2099/AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support:support-vector-drawable:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-vector-drawable-27.1.1.aar/9254b36ed5a84ae832b1e56df7bd53d7/AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support:support-core-ui:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-core-ui-27.1.1.aar/c58c01d099ac2c34823e5d4ce9c91b60/AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.persistence.room:runtime:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/runtime-1.1.0.aar/9a5ea8d0245cf78f6ae5c4b8fbeaa736/AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support:support-core-utils:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-core-utils-27.1.1.aar/4fed63cfe664cf862b7a5c0950fc7556/AndroidManifest.xml:17:1-22:12
+MERGED from [com.android.support:support-compat:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-compat-27.1.1.aar/a5cd056445abc472d7a7ceb300a10766/AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.persistence:db-framework:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/db-framework-1.1.0.aar/4d9a5200d379827a133dbc5d3e9ada3a/AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.persistence:db:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/db-1.1.0.aar/de44f09d3a95dff055ad8cdcfd58bdff/AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.lifecycle:livedata-core:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/livedata-core-1.1.0.aar/e0d24b66681fe01a15e0f8e70934bcbb/AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.core:runtime:1.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/runtime-1.1.1.aar/6075c687b16906ca9e4babd740663771/AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.lifecycle:runtime:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/runtime-1.1.0.aar/6225358bc54f3d12115f1b8322871761/AndroidManifest.xml:17:1-22:12
+MERGED from [android.arch.lifecycle:viewmodel:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/viewmodel-1.1.0.aar/e23d07d9db6648f13933e296b48abc07/AndroidManifest.xml:17:1-22:12
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:2:1-29:12
+	package
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:4:5-43
+		INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+		INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+	android:versionName
+		INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:2:1-29:12
+		INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+	xmlns:tools
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:3:5-51
+	android:versionCode
+		INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:2:1-29:12
+		INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:2:11-69
+uses-permission#android.permission.INTERNET
+ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:6:5-67
+MERGED from [:fetch2] /Users/tonyofrancis/Git/Fetch/fetch2/build/intermediates/manifests/full/debug/AndroidManifest.xml:11:5-67
+MERGED from [:fetch2] /Users/tonyofrancis/Git/Fetch/fetch2/build/intermediates/manifests/full/debug/AndroidManifest.xml:11:5-67
+	android:name
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:6:22-64
+uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
+ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:8:5-9:47
+	tools:remove
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:9:9-45
+	android:name
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:8:22-78
+uses-permission#android.permission.READ_EXTERNAL_STORAGE
+ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:10:5-11:47
+	tools:remove
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:11:9-45
+	android:name
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:10:22-77
+application
+ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:13:5-27:19
+MERGED from [com.android.support.constraint:constraint-layout:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/constraint-layout-1.1.0.aar/51abaa825fad32d90faa6629211ee05e/AndroidManifest.xml:9:5-20
+MERGED from [com.android.support.constraint:constraint-layout:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/constraint-layout-1.1.0.aar/51abaa825fad32d90faa6629211ee05e/AndroidManifest.xml:9:5-20
+	android:supportsRtl
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:18:9-35
+	android:label
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:16:9-41
+	android:roundIcon
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:17:9-54
+	android:icon
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:15:9-43
+	android:allowBackup
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:14:9-35
+	android:theme
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:19:9-40
+activity#com.tonyodev.serversampleapp.MainActivity
+ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:20:9-26:20
+	android:name
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:20:19-47
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:21:13-25:29
+action#android.intent.action.MAIN
+ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:22:17-69
+	android:name
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:22:25-66
+category#android.intent.category.LAUNCHER
+ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:24:17-77
+	android:name
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml:24:27-74
+uses-sdk
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+MERGED from [:fetch2fileserver] /Users/tonyofrancis/Git/Fetch/fetch2fileserver/build/intermediates/manifests/full/debug/AndroidManifest.xml:8:5-10:41
+MERGED from [:fetch2fileserver] /Users/tonyofrancis/Git/Fetch/fetch2fileserver/build/intermediates/manifests/full/debug/AndroidManifest.xml:8:5-10:41
+MERGED from [:fetch2] /Users/tonyofrancis/Git/Fetch/fetch2/build/intermediates/manifests/full/debug/AndroidManifest.xml:7:5-9:41
+MERGED from [:fetch2] /Users/tonyofrancis/Git/Fetch/fetch2/build/intermediates/manifests/full/debug/AndroidManifest.xml:7:5-9:41
+MERGED from [com.android.support:appcompat-v7:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/appcompat-v7-27.1.1.aar/2ea5461fe3607969f37b5c909d590190/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:appcompat-v7:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/appcompat-v7-27.1.1.aar/2ea5461fe3607969f37b5c909d590190/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support.constraint:constraint-layout:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/constraint-layout-1.1.0.aar/51abaa825fad32d90faa6629211ee05e/AndroidManifest.xml:5:5-7:41
+MERGED from [com.android.support.constraint:constraint-layout:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/constraint-layout-1.1.0.aar/51abaa825fad32d90faa6629211ee05e/AndroidManifest.xml:5:5-7:41
+MERGED from [com.android.support:support-fragment:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-fragment-27.1.1.aar/cb7b71a886e79cd3bbc1953a24b43fdc/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-fragment:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-fragment-27.1.1.aar/cb7b71a886e79cd3bbc1953a24b43fdc/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:animated-vector-drawable:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/animated-vector-drawable-27.1.1.aar/9c0b1eda37cccd2e679cc8ee5dca2099/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:animated-vector-drawable:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/animated-vector-drawable-27.1.1.aar/9c0b1eda37cccd2e679cc8ee5dca2099/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-vector-drawable:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-vector-drawable-27.1.1.aar/9254b36ed5a84ae832b1e56df7bd53d7/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-vector-drawable:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-vector-drawable-27.1.1.aar/9254b36ed5a84ae832b1e56df7bd53d7/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-core-ui:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-core-ui-27.1.1.aar/c58c01d099ac2c34823e5d4ce9c91b60/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-core-ui:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-core-ui-27.1.1.aar/c58c01d099ac2c34823e5d4ce9c91b60/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.persistence.room:runtime:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/runtime-1.1.0.aar/9a5ea8d0245cf78f6ae5c4b8fbeaa736/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.persistence.room:runtime:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/runtime-1.1.0.aar/9a5ea8d0245cf78f6ae5c4b8fbeaa736/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-core-utils:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-core-utils-27.1.1.aar/4fed63cfe664cf862b7a5c0950fc7556/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-core-utils:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-core-utils-27.1.1.aar/4fed63cfe664cf862b7a5c0950fc7556/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-compat:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-compat-27.1.1.aar/a5cd056445abc472d7a7ceb300a10766/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-compat:27.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/support-compat-27.1.1.aar/a5cd056445abc472d7a7ceb300a10766/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.persistence:db-framework:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/db-framework-1.1.0.aar/4d9a5200d379827a133dbc5d3e9ada3a/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.persistence:db-framework:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/db-framework-1.1.0.aar/4d9a5200d379827a133dbc5d3e9ada3a/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.persistence:db:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/db-1.1.0.aar/de44f09d3a95dff055ad8cdcfd58bdff/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.persistence:db:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/db-1.1.0.aar/de44f09d3a95dff055ad8cdcfd58bdff/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:livedata-core:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/livedata-core-1.1.0.aar/e0d24b66681fe01a15e0f8e70934bcbb/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:livedata-core:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/livedata-core-1.1.0.aar/e0d24b66681fe01a15e0f8e70934bcbb/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.core:runtime:1.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/runtime-1.1.1.aar/6075c687b16906ca9e4babd740663771/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.core:runtime:1.1.1] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/runtime-1.1.1.aar/6075c687b16906ca9e4babd740663771/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:runtime:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/runtime-1.1.0.aar/6225358bc54f3d12115f1b8322871761/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:runtime:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/runtime-1.1.0.aar/6225358bc54f3d12115f1b8322871761/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:viewmodel:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/viewmodel-1.1.0.aar/e23d07d9db6648f13933e296b48abc07/AndroidManifest.xml:20:5-44
+MERGED from [android.arch.lifecycle:viewmodel:1.1.0] /Users/tonyofrancis/.gradle/caches/transforms-1/files-1.1/viewmodel-1.1.0.aar/e23d07d9db6648f13933e296b48abc07/AndroidManifest.xml:20:5-44
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+		INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+		ADDED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+		INJECTED from /Users/tonyofrancis/Git/Fetch/serversampleapp/src/main/AndroidManifest.xml
+uses-permission#android.permission.ACCESS_WIFI_STATE
+ADDED from [:fetch2] /Users/tonyofrancis/Git/Fetch/fetch2/build/intermediates/manifests/full/debug/AndroidManifest.xml:12:5-76
+	android:name
+		ADDED from [:fetch2] /Users/tonyofrancis/Git/Fetch/fetch2/build/intermediates/manifests/full/debug/AndroidManifest.xml:12:22-73
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from [:fetch2] /Users/tonyofrancis/Git/Fetch/fetch2/build/intermediates/manifests/full/debug/AndroidManifest.xml:13:5-79
+	android:name
+		ADDED from [:fetch2] /Users/tonyofrancis/Git/Fetch/fetch2/build/intermediates/manifests/full/debug/AndroidManifest.xml:13:22-76

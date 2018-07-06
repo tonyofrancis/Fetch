@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Set;
 
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
 import timber.log.Timber;
 
 public class GameFilesActivity extends AppCompatActivity {
@@ -59,7 +58,7 @@ public class GameFilesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game_files);
         setUpViews();
-        rxFetch = ((App) getApplication()).getRxFetch();
+        rxFetch = RxFetch.Impl.getDefaultRxInstance();
         reset();
     }
 
@@ -69,20 +68,17 @@ public class GameFilesActivity extends AppCompatActivity {
         startButton = findViewById(R.id.startButton);
         labelTextView = findViewById(R.id.labelTextView);
         mainView = findViewById(R.id.activity_loading);
-        startButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final String label = (String) startButton.getText();
-                final Context context = GameFilesActivity.this;
-                if (label.equals(context.getString(R.string.reset))) {
-                    rxFetch.deleteAll();
-                    reset();
+        startButton.setOnClickListener(v -> {
+            final String label = (String) startButton.getText();
+            final Context context = GameFilesActivity.this;
+            if (label.equals(context.getString(R.string.reset))) {
+                rxFetch.deleteAll();
+                reset();
 
-                } else {
-                    startButton.setVisibility(View.GONE);
-                    labelTextView.setText(R.string.fetch_started);
-                    checkStoragePermission();
-                }
+            } else {
+                startButton.setVisibility(View.GONE);
+                labelTextView.setText(R.string.fetch_started);
+                checkStoragePermission();
             }
         });
     }
@@ -91,25 +87,17 @@ public class GameFilesActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         rxFetch.addListener(fetchListener);
-        resumeDisposable = rxFetch.getDownloadsInGroup(groupId)
-                .asFlowable()
-                .subscribe(new Consumer<List<Download>>() {
-                    @Override
-                    public void accept(List<Download> downloads) throws Exception {
-                        for (Download download : downloads) {
-                            if (fileProgressMap.containsKey(download.getId())) {
-                                fileProgressMap.put(download.getId(), download.getProgress());
-                                updateUIWithProgress();
-                            }
-                        }
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        final Error error = FetchErrorUtils.getErrorFromThrowable(throwable);
-                        Timber.d("GamesFilesActivity Error: %1$s", error);
-                    }
-                });
+        resumeDisposable = rxFetch.getDownloadsInGroup(groupId).asFlowable().subscribe(downloads -> {
+            for (Download download : downloads) {
+                if (fileProgressMap.containsKey(download.getId())) {
+                    fileProgressMap.put(download.getId(), download.getProgress());
+                    updateUIWithProgress();
+                }
+            }
+        }, throwable -> {
+            final Error error = FetchErrorUtils.getErrorFromThrowable(throwable);
+            Timber.d("GamesFilesActivity Error: %1$s", error);
+        });
     }
 
     @Override
@@ -121,8 +109,7 @@ public class GameFilesActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        rxFetch.deleteAll();
-        rxFetch.close();
+        rxFetch.deleteAll().close();
         if (enqueueDisposable != null && !enqueueDisposable.isDisposed()) {
             enqueueDisposable.dispose();
         }
@@ -133,23 +120,19 @@ public class GameFilesActivity extends AppCompatActivity {
 
     private void checkStoragePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    STORAGE_PERMISSION_CODE);
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
         } else {
             enqueueFiles();
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == STORAGE_PERMISSION_CODE || grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == STORAGE_PERMISSION_CODE || grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             enqueueFiles();
         } else {
-            Toast.makeText(this, R.string.permission_not_enabled, Toast.LENGTH_SHORT)
-                    .show();
+            Toast.makeText(this, R.string.permission_not_enabled, Toast.LENGTH_SHORT).show();
             reset();
         }
     }
@@ -158,8 +141,7 @@ public class GameFilesActivity extends AppCompatActivity {
         final int totalFiles = fileProgressMap.size();
         final int completedFiles = getCompletedFileCount();
 
-        progressTextView.setText(getResources()
-                .getString(R.string.complete_over, completedFiles, totalFiles));
+        progressTextView.setText(getResources().getString(R.string.complete_over, completedFiles, totalFiles));
         final int progress = getDownloadProgress();
         progressBar.setProgress(progress);
         if (completedFiles == totalFiles) {
@@ -208,23 +190,15 @@ public class GameFilesActivity extends AppCompatActivity {
         for (Request request : requestList) {
             request.setGroupId(groupId);
         }
-        enqueueDisposable = rxFetch.enqueue(requestList)
-                .asFlowable()
-                .subscribe(new Consumer<List<Download>>() {
-                    @Override
-                    public void accept(List<Download> downloads) throws Exception {
-                        for (Download download : downloads) {
-                            fileProgressMap.put(download.getId(), 0);
-                            updateUIWithProgress();
-                        }
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        final Error error = FetchErrorUtils.getErrorFromThrowable(throwable);
-                        Timber.d("GamesFilesActivity Error: %1$s", error);
-                    }
-                });
+        enqueueDisposable = rxFetch.enqueue(requestList).asFlowable().subscribe(updatedRequests -> {
+            for (Request request : updatedRequests) {
+                fileProgressMap.put(request.getId(), 0);
+                updateUIWithProgress();
+            }
+        }, throwable -> {
+            final Error error = FetchErrorUtils.getErrorFromThrowable(throwable);
+            Timber.d("GamesFilesActivity Error: %1$s", error);
+        });
     }
 
     private final FetchListener fetchListener = new AbstractFetchListener() {
@@ -238,8 +212,7 @@ public class GameFilesActivity extends AppCompatActivity {
         @Override
         public void onError(@NotNull Download download) {
             reset();
-            Snackbar.make(mainView, R.string.game_download_error, Snackbar.LENGTH_INDEFINITE)
-                    .show();
+            Snackbar.make(mainView, R.string.game_download_error, Snackbar.LENGTH_INDEFINITE).show();
         }
 
         @Override
