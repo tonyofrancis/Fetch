@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2fileserver
 
 import com.tonyodev.fetch2core.FileResource
+import com.tonyodev.fetch2core.InputResourceWrapper
 import com.tonyodev.fetch2core.InterruptMonitor
 import com.tonyodev.fetch2core.transporter.FileRequest
 import com.tonyodev.fetch2core.transporter.FileResourceTransporterWriter
@@ -32,16 +33,17 @@ interface FetchFileServerDelegate {
      * */
     fun onClientDisconnected(client: String)
 
-    /** Called when the Fetch File Server needs to provide the client the requested file input stream.
-     * If null is returned, Fetch File Server will provide the InputSteam. Use this method if you need
-     * to provide a custom InputStream. For example an encrypted input stream.
+    /** Called when the Fetch File Server needs to provide the client the requested file input stream
+     * wrapped in a InputResourceWrapper.
+     * If null is returned, Fetch File Server will provide the InputResourceWrapper. Use this method if you need
+     * to provide a custom InputResourceWrapper. For example an encrypted input stream.
      * @param fileResource Resource File that Fetch file Server will provide the client.
      * @param fileOffset The offset reading will begin from. Use this value to seek to the right
      * offset position. Note: Not seeking to the right position will cause the server to send
      * invalid data to the client.
-     * @return file input stream. Can be null.
+     * @return file InputResourceWrapper. Can be null.
      * */
-    fun getFileInputStream(fileResource: FileResource, fileOffset: Long): InputStream?
+    fun getFileInputResourceWrapper(fileResource: FileResource, fileOffset: Long): InputResourceWrapper?
 
     /** Called if the client requested a custom request that the Fetch File Server cannot
      * serve. Use this callback to provide a custom response.

@@ -10,7 +10,6 @@ import com.tonyodev.fetch2core.transporter.FileResponse.Companion.OPEN_CONNECTIO
 import com.tonyodev.fetch2core.transporter.FileResourceTransporter
 import com.tonyodev.fetch2core.transporter.FetchFileResourceTransporter
 import java.io.ByteArrayInputStream
-import java.io.InputStream
 import java.io.RandomAccessFile
 import java.net.HttpURLConnection
 import java.net.Socket
@@ -27,8 +26,7 @@ class FetchFileResourceProvider(private val client: Socket,
     private val transporter: FileResourceTransporter = FetchFileResourceTransporter(client)
     @Volatile
     private var interrupted: Boolean = false
-    private var fileInputStream: InputStream? = null
-    private var randomAccessFile: RandomAccessFile? = null
+    private var inputResourceWrapper: InputResourceWrapper? = null
     private var clientRequest: FileRequest? = null
     private var persistConnection = true
     private val persistentRunnable = Runnable {
@@ -74,16 +72,46 @@ class FetchFileResourceProvider(private val client: Socket,
                                         if (fileResourceInfo != null) {
                                             val fileResource = fileResourceInfo.toFileResource()
                                             this.fileResource = fileResource
-                                            fileInputStream = fileResourceProviderDelegate.getFileInputStream(fileResource, request.rangeStart)
-                                            if (fileInputStream == null) {
+                                            inputResourceWrapper = fileResourceProviderDelegate.getFileInputResourceWrapper(fileResource, request.rangeStart)
+                                            if (inputResourceWrapper == null) {
                                                 if (fileResourceInfo.id == FileRequest.CATALOG_ID) {
                                                     val catalog = fileResourceInfo.customData.toByteArray(Charsets.UTF_8)
                                                     fileResourceInfo.length = if (request.rangeEnd == -1L) catalog.size.toLong() else request.rangeEnd
                                                     fileResourceInfo.md5 = getMd5String(catalog)
-                                                    fileInputStream = ByteArrayInputStream(catalog, request.rangeStart.toInt(), fileResourceInfo.length.toInt())
+                                                    inputResourceWrapper = object : InputResourceWrapper() {
+
+                                                        private val inputStream = ByteArrayInputStream(catalog, request.rangeStart.toInt(), fileResourceInfo.length.toInt())
+
+                                                        override fun read(byteArray: ByteArray, offSet: Int, length: Int): Int {
+                                                            return inputStream.read(byteArray, offSet, length)
+                                                        }
+
+                                                        override fun setReadOffset(offset: Long) {
+                                                            inputStream.skip(offset)
+                                                        }
+
+                                                        override fun close() {
+                                                            inputStream.close()
+                                                        }
+                                                    }
                                                 } else {
-                                                    randomAccessFile = RandomAccessFile(fileResourceInfo.file, "r")
-                                                    randomAccessFile?.seek(request.rangeStart)
+                                                    inputResourceWrapper = object : InputResourceWrapper() {
+
+                                                        val randomAccessFile = RandomAccessFile(fileResourceInfo.file, "r")
+
+                                                        override fun read(byteArray: ByteArray, offSet: Int, length: Int): Int {
+                                                            return randomAccessFile.read(byteArray, offSet, length)
+                                                        }
+
+                                                        override fun setReadOffset(offset: Long) {
+                                                            randomAccessFile.seek(offset)
+                                                        }
+
+                                                        override fun close() {
+                                                            randomAccessFile.close()
+                                                        }
+                                                    }
+                                                    inputResourceWrapper?.setReadOffset(request.rangeStart)
                                                 }
                                             }
                                             if (!interrupted) {
@@ -93,8 +121,8 @@ class FetchFileResourceProvider(private val client: Socket,
                                                 var remainderBytes = contentLength
                                                 sendFileResourceResponse(contentLength, fileResourceInfo.md5)
                                                 var reportingStartTime = System.nanoTime()
-                                                var read = (fileInputStream?.read(byteArray)
-                                                        ?: randomAccessFile?.read(byteArray)) ?: -1
+                                                var read = inputResourceWrapper?.read(byteArray)
+                                                        ?: -1
                                                 var streamBytes: Int
                                                 while (remainderBytes > 0L && read != -1 && !interrupted) {
                                                     streamBytes = if (read <= remainderBytes) {
@@ -114,8 +142,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                                             fileResourceProviderDelegate.onProgress(request.client, fileResource, progress)
                                                             reportingStartTime = System.nanoTime()
                                                         }
-                                                        read = (fileInputStream?.read(byteArray)
-                                                                ?: randomAccessFile?.read(byteArray)) ?: -1
+                                                        read = inputResourceWrapper?.read(byteArray) ?: -1
                                                     }
                                                 }
                                                 if (remainderBytes == 0L && !interrupted) {
@@ -178,17 +205,11 @@ class FetchFileResourceProvider(private val client: Socket,
 
     private fun cleanFileStreams() {
         try {
-            fileInputStream?.close()
+            inputResourceWrapper?.close()
         } catch (e: Exception) {
             logger.e("FetchFileServerProvider - ${e.message}")
         }
-        try {
-            randomAccessFile?.close()
-        } catch (e: Exception) {
-            logger.e("FetchFileServerProvider - ${e.message}")
-        }
-        fileInputStream = null
-        randomAccessFile = null
+        inputResourceWrapper = null
     }
 
     private val interruptMonitor = object : InterruptMonitor {

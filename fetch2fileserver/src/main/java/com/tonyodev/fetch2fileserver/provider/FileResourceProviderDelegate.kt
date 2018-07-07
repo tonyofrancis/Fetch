@@ -1,11 +1,11 @@
 package com.tonyodev.fetch2fileserver.provider
 
 import com.tonyodev.fetch2core.FileResource
+import com.tonyodev.fetch2core.InputResourceWrapper
 import com.tonyodev.fetch2core.transporter.FileRequest
 import com.tonyodev.fetch2core.InterruptMonitor
 import com.tonyodev.fetch2fileserver.database.FileResourceInfo
 import com.tonyodev.fetch2core.transporter.FileResourceTransporterWriter
-import java.io.InputStream
 import java.util.*
 
 interface FileResourceProviderDelegate {
@@ -26,7 +26,7 @@ interface FileResourceProviderDelegate {
 
     fun getCatalog(page: Int, size: Int): String
 
-    fun getFileInputStream(fileResource: FileResource, fileOffset: Long): InputStream?
+    fun getFileInputResourceWrapper(fileResource: FileResource, fileOffset: Long): InputResourceWrapper?
 
     fun onCustomRequest(client: String, fileRequest: FileRequest,
                         fileResourceTransporterWriter: FileResourceTransporterWriter, interruptMonitor: InterruptMonitor)

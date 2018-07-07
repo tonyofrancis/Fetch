@@ -15,7 +15,6 @@ import com.tonyodev.fetch2fileserver.provider.FileResourceProviderDelegate
 import com.tonyodev.fetch2fileserver.provider.FetchFileResourceProvider
 import com.tonyodev.fetch2core.transporter.FileRequest
 import com.tonyodev.fetch2core.transporter.FileResourceTransporterWriter
-import java.io.InputStream
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.*
@@ -168,8 +167,8 @@ class FetchFileServerImpl(context: Context,
             return fileResourceServerDatabase.getRequestedCatalog(page, size)
         }
 
-        override fun getFileInputStream(fileResource: FileResource, fileOffset: Long): InputStream? {
-            return fetchFileServerDelegate?.getFileInputStream(fileResource, fileOffset)
+        override fun getFileInputResourceWrapper(fileResource: FileResource, fileOffset: Long): InputResourceWrapper? {
+            return fetchFileServerDelegate?.getFileInputResourceWrapper(fileResource, fileOffset)
         }
 
         override fun onProgress(client: String, fileResource: FileResource, progress: Int) {

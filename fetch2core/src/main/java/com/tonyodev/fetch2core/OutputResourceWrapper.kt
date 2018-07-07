@@ -14,7 +14,7 @@ abstract class OutputResourceWrapper : Closeable {
      * @param length data length
      * */
     @Throws(IOException::class)
-    abstract fun write(byteArray: ByteArray, offSet: Int, length: Int)
+    abstract fun write(byteArray: ByteArray, offSet: Int = 0, length: Int = byteArray.size)
 
     /** Set write offset position
      * @param offset write offset position
