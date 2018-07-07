@@ -291,6 +291,14 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             ioHandler.post {
                 fileResourceServerDatabase.delete(fileResource.toFileResourceInfo())
+                val iterator = fileResourceProviderMap.iterator()
+                while (iterator.hasNext()) {
+                    val provider = iterator.next().value
+                    if (provider.isServingFileResource(fileResource)) {
+                        provider.interrupt()
+                        break
+                    }
+                }
             }
         }
     }
@@ -300,6 +308,7 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             ioHandler.post {
                 fileResourceServerDatabase.deleteAll()
+                interruptAllProviders()
             }
         }
     }
@@ -309,6 +318,16 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             ioHandler.post {
                 fileResourceServerDatabase.delete(fileResources.map { it.toFileResourceInfo() })
+                fileResources.forEach {
+                    val iterator = fileResourceProviderMap.iterator()
+                    while (iterator.hasNext()) {
+                        val provider = iterator.next().value
+                        if (provider.isServingFileResource(it)) {
+                            provider.interrupt()
+                            break
+                        }
+                    }
+                }
             }
         }
     }

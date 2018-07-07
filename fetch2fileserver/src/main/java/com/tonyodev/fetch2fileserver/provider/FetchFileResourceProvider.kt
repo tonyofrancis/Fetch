@@ -34,6 +34,7 @@ class FetchFileResourceProvider(private val client: Socket,
     private val persistentRunnable = Runnable {
         interrupted = true
     }
+    private var fileResource: FileResource? = null
 
     override fun execute() {
         Thread {
@@ -72,6 +73,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                     if (!interrupted) {
                                         if (fileResourceInfo != null) {
                                             val fileResource = fileResourceInfo.toFileResource()
+                                            this.fileResource = fileResource
                                             fileInputStream = fileResourceProviderDelegate.getFileInputStream(fileResource, request.rangeStart)
                                             if (fileInputStream == null) {
                                                 if (fileResourceInfo.id == FileRequest.CATALOG_ID) {
@@ -121,6 +123,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                                 }
                                             }
                                             cleanFileStreams()
+                                            this.fileResource = null
                                         } else {
                                             sendInvalidResponse(HttpURLConnection.HTTP_NO_CONTENT)
                                         }
@@ -163,6 +166,7 @@ class FetchFileResourceProvider(private val client: Socket,
                 }
                 transporter.close()
                 cleanFileStreams()
+                fileResource = null
                 try {
                     fileResourceProviderDelegate.onFinished(id)
                 } catch (e: Exception) {
@@ -253,6 +257,10 @@ class FetchFileResourceProvider(private val client: Socket,
                 interrupted = true
             }
         }
+    }
+
+    override fun isServingFileResource(fileResource: FileResource): Boolean {
+        return this.fileResource?.equals(fileResource) ?: false
     }
 
 }
