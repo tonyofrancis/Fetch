@@ -63,7 +63,7 @@ public class FileServerActivity extends AppCompatActivity {
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
 
         fetchFileServer = new FetchFileServer.Builder(this)
-                .setAuthenticator((authorization, fileRequest) -> authorization.equals("password"))
+                .setAuthenticator((sessionId, authorization, fileRequest) -> authorization.equals("password"))
                 .build();
         fetchFileServer.start();
         checkStoragePermission();

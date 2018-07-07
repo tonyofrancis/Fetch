@@ -92,7 +92,7 @@ interface FetchFileServer {
         private var logger = FetchFileServerLogger()
         private var fileServerAuthenticator: FetchFileServerAuthenticator? = null
         private var fileServerDelegate: FetchFileServerDelegate? = null
-        private var transferProgressListener: FetchTransferProgressListener? = null
+        private var transferListener: FetchTransferListener? = null
         private var fileResourceDatabaseName = "LibFetchFileServerDatabaseLib.db"
 
         /** Set Custom Server Socket
@@ -142,12 +142,12 @@ interface FetchFileServer {
             return this
         }
 
-        /** Set Transfer Progress Listener
-         * @param fetchTransferProgressListener Default is null.
+        /** Set Transfer Listener
+         * @param fetchTransferListener Default is null.
          * @return builder
          * */
-        fun setTransferProgressListener(fetchTransferProgressListener: FetchTransferProgressListener): Builder {
-            this.transferProgressListener = fetchTransferProgressListener
+        fun setTransferListener(fetchTransferListener: FetchTransferListener): Builder {
+            this.transferListener = fetchTransferListener
             return this
         }
 
@@ -174,7 +174,7 @@ interface FetchFileServer {
                     databaseName = fileResourceDatabaseName,
                     fetchFileServerAuthenticator = fileServerAuthenticator,
                     fetchFileServerDelegate = fileServerDelegate,
-                    fetchTransferProgressListener = transferProgressListener)
+                    fetchTransferListener = transferListener)
         }
 
     }

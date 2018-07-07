@@ -32,6 +32,7 @@ class FetchFileResourceProvider(private val client: Socket,
     private val persistentRunnable = Runnable {
         interrupted = true
     }
+    private val sessionId = UUID.randomUUID().toString()
     private var fileResource: FileResource? = null
 
     override fun execute() {
@@ -44,11 +45,11 @@ class FetchFileResourceProvider(private val client: Socket,
                     val request = clientRequest
                     if (request != null && !interrupted) {
                         persistConnection = request.persistConnection
-                        if (!interrupted && fileResourceProviderDelegate.acceptAuthorization(request.authorization, request)) {
+                        if (!interrupted && fileResourceProviderDelegate.acceptAuthorization(sessionId, request.authorization, request)) {
                             logger.d("FetchFileServerProvider - ClientRequestAccepted - ${request.toJsonString}")
                             logger.d("FetchFileServerProvider - Client Connected - $client")
-                            fileResourceProviderDelegate.onClientConnected(request.client, request)
-                            fileResourceProviderDelegate.onClientDidProvideCustomData(request.client, request.customData, request)
+                            fileResourceProviderDelegate.onClientConnected(sessionId, request)
+                            fileResourceProviderDelegate.onClientDidProvideCustomData(sessionId, request.customData, request)
                             when (request.type) {
                                 FileRequest.TYPE_PING -> {
                                     if (!interrupted) {
@@ -72,7 +73,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                         if (fileResourceInfo != null) {
                                             val fileResource = fileResourceInfo.toFileResource()
                                             this.fileResource = fileResource
-                                            inputResourceWrapper = fileResourceProviderDelegate.getFileInputResourceWrapper(fileResource, request.rangeStart)
+                                            inputResourceWrapper = fileResourceProviderDelegate.getFileInputResourceWrapper(sessionId, request, fileResource, request.rangeStart)
                                             if (inputResourceWrapper == null) {
                                                 if (fileResourceInfo.id == FileRequest.CATALOG_ID) {
                                                     val catalog = fileResourceInfo.customData.toByteArray(Charsets.UTF_8)
@@ -124,6 +125,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                                 var read = inputResourceWrapper?.read(byteArray)
                                                         ?: -1
                                                 var streamBytes: Int
+                                                fileResourceProviderDelegate.onStarted(sessionId, request, fileResource)
                                                 while (remainderBytes > 0L && read != -1 && !interrupted) {
                                                     streamBytes = if (read <= remainderBytes) {
                                                         read
@@ -139,18 +141,18 @@ class FetchFileResourceProvider(private val client: Socket,
                                                                 reportingStopTime, DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS)
                                                         if (hasReportingTimeElapsed && !interrupted) {
                                                             val progress = calculateProgress(contentLength - remainderBytes, contentLength)
-                                                            fileResourceProviderDelegate.onProgress(request.client, fileResource, progress)
+                                                            fileResourceProviderDelegate.onProgress(sessionId, request, fileResource, progress)
                                                             reportingStartTime = System.nanoTime()
                                                         }
                                                         read = inputResourceWrapper?.read(byteArray) ?: -1
                                                     }
                                                 }
                                                 if (remainderBytes == 0L && !interrupted) {
-                                                    fileResourceProviderDelegate.onProgress(request.client, fileResource, 100)
+                                                    fileResourceProviderDelegate.onProgress(sessionId, request, fileResource, 100)
+                                                    fileResourceProviderDelegate.onComplete(sessionId, request, fileResource)
                                                 }
                                             }
                                             cleanFileStreams()
-                                            this.fileResource = null
                                         } else {
                                             sendInvalidResponse(HttpURLConnection.HTTP_NO_CONTENT)
                                         }
@@ -161,12 +163,12 @@ class FetchFileResourceProvider(private val client: Socket,
                                 }
                                 else -> {
                                     if (!interrupted) {
-                                        fileResourceProviderDelegate.onCustomRequest(request.client, request, transporter, interruptMonitor)
+                                        fileResourceProviderDelegate.onCustomRequest(sessionId, request, transporter, interruptMonitor)
                                     }
                                 }
                             }
                             logger.d("FetchFileServerProvider - Client Disconnected - $client")
-                            fileResourceProviderDelegate.onClientDisconnected(request.client)
+                            fileResourceProviderDelegate.onClientDisconnected(sessionId, request)
                         } else if (!interrupted) {
                             logger.d("FetchFileServerProvider - ClientRequestRejected - ${request.toJsonString}")
                             sendInvalidResponse(HttpURLConnection.HTTP_FORBIDDEN)
@@ -183,6 +185,11 @@ class FetchFileResourceProvider(private val client: Socket,
                 } catch (e: Exception) {
                     logger.e("FetchFileServerProvider - ${e.message}")
                 }
+                val fileResource = this.fileResource
+                val request = this.clientRequest
+                if (fileResource != null && request != null) {
+                    fileResourceProviderDelegate.onError(sessionId, request, fileResource, e)
+                }
             } finally {
                 if (interrupted) {
                     try {
@@ -193,7 +200,7 @@ class FetchFileResourceProvider(private val client: Socket,
                 }
                 transporter.close()
                 cleanFileStreams()
-                fileResource = null
+                this.fileResource = null
                 try {
                     fileResourceProviderDelegate.onFinished(id)
                 } catch (e: Exception) {
