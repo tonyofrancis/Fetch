@@ -1,8 +1,11 @@
 package com.tonyodev.fetch2core
 
+import android.os.Parcel
+import android.os.Parcelable
+
 /** File Resource used by Fetch File Server to server content data.
  * */
-class FileResource {
+class FileResource : Parcelable {
 
     /** Unique File Resource Identifier.
      * Clients can request data from the server using the file resource id
@@ -56,6 +59,38 @@ class FileResource {
     override fun toString(): String {
         return "FileResource(id=$id, length=$length, file='$file'," +
                 " name='$name', customData='$customData', md5='$md5')"
+    }
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeLong(id)
+        dest.writeString(name)
+        dest.writeLong(length)
+        dest.writeString(file)
+        dest.writeString(customData)
+        dest.writeString(md5)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<FileResource> {
+
+        @Suppress("UNCHECKED_CAST")
+        override fun createFromParcel(source: Parcel): FileResource {
+            val fileResource = FileResource()
+            fileResource.id = source.readLong()
+            fileResource.name = source.readString()
+            fileResource.length = source.readLong()
+            fileResource.file = source.readString()
+            fileResource.customData = source.readString()
+            fileResource.md5 = source.readString()
+            return fileResource
+        }
+
+        override fun newArray(size: Int): Array<FileResource?> {
+            return arrayOfNulls(size)
+        }
     }
 
 }
