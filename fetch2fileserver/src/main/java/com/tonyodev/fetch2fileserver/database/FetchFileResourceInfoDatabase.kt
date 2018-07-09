@@ -98,7 +98,7 @@ class FetchFileResourceInfoDatabase(context: Context,
         }
     }
 
-    fun getRequestedCatalog(page: Int, size: Int): String {
+    fun getRequestedCatalog(page: Int = -1, size: Int = -1): String {
         synchronized(lock) {
             throwExceptionIfClosed()
             val fileResources = getAll(page, size)

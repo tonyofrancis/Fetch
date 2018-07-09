@@ -2,7 +2,7 @@ package com.tonyodev.fetch2downloaders
 
 import com.tonyodev.fetch2core.*
 
-import com.tonyodev.fetch2core.transporter.FileRequest.Companion.TYPE_FILE
+import com.tonyodev.fetch2core.transporter.FileRequest.CREATOR.TYPE_FILE
 import com.tonyodev.fetch2core.transporter.FetchFileResourceTransporter
 import com.tonyodev.fetch2core.transporter.FileRequest
 import com.tonyodev.fetch2core.transporter.FileResponse

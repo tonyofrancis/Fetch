@@ -126,7 +126,7 @@ class FetchFileServerImpl(context: Context,
             return try {
                 val id: Long = fileResourceIdentifier.toLong()
                 if (id == FileRequest.CATALOG_ID) {
-                    val catalog = fileResourceServerDatabase.getRequestedCatalog(-1, -1)
+                    val catalog = fileResourceServerDatabase.getRequestedCatalog()
                     val catalogFileResourceInfo = FileResourceInfo()
                     catalogFileResourceInfo.id = FileRequest.CATALOG_ID
                     catalogFileResourceInfo.customData = catalog
@@ -393,7 +393,7 @@ class FetchFileServerImpl(context: Context,
     override fun getCatalog(func: Func<String>) {
         synchronized(lock) {
             throwIfTerminated()
-            val catalog = fileResourceServerDatabase.getRequestedCatalog(-1, -1)
+            val catalog = fileResourceServerDatabase.getRequestedCatalog()
             mainHandler.post {
                 func.call(catalog)
             }
