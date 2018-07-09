@@ -1,10 +1,12 @@
 package com.tonyodev.fetch2
 
+import android.os.Parcelable
+
 /**
  * An immutable object which contains a current snapshot of all the information
  * about a specific download managed by Fetch.
  * */
-interface Download {
+interface Download : Parcelable {
 
     /** Used to identify a download. This id also matches the id of the request that started
      * the download.*/
