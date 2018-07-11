@@ -2,9 +2,9 @@ package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2core.Downloader
 import com.tonyodev.fetch2core.InterruptMonitor
+import com.tonyodev.fetch2core.OutputResourceWrapper
 import com.tonyodev.fetch2core.getFileMd5String
 import java.io.InputStream
-import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Collections
@@ -114,7 +114,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestOutputStream(request: Downloader.ServerRequest, filePointerOffset: Long): OutputStream? {
+    override fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper? {
         return null
     }
 
@@ -128,10 +128,6 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
         return fileDownloaderType
-    }
-
-    override fun seekOutputStreamToPosition(request: Downloader.ServerRequest, outputStream: OutputStream, filePointerOffset: Long) {
-
     }
 
     override fun verifyContentMD5(request: Downloader.ServerRequest, md5: String): Boolean {

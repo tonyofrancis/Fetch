@@ -98,9 +98,6 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
             return if (currentDownloadsMap.containsKey(id)) {
                 val fileDownloader = currentDownloadsMap[id] as FileDownloader
                 fileDownloader.interrupted = true
-                while (!fileDownloader.terminated) {
-                    //Wait until download runnable terminates
-                }
                 currentDownloadsMap.remove(id)
                 downloadCounter -= 1
                 downloadManagerCoordinator.removeFileDownloader(id)
@@ -123,9 +120,6 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
     private fun cancelAllDownloads() {
         downloadManagerCoordinator.getFileDownloaderList().iterator().forEach {
             it.interrupted = true
-            while (!it.terminated) {
-                //Wait until download runnable terminates
-            }
             downloadManagerCoordinator.removeFileDownloader(it.download.id)
             logger.d("DownloadManager cancelled download ${it.download}")
         }
@@ -136,9 +130,6 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
     private fun terminateAllDownloads() {
         currentDownloadsMap.iterator().forEach {
             it.value.terminated = true
-            while (!it.value.terminated) {
-                //Wait until download runnable terminates
-            }
             logger.d("DownloadManager terminated download ${it.value.download}")
             downloadManagerCoordinator.removeFileDownloader(it.key)
         }

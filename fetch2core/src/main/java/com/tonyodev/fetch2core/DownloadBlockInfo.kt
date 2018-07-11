@@ -1,5 +1,8 @@
 package com.tonyodev.fetch2core
 
+import android.os.Parcel
+import android.os.Parcelable
+
 class DownloadBlockInfo : DownloadBlock {
 
     override var downloadId: Int = -1
@@ -47,6 +50,37 @@ class DownloadBlockInfo : DownloadBlock {
     override fun toString(): String {
         return "DownloadBlock(downloadId=$downloadId, blockPosition=$blockPosition, " +
                 "startByte=$startByte, endByte=$endByte, downloadedBytes=$downloadedBytes)"
+    }
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeInt(downloadId)
+        dest.writeInt(blockPosition)
+        dest.writeLong(startByte)
+        dest.writeLong(endByte)
+        dest.writeLong(downloadedBytes)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<DownloadBlockInfo> {
+
+        @Suppress("UNCHECKED_CAST")
+        override fun createFromParcel(source: Parcel): DownloadBlockInfo {
+            val downloadBlockInfo = DownloadBlockInfo()
+            downloadBlockInfo.downloadId = source.readInt()
+            downloadBlockInfo.blockPosition = source.readInt()
+            downloadBlockInfo.startByte = source.readLong()
+            downloadBlockInfo.endByte = source.readLong()
+            downloadBlockInfo.downloadedBytes = source.readLong()
+            return downloadBlockInfo
+        }
+
+        override fun newArray(size: Int): Array<DownloadBlockInfo?> {
+            return arrayOfNulls(size)
+        }
+
     }
 
 }

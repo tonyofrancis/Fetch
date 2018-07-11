@@ -2,13 +2,12 @@ package com.tonyodev.fetch2downloaders
 
 import com.tonyodev.fetch2core.*
 
-import com.tonyodev.fetch2core.transporter.FileRequest.Companion.TYPE_FILE
+import com.tonyodev.fetch2core.transporter.FileRequest.CREATOR.TYPE_FILE
 import com.tonyodev.fetch2core.transporter.FetchFileResourceTransporter
 import com.tonyodev.fetch2core.transporter.FileRequest
 import com.tonyodev.fetch2core.transporter.FileResponse
 import org.json.JSONObject
 
-import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.util.*
@@ -130,12 +129,8 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestOutputStream(request: Downloader.ServerRequest, filePointerOffset: Long): OutputStream? {
+    override fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper? {
         return null
-    }
-
-    override fun seekOutputStreamToPosition(request: Downloader.ServerRequest, outputStream: OutputStream, filePointerOffset: Long) {
-
     }
 
     override fun getFileSlicingCount(request: Downloader.ServerRequest, contentLength: Long): Int? {
@@ -161,4 +156,5 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
     override fun onServerResponse(request: Downloader.ServerRequest, response: Downloader.Response) {
 
     }
+
 }

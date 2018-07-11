@@ -1,11 +1,11 @@
 package com.tonyodev.fetch2fileserver.provider
 
-import com.tonyodev.fetch2fileserver.FileResource
+import com.tonyodev.fetch2core.FileResource
+import com.tonyodev.fetch2core.InputResourceWrapper
 import com.tonyodev.fetch2core.transporter.FileRequest
 import com.tonyodev.fetch2core.InterruptMonitor
 import com.tonyodev.fetch2fileserver.database.FileResourceInfo
 import com.tonyodev.fetch2core.transporter.FileResourceTransporterWriter
-import java.io.InputStream
 import java.util.*
 
 interface FileResourceProviderDelegate {
@@ -14,21 +14,27 @@ interface FileResourceProviderDelegate {
 
     fun onFinished(providerId: UUID)
 
-    fun acceptAuthorization(authorization: String, fileRequest: FileRequest): Boolean
+    fun acceptAuthorization(sessionId: String, authorization: String, fileRequest: FileRequest): Boolean
 
-    fun onClientDidProvideCustomData(client: String, customData: String, fileRequest: FileRequest)
+    fun onClientDidProvideCustomData(sessionId: String, customData: String, fileRequest: FileRequest)
 
-    fun onClientConnected(client: String, fileRequest: FileRequest)
+    fun onClientConnected(sessionId: String, fileRequest: FileRequest)
 
-    fun onClientDisconnected(client: String)
+    fun onClientDisconnected(sessionId: String, fileRequest: FileRequest)
 
-    fun onProgress(client: String, fileResource: FileResource, progress: Int)
+    fun onStarted(sessionId: String, fileRequest: FileRequest, fileResource: FileResource)
+
+    fun onProgress(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, progress: Int)
+
+    fun onComplete(sessionId: String, fileRequest: FileRequest, fileResource: FileResource)
+
+    fun onError(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, throwable: Throwable)
 
     fun getCatalog(page: Int, size: Int): String
 
-    fun getFileInputStream(fileResource: FileResource, fileOffset: Long): InputStream?
+    fun getFileInputResourceWrapper(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, fileOffset: Long): InputResourceWrapper?
 
-    fun onCustomRequest(client: String, fileRequest: FileRequest,
+    fun onCustomRequest(sessionId: String, fileRequest: FileRequest,
                         fileResourceTransporterWriter: FileResourceTransporterWriter, interruptMonitor: InterruptMonitor)
 
 }

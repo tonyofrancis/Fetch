@@ -7,10 +7,11 @@ import com.tonyodev.fetch2core.transporter.FileRequest
 interface FetchFileServerAuthenticator {
 
     /** Method called when a client is attempting to connect to the Fetch File Server.
+     * @param sessionId sessionId
      * @param authorization the authorization token
      * @param fileRequest the fileRequest the client sent.
      * @return true if the authorize token is accepted. False otherwise.
      * */
-    fun accept(authorization: String, fileRequest: FileRequest): Boolean
+    fun accept(sessionId: String, authorization: String, fileRequest: FileRequest): Boolean
 
 }

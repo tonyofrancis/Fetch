@@ -4,6 +4,8 @@ import android.arch.persistence.room.ColumnInfo
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.Index
 import android.arch.persistence.room.PrimaryKey
+import android.os.Parcel
+import android.os.Parcelable
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2.NetworkType
@@ -36,7 +38,7 @@ class DownloadInfo : Download {
     @ColumnInfo(name = DownloadDatabase.COLUMN_PRIORITY, typeAffinity = ColumnInfo.INTEGER)
     override var priority: Priority = defaultPriority
 
-    @ColumnInfo(name = DownloadDatabase.COLUMN_HEADERS,typeAffinity = ColumnInfo.TEXT)
+    @ColumnInfo(name = DownloadDatabase.COLUMN_HEADERS, typeAffinity = ColumnInfo.TEXT)
     override var headers: Map<String, String> = defaultEmptyHeaderMap
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_DOWNLOADED, typeAffinity = ColumnInfo.INTEGER)
@@ -143,5 +145,77 @@ class DownloadInfo : Download {
                 "enqueueAction=$enqueueAction, identifier=$identifier, downloadOnEnqueue=$downloadOnEnqueue)"
     }
 
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeInt(id)
+        dest.writeString(namespace)
+        dest.writeString(url)
+        dest.writeString(file)
+        dest.writeInt(group)
+        dest.writeInt(priority.value)
+        dest.writeSerializable(HashMap(headers))
+        dest.writeLong(downloaded)
+        dest.writeLong(total)
+        dest.writeInt(status.value)
+        dest.writeInt(error.value)
+        dest.writeInt(networkType.value)
+        dest.writeLong(created)
+        dest.writeString(tag)
+        dest.writeInt(enqueueAction.value)
+        dest.writeLong(identifier)
+        dest.writeInt(if (downloadOnEnqueue) 1 else 0)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<DownloadInfo> {
+
+        @Suppress("UNCHECKED_CAST")
+        override fun createFromParcel(source: Parcel): DownloadInfo {
+            val id = source.readInt()
+            val namespace = source.readString()
+            val url = source.readString()
+            val file = source.readString()
+            val group = source.readInt()
+            val priority = Priority.valueOf(source.readInt())
+            val headers = source.readSerializable() as Map<String, String>
+            val downloaded = source.readLong()
+            val total = source.readLong()
+            val status = Status.valueOf(source.readInt())
+            val error = Error.valueOf(source.readInt())
+            val networkType = NetworkType.valueOf(source.readInt())
+            val created = source.readLong()
+            val tag = source.readString()
+            val enqueueAction = EnqueueAction.valueOf(source.readInt())
+            val identifier = source.readLong()
+            val downloadOnEnqueue = source.readInt() == 1
+
+            val downloadInfo = DownloadInfo()
+            downloadInfo.id = id
+            downloadInfo.namespace = namespace
+            downloadInfo.url = url
+            downloadInfo.file = file
+            downloadInfo.group = group
+            downloadInfo.priority = priority
+            downloadInfo.headers = headers
+            downloadInfo.downloaded = downloaded
+            downloadInfo.total = total
+            downloadInfo.status = status
+            downloadInfo.error = error
+            downloadInfo.networkType = networkType
+            downloadInfo.created = created
+            downloadInfo.tag = tag
+            downloadInfo.enqueueAction = enqueueAction
+            downloadInfo.identifier = identifier
+            downloadInfo.downloadOnEnqueue = downloadOnEnqueue
+            return downloadInfo
+        }
+
+        override fun newArray(size: Int): Array<DownloadInfo?> {
+            return arrayOfNulls(size)
+        }
+
+    }
 
 }

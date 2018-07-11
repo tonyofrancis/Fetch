@@ -2,7 +2,6 @@ package com.tonyodev.fetch2core
 
 import java.io.Closeable
 import java.io.InputStream
-import java.io.OutputStream
 
 /**
  * This interface can be implemented by a class to create a
@@ -40,39 +39,15 @@ interface Downloader : Closeable {
     fun disconnect(response: Response)
 
     /**
-     * This method is called by Fetch to request the output stream the download will be saved too.
-     * The output stream for the request needs to be the same each time. Note that the type of
-     * output stream may affect download speeds.
-     * If null is returned, Fetch will provide the output stream. This method is called on a background thread.
+     * This method is called by Fetch to request the OutputResourceWrapper that will be used to save
+     * the download information too. If null is returned, Fetch will provide the OutputResourceWrapper.
+     * This method is called on a background thread.
      * @param request The request information for the download.
-     * @param filePointerOffset The offset position, measured in bytes from the beginning of the file,
-     *                          at which to set the file pointer. Writing will begin at the
-     *                          filePointerOffset position. Note that your output stream needs
-     *                          to use this value to set the file pointer location
-     *                          so that data in the file is not overwritten. If not
-     *                          handled correctly, Fetch will override the file and being writing
-     *                          data at the beginning of the file.
-     * @return The output stream the download will be saved to. Fetch will close the output stream automatically
+     * @return OutputResourceWrapper object. Fetch will call the close method automatically
      *         after the disconnect(response) method is called. Can return null. If null,
-     *         Fetch will provide the output stream.
+     *         Fetch will provide the OutputResourceWrapper.
      * */
-    fun getRequestOutputStream(request: ServerRequest, filePointerOffset: Long): OutputStream?
-
-    /** This method is called by Fetch for a request using the FileDownloaderType.Parallel type
-     * and an output stream was provided for the request. If an output stream was provided,
-     * use the filePointerOffset to seek the required location for byte data to be stored.
-     * Not properly setting this field will cause data corruption.
-     * @param request the request information for the download.
-     * @param outputStream the output stream the download will be saved to.
-     * @param filePointerOffset The offset position, measured in bytes from the beginning of the file,
-     *                          at which to set the file pointer. Writing will begin at the
-     *                          filePointerOffset position. Note that your output stream needs
-     *                          to use this value to set the file pointer location
-     *                          so that data in the file is not overwritten. If not
-     *                          handled correctly, Fetch will override the file and being writing
-     *                          data at the beginning of the file.
-     * */
-    fun seekOutputStreamToPosition(request: ServerRequest, outputStream: OutputStream, filePointerOffset: Long)
+    fun getRequestOutputResourceWrapper(request: ServerRequest): OutputResourceWrapper?
 
     /**
      * This method is called by Fetch if the FileDownloaderType.Parallel type was set

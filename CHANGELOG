@@ -1,3 +1,10 @@
+Version 2.1.0-RC14
+- Downloader improvements
+- Parcelable classes - Request, Download, CompletedDownload, DownloadBlock and FileRequest.
+- Fetch File Server improvements
+- Fetch File Server Task class improvements
+- bug fixes
+
 Version 2.1.0-RC13
 - Added new Fetch method getDownloadBlocks(downloadId: Int, func: Func<List<DownloadBlock>>): Fetch
 - Parallel downloader bug fixes

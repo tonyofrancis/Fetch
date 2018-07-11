@@ -12,9 +12,7 @@ import java.net.InetSocketAddress
 import java.util.*
 
 /** Downloader Task used to download a File/FileResource from a Fetch File Server.*/
-abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
-        /** Client timeout in milliseconds. Default is 20_000 milliseconds.*/
-        val timeout: Long = 20_000) {
+abstract class FetchFileResourceDownloadTask<T> {
 
     /** Task identifier.*/
     val id = UUID.randomUUID().toString()
@@ -43,10 +41,10 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
 
     /** Called by the task when an error occurs. The task is interrupted and stopped.
      * This method is called on the main thread.
-     * @param httpStatusCode http status code
+     * @param httpStatusCode http status code. Can be null
      * @param throwable throwable when an exception is throw. Can be null
      * */
-    protected open fun onError(httpStatusCode: Int, throwable: Throwable? = null){
+    protected open fun onError(httpStatusCode: Int?, throwable: Throwable? = null) {
 
     }
 
@@ -54,7 +52,7 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
      * @param result result returned by the doWork method.
      * */
     protected open fun onComplete(result: T) {
-        
+
     }
 
     /** Executes a task. The task can be reused after it has stopped.*/
@@ -77,14 +75,24 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
     }
 
     /** Checks if a task is cancelled.*/
-    protected val isCancelled: Boolean
+    val isCancelled: Boolean
         get() {
-            return interrupted
+            synchronized(lock) {
+                return interrupted
+            }
+        }
+
+    /** Checks if a task is running.*/
+    val isRunning: Boolean
+        get() {
+            synchronized(lock) {
+                return isExecutingTask
+            }
         }
 
     /** Sets the task progress and calls the onProgress method on the main thread
      * to post the progress update.*/
-    fun setProgress(progress: Int) {
+    protected fun setProgress(progress: Int) {
         mainHandler.post {
             onProgress(progress)
         }
@@ -132,7 +140,6 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
             return "FileResourceRequest(hostAddress='$hostAddress', port=$port, " +
                     "resourceIdentifier='$resourceIdentifier', headers=$headers)"
         }
-
 
     }
 
@@ -201,7 +208,7 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
                     break
                 }
                 timeoutStop = System.nanoTime()
-                if (hasIntervalTimeElapsed(timeoutStart, timeoutStop, timeout)) {
+                if (hasIntervalTimeElapsed(timeoutStart, timeoutStop, 20_000)) {
                     mainHandler.post {
                         onError(HttpURLConnection.HTTP_CLIENT_TIMEOUT)
                     }
@@ -210,7 +217,7 @@ abstract class FetchFileResourceDownloadTask<T> @JvmOverloads constructor(
             }
         } catch (e: Exception) {
             mainHandler.post {
-                onError(HttpURLConnection.HTTP_UNSUPPORTED_TYPE, e)
+                onError(null, e)
             }
         } finally {
             cleanUpTask()

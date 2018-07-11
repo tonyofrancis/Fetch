@@ -69,9 +69,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     private var fileSlices = emptyList<FileSlice>()
 
-    private var outputStream: OutputStream? = null
-
-    private var randomAccessFileOutput: RandomAccessFile? = null
+    private var outputResourceWrapper: OutputResourceWrapper? = null
 
     private var totalDownloadBlocks = 0
 
@@ -207,12 +205,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 logger.e("FileDownloader", e)
             }
             try {
-                randomAccessFileOutput?.close()
-            } catch (e: Exception) {
-                logger.e("FileDownloader", e)
-            }
-            try {
-                outputStream?.close()
+                outputResourceWrapper?.close()
             } catch (e: Exception) {
                 logger.e("FileDownloader", e)
             }
@@ -344,10 +337,32 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     private fun downloadSliceFiles(request: Downloader.ServerRequest, fileSlicesDownloadsList: List<FileSlice>) {
         actionsCounter = 0
         actionsTotal = fileSlicesDownloadsList.size
-        outputStream = downloader.getRequestOutputStream(request, 0)
-        if (outputStream == null) {
-            randomAccessFileOutput = RandomAccessFile(downloadInfo.file, "rw")
-            randomAccessFileOutput?.seek(0)
+        outputResourceWrapper = downloader.getRequestOutputResourceWrapper(request)
+        if (outputResourceWrapper == null) {
+            outputResourceWrapper = object : OutputResourceWrapper() {
+
+                private val randomAccessFile = RandomAccessFile(downloadInfo.file, "rw")
+
+                init {
+                    randomAccessFile.seek(0)
+                }
+
+                override fun write(byteArray: ByteArray, offSet: Int, length: Int) {
+                    randomAccessFile.write(byteArray, offSet, length)
+                }
+
+                override fun setWriteOffset(offset: Long) {
+                    randomAccessFile.seek(offset)
+                }
+
+                override fun flush() {
+
+                }
+
+                override fun close() {
+                    randomAccessFile.close()
+                }
+            }
         }
         for (fileSlice in fileSlicesDownloadsList) {
             if (!interrupted && !terminated) {
@@ -381,14 +396,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                 seekPosition = fileSlice.startBytes + fileSlice.downloaded
                                 synchronized(lock) {
                                     if (!interrupted && !terminated) {
-                                        val outputStream = outputStream
-                                        if (outputStream != null) {
-                                            downloader.seekOutputStreamToPosition(request, outputStream, seekPosition)
-                                            outputStream.write(buffer, 0, streamBytes)
-                                        } else {
-                                            randomAccessFileOutput?.seek(seekPosition)
-                                            randomAccessFileOutput?.write(buffer, 0, streamBytes)
-                                        }
+                                        outputResourceWrapper?.setWriteOffset(seekPosition)
+                                        outputResourceWrapper?.write(buffer, 0, streamBytes)
                                         fileSlice.downloaded += streamBytes
                                         downloaded += streamBytes
                                     }

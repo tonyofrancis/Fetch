@@ -1,9 +1,12 @@
 package com.tonyodev.fetch2
 
+import android.os.Parcel
+import android.os.Parcelable
 import java.util.*
+import kotlin.collections.HashMap
 
 /** Class used to enqueue an already completed download into Fetch for management.*/
-open class CompletedDownload {
+open class CompletedDownload : Parcelable {
 
     /** The url where the file was downloaded from.*/
     var url: String = ""
@@ -55,8 +58,54 @@ open class CompletedDownload {
     }
 
     override fun toString(): String {
-        return "CompletedDownload(url='$url', file='$file', group=$group, " +
+        return "CompletedDownload(url='$url', file='$file', groupId=$group, " +
                 "headers=$headers, tag=$tag, identifier=$identifier, created=$created)"
+    }
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(url)
+        dest.writeString(file)
+        dest.writeInt(group)
+        dest.writeLong(fileByteSize)
+        dest.writeSerializable(HashMap(headers))
+        dest.writeString(tag)
+        dest.writeLong(identifier)
+        dest.writeLong(created)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<CompletedDownload> {
+
+        @Suppress("UNCHECKED_CAST")
+        override fun createFromParcel(source: Parcel): CompletedDownload {
+            val url = source.readString()
+            val file = source.readString()
+            val groupId = source.readInt()
+            val fileByteSize = source.readLong()
+            val headers = source.readSerializable() as Map<String, String>
+            val tag = source.readString()
+            val identifier = source.readLong()
+            val created = source.readLong()
+
+            val completedDownload = CompletedDownload()
+            completedDownload.url = url
+            completedDownload.file = file
+            completedDownload.group = groupId
+            completedDownload.fileByteSize = fileByteSize
+            completedDownload.headers = headers
+            completedDownload.tag = tag
+            completedDownload.identifier = identifier
+            completedDownload.created = created
+            return completedDownload
+        }
+
+        override fun newArray(size: Int): Array<CompletedDownload?> {
+            return arrayOfNulls(size)
+        }
+
     }
 
 }

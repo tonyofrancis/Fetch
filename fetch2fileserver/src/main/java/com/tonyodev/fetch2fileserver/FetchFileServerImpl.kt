@@ -4,11 +4,8 @@ import android.content.Context
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import com.tonyodev.fetch2core.*
 
-import com.tonyodev.fetch2core.FetchLogger
-import com.tonyodev.fetch2core.Func
-import com.tonyodev.fetch2core.InterruptMonitor
-import com.tonyodev.fetch2core.getFileMd5String
 import com.tonyodev.fetch2fileserver.database.FetchFileResourceInfoDatabase
 import com.tonyodev.fetch2fileserver.database.FileResourceInfo
 import com.tonyodev.fetch2fileserver.database.toFileResource
@@ -18,7 +15,6 @@ import com.tonyodev.fetch2fileserver.provider.FileResourceProviderDelegate
 import com.tonyodev.fetch2fileserver.provider.FetchFileResourceProvider
 import com.tonyodev.fetch2core.transporter.FileRequest
 import com.tonyodev.fetch2core.transporter.FileResourceTransporterWriter
-import java.io.InputStream
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.*
@@ -31,7 +27,7 @@ class FetchFileServerImpl(context: Context,
                           databaseName: String,
                           private val fetchFileServerAuthenticator: FetchFileServerAuthenticator?,
                           private val fetchFileServerDelegate: FetchFileServerDelegate?,
-                          private val fetchTransferProgressListener: FetchTransferProgressListener?) : FetchFileServer {
+                          private val fetchTransferListener: FetchTransferListener?) : FetchFileServer {
 
     private val lock = Any()
     private val uuid = UUID.randomUUID().toString()
@@ -80,7 +76,7 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             if (!isStarted && !isTerminated) {
                 isStarted = true
-                Thread({
+                Thread {
                     while (!isTerminated) {
                         try {
                             val client = serverSocket.accept()
@@ -98,7 +94,7 @@ class FetchFileServerImpl(context: Context,
                         }
                     }
                     cleanUpServer()
-                }).start()
+                }.start()
             }
         }
     }
@@ -130,7 +126,7 @@ class FetchFileServerImpl(context: Context,
             return try {
                 val id: Long = fileResourceIdentifier.toLong()
                 if (id == FileRequest.CATALOG_ID) {
-                    val catalog = fileResourceServerDatabase.getRequestedCatalog(-1, -1)
+                    val catalog = fileResourceServerDatabase.getRequestedCatalog()
                     val catalogFileResourceInfo = FileResourceInfo()
                     catalogFileResourceInfo.id = FileRequest.CATALOG_ID
                     catalogFileResourceInfo.customData = catalog
@@ -145,25 +141,26 @@ class FetchFileServerImpl(context: Context,
             }
         }
 
-        override fun acceptAuthorization(authorization: String, fileRequest: FileRequest): Boolean {
-            return fetchFileServerAuthenticator?.accept(authorization, fileRequest) ?: true
+        override fun acceptAuthorization(sessionId: String, authorization: String, fileRequest: FileRequest): Boolean {
+            return fetchFileServerAuthenticator?.accept(sessionId, authorization, fileRequest)
+                    ?: true
         }
 
-        override fun onClientConnected(client: String, fileRequest: FileRequest) {
+        override fun onClientConnected(sessionId: String, fileRequest: FileRequest) {
             mainHandler.post {
-                fetchFileServerDelegate?.onClientConnected(client, fileRequest)
+                fetchFileServerDelegate?.onClientConnected(sessionId, fileRequest)
             }
         }
 
-        override fun onClientDidProvideCustomData(client: String, customData: String, fileRequest: FileRequest) {
+        override fun onClientDidProvideCustomData(sessionId: String, customData: String, fileRequest: FileRequest) {
             mainHandler.post {
-                fetchFileServerDelegate?.onClientDidProvideCustomData(client, customData, fileRequest)
+                fetchFileServerDelegate?.onClientDidProvideCustomData(sessionId, customData, fileRequest)
             }
         }
 
-        override fun onClientDisconnected(client: String) {
+        override fun onClientDisconnected(sessionId: String, fileRequest: FileRequest) {
             mainHandler.post {
-                fetchFileServerDelegate?.onClientDisconnected(client)
+                fetchFileServerDelegate?.onClientDisconnected(sessionId, fileRequest)
             }
         }
 
@@ -171,20 +168,38 @@ class FetchFileServerImpl(context: Context,
             return fileResourceServerDatabase.getRequestedCatalog(page, size)
         }
 
-        override fun getFileInputStream(fileResource: FileResource, fileOffset: Long): InputStream? {
-            return fetchFileServerDelegate?.getFileInputStream(fileResource, fileOffset)
+        override fun getFileInputResourceWrapper(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, fileOffset: Long): InputResourceWrapper? {
+            return fetchFileServerDelegate?.getFileInputResourceWrapper(sessionId, fileRequest, fileResource, fileOffset)
         }
 
-        override fun onProgress(client: String, fileResource: FileResource, progress: Int) {
+        override fun onStarted(sessionId: String, fileRequest: FileRequest, fileResource: FileResource) {
             mainHandler.post {
-                fetchTransferProgressListener?.onProgress(client, fileResource, progress)
+                fetchTransferListener?.onStarted(sessionId, fileRequest, fileResource)
             }
         }
 
-        override fun onCustomRequest(client: String, fileRequest: FileRequest,
+        override fun onProgress(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, progress: Int) {
+            mainHandler.post {
+                fetchTransferListener?.onProgress(sessionId, fileRequest, fileResource, progress)
+            }
+        }
+
+        override fun onComplete(sessionId: String, fileRequest: FileRequest, fileResource: FileResource) {
+            mainHandler.post {
+                fetchTransferListener?.onComplete(sessionId, fileRequest, fileResource)
+            }
+        }
+
+        override fun onError(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, throwable: Throwable) {
+            mainHandler.post {
+                fetchTransferListener?.onError(sessionId, fileRequest, fileResource, throwable)
+            }
+        }
+
+        override fun onCustomRequest(sessionId: String, fileRequest: FileRequest,
                                      fileResourceTransporterWriter: FileResourceTransporterWriter,
                                      interruptMonitor: InterruptMonitor) {
-            fetchFileServerDelegate?.onCustomRequest(client, fileRequest,
+            fetchFileServerDelegate?.onCustomRequest(sessionId, fileRequest,
                     fileResourceTransporterWriter, interruptMonitor)
         }
 
@@ -294,6 +309,14 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             ioHandler.post {
                 fileResourceServerDatabase.delete(fileResource.toFileResourceInfo())
+                val iterator = fileResourceProviderMap.iterator()
+                while (iterator.hasNext()) {
+                    val provider = iterator.next().value
+                    if (provider.isServingFileResource(fileResource)) {
+                        provider.interrupt()
+                        break
+                    }
+                }
             }
         }
     }
@@ -303,6 +326,7 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             ioHandler.post {
                 fileResourceServerDatabase.deleteAll()
+                interruptAllProviders()
             }
         }
     }
@@ -312,6 +336,16 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             ioHandler.post {
                 fileResourceServerDatabase.delete(fileResources.map { it.toFileResourceInfo() })
+                fileResources.forEach {
+                    val iterator = fileResourceProviderMap.iterator()
+                    while (iterator.hasNext()) {
+                        val provider = iterator.next().value
+                        if (provider.isServingFileResource(it)) {
+                            provider.interrupt()
+                            break
+                        }
+                    }
+                }
             }
         }
     }
@@ -359,7 +393,7 @@ class FetchFileServerImpl(context: Context,
     override fun getCatalog(func: Func<String>) {
         synchronized(lock) {
             throwIfTerminated()
-            val catalog = fileResourceServerDatabase.getRequestedCatalog(-1, -1)
+            val catalog = fileResourceServerDatabase.getRequestedCatalog()
             mainHandler.post {
                 func.call(catalog)
             }
