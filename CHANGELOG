@@ -1,3 +1,7 @@
+Version 2.1.0-RC15
+- Downloader improvements
+- Added new method fun getHeadRequestMethodSupported(request: ServerRequest): Boolean for downloader. True by default.
+
 Version 2.1.0-RC14
 - Downloader improvements
 - Parcelable classes - Request, Download, CompletedDownload, DownloadBlock and FileRequest.

@@ -142,6 +142,10 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     }
 
+    override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
+        return true
+    }
+
     /**
      * Use this class to set preference settings for the
      * HttpUrlConnectionDownloader HttpUrlConnection client.
