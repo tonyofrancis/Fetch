@@ -95,6 +95,14 @@ interface Downloader : Closeable {
      * */
     fun onServerResponse(request: ServerRequest, response: Response)
 
+    /** Checks with the downloader to see if the HEAD Request Method is supported by the server.
+     * If not, GET Request Method will be used to get information from the server. Default is true.
+     * This method is called on a background thread.
+     * @param request The request information for the download.
+     * @return true if HEAD Request Method is supported. Otherwise false
+     * */
+    fun getHeadRequestMethodSupported(request: ServerRequest): Boolean
+
     /**
      * A class that contains the information used by the Downloader to create a connection
      * to the server.

@@ -157,4 +157,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
 
     }
 
+    override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
+        return true
+    }
 }

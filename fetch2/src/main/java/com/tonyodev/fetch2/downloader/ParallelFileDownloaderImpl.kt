@@ -76,7 +76,11 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     override fun run() {
         var openingResponse: Downloader.Response? = null
         try {
-            val openingRequest = getRequestForDownload(initialDownload, HEAD_REQUEST_METHOD)
+            val openingRequest = if (downloader.getHeadRequestMethodSupported(getRequestForDownload(initialDownload))) {
+                getRequestForDownload(initialDownload, HEAD_REQUEST_METHOD)
+            } else {
+                getRequestForDownload(initialDownload)
+            }
             openingResponse = downloader.execute(openingRequest, interruptMonitor)
             if (!interrupted && !terminated && openingResponse?.isSuccessful == true) {
                 total = openingResponse.contentLength
