@@ -112,8 +112,10 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    uiHandler.post {
-                        func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
                     }
                 }
             }
@@ -148,8 +150,10 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    uiHandler.post {
-                        func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
                     }
                 }
             }
@@ -167,10 +171,18 @@ open class FetchImpl constructor(override val namespace: String,
             handlerWrapper.post {
                 try {
                     fetchHandler.freeze()
-                    func?.call(true)
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(true)
+                        }
+                    }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(false)
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(false)
+                        }
+                    }
                 }
             }
             return this
@@ -187,10 +199,18 @@ open class FetchImpl constructor(override val namespace: String,
             handlerWrapper.post {
                 try {
                     fetchHandler.unfreeze()
-                    func?.call(true)
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(true)
+                        }
+                    }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(false)
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(false)
+                        }
+                    }
                 }
             }
             return this
@@ -218,7 +238,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -252,7 +276,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -278,7 +306,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -312,7 +344,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -334,11 +370,15 @@ open class FetchImpl constructor(override val namespace: String,
                             logger.d("Removed download $it")
                             listenerCoordinator.mainListener.onRemoved(it)
                         }
+                        func?.call(downloads)
                     }
-                    func?.call(downloads)
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -364,7 +404,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -390,7 +434,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -416,7 +464,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -442,7 +494,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -472,11 +528,15 @@ open class FetchImpl constructor(override val namespace: String,
                             logger.d("Deleted download $it")
                             listenerCoordinator.mainListener.onDeleted(it)
                         }
+                        func?.call(downloads)
                     }
-                    func?.call(downloads)
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -502,7 +562,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -528,7 +592,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -554,7 +622,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -588,7 +660,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -614,7 +690,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -640,7 +720,11 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func?.call(emptyList())
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(emptyList())
+                        }
+                    }
                 }
             }
             return this
@@ -701,7 +785,9 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func.call(emptyList())
+                    uiHandler.post {
+                        func.call(emptyList())
+                    }
                 }
             }
             return this
@@ -719,7 +805,9 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func2.call(null)
+                    uiHandler.post {
+                        func2.call(null)
+                    }
                 }
             }
             return this
@@ -737,7 +825,9 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func.call(emptyList())
+                    uiHandler.post {
+                        func.call(emptyList())
+                    }
                 }
             }
             return this
@@ -755,7 +845,9 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func.call(emptyList())
+                    uiHandler.post {
+                        func.call(emptyList())
+                    }
                 }
             }
             return this
@@ -773,7 +865,9 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func.call(emptyList())
+                    uiHandler.post {
+                        func.call(emptyList())
+                    }
                 }
             }
             return this
@@ -791,7 +885,9 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func.call(emptyList())
+                    uiHandler.post {
+                        func.call(emptyList())
+                    }
                 }
             }
             return this
@@ -809,7 +905,9 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func.call(emptyList())
+                    uiHandler.post {
+                        func.call(emptyList())
+                    }
                 }
             }
             return this
@@ -912,7 +1010,9 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 } catch (e: FetchException) {
                     logger.e("Fetch with namespace $namespace error", e)
-                    func.call(emptyList())
+                    uiHandler.post {
+                        func.call(emptyList())
+                    }
                 }
             }
             return this
