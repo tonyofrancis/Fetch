@@ -99,7 +99,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.pause(ids)
+                            val downloads = fetchHandler.pause(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Paused download $it")
@@ -135,7 +135,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.pausedGroup(id)
+                            val downloads = fetchHandler.pausedGroup(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Paused download $it")
@@ -198,7 +198,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.resume(ids)
+                            val downloads = fetchHandler.resume(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Queued download $it")
@@ -236,7 +236,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.resumeGroup(id)
+                            val downloads = fetchHandler.resumeGroup(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Resumed download $it")
@@ -261,7 +261,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.remove(ids)
+                            val downloads = fetchHandler.remove(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Removed download $it")
@@ -297,7 +297,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.removeGroup(id)
+                            val downloads = fetchHandler.removeGroup(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Removed download $it")
@@ -343,11 +343,11 @@ open class RxFetchImpl(override val namespace: String,
     override fun removeAllWithStatus(status: Status): Convertible<List<Download>> {
         return synchronized(lock) {
             throwExceptionIfClosed()
-            Flowable.just(Any())
+            Flowable.just(status)
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.removeAllWithStatus(status)
+                            val downloads = fetchHandler.removeAllWithStatus(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Removed download $it")
@@ -368,11 +368,11 @@ open class RxFetchImpl(override val namespace: String,
     override fun removeAllInGroupWithStatus(id: Int, status: Status): Convertible<List<Download>> {
         return synchronized(lock) {
             throwExceptionIfClosed()
-            Flowable.just(Any())
+            Flowable.just(Pair(id, status))
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.removeAllInGroupWithStatus(id, status)
+                            val downloads = fetchHandler.removeAllInGroupWithStatus(it.first, it.second)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Removed download $it")
@@ -397,7 +397,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.delete(ids)
+                            val downloads = fetchHandler.delete(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Deleted download $it")
@@ -433,7 +433,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.deleteGroup(id)
+                            val downloads = fetchHandler.deleteGroup(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Deleted download $it")
@@ -483,7 +483,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.deleteAllWithStatus(status)
+                            val downloads = fetchHandler.deleteAllWithStatus(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Deleted download $it")
@@ -504,11 +504,11 @@ open class RxFetchImpl(override val namespace: String,
     override fun deleteAllInGroupWithStatus(id: Int, status: Status): Convertible<List<Download>> {
         return synchronized(lock) {
             throwExceptionIfClosed()
-            Flowable.just(Any())
+            Flowable.just(Pair(id, status))
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.deleteAllInGroupWithStatus(id, status)
+                            val downloads = fetchHandler.deleteAllInGroupWithStatus(it.first, it.second)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Deleted download $it")
@@ -533,7 +533,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.cancel(ids)
+                            val downloads = fetchHandler.cancel(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Cancelled download $it")
@@ -569,7 +569,7 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.cancelGroup(id)
+                            val downloads = fetchHandler.cancelGroup(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Cancelled download $it")
@@ -615,11 +615,11 @@ open class RxFetchImpl(override val namespace: String,
     override fun retry(ids: List<Int>): Convertible<List<Download>> {
         return synchronized(lock) {
             throwExceptionIfClosed()
-            Flowable.just(Any())
+            Flowable.just(ids)
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val downloads = fetchHandler.retry(ids)
+                            val downloads = fetchHandler.retry(it)
                             uiHandler.post {
                                 downloads.forEach {
                                     logger.d("Queued $it for download")
