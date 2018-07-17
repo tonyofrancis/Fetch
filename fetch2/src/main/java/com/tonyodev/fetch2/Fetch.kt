@@ -28,7 +28,7 @@ interface Fetch {
 
     /** The namespace which this instance of fetch operates in. An app can
      * have several instances of Fetch with different namespaces.
-     * @see com.tonyodev.fetch2.Fetch.Builder
+     * @see com.tonyodev.fetch2.FetchConfiguration
      * */
     val namespace: String
 
@@ -731,6 +731,7 @@ interface Fetch {
          * @throws FetchException if default FetchConfiguration is not set.
          * @return default FetchConfiguration
          * */
+        @Throws(FetchException::class)
         fun getDefaultFetchConfiguration(): FetchConfiguration {
             return synchronized(lock) {
                 if (defaultFetchConfiguration == null) {
@@ -742,6 +743,7 @@ interface Fetch {
         }
 
         /**
+         * @throws FetchException if default FetchConfiguration is not set.
          * @return Get default Fetch instance
          * */
         fun getDefaultInstance(): Fetch {

@@ -26,3 +26,5 @@ const val GLOBAL_FETCH_CONFIGURATION_NOT_SET = "Global Fetch Configuration not s
 const val INVALID_CONTENT_MD5 = "invalid content md5"
 const val REQUEST_WITH_FILE_PATH_ALREADY_EXIST = "request_with_file_path_already_exist"
 const val DOWNLOAD_INCOMPLETE = "download_incomplete"
+const val FAILED_TO_UPDATE_REQUEST = "failed_to_update_request"
+const val FAILED_TO_ADD_COMPLETED_DOWNLOAD = "failed_to_add_completed_download"

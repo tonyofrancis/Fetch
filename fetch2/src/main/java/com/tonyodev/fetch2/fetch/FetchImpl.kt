@@ -10,13 +10,13 @@ import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2core.*
 
 open class FetchImpl constructor(override val namespace: String,
-                                 protected val handlerWrapper: HandlerWrapper,
-                                 protected val uiHandler: Handler,
-                                 val fetchHandler: FetchHandler,
-                                 protected val logger: Logger,
-                                 protected val listenerCoordinator: ListenerCoordinator) : Fetch {
+                                 private val handlerWrapper: HandlerWrapper,
+                                 private val uiHandler: Handler,
+                                 private val fetchHandler: FetchHandler,
+                                 private val logger: Logger,
+                                 private val listenerCoordinator: ListenerCoordinator) : Fetch {
 
-    protected val lock = Object()
+    private val lock = Object()
     @Volatile
     private var closed = false
     override val isClosed: Boolean
@@ -964,7 +964,7 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
-    protected fun throwExceptionIfClosed() {
+    private fun throwExceptionIfClosed() {
         if (closed) {
             throw FetchException("This fetch instance has been closed. Create a new " +
                     "instance using the builder.",

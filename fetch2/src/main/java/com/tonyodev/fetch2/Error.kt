@@ -89,7 +89,13 @@ enum class Error constructor(
 
     /** Indicates that the downloaded file MD5 does not match the MD5 the server returned
      * for the content.*/
-    INVALID_CONTENT_MD5(20);
+    INVALID_CONTENT_MD5(20),
+
+    /** Indicates that Fetch was unable to update the existing request.*/
+    FAILED_TO_UPDATE_REQUEST(21),
+
+    /** Indicates that Fetch was unable to add a completed download.*/
+    FAILED_TO_ADD_COMPLETED_DOWNLOAD(22);
 
     companion object {
 
@@ -116,6 +122,8 @@ enum class Error constructor(
                 18 -> FETCH_FILE_SERVER_DOWNLOADER_NOT_SET
                 19 -> FETCH_FILE_SERVER_URL_INVALID
                 20 -> INVALID_CONTENT_MD5
+                21 -> FAILED_TO_UPDATE_REQUEST
+                22 -> FAILED_TO_ADD_COMPLETED_DOWNLOAD
                 else -> UNKNOWN
             }
         }

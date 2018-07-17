@@ -20,7 +20,9 @@ open class FetchException constructor(message: String,
         GLOBAL_CONFIGURATION_NOT_SET,
         INVALID_CONTENT_MD5,
         REQUEST_WITH_FILE_PATH_ALREADY_EXIST,
-        DOWNLOAD_INCOMPLETE;
+        DOWNLOAD_INCOMPLETE,
+        REQUEST_NOT_UPDATED,
+        COMPLETED_DOWNLOAD_NOT_ADDED;
     }
 
 }

@@ -79,7 +79,9 @@ public class MainActivity extends AppCompatActivity {
             Fetch.Impl.getInstance(fetchConfiguration).deleteAll().close();
         }
         Fetch.Impl.getDefaultInstance().deleteAll().close();
-        RxFetch.Impl.getDefaultRxInstance().deleteAll().close();
+        final RxFetch rxFetch = RxFetch.Impl.getDefaultRxInstance();
+        rxFetch.deleteAll();
+        rxFetch.close();
         new FetchFileServer.Builder(this)
                 .setFileServerDatabaseName(FileServerActivity.FETCH_NAMESPACE)
                 .setClearDatabaseOnShutdown(true)

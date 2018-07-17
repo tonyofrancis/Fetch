@@ -56,6 +56,10 @@ fun getErrorFromMessage(message: String?): Error {
         Error.INVALID_CONTENT_MD5
     } else if (message.contains(DOWNLOAD_INCOMPLETE, true)) {
         Error.UNKNOWN_IO_ERROR
+    } else if (message.contains(FAILED_TO_UPDATE_REQUEST, true)) {
+        Error.FAILED_TO_UPDATE_REQUEST
+    } else if (message.contains(FAILED_TO_ADD_COMPLETED_DOWNLOAD, true)) {
+        Error.FAILED_TO_ADD_COMPLETED_DOWNLOAD
     } else {
         Error.UNKNOWN
     }
