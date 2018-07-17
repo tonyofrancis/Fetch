@@ -3,6 +3,7 @@ package com.tonyodev.fetch2fileserver
 import android.content.Context
 import com.tonyodev.fetch2core.FileResource
 import com.tonyodev.fetch2core.Func
+import com.tonyodev.fetch2core.Func2
 import java.net.ServerSocket
 
 /** A lightweight TCP File Server that acts like an HTTP file server
@@ -78,9 +79,9 @@ interface FetchFileServer {
 
     /** Queries the File Server instance for a managed file resource if it exist.
      * @param fileResourceId file resource id
-     * @param func callback the result will be returned on. Result maybe null.
+     * @param func2 callback the result will be returned on. Result maybe null.
      * */
-    fun getFileResource(fileResourceId: Long, func: Func<FileResource?>)
+    fun getFileResource(fileResourceId: Long, func2: Func2<FileResource?>)
 
     /** Creates an instance of FetchFileServer.*/
     class Builder(

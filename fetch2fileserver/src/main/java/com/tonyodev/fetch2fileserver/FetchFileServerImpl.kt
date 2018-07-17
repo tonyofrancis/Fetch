@@ -378,13 +378,13 @@ class FetchFileServerImpl(context: Context,
         }
     }
 
-    override fun getFileResource(fileResourceId: Long, func: Func<FileResource?>) {
+    override fun getFileResource(fileResourceId: Long, func2: Func2<FileResource?>) {
         synchronized(lock) {
             throwIfTerminated()
             ioHandler.post {
                 val fileResource = fileResourceServerDatabase.get(fileResourceId)
                 mainHandler.post {
-                    func.call(fileResource?.toFileResource())
+                    func2.call(fileResource?.toFileResource())
                 }
             }
         }

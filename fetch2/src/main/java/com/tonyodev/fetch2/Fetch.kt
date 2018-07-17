@@ -13,13 +13,13 @@ import com.tonyodev.fetch2core.DownloadBlock
 import com.tonyodev.fetch2core.Func
 import com.tonyodev.fetch2core.Func2
 
-
 /**
  * A light weight file download manager for Android.
  * Features: Background downloading,
  *           Queue based Priority downloading,
  *           Pause & Resume downloads,
  *           Network specific downloading and more...
+ * @see https://github.com/tonyofrancis/Fetch
  * */
 interface Fetch {
 
@@ -34,7 +34,7 @@ interface Fetch {
 
     /**
      * Queues a request for downloading. If Fetch fails to enqueue the request,
-     * func2 will be called with the error message.
+     * func2 will be called with the error.
      * Errors that may cause Fetch to fail the enqueue are :
      * 1. No storage space on the device.
      * 2. Fetch is already managing the same request. This means that a request with the same url
@@ -69,10 +69,43 @@ interface Fetch {
 
     /** Pause a queued or downloading download.
      * @param ids ids of downloads to be paused.
+     * @param func Callback the paused downloads will be returned on. Note. Only downloads that
+     * were paused will be returned in the result list.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun pause(vararg ids: Int): Fetch
+    fun pause(ids: List<Int>, func: Func<List<Download>>? = null): Fetch
+
+    /** Pause a queued or downloading download.
+     * @param ids ids of downloads to be paused.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun pause(ids: List<Int>): Fetch
+
+    /** Pause a queued or downloading download.
+     * @param id id of download to be paused.
+     * @param func2 Callback where the paused download will be returned on if successful.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun pause(id: Int, func2: Func2<Download?>? = null): Fetch
+
+    /** Pause a queued or downloading download.
+     * @param id id of download to be paused.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun pause(id: Int): Fetch
+
+    /**
+     * Pause all queued or downloading downloads within the specified group.
+     * @param id specified group id.
+     * @param func callback that returns list of downloads that were paused in the group.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun pauseGroup(id: Int, func: Func<List<Download>>? = null): Fetch
 
     /**
      * Pause all queued or downloading downloads within the specified group.
@@ -87,6 +120,17 @@ interface Fetch {
      *  but do not want to release the instance of Fetch. However, you are still able to query
      *  download information.
      *  @see unfreeze
+     *  @param func callback returning the success of the freeze.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun freeze(func: Func<Boolean>? = null): Fetch
+
+    /** Pauses all currently downloading items, and pauses all download processing fetch operations.
+     *  Use this method when you do not want Fetch to keep processing downloads
+     *  but do not want to release the instance of Fetch. However, you are still able to query
+     *  download information.
+     *  @see unfreeze
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
@@ -94,10 +138,42 @@ interface Fetch {
 
     /** Resume a download that has been paused.
      * @param ids ids of downloads to be resumed.
+     * @param func callback where successfully resumed downloads will be returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun resume(vararg ids: Int): Fetch
+    fun resume(ids: List<Int>, func: Func<List<Download>>? = null): Fetch
+
+    /** Resume a download that has been paused.
+     * @param ids ids of downloads to be resumed.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun resume(ids: List<Int>): Fetch
+
+    /** Resume a download that has been paused.
+     * @param id id of download to be resumed.
+     * @param func2 callback where successfully resumed download will be returned.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun resume(id: Int, func2: Func2<Download?>? = null): Fetch
+
+    /** Resume a download that has been paused.
+     * @param id id of download to be resumed.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun resume(id: Int): Fetch
+
+    /**
+     * Resume all paused downloads within the specified group.
+     * @param id specified group id.
+     * @param func callback where successfully resumed downloads will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun resumeGroup(id: Int, func: Func<List<Download>>? = null): Fetch
 
     /**
      * Resume all paused downloads within the specified group.
@@ -109,19 +185,66 @@ interface Fetch {
 
     /** Allow fetch to resume operations after freeze has been called.
      * @see freeze
+     * @param func callback returning the success of the freeze.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun unfreeze(func: Func<Boolean>? = null): Fetch
+
+    /** Allow fetch to resume operations after freeze has been called.
+     * @see freeze
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
     fun unfreeze(): Fetch
 
     /**
-     * Remove a download managed by this instance of Fetch.
-     * The downloaded file for the removed download is not deleted.
+     * Remove a list of downloads managed by this instance of Fetch.
+     * The downloaded file for the removed downloads are not deleted.
+     * @param ids ids of downloads to be removed.
+     * @param func callback used to report successfully removed downloads.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun remove(ids: List<Int>, func: Func<List<Download>>? = null): Fetch
+
+    /**
+     * Remove a list of downloads managed by this instance of Fetch.
+     * The downloaded file for the removed downloads are not deleted.
      * @param ids ids of downloads to be removed.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun remove(vararg ids: Int): Fetch
+    fun remove(ids: List<Int>): Fetch
+
+    /**
+     * Remove a download managed by this instance of Fetch.
+     * The downloaded file for the removed download is not deleted.
+     * @param id id of download to be removed.
+     * @param func2 callback used to report the successfully removed download.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun remove(id: Int, func2: Func2<Download?>? = null): Fetch
+
+    /**
+     * Remove a download managed by this instance of Fetch.
+     * The downloaded file for the removed download is not deleted.
+     * @param id id of download to be removed.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun remove(id: Int): Fetch
+
+    /**
+     * Remove all downloads in the specified group managed by this instance of Fetch.
+     * The downloaded files for removed downloads are not deleted.
+     * @param id specified group id
+     * @param func callback with results of removed downloads in the group that were removed.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun removeGroup(id: Int, func: Func<List<Download>>? = null): Fetch
 
     /**
      * Remove all downloads in the specified group managed by this instance of Fetch.
@@ -135,10 +258,29 @@ interface Fetch {
     /**
      * Remove all downloads managed by this instance of Fetch.
      * The downloaded files for removed downloads are not deleted.
+     * @param func callback reporting all downloads that were removed.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun removeAll(func: Func<List<Download>>? = null): Fetch
+
+    /**
+     * Remove all downloads managed by this instance of Fetch.
+     * The downloaded files for removed downloads are not deleted.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
     fun removeAll(): Fetch
+
+    /**
+     * Remove all downloads with the specified status in this instance of Fetch.
+     * The downloaded files for removed downloads are not deleted.
+     * @param status status
+     * @param func callback returning a list of downloads that were removed.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun removeAllWithStatus(status: Status, func: Func<List<Download>>? = null): Fetch
 
     /**
      * Remove all downloads with the specified status in this instance of Fetch.
@@ -150,13 +292,52 @@ interface Fetch {
     fun removeAllWithStatus(status: Status): Fetch
 
     /**
-     * Delete a download managed by this instance of Fetch.
+     * Delete a list of downloads managed by this instance of Fetch.
+     * The downloaded file is deleted.
+     * @param ids ids of downloads to be deleted.
+     * @param func callback that returns the downloads that were deleted.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun delete(ids: List<Int>, func: Func<List<Download>>? = null): Fetch
+
+    /**
+     * Delete a list of downloads managed by this instance of Fetch.
      * The downloaded file is deleted.
      * @param ids ids of downloads to be deleted.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun delete(vararg ids: Int): Fetch
+    fun delete(ids: List<Int>): Fetch
+
+    /**
+     * Delete a download managed by this instance of Fetch.
+     * The downloaded file is deleted.
+     * @param id id of download to be deleted.
+     * @param func2 callback that returns the successfully deleted download.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun delete(id: Int, func2: Func2<Download?>? = null): Fetch
+
+    /**
+     * Delete a download managed by this instance of Fetch.
+     * The downloaded file is deleted.
+     * @param id id of download to be deleted.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun delete(id: Int): Fetch
+
+    /**
+     * Deletes all downloads in the specified group managed by this instance of Fetch.
+     * The downloaded files are also deleted.
+     * @param id specified group id
+     * @param func callback that returns the list of downloads that were deleted in the specified group.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun deleteGroup(id: Int, func: Func<List<Download>>? = null): Fetch
 
     /**
      * Deletes all downloads in the specified group managed by this instance of Fetch.
@@ -170,10 +351,29 @@ interface Fetch {
     /**
      * Deletes all downloads managed by this instance of Fetch.
      * The downloaded files are deleted.
+     * @param func callback returns the result of all deleted downloads.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun deleteAll(func: Func<List<Download>>? = null): Fetch
+
+    /**
+     * Deletes all downloads managed by this instance of Fetch.
+     * The downloaded files are deleted.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
     fun deleteAll(): Fetch
+
+    /**
+     * Deletes all downloads with the specified status in this instance of Fetch.
+     * The downloaded files are also deleted.
+     * @param status status
+     * @param func callback returns all deleted downloads with a specified status.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun deleteAllWithStatus(status: Status, func: Func<List<Download>>? = null): Fetch
 
     /**
      * Deletes all downloads with the specified status in this instance of Fetch.
@@ -185,13 +385,52 @@ interface Fetch {
     fun deleteAllWithStatus(status: Status): Fetch
 
     /**
-     * Cancel a non completed download managed by this instance of Fetch.
+     * Cancel a list of non completed downloads managed by this instance of Fetch.
+     * The downloaded file for the cancelled download is not deleted.
+     * @param ids ids of downloads to be cancelled.
+     * @param func callback used to return the results of the cancelled downloads.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun cancel(ids: List<Int>, func: Func<List<Download>>? = null): Fetch
+
+    /**
+     * Cancel a list of non completed downloads managed by this instance of Fetch.
      * The downloaded file for the cancelled download is not deleted.
      * @param ids ids of downloads to be cancelled.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun cancel(vararg ids: Int): Fetch
+    fun cancel(ids: List<Int>): Fetch
+
+    /**
+     * Cancel a non completed download managed by this instance of Fetch.
+     * The downloaded file for the cancelled download is not deleted.
+     * @param id id of downloads to be cancelled.
+     * @param func2 callback used to return the successful cancelled download.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun cancel(id: Int, func2: Func2<Download?>? = null): Fetch
+
+    /**
+     * Cancel a non completed download managed by this instance of Fetch.
+     * The downloaded file for the cancelled download is not deleted.
+     * @param id id of downloads to be cancelled.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun cancel(id: Int): Fetch
+
+    /**
+     * Cancels all non completed downloads in the specified group managed by this instance of Fetch.
+     * The downloaded files for cancelled downloads are not deleted.
+     * @param id specified group id
+     * @param func callback that returns the list of cancelled downloads.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun cancelGroup(id: Int, func: Func<List<Download>>? = null): Fetch
 
     /**
      * Cancels all non completed downloads in the specified group managed by this instance of Fetch.
@@ -205,10 +444,28 @@ interface Fetch {
     /**
      * Cancels all non completed downloads managed by this instance of Fetch.
      * The downloaded files for cancelled downloads are not deleted.
+     * @param func callback that returns the list of cancelled downloads.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun cancelAll(func: Func<List<Download>>? = null): Fetch
+
+    /**
+     * Cancels all non completed downloads managed by this instance of Fetch.
+     * The downloaded files for cancelled downloads are not deleted.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
     fun cancelAll(): Fetch
+
+    /**
+     * Retries to download a list of failed or cancelled downloads.
+     * @param ids ids of the failed or cancelled downloads.
+     * @param func callback that returns the list of downloads that were successfully queued.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun retry(ids: List<Int>, func: Func<List<Download>>? = null): Fetch
 
     /**
      * Retries to download a failed or cancelled download.
@@ -216,7 +473,24 @@ interface Fetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun retry(vararg ids: Int): Fetch
+    fun retry(ids: List<Int>): Fetch
+
+    /**
+     * Retries to download a failed or cancelled download.
+     * @param id id of the failed or cancelled downloads.
+     * @param func2 callback that returns the successful queued download.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun retry(id: Int, func2: Func2<Download?>? = null): Fetch
+
+    /**
+     * Retries to download a failed or cancelled download.
+     * @param id id of the failed or cancelled downloads.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun retry(id: Int): Fetch
 
     /** Updates an existing request.
      * @see com.tonyodev.fetch2.Request for more details.
@@ -251,11 +525,11 @@ interface Fetch {
      * Gets the download which has the specified id. If the download
      * does not exist null will be returned.
      * @param id Download id
-     * @param func Callback that the results will be returned on. Result maybe null.
+     * @param func2 Callback that the results will be returned on. Result maybe null.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun getDownload(id: Int, func: Func2<Download?>): Fetch
+    fun getDownload(id: Int, func2: Func2<Download?>): Fetch
 
     /**
      * Gets all downloads in the specified group.
