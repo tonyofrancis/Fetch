@@ -102,7 +102,7 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.pause(ids.toIntArray())
+                    val downloads = fetchHandler.pause(ids)
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Paused download $it")
@@ -206,7 +206,7 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.resume(ids.toIntArray())
+                    val downloads = fetchHandler.resume(ids)
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Queued download $it")
@@ -268,7 +268,7 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.remove(ids.toIntArray())
+                    val downloads = fetchHandler.remove(ids)
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Removed download $it")
@@ -380,7 +380,7 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.delete(ids.toIntArray())
+                    val downloads = fetchHandler.delete(ids)
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Deleted download $it")
@@ -492,7 +492,7 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.cancel(ids.toIntArray())
+                    val downloads = fetchHandler.cancel(ids)
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Cancelled download $it")
@@ -578,7 +578,7 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.retry(ids.toIntArray())
+                    val downloads = fetchHandler.retry(ids)
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Queued $it for download")

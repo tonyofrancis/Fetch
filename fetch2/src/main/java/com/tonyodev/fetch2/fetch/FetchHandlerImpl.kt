@@ -132,7 +132,7 @@ class FetchHandlerImpl(private val namespace: String,
         }
     }
 
-    override fun pause(ids: IntArray): List<Download> {
+    override fun pause(ids: List<Int>): List<Download> {
         startPriorityQueueIfNotStarted()
         ids.forEach {
             if (isDownloading(it)) {
@@ -190,7 +190,7 @@ class FetchHandlerImpl(private val namespace: String,
         priorityListProcessor.resume()
     }
 
-    override fun resume(ids: IntArray): List<Download> {
+    override fun resume(ids: List<Int>): List<Download> {
         startPriorityQueueIfNotStarted()
         ids.forEach {
             if (isDownloading(it)) {
@@ -230,7 +230,7 @@ class FetchHandlerImpl(private val namespace: String,
         }
     }
 
-    override fun remove(ids: IntArray): List<Download> {
+    override fun remove(ids: List<Int>): List<Download> {
         startPriorityQueueIfNotStarted()
         ids.forEach {
             if (isDownloading(it)) {
@@ -294,7 +294,7 @@ class FetchHandlerImpl(private val namespace: String,
         return downloadInfoList
     }
 
-    override fun delete(ids: IntArray): List<Download> {
+    override fun delete(ids: List<Int>): List<Download> {
         startPriorityQueueIfNotStarted()
         ids.forEach {
             if (isDownloading(it)) {
@@ -390,7 +390,7 @@ class FetchHandlerImpl(private val namespace: String,
         return downloadInfoList
     }
 
-    override fun cancel(ids: IntArray): List<Download> {
+    override fun cancel(ids: List<Int>): List<Download> {
         startPriorityQueueIfNotStarted()
         ids.forEach {
             if (isDownloading(it)) {
@@ -461,7 +461,7 @@ class FetchHandlerImpl(private val namespace: String,
         }
     }
 
-    override fun retry(ids: IntArray): List<Download> {
+    override fun retry(ids: List<Int>): List<Download> {
         startPriorityQueueIfNotStarted()
         val downloadInfoList = databaseManager.get(ids.toList()).filterNotNull()
         downloadInfoList.forEach {
@@ -495,9 +495,9 @@ class FetchHandlerImpl(private val namespace: String,
                     newDownloadInfo.downloaded = oldDownloadInfo.downloaded
                     newDownloadInfo.total = oldDownloadInfo.total
                 }
-                remove(intArrayOf(oldRequestId))
+                remove(listOf(oldRequestId))
             } else {
-                delete(intArrayOf(oldRequestId))
+                delete(listOf(oldRequestId))
             }
             prepareDownloadInfoForEnqueue(newDownloadInfo)
             startPriorityQueueIfNotStarted()
