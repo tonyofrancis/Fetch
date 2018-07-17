@@ -126,7 +126,7 @@ public class FetchHandlerInstrumentedTest {
         final Request request = getTestRequest();
         final Download download = fetchHandler.enqueue(request);
         assertNotNull(download);
-        final List<Download> downloads = fetchHandler.pause(new int[]{request.getId()});
+        final List<Download> downloads = fetchHandler.pause(getIdList(request.getId()));
         assertEquals(1, downloads.size());
         final Download pausedDownload = downloads.get(0);
         assertNotNull(pausedDownload);
@@ -175,7 +175,7 @@ public class FetchHandlerInstrumentedTest {
         final Request request = getTestRequest();
         final Download download = fetchHandler.enqueue(request);
         assertNotNull(download);
-        final List<Download> downloads = fetchHandler.resume(new int[]{request.getId()});
+        final List<Download> downloads = fetchHandler.resume(getIdList(request.getId()));
         assertEquals(1, downloads.size());
         final Download resumedDownload = downloads.get(0);
         assertNotNull(resumedDownload);
@@ -217,7 +217,7 @@ public class FetchHandlerInstrumentedTest {
         final Request request = getTestRequest();
         final Download download = fetchHandler.enqueue(request);
         assertNotNull(download);
-        final List<Download> downloads = fetchHandler.remove(new int[]{request.getId()});
+        final List<Download> downloads = fetchHandler.remove(getIdList(request.getId()));
         assertEquals(1, downloads.size());
         final Download removedDownload = downloads.get(0);
         assertNotNull(removedDownload);
@@ -286,7 +286,7 @@ public class FetchHandlerInstrumentedTest {
         final Request request = getTestRequest();
         final Download download = fetchHandler.enqueue(request);
         assertNotNull(download);
-        final List<Download> downloads = fetchHandler.delete(new int[]{request.getId()});
+        final List<Download> downloads = fetchHandler.delete(getIdList(request.getId()));
         assertEquals(1, downloads.size());
         final Download deletedDownload = downloads.get(0);
         assertNotNull(deletedDownload);
@@ -355,7 +355,7 @@ public class FetchHandlerInstrumentedTest {
         final Request request = getTestRequest();
         final Download download = fetchHandler.enqueue(request);
         assertNotNull(download);
-        final List<Download> downloads = fetchHandler.cancel(new int[]{request.getId()});
+        final List<Download> downloads = fetchHandler.cancel(getIdList(request.getId()));
         assertEquals(1, downloads.size());
         final Download cancelledDownload = downloads.get(0);
         assertNotNull(cancelledDownload);
@@ -412,7 +412,7 @@ public class FetchHandlerInstrumentedTest {
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(download);
         downloadInfo.setStatus(Status.FAILED);
         databaseManager.update(downloadInfo);
-        final List<Download> queuedDownloads = fetchHandler.retry(new int[]{request.getId()});
+        final List<Download> queuedDownloads = fetchHandler.retry(getIdList(request.getId()));
         assertNotNull(queuedDownloads);
         assertEquals(1, queuedDownloads.size());
         final Download queuedDownload = queuedDownloads.get(0);
@@ -572,6 +572,12 @@ public class FetchHandlerInstrumentedTest {
             requests.add(request);
         }
         return requests;
+    }
+
+    public List<Integer> getIdList(int id) {
+        final List<Integer> idList = new ArrayList<>();
+        idList.add(id);
+        return idList;
     }
 
 
