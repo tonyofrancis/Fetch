@@ -294,6 +294,23 @@ class FetchHandlerImpl(private val namespace: String,
         return downloadInfoList
     }
 
+    override fun removeAllInGroupWithStatus(groupId: Int, status: Status): List<Download> {
+        startPriorityQueueIfNotStarted()
+        val downloadInfoList = databaseManager.getDownloadsInGroupWithStatus(groupId, status)
+        downloadInfoList.forEach {
+            if (isDownloading(it.id)) {
+                cancelDownload(it.id)
+            }
+        }
+        databaseManager.delete(downloadInfoList)
+        val removedStatus = Status.REMOVED
+        downloadInfoList.forEach {
+            it.status = removedStatus
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
+        }
+        return downloadInfoList
+    }
+
     override fun delete(ids: List<Int>): List<Download> {
         startPriorityQueueIfNotStarted()
         ids.forEach {
@@ -368,6 +385,31 @@ class FetchHandlerImpl(private val namespace: String,
     override fun deleteAllWithStatus(status: Status): List<Download> {
         startPriorityQueueIfNotStarted()
         val downloadInfoList = databaseManager.getByStatus(status)
+        downloadInfoList.forEach {
+            if (isDownloading(it.id)) {
+                cancelDownload(it.id)
+            }
+        }
+        databaseManager.delete(downloadInfoList)
+        val deletedStatus = Status.DELETED
+        downloadInfoList.forEach {
+            it.status = deletedStatus
+            try {
+                val file = File(it.file)
+                if (file.exists()) {
+                    file.delete()
+                }
+            } catch (e: Exception) {
+                logger.d("Failed to delete file ${it.file}", e)
+            }
+            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
+        }
+        return downloadInfoList
+    }
+
+    override fun deleteAllInGroupWithStatus(groupId: Int, status: Status): List<Download> {
+        startPriorityQueueIfNotStarted()
+        val downloadInfoList = databaseManager.getDownloadsInGroupWithStatus(groupId, status)
         downloadInfoList.forEach {
             if (isDownloading(it.id)) {
                 cancelDownload(it.id)

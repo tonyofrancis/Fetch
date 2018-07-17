@@ -375,6 +375,32 @@ open class FetchImpl constructor(override val namespace: String,
         return removeAllWithStatus(status, null)
     }
 
+    override fun removeAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val downloads = fetchHandler.removeAllInGroupWithStatus(id, status)
+                    uiHandler.post {
+                        downloads.forEach {
+                            logger.d("Removed download $it")
+                            listenerCoordinator.mainListener.onRemoved(it)
+                        }
+                        func?.call(downloads)
+                    }
+                } catch (e: FetchException) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    func?.call(emptyList())
+                }
+            }
+            return this
+        }
+    }
+
+    override fun removeAllInGroupWithStatus(id: Int, status: Status): Fetch {
+        return removeAllInGroupWithStatus(id, status, null)
+    }
+
     override fun delete(ids: List<Int>, func: Func<List<Download>>?): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
@@ -485,6 +511,32 @@ open class FetchImpl constructor(override val namespace: String,
 
     override fun deleteAllWithStatus(status: Status): Fetch {
         return deleteAllWithStatus(status, null)
+    }
+
+    override fun deleteAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val downloads = fetchHandler.deleteAllInGroupWithStatus(id, status)
+                    uiHandler.post {
+                        downloads.forEach {
+                            logger.d("Deleted download $it")
+                            listenerCoordinator.mainListener.onDeleted(it)
+                        }
+                        func?.call(downloads)
+                    }
+                } catch (e: FetchException) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    func?.call(emptyList())
+                }
+            }
+            return this
+        }
+    }
+
+    override fun deleteAllInGroupWithStatus(id: Int, status: Status): Fetch {
+        return deleteAllInGroupWithStatus(id, status, null)
     }
 
     override fun cancel(ids: List<Int>, func: Func<List<Download>>?): Fetch {

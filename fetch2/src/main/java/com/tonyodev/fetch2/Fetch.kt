@@ -292,6 +292,25 @@ interface Fetch {
     fun removeAllWithStatus(status: Status): Fetch
 
     /**
+     * Remove all downloads with the specified group and status in this instance of Fetch.
+     * The downloaded files for removed downloads are not deleted.
+     * @param status status
+     * @param func callback returning a list of downloads that were removed.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun removeAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?): Fetch
+
+    /**
+     * Remove all downloads with the specified group and status in this instance of Fetch.
+     * The downloaded files for removed downloads are not deleted.
+     * @param status status
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun removeAllInGroupWithStatus(id: Int, status: Status): Fetch
+
+    /**
      * Delete a list of downloads managed by this instance of Fetch.
      * The downloaded file is deleted.
      * @param ids ids of downloads to be deleted.
@@ -383,6 +402,25 @@ interface Fetch {
      * @return Instance
      * */
     fun deleteAllWithStatus(status: Status): Fetch
+
+    /**
+     * Deletes all downloads with the specified group and status in this instance of Fetch.
+     * The downloaded files are also deleted.
+     * @param status status
+     * @param func callback returns all deleted downloads with a specified status.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun deleteAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?): Fetch
+
+    /**
+     * Deletes all downloads with the specified group and status in this instance of Fetch.
+     * The downloaded files are also deleted.
+     * @param status status
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun deleteAllInGroupWithStatus(id: Int, status: Status): Fetch
 
     /**
      * Cancel a list of non completed downloads managed by this instance of Fetch.
