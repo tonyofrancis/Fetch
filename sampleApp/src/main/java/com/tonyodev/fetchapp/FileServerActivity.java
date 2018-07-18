@@ -24,7 +24,7 @@ import com.tonyodev.fetch2downloaders.FetchFileResourceDownloadTask;
 import com.tonyodev.fetch2downloaders.FileDownloadTask;
 import com.tonyodev.fetch2fileserver.FetchFileServer;
 import com.tonyodev.fetch2downloaders.FetchFileServerDownloader;
-import com.tonyodev.fetch2core.FetchFileServerUrlBuilder;
+import com.tonyodev.fetch2core.FetchFileServerUriBuilder;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -150,10 +150,10 @@ public class FileServerActivity extends AppCompatActivity {
     }
 
     private Request getRequest() {
-        final String url = new FetchFileServerUrlBuilder()
+        final String url = new FetchFileServerUriBuilder()
                 .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
                 .setFileResourceIdentifier(CONTENT_PATH)
-                .create();
+                .toString();
         final Request request = new Request(url, getFile("(1)"));
         request.addHeader("Authorization", "password");
         request.setPriority(Priority.HIGH);

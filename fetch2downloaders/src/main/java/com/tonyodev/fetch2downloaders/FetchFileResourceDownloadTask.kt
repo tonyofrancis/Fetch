@@ -156,10 +156,10 @@ abstract class FetchFileResourceDownloadTask<T> {
     private val taskRunnable = Runnable {
         try {
             val serverRequest = getRequest()
-            val url = FetchFileServerUrlBuilder()
+            val url = FetchFileServerUriBuilder()
                     .setHostInetAddress(serverRequest.hostAddress, serverRequest.port)
                     .setFileResourceIdentifier(serverRequest.resourceIdentifier)
-                    .create()
+                    .toString()
             val headers = serverRequest.headers
             val range = getRangeForFetchFileServerRequest(headers["Range"]
                     ?: "bytes=0-")
