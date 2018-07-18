@@ -905,9 +905,9 @@ open class RxFetchImpl(override val namespace: String,
                         try {
                             val contentLength = fetchHandler.getContentLengthForRequest(it.first, it.second)
                             Flowable.just(contentLength)
-                        } catch (e: Exception) {
+                        } catch (e: FetchException) {
                             logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(-1L)
+                            throw e
                         }
                     }
                     .observeOn(uiSceduler)
@@ -924,13 +924,9 @@ open class RxFetchImpl(override val namespace: String,
                         try {
                             val catalogList = fetchHandler.getFetchFileServerCatalog(request)
                             Flowable.just(catalogList)
-                        } catch (e: Exception) {
+                        } catch (e: FetchException) {
                             logger.e("Fetch with namespace $namespace error", e)
-                            if (e is FetchException) {
-                                throw e
-                            } else {
-                                throw FetchException(e.message ?: "")
-                            }
+                            throw e
                         }
                     }
                     .observeOn(uiSceduler)
