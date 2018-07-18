@@ -24,6 +24,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         try {
             downloadInfoUpdater.update(downloadInfo)
             uiHandler.post {
+                fetchListener.onStarted(download)
                 fetchListener.onProgress(downloadInfo, etaInMilliseconds, downloadedBytesPerSecond)
             }
         } catch (e: Exception) {
