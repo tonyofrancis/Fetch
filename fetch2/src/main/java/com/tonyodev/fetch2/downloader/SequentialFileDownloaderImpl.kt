@@ -130,6 +130,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 downloadBlock.downloadedBytes = downloaded
                 downloadBlock.endByte = total
                 if (!terminated) {
+                    delegate?.saveDownloadProgress(downloadInfo)
                     delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                     delegate?.onProgress(
                             download = downloadInfo,
@@ -234,11 +235,9 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         reportingStopTime, progressReportingIntervalMillis)
 
                 if (hasReportingTimeElapsed) {
-                    if (progressReportingIntervalMillis <= DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS) {
-                        delegate?.saveDownloadProgress(downloadInfo)
-                    }
                     if (!terminated) {
                         downloadBlock.downloadedBytes = downloaded
+                        delegate?.saveDownloadProgress(downloadInfo)
                         delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                         delegate?.onProgress(
                                 download = downloadInfo,
@@ -269,6 +268,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             if (!terminated) {
                 if (md5CheckingEnabled) {
                     if (downloader.verifyContentMD5(response.request, response.md5)) {
+                        delegate?.saveDownloadProgress(downloadInfo)
                         delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                         delegate?.onProgress(
                                 download = downloadInfo,
@@ -280,6 +280,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         throw FetchException(INVALID_CONTENT_MD5, FetchException.Code.INVALID_CONTENT_MD5)
                     }
                 } else {
+                    delegate?.saveDownloadProgress(downloadInfo)
                     delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                     delegate?.onProgress(
                             download = downloadInfo,
