@@ -160,4 +160,17 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
     override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
         return true
     }
+
+    override fun getContentLengthForRequest(request: Downloader.ServerRequest): Long {
+        return try {
+            val response = execute(request, null)
+            val contentLength = response?.contentLength ?: -1
+            if (response != null) {
+                disconnect(response)
+            }
+            contentLength
+        } catch (e: Exception) {
+            -1L
+        }
+    }
 }

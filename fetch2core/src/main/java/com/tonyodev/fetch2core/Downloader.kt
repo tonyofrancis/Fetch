@@ -108,6 +108,14 @@ interface Downloader : Closeable {
     fun getHeadRequestMethodSupported(request: ServerRequest): Boolean
 
     /**
+     * Attempts to get the ContentLength for a file located at the specified url.
+     * This method runs on the calling thread.
+     * @param request The request information for the download.
+     * @return ContentLength if successful, or -1 if failed.
+     * */
+    fun getContentLengthForRequest(request: ServerRequest): Long
+
+    /**
      * A class that contains the information used by the Downloader to create a connection
      * to the server.
      * */

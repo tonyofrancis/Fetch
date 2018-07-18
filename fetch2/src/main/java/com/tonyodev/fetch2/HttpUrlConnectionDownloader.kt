@@ -1,9 +1,6 @@
 package com.tonyodev.fetch2
 
-import com.tonyodev.fetch2core.Downloader
-import com.tonyodev.fetch2core.InterruptMonitor
-import com.tonyodev.fetch2core.OutputResourceWrapper
-import com.tonyodev.fetch2core.getFileMd5String
+import com.tonyodev.fetch2core.*
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -144,6 +141,19 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
         return true
+    }
+
+    override fun getContentLengthForRequest(request: Downloader.ServerRequest): Long {
+        return try {
+            val response = execute(request, null)
+            val contentLength = response?.contentLength ?: -1
+            if (response != null) {
+                disconnect(response)
+            }
+            contentLength
+        } catch (e: Exception) {
+            -1L
+        }
     }
 
     /**
