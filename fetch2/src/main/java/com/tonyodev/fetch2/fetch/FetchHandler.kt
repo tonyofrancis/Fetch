@@ -2,6 +2,7 @@ package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.FileResource
 import java.io.Closeable
 
 /**
@@ -50,5 +51,7 @@ interface FetchHandler : Closeable {
     fun cancelDownload(id: Int): Boolean
     fun getDownloadBlocks(downloadId: Int): List<DownloadBlock>
     fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long
+    fun getFetchFileServerCatalog(request: Request): List<FileResource>
+
 
 }

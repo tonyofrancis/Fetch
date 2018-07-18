@@ -22,7 +22,8 @@ open class FetchException constructor(message: String,
         REQUEST_WITH_FILE_PATH_ALREADY_EXIST,
         DOWNLOAD_INCOMPLETE,
         REQUEST_NOT_UPDATED,
-        COMPLETED_DOWNLOAD_NOT_ADDED;
+        COMPLETED_DOWNLOAD_NOT_ADDED,
+        FILE_SERVER_DOWNLOADER_NOT_SET;
     }
 
 }

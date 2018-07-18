@@ -136,9 +136,13 @@ fun getSingleLineTextFromFile(filePath: String): String? {
 //eg: fetchlocal://192.168.0.1:80/45
 //eg: fetchlocal://192.168.0.1:80/file.txt
 fun isFetchFileServerUrl(url: String): Boolean {
-    return url.startsWith("fetchlocal://")
-            && getFetchFileServerHostAddress(url).isNotEmpty()
-            && getFetchFileServerPort(url) > -1
+    return try {
+        url.startsWith("fetchlocal://")
+                && getFetchFileServerHostAddress(url).isNotEmpty()
+                && getFetchFileServerPort(url) > -1
+    } catch (e: Exception) {
+        false
+    }
 }
 
 fun getFetchFileServerPort(url: String): Int {

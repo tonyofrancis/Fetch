@@ -7,6 +7,7 @@ import com.tonyodev.fetch2.FetchConfiguration
 import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.*
+import com.tonyodev.fetch2core.server.FileRequest
 import kotlin.math.ceil
 
 fun canPauseDownload(download: Download): Boolean {
@@ -67,7 +68,22 @@ fun getRequestForDownload(download: Download,
 
 fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
     val headers = request.headers.toMutableMap()
-    headers["Range"] = "bytes=$0-"
+    headers["Range"] = request.headers["Range"] ?: "bytes=0-"
+    return Downloader.ServerRequest(
+            id = request.id,
+            url = request.url,
+            headers = headers,
+            tag = request.tag,
+            identifier = request.identifier,
+            requestMethod = GET_REQUEST_METHOD,
+            file = request.file)
+}
+
+fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerRequest {
+    val headers = request.headers.toMutableMap()
+    headers["Range"] = request.headers["Range"] ?: "bytes=0-"
+    headers[FileRequest.FIELD_PAGE] = request.headers[FileRequest.FIELD_PAGE] ?: "-1"
+    headers[FileRequest.FIELD_SIZE] = request.headers[FileRequest.FIELD_SIZE] ?: "-1"
     return Downloader.ServerRequest(
             id = request.id,
             url = request.url,

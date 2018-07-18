@@ -28,3 +28,5 @@ const val REQUEST_WITH_FILE_PATH_ALREADY_EXIST = "request_with_file_path_already
 const val DOWNLOAD_INCOMPLETE = "download_incomplete"
 const val FAILED_TO_UPDATE_REQUEST = "failed_to_update_request"
 const val FAILED_TO_ADD_COMPLETED_DOWNLOAD = "failed_to_add_completed_download"
+const val FETCH_FILE_SERVER_DOWNLOADER_NOT_SET = "fetch_file_server_downloader_not_set"
+const val FETCH_FILE_SERVER_INVALID_RESPONSE_TYPE = "fetch_file_server_invalid_response_type"

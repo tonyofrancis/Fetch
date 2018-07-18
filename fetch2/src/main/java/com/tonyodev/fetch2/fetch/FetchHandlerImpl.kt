@@ -641,18 +641,21 @@ class FetchHandlerImpl(private val namespace: String,
             return download.total
         }
         if (fromServer) {
-            return try {
-                if (isFetchFileServerUrl(request.url)) {
-                    fileServerDownloader?.getContentLengthForRequest(getServerRequestFromRequest(request))
-                            ?: -1L
-                } else {
-                    httpDownloader.getContentLengthForRequest(getServerRequestFromRequest(request))
-                }
-            } catch (e: Exception) {
-                -1L
+            if (isFetchFileServerUrl(request.url)) {
+                fileServerDownloader?.getContentLengthForRequest(getServerRequestFromRequest(request))
+                        ?: -1L
+            } else {
+                httpDownloader.getContentLengthForRequest(getServerRequestFromRequest(request))
             }
         }
         return -1L
+    }
+
+    override fun getFetchFileServerCatalog(request: Request): List<FileResource> {
+        startPriorityQueueIfNotStarted()
+        val downloader = fileServerDownloader
+                ?: throw FetchException(FETCH_FILE_SERVER_DOWNLOADER_NOT_SET, FetchException.Code.FILE_SERVER_DOWNLOADER_NOT_SET)
+        return downloader.getFetchFileServerCatalog(getCatalogServerRequestFromRequest(request))
     }
 
     override fun close() {

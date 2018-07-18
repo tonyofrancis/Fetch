@@ -10,6 +10,7 @@ import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.createConfigWithNewNamespace
 import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.FileResource
 import com.tonyodev.fetch2core.GLOBAL_FETCH_CONFIGURATION_NOT_SET
 
 /**
@@ -431,14 +432,25 @@ interface RxFetch {
      * the Fetch database(meaning Fetch never processed the request and started downloading it) -1 is returned.
      * However, setting fromServer to true will create a new connection to the server to get the connectLength
      * if Fetch does not already contain the data in the database for the request.
-     * @param request Request. Can be a managed or un-managed request.
+     * @param request Request. Can be a managed or un-managed request. The request is not stored in
+     * the fetch database.
      * connection to get the contentLength
      * @param fromServer If true, fetch will attempt to get the ContentLength
      * from the server directly by making a network request. Otherwise no action is taken.
+     * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with content length result. If value is -1. This means that Fetch was
      * not able to get the content length.
      * */
     fun getContentLengthForRequest(request: Request, fromServer: Boolean): Convertible<Long>
+
+    /**
+     * Gets the full Catalog of a Fetch File Server.
+     * @param request Request. Can be a managed or un-managed request. The request is not stored in
+     * the fetch database.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Convertible with catalog results.
+     * */
+    fun getFetchFileServerCatalog(request: Request): Convertible<List<FileResource>>
 
     /**
      * RX Fetch implementation class. Use this Singleton to get instances of RxFetch or Fetch.

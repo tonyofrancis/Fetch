@@ -904,9 +904,32 @@ open class RxFetchImpl(override val namespace: String,
                         try {
                             val contentLength = fetchHandler.getContentLengthForRequest(it.first, it.second)
                             Flowable.just(contentLength)
-                        } catch (e: FetchException) {
+                        } catch (e: Exception) {
                             logger.e("Fetch with namespace $namespace error", e)
                             Flowable.just(-1L)
+                        }
+                    }
+                    .observeOn(uiSceduler)
+                    .toConvertible()
+        }
+    }
+
+    override fun getFetchFileServerCatalog(request: Request): Convertible<List<FileResource>> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(request)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        try {
+                            val catalogList = fetchHandler.getFetchFileServerCatalog(request)
+                            Flowable.just(catalogList)
+                        } catch (e: Exception) {
+                            logger.e("Fetch with namespace $namespace error", e)
+                            if (e is FetchException) {
+                                throw e
+                            } else {
+                                throw FetchException(e.message ?: "")
+                            }
                         }
                     }
                     .observeOn(uiSceduler)

@@ -5,8 +5,10 @@ import com.tonyodev.fetch2core.*
 import com.tonyodev.fetch2core.server.FileRequest.CREATOR.TYPE_FILE
 import com.tonyodev.fetch2core.server.FetchFileResourceTransporter
 import com.tonyodev.fetch2core.server.FileRequest
+import com.tonyodev.fetch2core.server.FileRequest.CREATOR.TYPE_CATALOG
 import com.tonyodev.fetch2core.server.FileResponse
 import org.json.JSONObject
+import java.io.InputStreamReader
 
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
@@ -42,7 +44,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         val timeoutStart = System.nanoTime()
         transporter.connect(inetSocketAddress)
         val fileRequest = FileRequest(
-                type = TYPE_FILE,
+                type = getFileRequestType(request),
                 fileResourceId = getFileResourceIdFromUrl(request.url),
                 rangeStart = range.first,
                 rangeEnd = range.second,
@@ -171,6 +173,69 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
             contentLength
         } catch (e: Exception) {
             -1L
+        }
+    }
+
+    override fun getFileRequestType(serverRequest: Downloader.ServerRequest): Int {
+        val resourceId = getFileResourceIdFromUrl(serverRequest.url)
+        return if (resourceId == FileRequest.CATALOG_ID.toString()
+                || resourceId == FileRequest.CATALOG_NAME) {
+            TYPE_CATALOG
+        } else {
+            TYPE_FILE
+        }
+    }
+
+    override fun getFetchFileServerCatalog(serverRequest: Downloader.ServerRequest): List<FileResource> {
+        val response = execute(serverRequest, object : InterruptMonitor {
+            override val isInterrupted: Boolean
+                get() = false
+        })
+        if (response?.byteStream != null) {
+            try {
+                val type = response.responseHeaders[FileRequest.FIELD_TYPE]?.firstOrNull()?.toInt()
+                        ?: -1
+                if (type != FileRequest.TYPE_CATALOG) {
+                    disconnect(response)
+                    throw Exception(FETCH_FILE_SERVER_INVALID_RESPONSE_TYPE)
+                }
+                val bufferSize = 1024
+                val buffer = CharArray(bufferSize)
+                val stringBuilder = StringBuilder()
+                val inputReader = InputStreamReader(response.byteStream, Charsets.UTF_8)
+                var read = inputReader.read(buffer, 0, bufferSize)
+                while (read != -1) {
+                    stringBuilder.append(buffer, 0, read)
+                    read = inputReader.read(buffer, 0, bufferSize)
+                }
+                inputReader.close()
+                val data = stringBuilder.toString()
+                if (data.isNotEmpty()) {
+                    val json = JSONObject(data)
+                    val catalogArray = json.getJSONArray("catalog")
+                    val size = catalogArray.length()
+                    val fileResourceList = mutableListOf<FileResource>()
+                    for (index in 0 until size) {
+                        val fileResource = FileResource()
+                        val catalogItem = catalogArray.getJSONObject(index)
+                        fileResource.id = catalogItem.getLong("id")
+                        fileResource.name = catalogItem.getString("name")
+                        fileResource.length = catalogItem.getLong("length")
+                        fileResource.customData = catalogItem.getString("customData")
+                        fileResource.md5 = catalogItem.getString("md5")
+                        fileResourceList.add(fileResource)
+                    }
+                    disconnect(response)
+                    return fileResourceList
+                } else {
+                    throw Exception(EMPTY_RESPONSE_BODY)
+                }
+            } catch (e: Exception) {
+                disconnect(response)
+                throw e
+            }
+        } else {
+            throw Exception(EMPTY_RESPONSE_BODY)
         }
     }
 }

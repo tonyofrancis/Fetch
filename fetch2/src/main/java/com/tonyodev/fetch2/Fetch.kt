@@ -7,11 +7,8 @@ import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_INSTANCE_NAMESPACE
-import com.tonyodev.fetch2core.GLOBAL_FETCH_CONFIGURATION_NOT_SET
 import com.tonyodev.fetch2.util.createConfigWithNewNamespace
-import com.tonyodev.fetch2core.DownloadBlock
-import com.tonyodev.fetch2core.Func
-import com.tonyodev.fetch2core.Func2
+import com.tonyodev.fetch2core.*
 
 /**
  * A light weight file download manager for Android.
@@ -668,8 +665,8 @@ interface Fetch {
      * the Fetch database(meaning Fetch never processed the request and started downloading it) -1 is returned.
      * However, setting fromServer to true will create a new connection to the server to get the connectLength
      * if Fetch does not already contain the data in the database for the request.
-     * @param request Request. Can be a managed or un-managed request.
-     * connection to get the contentLength
+     * @param request Request. Can be a managed or un-managed request. The request is not stored in
+     * the fetch database.
      * @param fromServer If true, fetch will attempt to get the ContentLength
      * from the server directly by making a network request. Otherwise no action is taken.
      * @param func callback result will be returned on. If the result is -1. This indicates that
@@ -678,6 +675,17 @@ interface Fetch {
      * @return Instance
      * */
     fun getContentLengthForRequest(request: Request, fromServer: Boolean, func: Func<Long>): Fetch
+
+    /**
+     * Gets the full Catalog of a Fetch File Server.
+     * @param request Request. Can be a managed or un-managed request. The request is not stored in
+     * the fetch database.
+     * @param func callback the result is returned on.
+     * @param func2 callback the error is returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun getFetchFileServerCatalog(request: Request, func: Func<List<FileResource>>, func2: Func<Error>? = null): Fetch
 
     /**
      * Enable or disable logging.

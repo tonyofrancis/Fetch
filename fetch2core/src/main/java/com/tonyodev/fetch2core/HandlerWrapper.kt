@@ -3,6 +3,8 @@ package com.tonyodev.fetch2core
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class HandlerWrapper(val namespace: String) {
 
@@ -14,6 +16,7 @@ class HandlerWrapper(val namespace: String) {
         handlerThread.start()
         Handler(handlerThread.looper)
     }()
+    private var workerTaskExecutor: ExecutorService? = null
 
     fun post(runnable: () -> Unit) {
         synchronized(lock) {
@@ -82,6 +85,17 @@ class HandlerWrapper(val namespace: String) {
         }
     }
 
+    fun executeWorkerTask(runnable: () -> Unit) {
+        synchronized(lock) {
+            if (!closed) {
+                if (workerTaskExecutor == null) {
+                    workerTaskExecutor = Executors.newSingleThreadExecutor()
+                }
+                workerTaskExecutor?.execute(runnable)
+            }
+        }
+    }
+
     fun close() {
         synchronized(lock) {
             if (!closed) {
@@ -89,6 +103,13 @@ class HandlerWrapper(val namespace: String) {
                 try {
                     handler.removeCallbacksAndMessages(null)
                     handler.looper.quit()
+                } catch (e: Exception) {
+
+                }
+                try {
+                    val executor = workerTaskExecutor
+                    workerTaskExecutor = null
+                    executor?.shutdown()
                 } catch (e: Exception) {
 
                 }

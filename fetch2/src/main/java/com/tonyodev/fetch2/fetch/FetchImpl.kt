@@ -1022,16 +1022,39 @@ open class FetchImpl constructor(override val namespace: String,
     override fun getContentLengthForRequest(request: Request, fromServer: Boolean, func: Func<Long>): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
-            handlerWrapper.post {
+            handlerWrapper.executeWorkerTask {
                 try {
                     val contentLength = fetchHandler.getContentLengthForRequest(request, fromServer)
                     uiHandler.post {
                         func.call(contentLength)
                     }
-                } catch (e: FetchException) {
+                } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     uiHandler.post {
                         func.call(-1L)
+                    }
+                }
+            }
+            return this
+        }
+    }
+
+    override fun getFetchFileServerCatalog(request: Request, func: Func<List<FileResource>>, func2: Func<Error>?): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.executeWorkerTask {
+                try {
+                    val fileResourceList = fetchHandler.getFetchFileServerCatalog(request)
+                    uiHandler.post {
+                        func.call(fileResourceList)
+                    }
+                } catch (e: Exception) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
                     }
                 }
             }

@@ -60,6 +60,7 @@ data class FileRequest(val type: Int = TYPE_INVALID,
         const val TYPE_FILE = 1
         const val TYPE_CATALOG = 2
         const val CATALOG_ID = -1L
+        const val CATALOG_NAME = "Catalog.json"
         const val FIELD_TYPE = "Type"
         const val FIELD_FILE_RESOURCE_ID = "FileResourceId"
         const val FIELD_RANGE_START = "RangeStart"
