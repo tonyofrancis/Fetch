@@ -114,18 +114,10 @@ public class FileServerActivity extends AppCompatActivity {
         }
         fetchFileServer.addFileResource(fileResource);
 
-       // downloadFileResourceUsingFetch();
-        fetch.getFetchFileServerCatalog(getCatalogRequest(), new Func<List<FileResource>>() {
-            @Override
-            public void call(@NotNull List<FileResource> result) {
-                Log.d("Tet", "Test");
-            }
-        }, new Func<Error>() {
-            @Override
-            public void call(@NotNull Error result) {
-                Log.d("Tet", "Test");
-            }
-        });
+        downloadFileResourceUsingFetch();
+        fetch.getFetchFileServerCatalog(getCatalogRequest(),
+                result -> Timber.d("Catalog:" + result.toString()),
+                error -> Timber.d("Catalog Fetch error:" + error.toString()));
     }
 
     private void downloadFileResourceUsingFetch() {
@@ -138,7 +130,7 @@ public class FileServerActivity extends AppCompatActivity {
 
     private Request getRequest() {
         final String url = new FetchFileServerUriBuilder()
-                .setHostInetAddress("127.0.0.1", fetchFileServer.getPort())
+                .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
                 .setFileResourceIdentifier(CONTENT_PATH)
                 .toString();
         final Request request = new Request(url, getFile("(1)"));
@@ -150,7 +142,7 @@ public class FileServerActivity extends AppCompatActivity {
     private Request getCatalogRequest() {
         final String url = new FetchFileServerUriBuilder()
                 .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
-                .setFileResourceIdentifier("-1")
+                .setFileResourceIdentifier("Catalog.json")
                 .toString();
         final Request request = new Request(url, getFile("(1)"));
         request.addHeader("Authorization", "password");
