@@ -90,7 +90,7 @@ public class FetchHandlerInstrumentedTest {
                 listenerCoordinator);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
                 priorityListProcessorImpl, fetchLogger, autoStart,
-                client, tempDir, listenerCoordinator, uiHandler);
+                client, null, tempDir, listenerCoordinator, uiHandler);
     }
 
     @Test

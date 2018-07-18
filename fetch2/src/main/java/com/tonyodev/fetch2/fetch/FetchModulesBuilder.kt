@@ -122,6 +122,7 @@ object FetchModulesBuilder {
                     logger = fetchConfiguration.logger,
                     autoStart = fetchConfiguration.autoStart,
                     httpDownloader = fetchConfiguration.httpDownloader,
+                    fileServerDownloader = fetchConfiguration.fileServerDownloader,
                     fileTempDir = getFileTempDir(fetchConfiguration.appContext),
                     listenerCoordinator = listenerCoordinator,
                     uiHandler = uiHandler)

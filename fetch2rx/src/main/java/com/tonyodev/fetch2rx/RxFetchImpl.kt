@@ -895,6 +895,25 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun getContentLengthForRequest(request: Request, fromServer: Boolean): Convertible<Long> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(Pair(request, fromServer))
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        try {
+                            val contentLength = fetchHandler.getContentLengthForRequest(it.first, it.second)
+                            Flowable.just(contentLength)
+                        } catch (e: FetchException) {
+                            logger.e("Fetch with namespace $namespace error", e)
+                            Flowable.just(-1L)
+                        }
+                    }
+                    .observeOn(uiSceduler)
+                    .toConvertible()
+        }
+    }
+
     override fun enableLogging(enabled: Boolean): RxFetch {
         synchronized(lock) {
             throwExceptionIfClosed()

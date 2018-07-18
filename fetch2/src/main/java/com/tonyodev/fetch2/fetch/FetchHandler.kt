@@ -49,5 +49,6 @@ interface FetchHandler : Closeable {
     fun isDownloading(id: Int): Boolean
     fun cancelDownload(id: Int): Boolean
     fun getDownloadBlocks(downloadId: Int): List<DownloadBlock>
+    fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long
 
 }

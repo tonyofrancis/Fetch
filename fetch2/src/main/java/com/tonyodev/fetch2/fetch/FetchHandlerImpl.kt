@@ -22,6 +22,7 @@ class FetchHandlerImpl(private val namespace: String,
                        private val logger: Logger,
                        private val autoStart: Boolean,
                        private val httpDownloader: Downloader,
+                       private val fileServerDownloader: FileServerDownloader?,
                        private val fileTempDir: String,
                        private val listenerCoordinator: ListenerCoordinator,
                        private val uiHandler: Handler) : FetchHandler {
@@ -631,6 +632,27 @@ class FetchHandlerImpl(private val namespace: String,
         } else {
             listOf()
         }
+    }
+
+    override fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long {
+        startPriorityQueueIfNotStarted()
+        val download = databaseManager.get(request.id)
+        if (download != null && download.total > 0) {
+            return download.total
+        }
+        if (fromServer) {
+            return try {
+                if (isFetchFileServerUrl(request.url)) {
+                    fileServerDownloader?.getContentLengthForRequest(getServerRequestFromRequest(request))
+                            ?: -1L
+                } else {
+                    httpDownloader.getContentLengthForRequest(getServerRequestFromRequest(request))
+                }
+            } catch (e: Exception) {
+                -1L
+            }
+        }
+        return -1L
     }
 
     override fun close() {

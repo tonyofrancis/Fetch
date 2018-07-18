@@ -4,6 +4,7 @@ package com.tonyodev.fetch2.util
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchConfiguration
+import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.*
 import kotlin.math.ceil
@@ -62,6 +63,19 @@ fun getRequestForDownload(download: Download,
             tag = download.tag,
             identifier = download.identifier,
             requestMethod = requestMethod)
+}
+
+fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
+    val headers = request.headers.toMutableMap()
+    headers["Range"] = "bytes=$0-"
+    return Downloader.ServerRequest(
+            id = request.id,
+            url = request.url,
+            headers = headers,
+            tag = request.tag,
+            identifier = request.identifier,
+            requestMethod = GET_REQUEST_METHOD,
+            file = request.file)
 }
 
 fun deleteRequestTempFiles(fileTempDir: String,

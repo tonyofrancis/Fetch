@@ -1019,6 +1019,26 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun getContentLengthForRequest(request: Request, fromServer: Boolean, func: Func<Long>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val contentLength = fetchHandler.getContentLengthForRequest(request, fromServer)
+                    uiHandler.post {
+                        func.call(contentLength)
+                    }
+                } catch (e: FetchException) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    uiHandler.post {
+                        func.call(-1L)
+                    }
+                }
+            }
+            return this
+        }
+    }
+
     override fun setGlobalNetworkType(networkType: NetworkType): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()

@@ -664,6 +664,22 @@ interface Fetch {
     fun getDownloadBlocks(downloadId: Int, func: Func<List<DownloadBlock>>): Fetch
 
     /**
+     * Gets the content Length for a request. If the request or contentLength cannot be found in
+     * the Fetch database(meaning Fetch never processed the request and started downloading it) -1 is returned.
+     * However, setting fromServer to true will create a new connection to the server to get the connectLength
+     * if Fetch does not already contain the data in the database for the request.
+     * @param request Request. Can be a managed or un-managed request.
+     * connection to get the contentLength
+     * @param fromServer If true, fetch will attempt to get the ContentLength
+     * from the server directly by making a network request. Otherwise no action is taken.
+     * @param func callback result will be returned on. If the result is -1. This indicates that
+     * Fetch was not able to get the ContentLength.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun getContentLengthForRequest(request: Request, fromServer: Boolean, func: Func<Long>): Fetch
+
+    /**
      * Enable or disable logging.
      * @param enabled Enable or disable logging.
      * @throws FetchException if this instance of Fetch has been closed.
