@@ -12,6 +12,7 @@ import com.tonyodev.fetch2core.*
 import com.tonyodev.fetch2rx.util.toConvertible
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 
 open class RxFetchImpl(override val namespace: String,
                        private val handlerWrapper: HandlerWrapper,
@@ -899,7 +900,7 @@ open class RxFetchImpl(override val namespace: String,
         return synchronized(lock) {
             throwExceptionIfClosed()
             Flowable.just(Pair(request, fromServer))
-                    .subscribeOn(scheduler)
+                    .subscribeOn(Schedulers.from(handlerWrapper.getWorkTaskExecutor()))
                     .flatMap {
                         try {
                             val contentLength = fetchHandler.getContentLengthForRequest(it.first, it.second)
@@ -918,7 +919,7 @@ open class RxFetchImpl(override val namespace: String,
         return synchronized(lock) {
             throwExceptionIfClosed()
             Flowable.just(request)
-                    .subscribeOn(scheduler)
+                    .subscribeOn(Schedulers.from(handlerWrapper.getWorkTaskExecutor()))
                     .flatMap {
                         try {
                             val catalogList = fetchHandler.getFetchFileServerCatalog(request)
