@@ -7,7 +7,8 @@ import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class HandlerWrapper(val namespace: String) {
+class HandlerWrapper(val namespace: String,
+                     private val concurrentLimit: Int) {
 
     private val lock = Any()
     private var closed = false
@@ -90,7 +91,7 @@ class HandlerWrapper(val namespace: String) {
         synchronized(lock) {
             if (!closed) {
                 if (workerTaskExecutor == null) {
-                    workerTaskExecutor = Executors.newSingleThreadExecutor()
+                    workerTaskExecutor = Executors.newFixedThreadPool(concurrentLimit)
                 }
                 workerTaskExecutor?.execute(runnable)
             }
@@ -101,7 +102,7 @@ class HandlerWrapper(val namespace: String) {
         return synchronized(lock) {
             val executor = workerTaskExecutor
             if (executor == null) {
-                val executorService = Executors.newSingleThreadExecutor()
+                val executorService = Executors.newFixedThreadPool(concurrentLimit)
                 workerTaskExecutor = executorService
                 executorService
             } else {
