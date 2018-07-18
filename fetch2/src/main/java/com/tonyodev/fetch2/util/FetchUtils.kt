@@ -67,12 +67,10 @@ fun getRequestForDownload(download: Download,
 }
 
 fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
-    val headers = request.headers.toMutableMap()
-    headers["Range"] = request.headers["Range"] ?: "bytes=0-"
     return Downloader.ServerRequest(
             id = request.id,
             url = request.url,
-            headers = headers,
+            headers = request.headers,
             tag = request.tag,
             identifier = request.identifier,
             requestMethod = GET_REQUEST_METHOD,
@@ -81,9 +79,9 @@ fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
 
 fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerRequest {
     val headers = request.headers.toMutableMap()
-    headers["Range"] = request.headers["Range"] ?: "bytes=0-"
-    headers[FileRequest.FIELD_PAGE] = request.headers[FileRequest.FIELD_PAGE] ?: "-1"
-    headers[FileRequest.FIELD_SIZE] = request.headers[FileRequest.FIELD_SIZE] ?: "-1"
+    headers["Range"] = "bytes=0-"
+    headers[FileRequest.FIELD_PAGE] = "-1"
+    headers[FileRequest.FIELD_SIZE] = "-1"
     return Downloader.ServerRequest(
             id = request.id,
             url = request.url,

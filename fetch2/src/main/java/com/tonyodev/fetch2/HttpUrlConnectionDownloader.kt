@@ -146,7 +146,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     override fun getContentLengthForRequest(request: Downloader.ServerRequest): Long {
         return try {
             val response = execute(request, null)
-            val contentLength = response?.contentLength ?: -1
+            val contentLength = response?.contentLength ?: -1L
             if (response != null) {
                 disconnect(response)
             }

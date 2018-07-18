@@ -636,26 +636,36 @@ class FetchHandlerImpl(private val namespace: String,
 
     override fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long {
         startPriorityQueueIfNotStarted()
-        val download = databaseManager.get(request.id)
-        if (download != null && download.total > 0) {
-            return download.total
-        }
-        if (fromServer) {
-            if (isFetchFileServerUrl(request.url)) {
-                fileServerDownloader?.getContentLengthForRequest(getServerRequestFromRequest(request))
-                        ?: -1L
-            } else {
-                httpDownloader.getContentLengthForRequest(getServerRequestFromRequest(request))
+        return try {
+            val download = databaseManager.get(request.id)
+            if (download != null && download.total > 0) {
+                return download.total
             }
+            if (fromServer) {
+                if (isFetchFileServerUrl(request.url)) {
+                    val downloader = fileServerDownloader
+                            ?: throw FetchException(FETCH_FILE_SERVER_DOWNLOADER_NOT_SET, FetchException.Code.FILE_SERVER_DOWNLOADER_NOT_SET)
+                    downloader.getContentLengthForRequest(getServerRequestFromRequest(request))
+                } else {
+                    httpDownloader.getContentLengthForRequest(getServerRequestFromRequest(request))
+                }
+            } else {
+                -1L
+            }
+        } catch (e: Exception) {
+            throw FetchException(e.message ?: "")
         }
-        return -1L
     }
 
     override fun getFetchFileServerCatalog(request: Request): List<FileResource> {
         startPriorityQueueIfNotStarted()
         val downloader = fileServerDownloader
                 ?: throw FetchException(FETCH_FILE_SERVER_DOWNLOADER_NOT_SET, FetchException.Code.FILE_SERVER_DOWNLOADER_NOT_SET)
-        return downloader.getFetchFileServerCatalog(getCatalogServerRequestFromRequest(request))
+        return try {
+            downloader.getFetchFileServerCatalog(getCatalogServerRequestFromRequest(request))
+        } catch (e: Exception) {
+            throw FetchException(e.message ?: "")
+        }
     }
 
     override fun close() {

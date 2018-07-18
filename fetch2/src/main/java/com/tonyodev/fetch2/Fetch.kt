@@ -671,13 +671,15 @@ interface Fetch {
      * from the server directly by making a network request. Otherwise no action is taken.
      * @param func callback result will be returned on. If the result is -1. This indicates that
      * Fetch was not able to get the ContentLength.
+     * @param func2 where the error will be returned if one occurs. This indicates that
+     * Fetch was not able to get the ContentLength.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun getContentLengthForRequest(request: Request, fromServer: Boolean, func: Func<Long>): Fetch
+    fun getContentLengthForRequest(request: Request, fromServer: Boolean, func: Func<Long>, func2: Func<Error>?): Fetch
 
     /**
-     * Gets the full Catalog of a Fetch File Server.
+     * Gets the full File Resource Catalog of a Fetch File Server.
      * @param request Request. Can be a managed or un-managed request. The request is not stored in
      * the fetch database.
      * @param func callback the result is returned on.
