@@ -13,8 +13,8 @@ import com.tonyodev.fetch2fileserver.database.toFileResourceInfo
 import com.tonyodev.fetch2fileserver.provider.FileResourceProvider
 import com.tonyodev.fetch2fileserver.provider.FileResourceProviderDelegate
 import com.tonyodev.fetch2fileserver.provider.FetchFileResourceProvider
-import com.tonyodev.fetch2core.transporter.FileRequest
-import com.tonyodev.fetch2core.transporter.FileResourceTransporterWriter
+import com.tonyodev.fetch2core.server.FileRequest
+import com.tonyodev.fetch2core.server.FileResourceTransporterWriter
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.*

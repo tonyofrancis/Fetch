@@ -53,6 +53,7 @@ interface Downloader : Closeable {
      * This method is called by Fetch if the FileDownloaderType.Parallel type was set
      * for the download request. Returns the desired slices that the file will be divided in for parallel downloading.
      * If null is returned, Fetch will automatically select an appropriate slicing size based on the content length.
+     * This method is called on a background thread.
      * @param request the request information for the download.
      * @param contentLength the total content length in bytes.
      * @return the slicing size for the request file. Can be null.
@@ -60,7 +61,8 @@ interface Downloader : Closeable {
     fun getFileSlicingCount(request: ServerRequest, contentLength: Long): Int?
 
     /** This method is called by Fetch to select the FileDownloaderType for each
-     * download request. The Default is FileDownloaderType.SEQUENTIAL
+     * download request. The Default is FileDownloaderType.SEQUENTIAL.
+     * This method is called on a background thread.
      * @param request the request information for the download.
      * @return the FileDownloaderType.
      * */
@@ -72,6 +74,7 @@ interface Downloader : Closeable {
      * temp files for the request. If the return directory is null, Fetch
      * will select the default directory. Temp files in this directory are automatically
      * deleted by Fetch once a download completes or a request is removed.
+     * This method is called on a background thread.
      * @param request the request information for the download.
      * @return the directory where the temp files will be stored. Can be null.
      * */
@@ -80,6 +83,7 @@ interface Downloader : Closeable {
     /**
      * This method should be used to verify that the download file MD5 matches the
      * passed in MD5 returned by the server for the content.
+     * This method is called on a background thread.
      * @param request the request information for the download.
      * @param md5 MD5 returned by the server for the content
      * @return return true if the md5 values match otherwise false. If false is returned,

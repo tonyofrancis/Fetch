@@ -2,7 +2,7 @@ package com.tonyodev.fetch2downloaders
 
 import com.tonyodev.fetch2core.FileResource
 import com.tonyodev.fetch2core.calculateProgress
-import com.tonyodev.fetch2core.transporter.FileRequest
+import com.tonyodev.fetch2core.server.FileRequest
 import org.json.JSONObject
 import java.io.InputStream
 import java.io.InputStreamReader

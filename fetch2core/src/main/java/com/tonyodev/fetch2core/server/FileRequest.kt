@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2core.transporter
+package com.tonyodev.fetch2core.server
 
 import android.os.Parcel
 import android.os.Parcelable

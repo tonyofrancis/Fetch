@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2fileserver
 
-import com.tonyodev.fetch2core.transporter.FileRequest
+import com.tonyodev.fetch2core.server.FileRequest
 
 /** Used to authenticate clients trying to connect to the Fetch File Server
  * instance this authenticator instance is attached to.*/

@@ -3,9 +3,9 @@ package com.tonyodev.fetch2downloaders
 import android.os.Handler
 import android.os.Looper
 import com.tonyodev.fetch2core.*
-import com.tonyodev.fetch2core.transporter.FetchFileResourceTransporter
-import com.tonyodev.fetch2core.transporter.FileRequest
-import com.tonyodev.fetch2core.transporter.FileResponse
+import com.tonyodev.fetch2core.server.FetchFileResourceTransporter
+import com.tonyodev.fetch2core.server.FileRequest
+import com.tonyodev.fetch2core.server.FileResponse
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress

@@ -1,7 +1,7 @@
 package com.tonyodev.fetch2fileserver
 
 import com.tonyodev.fetch2core.FileResource
-import com.tonyodev.fetch2core.transporter.FileRequest
+import com.tonyodev.fetch2core.server.FileRequest
 
 /** Listener that can be attached to a Fetch File Server instance
  * and reports connected clients content file transfer progress.*/
