@@ -1,6 +1,4 @@
-package com.tonyodev.fetch2.fetch
-
-import com.tonyodev.fetch2.downloader.FileDownloader
+package com.tonyodev.fetch2.downloader
 
 class DownloadManagerCoordinator(val namespace: String) {
 
@@ -12,9 +10,6 @@ class DownloadManagerCoordinator(val namespace: String) {
             val fileDownloader = fileDownloaderMap[downloadId]
             if (fileDownloader != null) {
                 fileDownloader.interrupted = true
-                while (!fileDownloader.terminated) {
-                    //Wait until download runnable terminates
-                }
                 fileDownloaderMap.remove(downloadId)
             }
         }

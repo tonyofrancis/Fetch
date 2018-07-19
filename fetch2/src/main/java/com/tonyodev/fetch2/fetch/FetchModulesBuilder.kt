@@ -8,6 +8,7 @@ import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DatabaseManagerImpl
 import com.tonyodev.fetch2.database.DownloadDatabase
 import com.tonyodev.fetch2.downloader.DownloadManager
+import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater
 import com.tonyodev.fetch2.helper.PriorityListProcessor
