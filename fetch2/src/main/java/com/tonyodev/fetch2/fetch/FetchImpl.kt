@@ -743,25 +743,20 @@ open class FetchImpl constructor(override val namespace: String,
         return retry(id, null)
     }
 
-    override fun updateRequest(oldRequestId: Int, newRequest: Request, func: Func<Download>?,
+    override fun updateRequest(requestId: Int, updatedRequest: Request, func: Func<Download>?,
                                func2: Func<Error>?): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val download = fetchHandler.updateRequest(oldRequestId, newRequest)
-                    if (download != null && func != null) {
+                    val download = fetchHandler.updateRequest(requestId, updatedRequest)
+                    if (func != null) {
                         uiHandler.post {
                             func.call(download)
                         }
                     }
-                    if (download == null && func2 != null) {
-                        uiHandler.post {
-                            func2.call(Error.DOWNLOAD_NOT_FOUND)
-                        }
-                    }
-                } catch (e: Exception) {
-                    logger.e("Failed to update request with id $oldRequestId", e)
+                } catch (e: FetchException) {
+                    logger.e("Failed to update request with id $requestId", e)
                     val error = getErrorFromMessage(e.message)
                     if (func2 != null) {
                         uiHandler.post {

@@ -98,7 +98,10 @@ enum class Error constructor(
     FAILED_TO_ADD_COMPLETED_DOWNLOAD(22),
 
     /** Indicates that the Fetch File Server returned the wrong response type. */
-    FETCH_FILE_SERVER_INVALID_RESPONSE(23);
+    FETCH_FILE_SERVER_INVALID_RESPONSE(23),
+
+    /** Indicates that the Request Being Queried does not exist.*/
+    REQUEST_DOES_NOT_EXIST(24);
 
     companion object {
 
@@ -128,6 +131,7 @@ enum class Error constructor(
                 21 -> FAILED_TO_UPDATE_REQUEST
                 22 -> FAILED_TO_ADD_COMPLETED_DOWNLOAD
                 23 -> FETCH_FILE_SERVER_INVALID_RESPONSE
+                24 -> REQUEST_DOES_NOT_EXIST
                 else -> UNKNOWN
             }
         }

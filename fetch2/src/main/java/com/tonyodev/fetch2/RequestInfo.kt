@@ -64,9 +64,7 @@ open class RequestInfo {
     var downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
 
     /** Store custom data/ key value pairs with a request.
-     *  Update extras by calling fetch.updateRequestExtras(requestId, extras) for a request.
-     *  or fetch.updateRequest(oldRequestId, newRequest, func, func). Note calling
-     *  fetch.updateRequestExtras(requestId, extras) overrides the existing extras.
+     *  Update extras by calling fetch.updateRequest(requestId, updatedRequest, func, func).
      * */
     val extras = mutableMapOf<String, String>()
 

@@ -284,12 +284,12 @@ interface RxFetch {
 
     /** Updates an existing request.
      * @see com.tonyodev.fetch2.Request for more details.
-     * @param oldRequestId Id of existing request/download
-     * @param newRequest Request object
+     * @param requestId Id of existing request/download
+     * @param updatedRequest Request object
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with the successfully updated download or null.
      * */
-    fun updateRequest(oldRequestId: Int, newRequest: Request): Convertible<Download?>
+    fun updateRequest(requestId: Int, updatedRequest: Request): Convertible<Download?>
 
     /**
      * Gets all downloads managed by this instance of Fetch.

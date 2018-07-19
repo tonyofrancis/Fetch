@@ -673,17 +673,17 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
-    override fun updateRequest(oldRequestId: Int, newRequest: Request): Convertible<Download?> {
+    override fun updateRequest(requestId: Int, updatedRequest: Request): Convertible<Download?> {
         return synchronized(lock) {
             throwExceptionIfClosed()
-            Flowable.just(Any())
+            Flowable.just(Pair(requestId, updatedRequest))
                     .subscribeOn(scheduler)
                     .flatMap {
                         try {
-                            val download = fetchHandler.updateRequest(oldRequestId, newRequest)
+                            val download = fetchHandler.updateRequest(it.first, it.second)
                             Flowable.just(download)
                         } catch (e: Exception) {
-                            logger.e("Failed to update request with id $oldRequestId", e)
+                            logger.e("Failed to update request with id $requestId", e)
                             throw FetchException(e.message ?: FAILED_TO_UPDATE_REQUEST)
                         }
                     }

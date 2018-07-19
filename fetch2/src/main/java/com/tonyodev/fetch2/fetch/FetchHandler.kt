@@ -35,7 +35,7 @@ interface FetchHandler : Closeable {
     fun cancelGroup(id: Int): List<Download>
     fun cancelAll(): List<Download>
     fun retry(ids: List<Int>): List<Download>
-    fun updateRequest(oldRequestId: Int, newRequest: Request): Download?
+    fun updateRequest(oldRequestId: Int, newRequest: Request): Download
     fun getDownloads(): List<Download>
     fun getDownload(id: Int): Download?
     fun getDownloads(idList: List<Int>): List<Download>

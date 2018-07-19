@@ -64,6 +64,8 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FETCH_FILE_SERVER_DOWNLOADER_NOT_SET
     } else if (message.contains(FETCH_FILE_SERVER_INVALID_RESPONSE_TYPE, true)) {
         Error.FETCH_FILE_SERVER_INVALID_RESPONSE
+    } else if (message.contains(REQUEST_DOES_NOT_EXIST, true)) {
+        Error.REQUEST_DOES_NOT_EXIST
     } else {
         Error.UNKNOWN
     }

@@ -523,32 +523,37 @@ class FetchHandlerImpl(private val namespace: String,
         }
     }
 
-    override fun updateRequest(oldRequestId: Int, newRequest: Request): Download? {
+    override fun updateRequest(oldRequestId: Int, newRequest: Request): Download {
         val oldDownloadInfo = databaseManager.get(oldRequestId)
         if (oldDownloadInfo != null) {
-            val newDownloadInfo = newRequest.toDownloadInfo()
-            newDownloadInfo.status = if (newRequest.downloadOnEnqueue) {
-                Status.QUEUED
-            } else {
-                Status.ADDED
-            }
-            newDownloadInfo.namespace = namespace
-            val enqueueAction = newDownloadInfo.enqueueAction
-            if (enqueueAction == EnqueueAction.REPLACE_EXISTING) {
-                if (newRequest.file == oldDownloadInfo.file) {
-                    newDownloadInfo.downloaded = oldDownloadInfo.downloaded
-                    newDownloadInfo.total = oldDownloadInfo.total
+            try {
+                val newDownloadInfo = newRequest.toDownloadInfo()
+                newDownloadInfo.status = if (newRequest.downloadOnEnqueue) {
+                    Status.QUEUED
+                } else {
+                    Status.ADDED
                 }
-                remove(listOf(oldRequestId))
-            } else {
-                delete(listOf(oldRequestId))
+                newDownloadInfo.namespace = namespace
+                val enqueueAction = newDownloadInfo.enqueueAction
+                if (enqueueAction == EnqueueAction.REPLACE_EXISTING) {
+                    if (newRequest.file == oldDownloadInfo.file) {
+                        newDownloadInfo.downloaded = oldDownloadInfo.downloaded
+                        newDownloadInfo.total = oldDownloadInfo.total
+                    }
+                    remove(listOf(oldRequestId))
+                } else {
+                    delete(listOf(oldRequestId))
+                }
+                prepareDownloadInfoForEnqueue(newDownloadInfo)
+                startPriorityQueueIfNotStarted()
+                databaseManager.insert(newDownloadInfo)
+                return newDownloadInfo
+            } catch (e: Exception) {
+                throw FetchException(e.message ?: "")
             }
-            prepareDownloadInfoForEnqueue(newDownloadInfo)
-            startPriorityQueueIfNotStarted()
-            databaseManager.insert(newDownloadInfo)
-            return newDownloadInfo
+        } else {
+            throw FetchException(REQUEST_DOES_NOT_EXIST)
         }
-        return null
     }
 
     override fun getDownloads(): List<Download> {
