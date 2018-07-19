@@ -30,8 +30,8 @@ object FetchModulesBuilder {
                 Modules(fetchConfiguration, holder.handlerWrapper, holder.downloadBlockHandlerWrapper, holder.databaseManager,
                         holder.downloadManagerCoordinator, holder.listenerCoordinator)
             } else {
-                val newHandlerWrapper = HandlerWrapper(fetchConfiguration.namespace, fetchConfiguration.concurrentLimit)
-                val newDownloadBlockHandlerWrapper = HandlerWrapper("${fetchConfiguration.namespace}-DownloadBlockHandler", fetchConfiguration.concurrentLimit)
+                val newHandlerWrapper = HandlerWrapper(fetchConfiguration.namespace)
+                val newDownloadBlockHandlerWrapper = HandlerWrapper("${fetchConfiguration.namespace}-DownloadBlockHandler")
                 val newDatabaseManager = DatabaseManagerImpl(
                         context = fetchConfiguration.appContext,
                         namespace = fetchConfiguration.namespace,

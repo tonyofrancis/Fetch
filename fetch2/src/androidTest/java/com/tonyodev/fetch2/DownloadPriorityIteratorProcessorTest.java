@@ -56,7 +56,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
-        final HandlerWrapper handlerWrapper = new HandlerWrapper("DownloadBlockHandler", concurrentLimit);
+        final HandlerWrapper handlerWrapper = new HandlerWrapper("DownloadBlockHandler");
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
@@ -66,7 +66,7 @@ public class DownloadPriorityIteratorProcessorTest {
                 uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
                 listenerCoordinator, null, false, handlerWrapper);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
-                new HandlerWrapper(namespace, concurrentLimit),
+                new HandlerWrapper(namespace),
                 new DownloadProvider(databaseManager),
                 downloadManager,
                 new NetworkInfoProvider(appContext),

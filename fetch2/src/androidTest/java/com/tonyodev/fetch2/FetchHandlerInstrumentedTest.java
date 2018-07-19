@@ -64,20 +64,20 @@ public class FetchHandlerInstrumentedTest {
         final Migration[] migrations = DownloadDatabase.getMigrations();
         databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations);
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
-        final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace, concurrentLimit);
+        final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
-        final HandlerWrapper downloadBlockHandler = new HandlerWrapper("DownloadBlockHandler", concurrentLimit);
+        final HandlerWrapper downloadBlockHandler = new HandlerWrapper("DownloadBlockHandler");
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
         final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
+                progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
                 listenerCoordinator, null, false, downloadBlockHandler);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
