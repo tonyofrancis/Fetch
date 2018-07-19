@@ -497,7 +497,7 @@ interface RxFetch {
         fun getDefaultRxFetchConfiguration(): FetchConfiguration {
             return synchronized(lock) {
                 if (defaultRxFetchConfiguration == null) {
-                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET, FetchException.Code.GLOBAL_CONFIGURATION_NOT_SET)
+                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
                 } else {
                     defaultRxFetchConfiguration!!
                 }
@@ -511,7 +511,7 @@ interface RxFetch {
         fun getDefaultRxInstance(): RxFetch {
             synchronized(lock) {
                 if (defaultRxFetchConfiguration == null) {
-                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET, FetchException.Code.GLOBAL_CONFIGURATION_NOT_SET)
+                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
                 }
                 return RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(defaultRxFetchConfiguration!!))
             }

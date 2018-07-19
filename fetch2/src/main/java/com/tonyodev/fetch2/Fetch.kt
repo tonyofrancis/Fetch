@@ -761,7 +761,7 @@ interface Fetch {
         fun getDefaultFetchConfiguration(): FetchConfiguration {
             return synchronized(lock) {
                 if (defaultFetchConfiguration == null) {
-                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET, FetchException.Code.GLOBAL_CONFIGURATION_NOT_SET)
+                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
                 } else {
                     defaultFetchConfiguration!!
                 }
@@ -775,7 +775,7 @@ interface Fetch {
         fun getDefaultInstance(): Fetch {
             synchronized(lock) {
                 if (defaultFetchConfiguration == null) {
-                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET, FetchException.Code.GLOBAL_CONFIGURATION_NOT_SET)
+                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
                 }
                 return FetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(defaultFetchConfiguration!!))
             }

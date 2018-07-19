@@ -57,7 +57,7 @@ class FetchHandlerImpl(private val namespace: String,
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
         val existingDownload = databaseManager.getByFile(downloadInfo.file)
         if (downloadInfo.enqueueAction == EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING && existingDownload != null) {
-            throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST, FetchException.Code.REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+            throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
         } else if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
             if (isDownloading(existingDownload.id)) {
                 downloadManager.cancel(downloadInfo.id)
@@ -644,7 +644,7 @@ class FetchHandlerImpl(private val namespace: String,
             if (fromServer) {
                 if (isFetchFileServerUrl(request.url)) {
                     val downloader = fileServerDownloader
-                            ?: throw FetchException(FETCH_FILE_SERVER_DOWNLOADER_NOT_SET, FetchException.Code.FILE_SERVER_DOWNLOADER_NOT_SET)
+                            ?: throw FetchException(FETCH_FILE_SERVER_DOWNLOADER_NOT_SET)
                     downloader.getContentLengthForRequest(getServerRequestFromRequest(request))
                 } else {
                     httpDownloader.getContentLengthForRequest(getServerRequestFromRequest(request))
@@ -660,7 +660,7 @@ class FetchHandlerImpl(private val namespace: String,
     override fun getFetchFileServerCatalog(request: Request): List<FileResource> {
         startPriorityQueueIfNotStarted()
         val downloader = fileServerDownloader
-                ?: throw FetchException(FETCH_FILE_SERVER_DOWNLOADER_NOT_SET, FetchException.Code.FILE_SERVER_DOWNLOADER_NOT_SET)
+                ?: throw FetchException(FETCH_FILE_SERVER_DOWNLOADER_NOT_SET)
         return try {
             downloader.getFetchFileServerCatalog(getCatalogServerRequestFromRequest(request))
         } catch (e: Exception) {

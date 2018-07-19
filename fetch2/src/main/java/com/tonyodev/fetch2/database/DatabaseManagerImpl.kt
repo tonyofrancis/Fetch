@@ -8,7 +8,6 @@ import com.tonyodev.fetch2core.Logger
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
-import com.tonyodev.fetch2.exception.FetchImplementationException
 import com.tonyodev.fetch2.util.sanitize
 
 
@@ -216,8 +215,7 @@ class DatabaseManagerImpl constructor(context: Context,
 
     private fun throwExceptionIfClosed() {
         if (closed) {
-            throw FetchImplementationException("$namespace database is closed",
-                    FetchException.Code.CLOSED)
+            throw FetchException("$namespace database is closed")
         }
     }
 

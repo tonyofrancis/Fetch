@@ -1113,8 +1113,7 @@ open class FetchImpl constructor(override val namespace: String,
     private fun throwExceptionIfClosed() {
         if (closed) {
             throw FetchException("This fetch instance has been closed. Create a new " +
-                    "instance using the builder.",
-                    FetchException.Code.CLOSED)
+                    "instance using the builder.")
         }
     }
 

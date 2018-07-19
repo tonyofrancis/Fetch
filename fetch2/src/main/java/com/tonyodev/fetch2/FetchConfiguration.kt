@@ -101,8 +101,7 @@ class FetchConfiguration private constructor(val appContext: Context,
          * */
         fun setProgressReportingInterval(progressReportingIntervalMillis: Long): Builder {
             if (progressReportingIntervalMillis < 0) {
-                throw FetchException("progressReportingIntervalMillis cannot be less than 0",
-                        FetchException.Code.ILLEGAL_ARGUMENT)
+                throw FetchException("progressReportingIntervalMillis cannot be less than 0")
             }
             this.progressReportingIntervalMillis = progressReportingIntervalMillis
             return this
@@ -116,9 +115,7 @@ class FetchConfiguration private constructor(val appContext: Context,
          * */
         fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int): Builder {
             if (downloadConcurrentLimit < 1) {
-                throw FetchException("Concurrent limit cannot be less " +
-                        "than 1",
-                        FetchException.Code.ILLEGAL_ARGUMENT)
+                throw FetchException("Concurrent limit cannot be less than 1")
             }
             this.concurrentLimit = downloadConcurrentLimit
             return this
@@ -154,8 +151,7 @@ class FetchConfiguration private constructor(val appContext: Context,
          * */
         fun setDownloadBufferSize(bytes: Int): Builder {
             if (bytes < 1) {
-                throw FetchException("Buffer size cannot be less than 1.",
-                        FetchException.Code.ILLEGAL_ARGUMENT)
+                throw FetchException("Buffer size cannot be less than 1.")
             }
             this.downloadBufferSizeBytes = bytes
             return this

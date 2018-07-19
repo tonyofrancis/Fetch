@@ -122,7 +122,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                 fileSlicesTotal += it.downloaded
                             }
                             if (fileSlicesTotal != total) {
-                                throwable = FetchException(DOWNLOAD_INCOMPLETE, FetchException.Code.DOWNLOAD_INCOMPLETE)
+                                throwable = FetchException(DOWNLOAD_INCOMPLETE)
                             }
                             throwExceptionIfFound()
                             completedDownload = true
@@ -135,7 +135,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     delegate?.onComplete(
                                             download = downloadInfo)
                                 } else {
-                                    throw FetchException(INVALID_CONTENT_MD5, FetchException.Code.INVALID_CONTENT_MD5)
+                                    throw FetchException(INVALID_CONTENT_MD5)
                                 }
                             } else {
                                 delegate?.onProgress(
@@ -159,18 +159,14 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         }
                     }
                 } else {
-                    throw FetchException(EMPTY_RESPONSE_BODY,
-                            FetchException.Code.EMPTY_RESPONSE_BODY)
+                    throw FetchException(EMPTY_RESPONSE_BODY)
                 }
             } else if (openingResponse == null && !interrupted && !terminated) {
-                throw FetchException(EMPTY_RESPONSE_BODY,
-                        FetchException.Code.EMPTY_RESPONSE_BODY)
+                throw FetchException(EMPTY_RESPONSE_BODY)
             } else if (openingResponse?.isSuccessful == false && !interrupted && !terminated) {
-                throw FetchException(RESPONSE_NOT_SUCCESSFUL,
-                        FetchException.Code.REQUEST_NOT_SUCCESSFUL)
+                throw FetchException(RESPONSE_NOT_SUCCESSFUL)
             } else if (!interrupted && !terminated) {
-                throw FetchException(UNKNOWN_ERROR,
-                        FetchException.Code.UNKNOWN)
+                throw FetchException(UNKNOWN_ERROR)
             }
         } catch (e: Exception) {
             if (!interrupted && !terminated) {
@@ -426,14 +422,11 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             downloadBlock.downloadedBytes = fileSlice.downloaded
                             delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                         } else if (downloadResponse == null && !interrupted && !terminated) {
-                            throw FetchException(EMPTY_RESPONSE_BODY,
-                                    FetchException.Code.EMPTY_RESPONSE_BODY)
+                            throw FetchException(EMPTY_RESPONSE_BODY)
                         } else if (downloadResponse?.isSuccessful == false && !interrupted && !terminated) {
-                            throw FetchException(RESPONSE_NOT_SUCCESSFUL,
-                                    FetchException.Code.REQUEST_NOT_SUCCESSFUL)
+                            throw FetchException(RESPONSE_NOT_SUCCESSFUL)
                         } else if (!interrupted && !terminated) {
-                            throw FetchException(UNKNOWN_ERROR,
-                                    FetchException.Code.UNKNOWN)
+                            throw FetchException(UNKNOWN_ERROR)
                         }
                     } catch (e: Exception) {
                         throwable = e

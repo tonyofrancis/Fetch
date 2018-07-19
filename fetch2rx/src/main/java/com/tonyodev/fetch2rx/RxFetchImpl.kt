@@ -684,8 +684,7 @@ open class RxFetchImpl(override val namespace: String,
                             Flowable.just(download)
                         } catch (e: Exception) {
                             logger.e("Failed to update request with id $oldRequestId", e)
-                            throw FetchException(e.message
-                                    ?: FAILED_TO_UPDATE_REQUEST, FetchException.Code.REQUEST_NOT_UPDATED)
+                            throw FetchException(e.message ?: FAILED_TO_UPDATE_REQUEST)
                         }
                     }
                     .observeOn(uiSceduler)
@@ -842,8 +841,7 @@ open class RxFetchImpl(override val namespace: String,
                             Flowable.just(download)
                         } catch (e: Exception) {
                             logger.e("Failed to add CompletedDownload $completedDownload", e)
-                            throw  FetchException(e.message
-                                    ?: FAILED_TO_ADD_COMPLETED_DOWNLOAD, FetchException.Code.COMPLETED_DOWNLOAD_NOT_ADDED)
+                            throw  FetchException(e.message ?: FAILED_TO_ADD_COMPLETED_DOWNLOAD)
                         }
                     }
                     .observeOn(uiSceduler)
@@ -868,8 +866,7 @@ open class RxFetchImpl(override val namespace: String,
                             Flowable.just(downloads)
                         } catch (e: Exception) {
                             logger.e("Failed to add CompletedDownload list $completedDownloads")
-                            throw  FetchException(e.message
-                                    ?: FAILED_TO_ADD_COMPLETED_DOWNLOAD, FetchException.Code.COMPLETED_DOWNLOAD_NOT_ADDED)
+                            throw  FetchException(e.message ?: FAILED_TO_ADD_COMPLETED_DOWNLOAD)
                         }
                     }
                     .observeOn(uiSceduler)
@@ -982,8 +979,7 @@ open class RxFetchImpl(override val namespace: String,
     private fun throwExceptionIfClosed() {
         if (closed) {
             throw FetchException("This fetch instance has been closed. Create a new " +
-                    "instance using the builder.",
-                    FetchException.Code.CLOSED)
+                    "instance using the builder.")
         }
     }
 

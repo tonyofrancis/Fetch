@@ -114,14 +114,11 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         writeToOutput(input, outputResourceWrapper, response)
                     }
                 } else if (response == null && !interrupted && !terminated) {
-                    throw FetchException(EMPTY_RESPONSE_BODY,
-                            FetchException.Code.EMPTY_RESPONSE_BODY)
+                    throw FetchException(EMPTY_RESPONSE_BODY)
                 } else if (!isResponseSuccessful && !interrupted && !terminated) {
-                    throw FetchException(RESPONSE_NOT_SUCCESSFUL,
-                            FetchException.Code.REQUEST_NOT_SUCCESSFUL)
+                    throw FetchException(RESPONSE_NOT_SUCCESSFUL)
                 } else if (!interrupted && !terminated) {
-                    throw FetchException(UNKNOWN_ERROR,
-                            FetchException.Code.UNKNOWN)
+                    throw FetchException(UNKNOWN_ERROR)
                 }
             }
             if (!completedDownload) {
@@ -277,7 +274,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         delegate?.onComplete(
                                 download = downloadInfo)
                     } else {
-                        throw FetchException(INVALID_CONTENT_MD5, FetchException.Code.INVALID_CONTENT_MD5)
+                        throw FetchException(INVALID_CONTENT_MD5)
                     }
                 } else {
                     delegate?.saveDownloadProgress(downloadInfo)
