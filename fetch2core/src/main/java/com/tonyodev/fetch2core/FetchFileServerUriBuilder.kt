@@ -63,7 +63,7 @@ class FetchFileServerUriBuilder {
      * */
     fun build(): Uri {
         return Uri.Builder()
-                .scheme(FETCH_URL_SCHEME)
+                .scheme(FETCH_URI_SCHEME)
                 .encodedAuthority("$host:$port")
                 .appendPath(identifier)
                 .build()
@@ -76,7 +76,7 @@ class FetchFileServerUriBuilder {
     companion object {
 
         /** Fetch File Server Url Scheme*/
-        const val FETCH_URL_SCHEME = "fetchlocal"
+        const val FETCH_URI_SCHEME = "fetchlocal"
 
     }
 
