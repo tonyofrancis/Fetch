@@ -13,7 +13,6 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val namespace: String,
                                              val concurrentLimit: Int,
                                              val progressReportingIntervalMillis: Long,
-                                             val downloadBufferSizeBytes: Int,
                                              val loggingEnabled: Boolean,
                                              val httpDownloader: Downloader,
                                              val globalNetworkType: NetworkType,
@@ -38,7 +37,6 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var namespace = DEFAULT_INSTANCE_NAMESPACE
         private var concurrentLimit = DEFAULT_CONCURRENT_LIMIT
         private var progressReportingIntervalMillis = DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS
-        private var downloadBufferSizeBytes = DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES
         private var loggingEnabled = DEFAULT_LOGGING_ENABLED
         private var httpDownloader = defaultDownloader
         private var globalNetworkType = defaultGlobalNetworkType
@@ -144,19 +142,6 @@ class FetchConfiguration private constructor(val appContext: Context,
             return this
         }
 
-        /** Sets the buffer size for downloads. Default is 8192 bytes.
-         * @param bytes buffer size. Has to be greater than 0.
-         * @throws FetchException if the passed in buffer size is less than 1.
-         * @return Builder
-         * */
-        fun setDownloadBufferSize(bytes: Int): Builder {
-            if (bytes < 1) {
-                throw FetchException("Buffer size cannot be less than 1.")
-            }
-            this.downloadBufferSizeBytes = bytes
-            return this
-        }
-
         /** Sets custom logger.
          * @param logger custom logger.
          * @return Builder
@@ -215,7 +200,6 @@ class FetchConfiguration private constructor(val appContext: Context,
                     namespace = namespace,
                     concurrentLimit = concurrentLimit,
                     progressReportingIntervalMillis = progressReportingIntervalMillis,
-                    downloadBufferSizeBytes = downloadBufferSizeBytes,
                     loggingEnabled = loggingEnabled,
                     httpDownloader = httpDownloader,
                     globalNetworkType = globalNetworkType,
@@ -236,7 +220,6 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (namespace != other.namespace) return false
         if (concurrentLimit != other.concurrentLimit) return false
         if (progressReportingIntervalMillis != other.progressReportingIntervalMillis) return false
-        if (downloadBufferSizeBytes != other.downloadBufferSizeBytes) return false
         if (loggingEnabled != other.loggingEnabled) return false
         if (httpDownloader != other.httpDownloader) return false
         if (globalNetworkType != other.globalNetworkType) return false
@@ -253,7 +236,6 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + namespace.hashCode()
         result = 31 * result + concurrentLimit
         result = 31 * result + progressReportingIntervalMillis.hashCode()
-        result = 31 * result + downloadBufferSizeBytes
         result = 31 * result + loggingEnabled.hashCode()
         result = 31 * result + httpDownloader.hashCode()
         result = 31 * result + globalNetworkType.hashCode()
@@ -268,8 +250,7 @@ class FetchConfiguration private constructor(val appContext: Context,
     override fun toString(): String {
         return "FetchConfiguration(appContext=$appContext, namespace='$namespace', " +
                 "concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis," +
-                " downloadBufferSizeBytes=$downloadBufferSizeBytes, loggingEnabled=$loggingEnabled, " +
-                "httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType, logger=$logger, " +
+                "loggingEnabled=$loggingEnabled, " + "httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType, logger=$logger, " +
                 "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
                 "fileServerDownloader=$fileServerDownloader, md5CheckingEnabled=$md5CheckingEnabled)"
     }

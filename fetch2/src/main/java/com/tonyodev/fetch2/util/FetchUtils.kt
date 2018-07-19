@@ -214,7 +214,6 @@ fun createConfigWithNewNamespace(fetchConfiguration: FetchConfiguration,
             .enableAutoStart(fetchConfiguration.autoStart)
             .enableLogging(fetchConfiguration.loggingEnabled)
             .enableRetryOnNetworkGain(fetchConfiguration.retryOnNetworkGain)
-            .setDownloadBufferSize(fetchConfiguration.downloadBufferSizeBytes)
             .setHttpDownloader(fetchConfiguration.httpDownloader)
             .setDownloadConcurrentLimit(fetchConfiguration.concurrentLimit)
             .setProgressReportingInterval(fetchConfiguration.progressReportingIntervalMillis)

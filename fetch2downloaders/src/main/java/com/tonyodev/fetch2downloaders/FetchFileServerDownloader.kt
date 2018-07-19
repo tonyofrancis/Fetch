@@ -163,6 +163,10 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         return true
     }
 
+    override fun getBufferSizeForRequest(request: Downloader.ServerRequest): Int? {
+        return null
+    }
+
     override fun getContentLengthForRequest(request: Downloader.ServerRequest): Long {
         return try {
             val response = execute(request, null)

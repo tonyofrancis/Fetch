@@ -156,6 +156,10 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         }
     }
 
+    override fun getBufferSizeForRequest(request: Downloader.ServerRequest): Int? {
+        return null
+    }
+
     /**
      * Use this class to set preference settings for the
      * HttpUrlConnectionDownloader HttpUrlConnection client.

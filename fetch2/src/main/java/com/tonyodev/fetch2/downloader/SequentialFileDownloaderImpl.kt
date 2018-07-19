@@ -12,7 +12,6 @@ import kotlin.math.ceil
 class SequentialFileDownloaderImpl(private val initialDownload: Download,
                                    private val downloader: Downloader,
                                    private val progressReportingIntervalMillis: Long,
-                                   private val downloadBufferSizeBytes: Int,
                                    private val logger: Logger,
                                    private val networkInfoProvider: NetworkInfoProvider,
                                    private val retryOnNetworkGain: Boolean,
@@ -58,6 +57,11 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 response = downloader.execute(request, interruptMonitor)
                 val isResponseSuccessful = response?.isSuccessful ?: false
                 if (!interrupted && !terminated && response != null && isResponseSuccessful) {
+                    downloaded = if (response.code == HttpURLConnection.HTTP_PARTIAL || response.acceptsRanges) {
+                        initialDownload.downloaded
+                    } else {
+                        0
+                    }
                     total = if (response.contentLength == -1L) {
                         -1L
                     } else {
@@ -99,7 +103,9 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                     }
                     outputResourceWrapper.setWriteOffset(seekPosition)
                     if (!interrupted && !terminated) {
-                        input = BufferedInputStream(response.byteStream, downloadBufferSizeBytes)
+                        val bufferSize = downloader.getBufferSizeForRequest(request)
+                                ?: DEFAULT_BUFFER_SIZE
+                        input = BufferedInputStream(response.byteStream, bufferSize)
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
                         downloadBlock.downloadedBytes = downloaded
@@ -111,7 +117,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                                     etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
                                     downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                         }
-                        writeToOutput(input, outputResourceWrapper, response)
+                        writeToOutput(input, outputResourceWrapper, response, bufferSize)
                     }
                 } else if (response == null && !interrupted && !terminated) {
                     throw FetchException(EMPTY_RESPONSE_BODY)
@@ -191,15 +197,16 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
 
     private fun writeToOutput(input: BufferedInputStream,
                               outputResourceWrapper: OutputResourceWrapper?,
-                              response: Downloader.Response) {
+                              response: Downloader.Response,
+                              bufferSize: Int) {
         var reportingStopTime: Long
         var downloadSpeedStopTime: Long
         var downloadedBytesPerSecond = downloaded
-        val buffer = ByteArray(downloadBufferSizeBytes)
+        val buffer = ByteArray(bufferSize)
         var reportingStartTime = System.nanoTime()
         var downloadSpeedStartTime = System.nanoTime()
 
-        var read = input.read(buffer, 0, downloadBufferSizeBytes)
+        var read = input.read(buffer, 0, bufferSize)
         while (!interrupted && !terminated && read != -1) {
             outputResourceWrapper?.write(buffer, 0, read)
             if (!terminated) {
@@ -247,7 +254,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 if (downloadSpeedCheckTimeElapsed) {
                     downloadSpeedStartTime = System.nanoTime()
                 }
-                read = input.read(buffer, 0, downloadBufferSizeBytes)
+                read = input.read(buffer, 0, bufferSize)
             }
         }
         try {

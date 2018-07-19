@@ -17,7 +17,6 @@ import kotlin.math.ceil
 class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                  private val downloader: Downloader,
                                  private val progressReportingIntervalMillis: Long,
-                                 private val downloadBufferSizeBytes: Int,
                                  private val logger: Logger,
                                  private val networkInfoProvider: NetworkInfoProvider,
                                  private val retryOnNetworkGain: Boolean,
@@ -379,8 +378,10 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         downloadResponse = downloader.execute(downloadRequest, interruptMonitor)
                         if (!terminated && !interrupted && downloadResponse?.isSuccessful == true) {
                             var reportingStopTime: Long
-                            val buffer = ByteArray(downloadBufferSizeBytes)
-                            var read: Int = downloadResponse.byteStream?.read(buffer, 0, downloadBufferSizeBytes)
+                            val bufferSize = downloader.getBufferSizeForRequest(downloadRequest)
+                                    ?: DEFAULT_BUFFER_SIZE
+                            val buffer = ByteArray(bufferSize)
+                            var read: Int = downloadResponse.byteStream?.read(buffer, 0, bufferSize)
                                     ?: -1
                             var remainderBytes: Long = fileSlice.endBytes - (fileSlice.startBytes + fileSlice.downloaded)
                             var reportingStartTime = System.nanoTime()
@@ -413,7 +414,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                         reportingStartTime = System.nanoTime()
                                     }
                                     if (read != -1) {
-                                        read = downloadResponse.byteStream?.read(buffer, 0, downloadBufferSizeBytes) ?: -1
+                                        read = downloadResponse.byteStream?.read(buffer, 0, bufferSize) ?: -1
                                         remainderBytes = fileSlice.endBytes - (fileSlice.startBytes + fileSlice.downloaded)
                                     }
                                 }

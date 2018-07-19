@@ -65,7 +65,7 @@ public class DownloadManagerInstrumentedTest {
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
         final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
+                progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
                 listenerCoordinator, null, false, handlerWrapper);
     }

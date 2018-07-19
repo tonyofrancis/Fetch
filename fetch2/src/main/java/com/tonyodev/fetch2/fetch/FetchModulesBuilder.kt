@@ -92,7 +92,6 @@ object FetchModulesBuilder {
                     httpDownloader = fetchConfiguration.httpDownloader,
                     concurrentLimit = fetchConfiguration.concurrentLimit,
                     progressReportingIntervalMillis = fetchConfiguration.progressReportingIntervalMillis,
-                    downloadBufferSizeBytes = fetchConfiguration.downloadBufferSizeBytes,
                     logger = fetchConfiguration.logger,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = fetchConfiguration.retryOnNetworkGain,

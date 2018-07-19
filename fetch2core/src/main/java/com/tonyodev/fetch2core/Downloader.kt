@@ -116,6 +116,17 @@ interface Downloader : Closeable {
     fun getContentLengthForRequest(request: ServerRequest): Long
 
     /**
+     * Attempts to get the buffer size for a specific download.
+     * This method runs on a background thread. Note Android Framework may limit
+     * the buffer size of io streams. So a very large buffer size may be limited to 8192
+     * by the framework.
+     * @param request The request information for the download.
+     * @return buffer size or null. If the buffer size is not set. The default
+     * buffer size will be 8192 bytes. Can be null.
+     * */
+    fun getBufferSizeForRequest(request: ServerRequest): Int?
+
+    /**
      * A class that contains the information used by the Downloader to create a connection
      * to the server.
      * */

@@ -40,7 +40,6 @@ public class FetchBuilderTest {
         final FetchConfiguration.Builder builder =
                 new FetchConfiguration.Builder(appContext)
                         .setNamespace(namespace)
-                        .setDownloadBufferSize(bufferSize)
                         .enableLogging(loggingEnabled)
                         .setProgressReportingInterval(progressInterval)
                         .setGlobalNetworkType(networkType)
@@ -49,7 +48,6 @@ public class FetchBuilderTest {
                         .setHttpDownloader(downloader);
         final FetchConfiguration prefs = builder.build();
         assertEquals(namespace, prefs.getNamespace());
-        assertEquals(bufferSize, prefs.getDownloadBufferSizeBytes());
         assertEquals(loggingEnabled, prefs.getLoggingEnabled());
         assertEquals(progressInterval, prefs.getProgressReportingIntervalMillis());
         assertEquals(concurrentLimit, prefs.getConcurrentLimit());
