@@ -28,12 +28,20 @@ open class RequestInfo {
      * @see com.tonyodev.fetch2.NetworkType*/
     var networkType: NetworkType = defaultNetworkType
 
-    /** Adds a header for a download.
+    /** Adds a header for the download.
      * @param key Header Key
      * @param value Header Value
      * */
     fun addHeader(key: String, value: String) {
         this.headers[key] = value
+    }
+
+    /** Adds an extra for the download.
+     * @param key Extra Key
+     * @param value Extra Value
+     * */
+    fun addExtra(key: String, value: String) {
+        this.extras[key] = value
     }
 
     /** Associate a tag for this request*/
@@ -55,6 +63,13 @@ open class RequestInfo {
      * */
     var downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
 
+    /** Store custom data/ key value pairs with a request.
+     *  Update extras by calling fetch.updateRequestExtras(requestId, extras) for a request.
+     *  or fetch.updateRequest(oldRequestId, newRequest, func, func). Note calling
+     *  fetch.updateRequestExtras(requestId, extras) overrides the existing extras.
+     * */
+    val extras = mutableMapOf<String, String>()
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -67,6 +82,7 @@ open class RequestInfo {
         if (tag != other.tag) return false
         if (enqueueAction != other.enqueueAction) return false
         if (downloadOnEnqueue != other.downloadOnEnqueue) return false
+        if (extras != other.extras) return false
         return true
     }
 
@@ -79,12 +95,14 @@ open class RequestInfo {
         result = 31 * result + (tag?.hashCode() ?: 0)
         result = 31 * result + enqueueAction.hashCode()
         result = 31 * result + downloadOnEnqueue.hashCode()
+        result = 31 * result + extras.hashCode()
         return result
     }
 
     override fun toString(): String {
         return "RequestInfo(identifier=$identifier, groupId=$groupId, headers=$headers, priority=$priority, " +
-                "networkType=$networkType, tag=$tag, enqueueAction=$enqueueAction, downloadOnEnqueue=$downloadOnEnqueue)"
+                "networkType=$networkType, tag=$tag, enqueueAction=$enqueueAction, downloadOnEnqueue=$downloadOnEnqueue, " +
+                "extras=$extras)"
     }
 
 }

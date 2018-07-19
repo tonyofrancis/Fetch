@@ -54,6 +54,7 @@ open class Request constructor(
         dest?.writeString(tag)
         dest?.writeInt(enqueueAction.value)
         dest?.writeInt(if (downloadOnEnqueue) 1 else 0)
+        dest?.writeSerializable(HashMap(extras))
     }
 
     override fun describeContents(): Int {
@@ -74,6 +75,7 @@ open class Request constructor(
             val tag = input.readString()
             val enqueueAction = EnqueueAction.valueOf(input.readInt())
             val downloadOnEnqueue = input.readInt() == 1
+            val extras = input.readSerializable() as Map<String, String>
 
             val request = Request(url, file)
             request.identifier = identifier
@@ -86,6 +88,9 @@ open class Request constructor(
             request.tag = tag
             request.enqueueAction = enqueueAction
             request.downloadOnEnqueue = downloadOnEnqueue
+            extras.forEach {
+                request.addExtra(it.key, it.value)
+            }
             return request
         }
 

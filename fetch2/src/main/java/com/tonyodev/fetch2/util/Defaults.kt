@@ -22,7 +22,6 @@ const val DEFAULT_INSTANCE_NAMESPACE = "LibGlobalFetchLib"
 const val DEFAULT_MD5_CHECK_ENABLED = false
 const val DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED = false
 const val DEFAULT_DOWNLOAD_ON_ENQUEUE = true
-val defaultEmptyHeaderMap = mapOf<String, String>()
 val defaultNetworkType = NetworkType.ALL
 val defaultGlobalNetworkType = NetworkType.GLOBAL_OFF
 val defaultPriority = Priority.NORMAL

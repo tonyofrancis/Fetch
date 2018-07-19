@@ -39,7 +39,7 @@ class DownloadInfo : Download {
     override var priority: Priority = defaultPriority
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_HEADERS, typeAffinity = ColumnInfo.TEXT)
-    override var headers: Map<String, String> = defaultEmptyHeaderMap
+    override var headers: Map<String, String> = mutableMapOf()
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_DOWNLOADED, typeAffinity = ColumnInfo.INTEGER)
     override var downloaded: Long = 0L
@@ -71,6 +71,9 @@ class DownloadInfo : Download {
     @ColumnInfo(name = DownloadDatabase.COLUMN_DOWNLOAD_ON_ENQUEUE, typeAffinity = ColumnInfo.INTEGER)
     override var downloadOnEnqueue: Boolean = DEFAULT_DOWNLOAD_ON_ENQUEUE
 
+    @ColumnInfo(name = DownloadDatabase.COLUMN_EXTRAS, typeAffinity = ColumnInfo.TEXT)
+    override var extras: Map<String, String> = mutableMapOf()
+
     override val progress: Int
         get() {
             return calculateProgress(downloaded, total)
@@ -86,6 +89,7 @@ class DownloadInfo : Download {
             request.enqueueAction = enqueueAction
             request.identifier = identifier
             request.downloadOnEnqueue = downloadOnEnqueue
+            request.extras.putAll(extras)
             return request
         }
 
@@ -114,6 +118,7 @@ class DownloadInfo : Download {
         if (enqueueAction != other.enqueueAction) return false
         if (identifier != other.identifier) return false
         if (downloadOnEnqueue != other.downloadOnEnqueue) return false
+        if (extras != other.extras) return false
         return true
     }
 
@@ -135,6 +140,7 @@ class DownloadInfo : Download {
         result = 31 * result + enqueueAction.hashCode()
         result = 31 * result + identifier.hashCode()
         result = 31 * result + downloadOnEnqueue.hashCode()
+        result = 31 * result + extras.hashCode()
         return result
     }
 
@@ -142,7 +148,8 @@ class DownloadInfo : Download {
         return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file', group=$group," +
                 " priority=$priority, headers=$headers, downloaded=$downloaded, total=$total, status=$status," +
                 " error=$error, networkType=$networkType, created=$created, tag=$tag, " +
-                "enqueueAction=$enqueueAction, identifier=$identifier, downloadOnEnqueue=$downloadOnEnqueue)"
+                "enqueueAction=$enqueueAction, identifier=$identifier, downloadOnEnqueue=$downloadOnEnqueue, " +
+                "extras=$extras)"
     }
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
@@ -163,6 +170,7 @@ class DownloadInfo : Download {
         dest.writeInt(enqueueAction.value)
         dest.writeLong(identifier)
         dest.writeInt(if (downloadOnEnqueue) 1 else 0)
+        dest.writeSerializable(HashMap(extras))
     }
 
     override fun describeContents(): Int {
@@ -190,6 +198,7 @@ class DownloadInfo : Download {
             val enqueueAction = EnqueueAction.valueOf(source.readInt())
             val identifier = source.readLong()
             val downloadOnEnqueue = source.readInt() == 1
+            val extras = source.readSerializable() as Map<String, String>
 
             val downloadInfo = DownloadInfo()
             downloadInfo.id = id
@@ -209,6 +218,7 @@ class DownloadInfo : Download {
             downloadInfo.enqueueAction = enqueueAction
             downloadInfo.identifier = identifier
             downloadInfo.downloadOnEnqueue = downloadOnEnqueue
+            downloadInfo.extras = extras
             return downloadInfo
         }
 
