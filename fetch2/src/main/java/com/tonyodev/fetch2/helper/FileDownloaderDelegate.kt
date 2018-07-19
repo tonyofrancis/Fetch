@@ -18,14 +18,13 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                              private val retryOnNetworkGain: Boolean,
                              private val downloadBlockHandlerWrapper: HandlerWrapper) : FileDownloader.Delegate {
 
-    override fun onStarted(download: Download, etaInMilliseconds: Long, downloadedBytesPerSecond: Long) {
+    override fun onStarted(download: Download) {
         val downloadInfo = download as DownloadInfo
         downloadInfo.status = Status.DOWNLOADING
         try {
             downloadInfoUpdater.update(downloadInfo)
             uiHandler.post {
                 fetchListener.onStarted(download)
-                fetchListener.onProgress(downloadInfo, etaInMilliseconds, downloadedBytesPerSecond)
             }
         } catch (e: Exception) {
             logger.e("DownloadManagerDelegate", e)

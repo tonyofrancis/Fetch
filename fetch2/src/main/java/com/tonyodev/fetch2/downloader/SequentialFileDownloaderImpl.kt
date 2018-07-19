@@ -113,9 +113,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         downloadBlock.endByte = total
                         if (!terminated) {
                             delegate?.onStarted(
-                                    download = downloadInfo,
-                                    etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
-                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                    download = downloadInfo)
                         }
                         writeToOutput(input, outputResourceWrapper, response, bufferSize)
                     }

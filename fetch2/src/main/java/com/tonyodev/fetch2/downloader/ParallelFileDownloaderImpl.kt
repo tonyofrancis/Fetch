@@ -96,9 +96,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
                         delegate?.onStarted(
-                                download = downloadInfo,
-                                etaInMilliseconds = estimatedTimeRemainingInMilliseconds,
-                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                download = downloadInfo)
                         fileSlices.forEach {
                             val downloadBlock = DownloadBlockInfo()
                             downloadBlock.downloadId = it.id
