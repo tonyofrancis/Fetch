@@ -41,7 +41,7 @@ public class DownloadProviderInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations);
         downloadProvider = new DownloadProvider(databaseManager);
     }
 

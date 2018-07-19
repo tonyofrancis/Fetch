@@ -8,8 +8,8 @@ import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.DatabaseManagerImpl;
 import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
+import com.tonyodev.fetch2.database.FetchDatabaseExtensions;
 import com.tonyodev.fetch2.database.migration.Migration;
-import com.tonyodev.fetch2.util.FetchDatabaseExtensions;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
 import com.tonyodev.fetch2core.FetchLogger;
 
@@ -43,7 +43,7 @@ public class DatabaseInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations);
     }
 
     @After

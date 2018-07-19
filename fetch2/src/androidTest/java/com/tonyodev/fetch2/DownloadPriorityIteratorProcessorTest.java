@@ -48,7 +48,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final String namespace = "fetch2DatabaseTest";
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final Migration[] migrations = DownloadDatabase.getMigrations();
-        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
+        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;

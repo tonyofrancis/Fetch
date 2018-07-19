@@ -1,11 +1,9 @@
 @file:JvmName("FetchDatabaseExtensions")
 
-package com.tonyodev.fetch2.util
+package com.tonyodev.fetch2.database
 
 import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Status
-import com.tonyodev.fetch2.database.DatabaseManager
-import com.tonyodev.fetch2.database.DownloadInfo
 import java.io.File
 
 @JvmOverloads
@@ -65,7 +63,6 @@ fun DatabaseManager.sanitize(downloads: List<DownloadInfo>, initializing: Boolea
         try {
             updateNoLock(changedDownloadsList)
         } catch (e: Exception) {
-            logger.e("Database sanitize update error", e)
         }
     }
     return changedDownloadsList.size > 0

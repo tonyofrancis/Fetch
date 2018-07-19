@@ -4,6 +4,7 @@ import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
+import com.tonyodev.fetch2.database.sanitize
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.helper.PriorityListProcessor

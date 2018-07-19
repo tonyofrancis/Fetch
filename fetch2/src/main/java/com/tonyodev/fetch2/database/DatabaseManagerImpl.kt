@@ -4,16 +4,13 @@ import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.content.Context
 import android.database.sqlite.SQLiteException
-import com.tonyodev.fetch2core.Logger
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
-import com.tonyodev.fetch2.util.sanitize
 
 
 class DatabaseManagerImpl constructor(context: Context,
                                       private val namespace: String,
-                                      override val logger: Logger,
                                       migrations: Array<Migration>) : DatabaseManager {
 
     private val lock = Object()
@@ -24,14 +21,15 @@ class DatabaseManagerImpl constructor(context: Context,
     override val isClosed: Boolean
         get() = closed
 
-    private val requestDatabase = {
-        val builder = Room.databaseBuilder(context, DownloadDatabase::class.java,
-                "$namespace.db")
-        builder.addMigrations(*migrations)
-        builder.build()
-    }()
+    private val requestDatabase: DownloadDatabase
+    private val database: SupportSQLiteDatabase
 
-    val database: SupportSQLiteDatabase = requestDatabase.openHelper.writableDatabase
+    init {
+        val builder = Room.databaseBuilder(context, DownloadDatabase::class.java, "$namespace.db")
+        builder.addMigrations(*migrations)
+        requestDatabase = builder.build()
+        database = requestDatabase.openHelper.writableDatabase
+    }
 
     override fun insert(downloadInfo: DownloadInfo): Pair<DownloadInfo, Boolean> {
         synchronized(lock) {
@@ -46,9 +44,7 @@ class DatabaseManagerImpl constructor(context: Context,
             throwExceptionIfClosed()
             val rowsList = requestDatabase.requestDao().insert(downloadInfoList)
             return rowsList.indices.map {
-                val pair = Pair(downloadInfoList[it],
-                        requestDatabase.wasRowInserted(rowsList[it]))
-                pair
+                Pair(downloadInfoList[it], requestDatabase.wasRowInserted(rowsList[it]))
             }
         }
     }
@@ -71,7 +67,6 @@ class DatabaseManagerImpl constructor(context: Context,
         synchronized(lock) {
             throwExceptionIfClosed()
             requestDatabase.requestDao().deleteAll()
-            logger.d("Cleared Database $namespace.db")
         }
     }
 
@@ -105,12 +100,12 @@ class DatabaseManagerImpl constructor(context: Context,
                         + "WHERE ${DownloadDatabase.COLUMN_ID} = ${downloadInfo.id}")
                 database.setTransactionSuccessful()
             } catch (e: SQLiteException) {
-                logger.e("DatabaseManager exception", e)
+
             }
             try {
                 database.endTransaction()
             } catch (e: SQLiteException) {
-                logger.e("DatabaseManager exception", e)
+
             }
         }
     }
@@ -209,7 +204,6 @@ class DatabaseManagerImpl constructor(context: Context,
             }
             closed = true
             requestDatabase.close()
-            logger.d("Database closed")
         }
     }
 

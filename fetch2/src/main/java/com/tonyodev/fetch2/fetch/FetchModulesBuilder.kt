@@ -34,7 +34,6 @@ object FetchModulesBuilder {
                 val newDatabaseManager = DatabaseManagerImpl(
                         context = fetchConfiguration.appContext,
                         namespace = fetchConfiguration.namespace,
-                        logger = fetchConfiguration.logger,
                         migrations = DownloadDatabase.getMigrations())
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
                 val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace)

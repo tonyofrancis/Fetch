@@ -51,7 +51,7 @@ public class DownloadManagerInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
