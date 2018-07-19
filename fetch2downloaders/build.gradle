@@ -62,7 +62,6 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    api "com.squareup.okhttp3:okhttp:$okhttp_version"
     api project(':fetch2core')
 
     testImplementation "junit:junit:$junit_version"
