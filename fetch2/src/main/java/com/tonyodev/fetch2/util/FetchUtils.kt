@@ -92,13 +92,13 @@ fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerReque
             file = request.file)
 }
 
-fun deleteRequestTempFiles(fileTempDir: String,
+fun deleteRequestTempFiles(defaultTempFilesDir: String,
                            downloader: Downloader,
                            download: Download) {
     try {
         val request = getRequestForDownload(download)
         val tempDirPath = downloader.getDirectoryForFileDownloaderTypeParallel(request)
-                ?: fileTempDir
+                ?: defaultTempFilesDir
         val tempDir = getFile(tempDirPath)
         if (tempDir.exists()) {
             val tempFiles = tempDir.listFiles()
@@ -215,6 +215,7 @@ fun createConfigWithNewNamespace(fetchConfiguration: FetchConfiguration,
             .enableLogging(fetchConfiguration.loggingEnabled)
             .enableRetryOnNetworkGain(fetchConfiguration.retryOnNetworkGain)
             .setHttpDownloader(fetchConfiguration.httpDownloader)
+            .setFileServerDownloader(fetchConfiguration.fileServerDownloader)
             .setDownloadConcurrentLimit(fetchConfiguration.concurrentLimit)
             .setProgressReportingInterval(fetchConfiguration.progressReportingIntervalMillis)
             .setGlobalNetworkType(fetchConfiguration.globalNetworkType)
