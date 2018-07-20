@@ -15,6 +15,7 @@ import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator;
 import com.tonyodev.fetch2.fetch.ListenerCoordinator;
+import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
@@ -52,7 +53,8 @@ public class DownloadManagerInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations);
+        final LiveSettings liveSettings = new LiveSettings(namespace);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;

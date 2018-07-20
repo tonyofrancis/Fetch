@@ -8,21 +8,26 @@ import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
+import com.tonyodev.fetch2.fetch.LiveSettings
 import java.io.File
 
 
 class DatabaseManagerImpl constructor(context: Context,
                                       private val namespace: String,
-                                      migrations: Array<Migration>) : DatabaseManager {
+                                      migrations: Array<Migration>,
+                                      private val liveSettings: LiveSettings) : DatabaseManager {
 
     private val lock = Object()
-
     @Volatile
     private var closed = false
-
     override val isClosed: Boolean
-        get() = closed
-
+        get() {
+            return closed
+        }
+    override val didSanitizeOnFirstEntry: Boolean
+        get() {
+            return liveSettings.didSanitizeDatabaseOnFirstEntry
+        }
     private val requestDatabase: DownloadDatabase
     private val database: SupportSQLiteDatabase
 
@@ -114,11 +119,15 @@ class DatabaseManagerImpl constructor(context: Context,
 
     override fun get(): List<DownloadInfo> {
         synchronized(lock) {
-            throwExceptionIfClosed()
-            val downloads = requestDatabase.requestDao().get()
-            sanitize(downloads)
-            return downloads
+            return getDownloadsNoLock()
         }
+    }
+
+    private fun getDownloadsNoLock(): List<DownloadInfo> {
+        throwExceptionIfClosed()
+        val downloads = requestDatabase.requestDao().get()
+        sanitize(downloads)
+        return downloads
     }
 
     override fun get(id: Int): DownloadInfo? {
@@ -199,11 +208,19 @@ class DatabaseManagerImpl constructor(context: Context,
         }
     }
 
-    override fun sanitize(initializing: Boolean): Boolean {
-        return sanitize(get(), initializing)
+    override fun sanitizeOnFirstEntry() {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            liveSettings.execute {
+                if (!it.didSanitizeDatabaseOnFirstEntry) {
+                    sanitize(getDownloadsNoLock(), true)
+                    it.didSanitizeDatabaseOnFirstEntry = true
+                }
+            }
+        }
     }
 
-    override fun sanitize(downloads: List<DownloadInfo>, initializing: Boolean): Boolean {
+    private fun sanitize(downloads: List<DownloadInfo>, firstEntry: Boolean = false): Boolean {
         val changedDownloadsList = mutableListOf<DownloadInfo>()
         var file: File?
         var fileExist: Boolean
@@ -239,7 +256,7 @@ class DatabaseManagerImpl constructor(context: Context,
                     }
                 }
                 Status.DOWNLOADING -> {
-                    if (initializing) {
+                    if (firstEntry) {
                         downloadInfo.status = Status.QUEUED
                         changedDownloadsList.add(downloadInfo)
                     }
@@ -259,7 +276,7 @@ class DatabaseManagerImpl constructor(context: Context,
         return changedDownloadsList.size > 0
     }
 
-    override fun sanitize(downloadInfo: DownloadInfo?, initializing: Boolean): Boolean {
+    private fun sanitize(downloadInfo: DownloadInfo?, initializing: Boolean = false): Boolean {
         return if (downloadInfo == null) {
             false
         } else {

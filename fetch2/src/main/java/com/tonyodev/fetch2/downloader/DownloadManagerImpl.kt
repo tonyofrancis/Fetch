@@ -33,7 +33,9 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
     @Volatile
     private var closed = false
     override val isClosed: Boolean
-        get() = closed
+        get() {
+            return closed
+        }
 
     override fun start(download: Download): Boolean {
         return synchronized(lock) {

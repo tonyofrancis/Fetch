@@ -53,5 +53,4 @@ interface FetchHandler : Closeable {
     fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long
     fun getFetchFileServerCatalog(request: Request): List<FileResource>
 
-
 }

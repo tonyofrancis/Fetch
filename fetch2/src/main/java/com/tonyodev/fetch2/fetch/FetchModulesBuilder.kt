@@ -31,16 +31,18 @@ object FetchModulesBuilder {
                         holder.downloadManagerCoordinator, holder.listenerCoordinator)
             } else {
                 val newHandlerWrapper = HandlerWrapper(fetchConfiguration.namespace)
+                val liveSettings = LiveSettings(fetchConfiguration.namespace)
                 val newDatabaseManager = DatabaseManagerImpl(
                         context = fetchConfiguration.appContext,
                         namespace = fetchConfiguration.namespace,
-                        migrations = DownloadDatabase.getMigrations())
+                        migrations = DownloadDatabase.getMigrations(),
+                        liveSettings = liveSettings)
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
                 val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace)
                 val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager,
                         downloadManagerCoordinator, listenerCoordinator)
                 holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager,
-                        downloadManagerCoordinator, listenerCoordinator)
+                        downloadManagerCoordinator, listenerCoordinator, liveSettings)
                 newModules
             }
             modules.handlerWrapper.incrementUsageCounter()
@@ -67,7 +69,8 @@ object FetchModulesBuilder {
     data class Holder(val handlerWrapper: HandlerWrapper,
                       val databaseManager: DatabaseManager,
                       val downloadManagerCoordinator: DownloadManagerCoordinator,
-                      val listenerCoordinator: ListenerCoordinator)
+                      val listenerCoordinator: ListenerCoordinator,
+                      val liveSettings: LiveSettings)
 
     class Modules constructor(val fetchConfiguration: FetchConfiguration,
                               val handlerWrapper: HandlerWrapper,

@@ -14,6 +14,7 @@ import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator;
+import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.FetchCoreDefaults;
 import com.tonyodev.fetch2core.FetchCoreUtils;
@@ -49,7 +50,8 @@ public class DownloadPriorityIteratorProcessorTest {
         final String namespace = "fetch2DatabaseTest";
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final Migration[] migrations = DownloadDatabase.getMigrations();
-        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations);
+        final LiveSettings liveSettings = new LiveSettings(namespace);
+        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;

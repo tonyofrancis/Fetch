@@ -17,6 +17,7 @@ import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator;
 import com.tonyodev.fetch2.fetch.FetchHandler;
 import com.tonyodev.fetch2.fetch.FetchHandlerImpl;
+import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.FetchCoreDefaults;
 import com.tonyodev.fetch2core.FetchCoreUtils;
@@ -63,7 +64,8 @@ public class FetchHandlerInstrumentedTest {
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final Boolean autoStart = true;
         final Migration[] migrations = DownloadDatabase.getMigrations();
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations);
+        final LiveSettings liveSettings = new LiveSettings(namespace);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings);
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace);
         final Downloader client = FetchDefaults.getDefaultDownloader();

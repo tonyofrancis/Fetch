@@ -7,6 +7,7 @@ import java.io.Closeable
 interface DatabaseManager : Closeable {
 
     val isClosed: Boolean
+    val didSanitizeOnFirstEntry: Boolean
 
     fun insert(downloadInfo: DownloadInfo): Pair<DownloadInfo, Boolean>
     fun insert(downloadInfoList: List<DownloadInfo>): List<Pair<DownloadInfo, Boolean>>
@@ -26,7 +27,5 @@ interface DatabaseManager : Closeable {
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<DownloadInfo>
     fun getDownloadsByRequestIdentifier(identifier: Long): List<DownloadInfo>
     fun getPendingDownloadsSorted(): List<DownloadInfo>
-    fun sanitize(initializing: Boolean = false): Boolean
-    fun sanitize(downloads: List<DownloadInfo>, initializing: Boolean = false): Boolean
-    fun sanitize(downloadInfo: DownloadInfo?, initializing: Boolean = false): Boolean
+    fun sanitizeOnFirstEntry()
 }

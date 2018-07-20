@@ -34,7 +34,7 @@ class FetchHandlerImpl(private val namespace: String,
     private var isTerminating = false
 
     override fun init() {
-        databaseManager.sanitize(true)
+        databaseManager.sanitizeOnFirstEntry()
         if (autoStart) {
             priorityListProcessor.start()
         }
@@ -182,12 +182,10 @@ class FetchHandlerImpl(private val namespace: String,
         startPriorityQueueIfNotStarted()
         priorityListProcessor.pause()
         downloadManager.cancelAll()
-        databaseManager.sanitize(true)
     }
 
     override fun unfreeze() {
         startPriorityQueueIfNotStarted()
-        databaseManager.sanitize(true)
         priorityListProcessor.resume()
     }
 
@@ -691,7 +689,6 @@ class FetchHandlerImpl(private val namespace: String,
         startPriorityQueueIfNotStarted()
         priorityListProcessor.globalNetworkType = networkType
         downloadManager.cancelAll()
-        databaseManager.sanitize(true)
     }
 
     override fun enableLogging(enabled: Boolean) {
