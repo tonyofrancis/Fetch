@@ -4,9 +4,11 @@ import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.content.Context
 import android.database.sqlite.SQLiteException
+import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
+import java.io.File
 
 
 class DatabaseManagerImpl constructor(context: Context,
@@ -194,6 +196,74 @@ class DatabaseManagerImpl constructor(context: Context,
                 downloads = downloads.filter { it.status == Status.QUEUED }
             }
             return downloads
+        }
+    }
+
+    override fun sanitize(initializing: Boolean): Boolean {
+        return sanitize(get(), initializing)
+    }
+
+    override fun sanitize(downloads: List<DownloadInfo>, initializing: Boolean): Boolean {
+        val changedDownloadsList = mutableListOf<DownloadInfo>()
+        var file: File?
+        var fileExist: Boolean
+        var downloadInfo: DownloadInfo
+        var update: Boolean
+        for (i in 0 until downloads.size) {
+            downloadInfo = downloads[i]
+            file = File(downloadInfo.file)
+            fileExist = file.exists()
+            when (downloadInfo.status) {
+                Status.PAUSED,
+                Status.COMPLETED,
+                Status.CANCELLED,
+                Status.REMOVED,
+                Status.FAILED,
+                Status.QUEUED -> {
+                    if (!fileExist && downloadInfo.status == Status.COMPLETED) {
+                        downloadInfo.status = Status.FAILED
+                        downloadInfo.error = Error.FILE_NOT_FOUND
+                        downloadInfo.downloaded = 0L
+                        downloadInfo.total = -1L
+                        changedDownloadsList.add(downloadInfo)
+                    } else {
+                        update = false
+                        if (downloadInfo.status == Status.COMPLETED && downloadInfo.total < 1
+                                && downloadInfo.downloaded > 0 && fileExist) {
+                            downloadInfo.total = downloadInfo.downloaded
+                            update = true
+                        }
+                        if (update) {
+                            changedDownloadsList.add(downloadInfo)
+                        }
+                    }
+                }
+                Status.DOWNLOADING -> {
+                    if (initializing) {
+                        downloadInfo.status = Status.QUEUED
+                        changedDownloadsList.add(downloadInfo)
+                    }
+                }
+                Status.ADDED,
+                Status.NONE,
+                Status.DELETED -> {
+                }
+            }
+        }
+        if (changedDownloadsList.size > 0) {
+            try {
+                updateNoLock(changedDownloadsList)
+            } catch (e: Exception) {
+            }
+        }
+        return changedDownloadsList.size > 0
+    }
+
+    override fun sanitize(downloadInfo: DownloadInfo?, initializing: Boolean): Boolean {
+        return if (downloadInfo == null) {
+            false
+        } else {
+            sanitize(listOf(downloadInfo), initializing)
         }
     }
 

@@ -26,4 +26,7 @@ interface DatabaseManager : Closeable {
     fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<DownloadInfo>
     fun getDownloadsByRequestIdentifier(identifier: Long): List<DownloadInfo>
     fun getPendingDownloadsSorted(): List<DownloadInfo>
+    fun sanitize(initializing: Boolean = false): Boolean
+    fun sanitize(downloads: List<DownloadInfo>, initializing: Boolean = false): Boolean
+    fun sanitize(downloadInfo: DownloadInfo?, initializing: Boolean = false): Boolean
 }
