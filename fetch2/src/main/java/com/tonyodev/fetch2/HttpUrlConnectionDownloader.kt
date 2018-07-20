@@ -160,6 +160,10 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return null
     }
 
+    override fun getSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        return getSupportedFileDownloaderTypes(request, this)
+    }
+
     /**
      * Use this class to set preference settings for the
      * HttpUrlConnectionDownloader HttpUrlConnection client.

@@ -164,4 +164,9 @@ open class OkHttpDownloader @JvmOverloads constructor(
             -1L
         }
     }
+
+    override fun getSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        return getSupportedFileDownloaderTypes(request, this)
+    }
+
 }

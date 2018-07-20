@@ -243,4 +243,8 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         }
     }
 
+    override fun getSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        return getSupportedFileDownloaderTypes(request, this)
+    }
+
 }

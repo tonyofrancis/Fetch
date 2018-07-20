@@ -128,6 +128,13 @@ interface Downloader : Closeable {
     fun getBufferSizeForRequest(request: ServerRequest): Int?
 
     /**
+     * Gets a set of supported FileDownloaderTypes for a request.
+     * @param request The request information for the download.
+     * @return set of supported FileDownloaderTypes
+     * */
+    fun getSupportedFileDownloaderTypes(request: ServerRequest): Set<FileDownloaderType>
+
+    /**
      * A class that contains the information used by the Downloader to create a connection
      * to the server.
      * */
