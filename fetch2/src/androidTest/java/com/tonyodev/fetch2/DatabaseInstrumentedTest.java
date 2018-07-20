@@ -8,7 +8,6 @@ import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.DatabaseManagerImpl;
 import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
-import com.tonyodev.fetch2.database.FetchDatabaseExtensions;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
 import com.tonyodev.fetch2core.FetchLogger;
@@ -343,7 +342,7 @@ public class DatabaseInstrumentedTest {
         databaseManager.insert(downloadInfoList);
         int size = databaseManager.get().size();
         assertEquals(20, size);
-        FetchDatabaseExtensions.sanitize(databaseManager, true);
+        databaseManager.sanitize(true);
         final List<DownloadInfo> downloads = databaseManager.get();
         for (DownloadInfo download : downloads) {
             assertNotNull(download);

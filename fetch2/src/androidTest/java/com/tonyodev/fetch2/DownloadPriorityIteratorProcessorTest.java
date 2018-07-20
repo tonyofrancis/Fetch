@@ -18,6 +18,7 @@ import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.FetchCoreDefaults;
 import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FetchLogger;
+import com.tonyodev.fetch2core.FileServerDownloader;
 import com.tonyodev.fetch2core.HandlerWrapper;
 import com.tonyodev.fetch2.fetch.ListenerCoordinator;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
@@ -50,13 +51,12 @@ public class DownloadPriorityIteratorProcessorTest {
         final Migration[] migrations = DownloadDatabase.getMigrations();
         final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations);
         final Downloader client = FetchDefaults.getDefaultDownloader();
+        final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
-        final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
-        final HandlerWrapper handlerWrapper = new HandlerWrapper("DownloadBlockHandler");
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
@@ -64,7 +64,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
-                listenerCoordinator, null, false, handlerWrapper);
+                listenerCoordinator, serverDownloader, false);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 new HandlerWrapper(namespace),
                 new DownloadProvider(databaseManager),

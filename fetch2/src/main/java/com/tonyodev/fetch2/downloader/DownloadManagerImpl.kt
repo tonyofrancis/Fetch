@@ -23,8 +23,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val downloadManagerCoordinator: DownloadManagerCoordinator,
                           private val listenerCoordinator: ListenerCoordinator,
                           private val fileServerDownloader: FileServerDownloader,
-                          private val md5CheckingEnabled: Boolean,
-                          private val downloadBlockHandlerWrapper: HandlerWrapper) : DownloadManager {
+                          private val md5CheckingEnabled: Boolean) : DownloadManager {
 
     private val lock = Any()
     private val executor = Executors.newFixedThreadPool(concurrentLimit)
@@ -221,8 +220,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                 uiHandler = uiHandler,
                 fetchListener = listenerCoordinator.mainListener,
                 logger = logger,
-                retryOnNetworkGain = retryOnNetworkGain,
-                downloadBlockHandlerWrapper = downloadBlockHandlerWrapper)
+                retryOnNetworkGain = retryOnNetworkGain)
     }
 
     override fun getDownloadFileTempDir(download: Download): String {

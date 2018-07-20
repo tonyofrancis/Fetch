@@ -7,7 +7,6 @@ import com.tonyodev.fetch2.downloader.FileDownloader
 import com.tonyodev.fetch2.util.defaultNoError
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.DownloadBlock
-import com.tonyodev.fetch2core.HandlerWrapper
 import com.tonyodev.fetch2core.Logger
 
 
@@ -15,8 +14,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                              private val uiHandler: Handler,
                              private val fetchListener: FetchListener,
                              private val logger: Logger,
-                             private val retryOnNetworkGain: Boolean,
-                             private val downloadBlockHandlerWrapper: HandlerWrapper) : FileDownloader.Delegate {
+                             private val retryOnNetworkGain: Boolean) : FileDownloader.Delegate {
 
     override fun onStarted(download: Download) {
         val downloadInfo = download as DownloadInfo
@@ -38,23 +36,15 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
     }
 
     override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
-        try {
-            progressRunnable.download = download
-            progressRunnable.etaInMilliSeconds = etaInMilliSeconds
-            progressRunnable.downloadedBytesPerSecond = downloadedBytesPerSecond
-            uiHandler.post(progressRunnable)
-        } catch (e: Exception) {
-            logger.e("DownloadManagerDelegate", e)
-        }
+        progressRunnable.download = download
+        progressRunnable.etaInMilliSeconds = etaInMilliSeconds
+        progressRunnable.downloadedBytesPerSecond = downloadedBytesPerSecond
+        uiHandler.post(progressRunnable)
     }
 
     private val downloadBlockProgressRunnable = object : DownloadBlockReportingRunnable() {
         override fun run() {
-            try {
-                fetchListener.onDownloadBlockUpdated(download, downloadBlock, totalBlocks)
-            } catch (e: Exception) {
-                logger.e("DownloadManagerDelegate", e)
-            }
+            fetchListener.onDownloadBlockUpdated(download, downloadBlock, totalBlocks)
         }
     }
 
@@ -62,7 +52,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         downloadBlockProgressRunnable.download = download
         downloadBlockProgressRunnable.downloadBlock = downloadBlock
         downloadBlockProgressRunnable.totalBlocks = totalBlocks
-        downloadBlockHandlerWrapper.post(downloadBlockProgressRunnable)
+        uiHandler.post(downloadBlockProgressRunnable)
     }
 
     override fun onError(download: Download) {
