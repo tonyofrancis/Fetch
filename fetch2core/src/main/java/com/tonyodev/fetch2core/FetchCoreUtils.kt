@@ -228,26 +228,21 @@ fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): 
     return transferEncoding != "chunked" && contentLength > -1L
 }
 
-fun getHeadersForRequest(request: Downloader.ServerRequest): Map<String, List<String>> {
-    var headers = mapOf<String, List<String>>()
+fun getSupportedFileDownloaderTypes(request: Downloader.ServerRequest, downloader: Downloader): Set<Downloader.FileDownloaderType> {
+    val fileDownloaderTypeSet = mutableSetOf(Downloader.FileDownloaderType.SEQUENTIAL)
     return try {
-        val httpUrl = URL(request.url)
-        val client = httpUrl.openConnection() as HttpURLConnection
-        client.requestMethod = GET_REQUEST_METHOD
-        client.readTimeout = 15_000
-        client.connectTimeout = 20_000
-        client.useCaches = false
-        client.defaultUseCaches = false
-        client.instanceFollowRedirects = true
-        client.doInput = true
-        request.headers.entries.forEach {
-            client.addRequestProperty(it.key, it.value)
+        val response = downloader.execute(request, object : InterruptMonitor {
+            override val isInterrupted: Boolean
+                get() = false
+        })
+        if (response != null) {
+            if (isParallelDownloadingSupported(response.responseHeaders)) {
+                fileDownloaderTypeSet.add(Downloader.FileDownloaderType.PARALLEL)
+            }
+            downloader.disconnect(response)
         }
-        client.connect()
-        headers = client.headerFields
-        client.disconnect()
-        headers
+        fileDownloaderTypeSet
     } catch (e: Exception) {
-        headers
+        fileDownloaderTypeSet
     }
 }

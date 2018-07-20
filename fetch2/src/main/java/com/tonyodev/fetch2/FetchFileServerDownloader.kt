@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2downloaders
+package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2core.*
 

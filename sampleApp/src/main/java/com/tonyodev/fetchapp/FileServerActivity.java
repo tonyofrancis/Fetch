@@ -7,13 +7,11 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Download;
-import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
@@ -22,9 +20,8 @@ import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FileResource;
-import com.tonyodev.fetch2core.Func;
 import com.tonyodev.fetch2fileserver.FetchFileServer;
-import com.tonyodev.fetch2downloaders.FetchFileServerDownloader;
+import com.tonyodev.fetch2.FetchFileServerDownloader;
 import com.tonyodev.fetch2core.FetchFileServerUriBuilder;
 
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +33,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 
 import timber.log.Timber;
 

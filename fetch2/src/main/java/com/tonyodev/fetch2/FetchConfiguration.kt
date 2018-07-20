@@ -19,7 +19,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val logger: Logger,
                                              val autoStart: Boolean,
                                              val retryOnNetworkGain: Boolean,
-                                             val fileServerDownloader: FileServerDownloader?,
+                                             val fileServerDownloader: FileServerDownloader,
                                              val md5CheckingEnabled: Boolean) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
@@ -43,7 +43,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var logger: Logger = defaultLogger
         private var autoStart = DEFAULT_AUTO_START
         private var retryOnNetworkGain = DEFAULT_RETRY_ON_NETWORK_GAIN
-        private var fileServerDownloader: FileServerDownloader? = null
+        private var fileServerDownloader: FileServerDownloader = defaultFileServerDownloader
         private var md5CheckEnabled = DEFAULT_MD5_CHECK_ENABLED
 
         /** Sets the namespace which Fetch operates in. Fetch uses
@@ -242,7 +242,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + logger.hashCode()
         result = 31 * result + autoStart.hashCode()
         result = 31 * result + retryOnNetworkGain.hashCode()
-        result = 31 * result + (fileServerDownloader?.hashCode() ?: 0)
+        result = 31 * result + (fileServerDownloader.hashCode())
         result = 31 * result + md5CheckingEnabled.hashCode()
         return result
     }
