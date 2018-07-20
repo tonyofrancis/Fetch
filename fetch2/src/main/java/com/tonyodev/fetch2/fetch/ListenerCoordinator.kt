@@ -229,7 +229,9 @@ class ListenerCoordinator(val namespace: String) {
     }
 
     fun clearAll() {
-        listenerMap.clear()
+        synchronized(lock) {
+            listenerMap.clear()
+        }
     }
 
 }
