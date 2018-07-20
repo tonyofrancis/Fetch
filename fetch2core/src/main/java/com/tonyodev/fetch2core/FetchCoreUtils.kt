@@ -6,6 +6,8 @@ import android.content.Context
 import android.net.Uri
 import java.io.*
 import java.math.BigInteger
+import java.net.HttpURLConnection
+import java.net.URL
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -213,5 +215,39 @@ fun getFileMd5String(file: String): String? {
         md5
     } catch (e: Exception) {
         null
+    }
+}
+
+fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): Boolean {
+    val transferEncoding = responseHeaders["Transfer-Encoding"]?.firstOrNull()
+            ?: responseHeaders["TransferEncoding"]?.firstOrNull()
+            ?: ""
+    val contentLength = (responseHeaders["Content-Length"]?.firstOrNull()?.toLongOrNull()
+            ?: responseHeaders["ContentLength"]?.firstOrNull()?.toLongOrNull())
+            ?: -1L
+    return transferEncoding != "chunked" && contentLength > -1L
+}
+
+fun getHeadersForRequest(request: Downloader.ServerRequest): Map<String, List<String>> {
+    var headers = mapOf<String, List<String>>()
+    return try {
+        val httpUrl = URL(request.url)
+        val client = httpUrl.openConnection() as HttpURLConnection
+        client.requestMethod = GET_REQUEST_METHOD
+        client.readTimeout = 15_000
+        client.connectTimeout = 20_000
+        client.useCaches = false
+        client.defaultUseCaches = false
+        client.instanceFollowRedirects = true
+        client.doInput = true
+        request.headers.entries.forEach {
+            client.addRequestProperty(it.key, it.value)
+        }
+        client.connect()
+        headers = client.headerFields
+        client.disconnect()
+        headers
+    } catch (e: Exception) {
+        headers
     }
 }

@@ -190,7 +190,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
     }
 
     private fun getFileDownloader(request: Downloader.ServerRequest, download: Download, downloader: Downloader): FileDownloader {
-        return if (downloader.getFileDownloaderType(request) == Downloader.FileDownloaderType.SEQUENTIAL) {
+        val supportedDownloadTypes = getSupportedFileDownloaderTypes(request)
+        return if (downloader.getFileDownloaderType(request, supportedDownloadTypes) == Downloader.FileDownloaderType.SEQUENTIAL) {
             SequentialFileDownloaderImpl(
                     initialDownload = download,
                     downloader = downloader,
@@ -232,6 +233,19 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
         } else {
             httpDownloader.getDirectoryForFileDownloaderTypeParallel(request)
                     ?: fileTempDir
+        }
+    }
+
+    private fun getSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        val fileDownloaderTypeSet = mutableSetOf(Downloader.FileDownloaderType.SEQUENTIAL)
+        return try {
+            val headers = getHeadersForRequest(request)
+            if (isParallelDownloadingSupported(headers)) {
+                fileDownloaderTypeSet.add(Downloader.FileDownloaderType.PARALLEL)
+            }
+            fileDownloaderTypeSet
+        } catch (e: Exception) {
+            fileDownloaderTypeSet
         }
     }
 

@@ -139,7 +139,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
+    override fun getFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
         return fileDownloaderType
     }
 
@@ -242,4 +242,5 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
             throw Exception(EMPTY_RESPONSE_BODY)
         }
     }
+
 }

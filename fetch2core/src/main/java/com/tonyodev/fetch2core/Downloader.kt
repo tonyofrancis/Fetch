@@ -64,9 +64,10 @@ interface Downloader : Closeable {
      * download request. The Default is FileDownloaderType.SEQUENTIAL.
      * This method is called on a background thread.
      * @param request the request information for the download.
+     * @param supportedFileDownloaderTypes a set of file downloader types supported by the request.
      * @return the FileDownloaderType.
      * */
-    fun getFileDownloaderType(request: ServerRequest): FileDownloaderType
+    fun getFileDownloaderType(request: ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): FileDownloaderType
 
     /**
      * This method is called by Fetch for download requests that are downloading using the

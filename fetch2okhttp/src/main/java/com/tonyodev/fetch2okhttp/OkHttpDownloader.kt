@@ -1,9 +1,6 @@
 package com.tonyodev.fetch2okhttp
 
-import com.tonyodev.fetch2core.Downloader
-import com.tonyodev.fetch2core.InterruptMonitor
-import com.tonyodev.fetch2core.OutputResourceWrapper
-import com.tonyodev.fetch2core.getFileMd5String
+import com.tonyodev.fetch2core.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -131,7 +128,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
+    override fun getFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
         return fileDownloaderType
     }
 
