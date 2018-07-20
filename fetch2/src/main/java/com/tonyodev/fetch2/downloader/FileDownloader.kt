@@ -15,13 +15,9 @@ interface FileDownloader : Runnable {
 
         fun onStarted(download: Download)
 
-        fun onDownloadBlockUpdated(download: Download,
-                                   downloadBlock: DownloadBlock,
-                                   totalBlocks: Int)
+        fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int)
 
-        fun onProgress(download: Download,
-                       etaInMilliSeconds: Long,
-                       downloadedBytesPerSecond: Long)
+        fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long)
 
         fun onError(download: Download)
 
