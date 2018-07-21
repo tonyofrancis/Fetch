@@ -60,12 +60,16 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FAILED_TO_UPDATE_REQUEST
     } else if (message.contains(FAILED_TO_ADD_COMPLETED_DOWNLOAD, true)) {
         Error.FAILED_TO_ADD_COMPLETED_DOWNLOAD
-    } else if (message.contains(FETCH_FILE_SERVER_DOWNLOADER_NOT_SET, true)) {
-        Error.FETCH_FILE_SERVER_DOWNLOADER_NOT_SET
     } else if (message.contains(FETCH_FILE_SERVER_INVALID_RESPONSE_TYPE, true)) {
         Error.FETCH_FILE_SERVER_INVALID_RESPONSE
     } else if (message.contains(REQUEST_DOES_NOT_EXIST, true)) {
         Error.REQUEST_DOES_NOT_EXIST
+    } else if (message.contains(NO_NETWORK_CONNECTION, true)) {
+        Error.NO_NETWORK_CONNECTION
+    } else if (message.contains(FILE_NOT_FOUND, true)) {
+        Error.FILE_NOT_FOUND
+    } else if (message.contains(FETCH_FILE_SERVER_URL_INVALID, true)) {
+        Error.FETCH_FILE_SERVER_URL_INVALID
     } else {
         Error.UNKNOWN
     }
