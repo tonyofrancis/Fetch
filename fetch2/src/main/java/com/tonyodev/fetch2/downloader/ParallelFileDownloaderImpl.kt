@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2core.Logger
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromThrowable
+import com.tonyodev.fetch2.helper.FileDownloaderDelegate
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
@@ -25,9 +26,17 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     @Volatile
     override var interrupted = false
+        set(value) {
+            (delegate as? FileDownloaderDelegate)?.interrupted = value
+            field = value
+        }
 
     @Volatile
     override var terminated = false
+        set(value) {
+            (delegate as? FileDownloaderDelegate)?.interrupted = value
+            field = value
+        }
 
     @Volatile
     override var completedDownload = false

@@ -16,16 +16,22 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                              private val logger: Logger,
                              private val retryOnNetworkGain: Boolean) : FileDownloader.Delegate {
 
+
+    @Volatile
+    override var interrupted = false
+
     override fun onStarted(download: Download) {
-        val downloadInfo = download as DownloadInfo
-        downloadInfo.status = Status.DOWNLOADING
-        try {
-            downloadInfoUpdater.update(downloadInfo)
-            uiHandler.post {
-                fetchListener.onStarted(download)
+        if (!interrupted) {
+            val downloadInfo = download as DownloadInfo
+            downloadInfo.status = Status.DOWNLOADING
+            try {
+                downloadInfoUpdater.update(downloadInfo)
+                uiHandler.post {
+                    fetchListener.onStarted(download)
+                }
+            } catch (e: Exception) {
+                logger.e("DownloadManagerDelegate", e)
             }
-        } catch (e: Exception) {
-            logger.e("DownloadManagerDelegate", e)
         }
     }
 
@@ -36,10 +42,12 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
     }
 
     override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
-        progressRunnable.download = download
-        progressRunnable.etaInMilliSeconds = etaInMilliSeconds
-        progressRunnable.downloadedBytesPerSecond = downloadedBytesPerSecond
-        uiHandler.post(progressRunnable)
+        if (!interrupted) {
+            progressRunnable.download = download
+            progressRunnable.etaInMilliSeconds = etaInMilliSeconds
+            progressRunnable.downloadedBytesPerSecond = downloadedBytesPerSecond
+            uiHandler.post(progressRunnable)
+        }
     }
 
     private val downloadBlockProgressRunnable = object : DownloadBlockReportingRunnable() {
@@ -49,54 +57,62 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
     }
 
     override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int) {
-        downloadBlockProgressRunnable.download = download
-        downloadBlockProgressRunnable.downloadBlock = downloadBlock
-        downloadBlockProgressRunnable.totalBlocks = totalBlocks
-        uiHandler.post(downloadBlockProgressRunnable)
+        if (!interrupted) {
+            downloadBlockProgressRunnable.download = download
+            downloadBlockProgressRunnable.downloadBlock = downloadBlock
+            downloadBlockProgressRunnable.totalBlocks = totalBlocks
+            uiHandler.post(downloadBlockProgressRunnable)
+        }
     }
 
     override fun onError(download: Download) {
-        val downloadInfo = download as DownloadInfo
-        try {
-            if (retryOnNetworkGain && downloadInfo.error == Error.NO_NETWORK_CONNECTION) {
-                downloadInfo.status = Status.QUEUED
-                downloadInfo.error = defaultNoError
-                downloadInfoUpdater.update(downloadInfo)
-                uiHandler.post {
-                    fetchListener.onQueued(downloadInfo, true)
+        if (!interrupted) {
+            val downloadInfo = download as DownloadInfo
+            try {
+                if (retryOnNetworkGain && downloadInfo.error == Error.NO_NETWORK_CONNECTION) {
+                    downloadInfo.status = Status.QUEUED
+                    downloadInfo.error = defaultNoError
+                    downloadInfoUpdater.update(downloadInfo)
+                    uiHandler.post {
+                        fetchListener.onQueued(downloadInfo, true)
+                    }
+                } else {
+                    downloadInfo.status = Status.FAILED
+                    downloadInfoUpdater.update(downloadInfo)
+                    uiHandler.post {
+                        fetchListener.onError(downloadInfo)
+                    }
                 }
-            } else {
-                downloadInfo.status = Status.FAILED
-                downloadInfoUpdater.update(downloadInfo)
-                uiHandler.post {
-                    fetchListener.onError(downloadInfo)
-                }
+            } catch (e: Exception) {
+                logger.e("DownloadManagerDelegate", e)
             }
-        } catch (e: Exception) {
-            logger.e("DownloadManagerDelegate", e)
         }
     }
 
     override fun onComplete(download: Download) {
-        val downloadInfo = download as DownloadInfo
-        downloadInfo.status = Status.COMPLETED
-        try {
-            downloadInfoUpdater.update(downloadInfo)
-            uiHandler.post {
-                fetchListener.onCompleted(downloadInfo)
+        if (!interrupted) {
+            val downloadInfo = download as DownloadInfo
+            downloadInfo.status = Status.COMPLETED
+            try {
+                downloadInfoUpdater.update(downloadInfo)
+                uiHandler.post {
+                    fetchListener.onCompleted(downloadInfo)
+                }
+            } catch (e: Exception) {
+                logger.e("DownloadManagerDelegate", e)
             }
-        } catch (e: Exception) {
-            logger.e("DownloadManagerDelegate", e)
         }
     }
 
     override fun saveDownloadProgress(download: Download) {
-        try {
-            val downloadInfo = download as DownloadInfo
-            downloadInfo.status = Status.DOWNLOADING
-            downloadInfoUpdater.updateFileBytesInfoAndStatusOnly(downloadInfo)
-        } catch (e: Exception) {
-            logger.e("DownloadManagerDelegate", e)
+        if (!interrupted) {
+            try {
+                val downloadInfo = download as DownloadInfo
+                downloadInfo.status = Status.DOWNLOADING
+                downloadInfoUpdater.updateFileBytesInfoAndStatusOnly(downloadInfo)
+            } catch (e: Exception) {
+                logger.e("DownloadManagerDelegate", e)
+            }
         }
     }
 
