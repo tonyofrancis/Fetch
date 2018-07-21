@@ -897,7 +897,7 @@ open class RxFetchImpl(override val namespace: String,
         return synchronized(lock) {
             throwExceptionIfClosed()
             Flowable.just(Pair(request, fromServer))
-                    .subscribeOn(Schedulers.from(handlerWrapper.getWorkTaskExecutor()))
+                    .subscribeOn(AndroidSchedulers.from(handlerWrapper.getWorkTaskLooper()))
                     .flatMap {
                         try {
                             val contentLength = fetchHandler.getContentLengthForRequest(it.first, it.second)
@@ -916,7 +916,7 @@ open class RxFetchImpl(override val namespace: String,
         return synchronized(lock) {
             throwExceptionIfClosed()
             Flowable.just(request)
-                    .subscribeOn(Schedulers.from(handlerWrapper.getWorkTaskExecutor()))
+                    .subscribeOn(AndroidSchedulers.from(handlerWrapper.getWorkTaskLooper()))
                     .flatMap {
                         try {
                             val catalogList = fetchHandler.getFetchFileServerCatalog(request)

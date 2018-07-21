@@ -3,9 +3,6 @@ package com.tonyodev.fetch2core
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
-import java.util.concurrent.Executor
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 class HandlerWrapper(val namespace: String) {
 
@@ -17,7 +14,7 @@ class HandlerWrapper(val namespace: String) {
         handlerThread.start()
         Handler(handlerThread.looper)
     }()
-    private var workerTaskExecutor: ExecutorService? = null
+    private var workerTaskHandler: Handler? = null
 
     fun post(runnable: () -> Unit) {
         synchronized(lock) {
@@ -89,25 +86,31 @@ class HandlerWrapper(val namespace: String) {
     fun executeWorkerTask(runnable: () -> Unit) {
         synchronized(lock) {
             if (!closed) {
-                if (workerTaskExecutor == null) {
-                    workerTaskExecutor = Executors.newSingleThreadExecutor()
+                if (workerTaskHandler == null) {
+                    workerTaskHandler = getNewWorkerTaskHandler()
                 }
-                workerTaskExecutor?.execute(runnable)
+                workerTaskHandler?.post(runnable)
             }
         }
     }
 
-    fun getWorkTaskExecutor(): Executor {
+    fun getWorkTaskLooper(): Looper {
         return synchronized(lock) {
-            val executor = workerTaskExecutor
-            if (executor == null) {
-                val executorService = Executors.newSingleThreadExecutor()
-                workerTaskExecutor = executorService
-                executorService
+            val workerHandler = workerTaskHandler
+            if (workerHandler == null) {
+                val newHandler = getNewWorkerTaskHandler()
+                workerTaskHandler = newHandler
+                newHandler.looper
             } else {
-                executor
+                workerHandler.looper
             }
         }
+    }
+
+    private fun getNewWorkerTaskHandler(): Handler {
+        val handlerThread = HandlerThread("$namespace worker task")
+        handlerThread.start()
+        return Handler(handlerThread.looper)
     }
 
     fun close() {
@@ -121,9 +124,10 @@ class HandlerWrapper(val namespace: String) {
 
                 }
                 try {
-                    val executor = workerTaskExecutor
-                    workerTaskExecutor = null
-                    executor?.shutdown()
+                    val workerHandler = workerTaskHandler
+                    workerTaskHandler = null
+                    workerHandler?.removeCallbacksAndMessages(null)
+                    workerHandler?.looper?.quit()
                 } catch (e: Exception) {
 
                 }

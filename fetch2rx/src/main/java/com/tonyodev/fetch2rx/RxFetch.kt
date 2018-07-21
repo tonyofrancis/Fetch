@@ -459,6 +459,7 @@ interface RxFetch {
 
         private val lock = Any()
         @SuppressLint("StaticFieldLeak")
+        @Volatile
         private var defaultRxFetchConfiguration: FetchConfiguration? = null
 
         /**
@@ -478,29 +479,18 @@ interface RxFetch {
          * */
         fun setDefaultRxInstanceConfiguration(fetchConfiguration: FetchConfiguration) {
             synchronized(lock) {
-                val config = if (fetchConfiguration.namespace != DEFAULT_INSTANCE_NAMESPACE) {
-                    createConfigWithNewNamespace(fetchConfiguration, DEFAULT_INSTANCE_NAMESPACE)
-                } else {
-                    fetchConfiguration
-                }
-                defaultRxFetchConfiguration = config
+                defaultRxFetchConfiguration = fetchConfiguration
             }
         }
 
         /**
          * Get the default Fetch Configuration set with setDefaultInstanceConfiguration(fetchConfiguration: FetchConfiguration)
          * or setDefaultInstanceConfiguration(context: Context)
-         * @throws FetchException if default FetchConfiguration is not set.
          * @return default FetchConfiguration
          * */
-        @Throws(FetchException::class)
-        fun getDefaultRxFetchConfiguration(): FetchConfiguration {
+        fun getDefaultRxFetchConfiguration(): FetchConfiguration? {
             return synchronized(lock) {
-                if (defaultRxFetchConfiguration == null) {
-                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
-                } else {
-                    defaultRxFetchConfiguration!!
-                }
+                defaultRxFetchConfiguration
             }
         }
 
@@ -509,12 +499,9 @@ interface RxFetch {
          * @return Get default RxFetch instance
          * */
         fun getDefaultRxInstance(): RxFetch {
-            synchronized(lock) {
-                if (defaultRxFetchConfiguration == null) {
-                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
-                }
-                return RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(defaultRxFetchConfiguration!!))
-            }
+            val fetchConfiguration = defaultRxFetchConfiguration
+                    ?: throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
+            return RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(fetchConfiguration))
         }
 
         /**
@@ -523,12 +510,7 @@ interface RxFetch {
          * @return custom RxFetch instance
          * */
         fun getRxInstance(fetchConfiguration: FetchConfiguration): RxFetch {
-            return if (fetchConfiguration.namespace == DEFAULT_INSTANCE_NAMESPACE) {
-                setDefaultRxInstanceConfiguration(fetchConfiguration)
-                getDefaultRxInstance()
-            } else {
-                return RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(fetchConfiguration))
-            }
+            return RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(fetchConfiguration))
         }
 
     }

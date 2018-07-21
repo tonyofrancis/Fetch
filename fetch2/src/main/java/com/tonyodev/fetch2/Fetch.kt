@@ -748,6 +748,7 @@ interface Fetch {
 
         private val lock = Any()
         @SuppressLint("StaticFieldLeak")
+        @Volatile
         private var defaultFetchConfiguration: FetchConfiguration? = null
 
         /**
@@ -767,29 +768,18 @@ interface Fetch {
          * */
         fun setDefaultInstanceConfiguration(fetchConfiguration: FetchConfiguration) {
             synchronized(lock) {
-                val config = if (fetchConfiguration.namespace != DEFAULT_INSTANCE_NAMESPACE) {
-                    createConfigWithNewNamespace(fetchConfiguration, DEFAULT_INSTANCE_NAMESPACE)
-                } else {
-                    fetchConfiguration
-                }
-                defaultFetchConfiguration = config
+                defaultFetchConfiguration = fetchConfiguration
             }
         }
 
         /**
          * Get the default Fetch Configuration set with setDefaultInstanceConfiguration(fetchConfiguration: FetchConfiguration)
          * or setDefaultInstanceConfiguration(context: Context)
-         * @throws FetchException if default FetchConfiguration is not set.
          * @return default FetchConfiguration
          * */
-        @Throws(FetchException::class)
-        fun getDefaultFetchConfiguration(): FetchConfiguration {
+        fun getDefaultFetchConfiguration(): FetchConfiguration? {
             return synchronized(lock) {
-                if (defaultFetchConfiguration == null) {
-                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
-                } else {
-                    defaultFetchConfiguration!!
-                }
+                defaultFetchConfiguration
             }
         }
 
@@ -798,12 +788,9 @@ interface Fetch {
          * @return Get default Fetch instance
          * */
         fun getDefaultInstance(): Fetch {
-            synchronized(lock) {
-                if (defaultFetchConfiguration == null) {
-                    throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
-                }
-                return FetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(defaultFetchConfiguration!!))
-            }
+            val fetchConfiguration = defaultFetchConfiguration
+                    ?: throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
+            return FetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(fetchConfiguration))
         }
 
         /**
@@ -812,12 +799,7 @@ interface Fetch {
          * @return custom Fetch instance
          * */
         fun getInstance(fetchConfiguration: FetchConfiguration): Fetch {
-            return if (fetchConfiguration.namespace == DEFAULT_INSTANCE_NAMESPACE) {
-                setDefaultInstanceConfiguration(fetchConfiguration)
-                getDefaultInstance()
-            } else {
-                return FetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(fetchConfiguration))
-            }
+            return FetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(fetchConfiguration))
         }
 
     }
