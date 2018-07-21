@@ -1,13 +1,10 @@
 package com.tonyodev.fetch2
 
 import android.annotation.SuppressLint
-import android.content.Context
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
-import com.tonyodev.fetch2.util.DEFAULT_INSTANCE_NAMESPACE
-import com.tonyodev.fetch2.util.createConfigWithNewNamespace
 import com.tonyodev.fetch2core.*
 
 /**
