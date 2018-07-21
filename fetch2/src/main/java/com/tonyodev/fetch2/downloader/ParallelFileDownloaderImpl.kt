@@ -43,7 +43,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     override var delegate: FileDownloader.Delegate? = null
 
-    private var downloadInfo = initialDownload.toDownloadInfo()
+    private val downloadInfo = initialDownload.toDownloadInfo()
 
     override val download: Download
         get () {
@@ -55,6 +55,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     @Volatile
     private var downloaded = 0L
 
+    @Volatile
     private var total = -1L
 
     private var averageDownloadedBytesPerSecond = 0.0
@@ -134,12 +135,14 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             completedDownload = true
                             if (md5CheckingEnabled) {
                                 if (downloader.verifyContentMD5(openingResponse.request, openingResponse.md5)) {
-                                    delegate?.onProgress(
-                                            download = downloadInfo,
-                                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                                    delegate?.onComplete(
-                                            download = downloadInfo)
+                                    if (!interrupted && !terminated) {
+                                        delegate?.onProgress(
+                                                download = downloadInfo,
+                                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                        delegate?.onComplete(
+                                                download = downloadInfo)
+                                    }
                                 } else {
                                     throw FetchException(INVALID_CONTENT_MD5)
                                 }
@@ -152,16 +155,14 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                         download = downloadInfo)
                             }
                         }
-                        if (!completedDownload) {
+                        if (!completedDownload && !terminated && !interrupted) {
                             downloadInfo.downloaded = downloaded
                             downloadInfo.total = total
-                            if (!terminated) {
-                                delegate?.saveDownloadProgress(downloadInfo)
-                                delegate?.onProgress(
-                                        download = downloadInfo,
-                                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                            }
+                            delegate?.saveDownloadProgress(downloadInfo)
+                            delegate?.onProgress(
+                                    download = downloadInfo,
+                                    etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                         }
                     }
                 } else {
@@ -200,7 +201,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 downloadInfo.downloaded = downloaded
                 downloadInfo.total = total
                 downloadInfo.error = error
-                if (!terminated) {
+                if (!terminated && !interrupted) {
                     delegate?.onError(download = downloadInfo)
                 }
             }
@@ -315,23 +316,16 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         totalBytes = total,
                         downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                 downloadedBytesPerSecond = downloaded
-                if (progressReportingIntervalMillis > DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS) {
-                    delegate?.saveDownloadProgress(downloadInfo)
-                }
             }
             reportingStopTime = System.nanoTime()
             val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
                     reportingStopTime, progressReportingIntervalMillis)
             if (hasReportingTimeElapsed) {
-                if (progressReportingIntervalMillis <= DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS) {
-                    delegate?.saveDownloadProgress(downloadInfo)
-                }
-                if (!terminated) {
-                    delegate?.onProgress(
-                            download = downloadInfo,
-                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                }
+                delegate?.saveDownloadProgress(downloadInfo)
+                delegate?.onProgress(
+                        download = downloadInfo,
+                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
                 reportingStartTime = System.nanoTime()
             }
             if (downloadSpeedCheckTimeElapsed) {
@@ -414,9 +408,11 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
                                             reportingStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
                                     if (hasReportingTimeElapsed) {
-                                        saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded, fileTempDir)
-                                        downloadBlock.downloadedBytes = fileSlice.downloaded
-                                        delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                                        if (!interrupted && !terminated) {
+                                            saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded, fileTempDir)
+                                            downloadBlock.downloadedBytes = fileSlice.downloaded
+                                            delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                                        }
                                         reportingStartTime = System.nanoTime()
                                     }
                                     if (read != -1) {
@@ -425,9 +421,11 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     }
                                 }
                             }
-                            saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded, fileTempDir)
-                            downloadBlock.downloadedBytes = fileSlice.downloaded
-                            delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                            if (!interrupted && !terminated) {
+                                saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded, fileTempDir)
+                                downloadBlock.downloadedBytes = fileSlice.downloaded
+                                delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                            }
                         } else if (downloadResponse == null && !interrupted && !terminated) {
                             throw FetchException(EMPTY_RESPONSE_BODY)
                         } else if (downloadResponse?.isSuccessful == false && !interrupted && !terminated) {
@@ -448,6 +446,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         incrementActionCompletedCount()
                     }
                 }
+            } else {
+                break
             }
         }
     }
