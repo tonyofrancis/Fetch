@@ -378,9 +378,9 @@ class FetchHandlerImpl(private val namespace: String,
         }
         return if (fromServer) {
             if (isFetchFileServerUrl(request.url)) {
-                fileServerDownloader.getContentLengthForRequest(getServerRequestFromRequest(request))
+                fileServerDownloader.getRequestContentLength(getServerRequestFromRequest(request))
             } else {
-                httpDownloader.getContentLengthForRequest(getServerRequestFromRequest(request))
+                httpDownloader.getRequestContentLength(getServerRequestFromRequest(request))
             }
         } else {
             -1L

@@ -27,7 +27,7 @@ interface Downloader : Closeable {
      * For an example:
      * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader.execute
      * */
-    fun execute(request: ServerRequest, interruptMonitor: InterruptMonitor?): Response?
+    fun execute(request: ServerRequest, interruptMonitor: InterruptMonitor): Response?
 
     /**
      * This method is called by Fetch to disconnect the connection for the passed in response.
@@ -67,7 +67,7 @@ interface Downloader : Closeable {
      * @param supportedFileDownloaderTypes a set of file downloader types supported by the request.
      * @return the FileDownloaderType.
      * */
-    fun getFileDownloaderType(request: ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): FileDownloaderType
+    fun getRequestFileDownloaderType(request: ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): FileDownloaderType
 
     /**
      * This method is called by Fetch for download requests that are downloading using the
@@ -114,7 +114,7 @@ interface Downloader : Closeable {
      * @param request The request information for the download.
      * @return ContentLength if successful, or -1 if failed.
      * */
-    fun getContentLengthForRequest(request: ServerRequest): Long
+    fun getRequestContentLength(request: ServerRequest): Long
 
     /**
      * Attempts to get the buffer size for a specific download.
@@ -125,14 +125,14 @@ interface Downloader : Closeable {
      * @return buffer size or null. If the buffer size is not set. The default
      * buffer size will be 8192 bytes. Can be null.
      * */
-    fun getBufferSizeForRequest(request: ServerRequest): Int?
+    fun getRequestBufferSize(request: ServerRequest): Int
 
     /**
      * Gets a set of supported FileDownloaderTypes for a request.
      * @param request The request information for the download.
      * @return set of supported FileDownloaderTypes
      * */
-    fun getSupportedFileDownloaderTypes(request: ServerRequest): Set<FileDownloaderType>
+    fun getRequestSupportedFileDownloaderTypes(request: ServerRequest): Set<FileDownloaderType>
 
     /**
      * A class that contains the information used by the Downloader to create a connection

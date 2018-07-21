@@ -32,7 +32,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
 
     protected val connections: MutableMap<Downloader.Response, FetchFileResourceTransporter> = Collections.synchronizedMap(HashMap<Downloader.Response, FetchFileResourceTransporter>())
 
-    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
         val headers = request.headers
         val range = getRangeForFetchFileServerRequest(headers["Range"] ?: "bytes=0-")
         val authorization = headers[FileRequest.FIELD_AUTHORIZATION] ?: ""
@@ -59,7 +59,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         ?: 0,
                 persistConnection = false)
         transporter.sendFileRequest(fileRequest)
-        while (interruptMonitor?.isInterrupted == false) {
+        while (!interruptMonitor.isInterrupted) {
             val serverResponse = transporter.receiveFileResponse()
             if (serverResponse != null) {
                 val code = serverResponse.status
@@ -139,7 +139,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun getFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
+    override fun getRequestFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
         return fileDownloaderType
     }
 
@@ -160,24 +160,15 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
     }
 
     override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
-        return true
+        return false
     }
 
-    override fun getBufferSizeForRequest(request: Downloader.ServerRequest): Int? {
-        return null
+    override fun getRequestBufferSize(request: Downloader.ServerRequest): Int {
+        return DEFAULT_BUFFER_SIZE
     }
 
-    override fun getContentLengthForRequest(request: Downloader.ServerRequest): Long {
-        return try {
-            val response = execute(request, null)
-            val contentLength = response?.contentLength ?: -1L
-            if (response != null) {
-                disconnect(response)
-            }
-            contentLength
-        } catch (e: Exception) {
-            -1L
-        }
+    override fun getRequestContentLength(request: Downloader.ServerRequest): Long {
+        return getRequestContentLength(request, this)
     }
 
     override fun getFileRequestType(serverRequest: Downloader.ServerRequest): Int {
@@ -243,8 +234,8 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
-        return getSupportedFileDownloaderTypes(request, this)
+    override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        return getRequestSupportedFileDownloaderTypes(request, this)
     }
 
 }

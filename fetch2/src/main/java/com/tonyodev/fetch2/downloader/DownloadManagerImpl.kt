@@ -191,8 +191,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
 
     private fun getFileDownloader(download: Download, downloader: Downloader): FileDownloader {
         val request = getRequestForDownload(download)
-        val supportedDownloadTypes = downloader.getSupportedFileDownloaderTypes(request)
-        return if (downloader.getFileDownloaderType(request, supportedDownloadTypes) == Downloader.FileDownloaderType.SEQUENTIAL) {
+        val supportedDownloadTypes = downloader.getRequestSupportedFileDownloaderTypes(request)
+        return if (downloader.getRequestFileDownloaderType(request, supportedDownloadTypes) == Downloader.FileDownloaderType.SEQUENTIAL) {
             SequentialFileDownloaderImpl(
                     initialDownload = download,
                     downloader = downloader,

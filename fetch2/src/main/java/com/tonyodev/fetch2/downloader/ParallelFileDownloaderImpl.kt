@@ -385,8 +385,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         downloadResponse = downloader.execute(downloadRequest, interruptMonitor)
                         if (!terminated && !interrupted && downloadResponse?.isSuccessful == true) {
                             var reportingStopTime: Long
-                            val bufferSize = downloader.getBufferSizeForRequest(downloadRequest)
-                                    ?: DEFAULT_BUFFER_SIZE
+                            val bufferSize = downloader.getRequestBufferSize(downloadRequest)
                             val buffer = ByteArray(bufferSize)
                             var read: Int = downloadResponse.byteStream?.read(buffer, 0, bufferSize)
                                     ?: -1

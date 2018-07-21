@@ -112,8 +112,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                     }
                     outputResourceWrapper.setWriteOffset(seekPosition)
                     if (!interrupted && !terminated) {
-                        val bufferSize = downloader.getBufferSizeForRequest(request)
-                                ?: DEFAULT_BUFFER_SIZE
+                        val bufferSize = downloader.getRequestBufferSize(request)
                         input = BufferedInputStream(response.byteStream, bufferSize)
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total

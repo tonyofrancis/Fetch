@@ -302,21 +302,23 @@ open class FetchImpl constructor(override val namespace: String,
     private fun executeRemoveAction(downloadAction: () -> List<Download>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
         return synchronized(lock) {
             throwExceptionIfClosed()
-            try {
-                val downloads = downloadAction.invoke()
-                uiHandler.post {
-                    downloads.forEach {
-                        logger.d("Removed download $it")
-                        listenerCoordinator.mainListener.onRemoved(it)
-                    }
-                    func?.call(downloads)
-                }
-            } catch (e: Exception) {
-                logger.e("Fetch with namespace $namespace error", e)
-                val error = getErrorFromMessage(e.message)
-                if (func2 != null) {
+            handlerWrapper.post {
+                try {
+                    val downloads = downloadAction.invoke()
                     uiHandler.post {
-                        func2.call(error)
+                        downloads.forEach {
+                            logger.d("Removed download $it")
+                            listenerCoordinator.mainListener.onRemoved(it)
+                        }
+                        func?.call(downloads)
+                    }
+                } catch (e: Exception) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
                     }
                 }
             }
@@ -375,21 +377,23 @@ open class FetchImpl constructor(override val namespace: String,
     private fun executeDeleteAction(downloadAction: () -> List<Download>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
         return synchronized(lock) {
             throwExceptionIfClosed()
-            try {
-                val downloads = downloadAction.invoke()
-                uiHandler.post {
-                    downloads.forEach {
-                        logger.d("Deleted download $it")
-                        listenerCoordinator.mainListener.onDeleted(it)
-                    }
-                    func?.call(downloads)
-                }
-            } catch (e: Exception) {
-                logger.e("Fetch with namespace $namespace error", e)
-                val error = getErrorFromMessage(e.message)
-                if (func2 != null) {
+            handlerWrapper.post {
+                try {
+                    val downloads = downloadAction.invoke()
                     uiHandler.post {
-                        func2.call(error)
+                        downloads.forEach {
+                            logger.d("Deleted download $it")
+                            listenerCoordinator.mainListener.onDeleted(it)
+                        }
+                        func?.call(downloads)
+                    }
+                } catch (e: Exception) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
                     }
                 }
             }
@@ -432,21 +436,23 @@ open class FetchImpl constructor(override val namespace: String,
     private fun executeCancelAction(downloadAction: () -> List<Download>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
         return synchronized(lock) {
             throwExceptionIfClosed()
-            try {
-                val downloads = downloadAction.invoke()
-                uiHandler.post {
-                    downloads.forEach {
-                        logger.d("Cancelled download $it")
-                        listenerCoordinator.mainListener.onCancelled(it)
-                    }
-                    func?.call(downloads)
-                }
-            } catch (e: Exception) {
-                logger.e("Fetch with namespace $namespace error", e)
-                val error = getErrorFromMessage(e.message)
-                if (func2 != null) {
+            handlerWrapper.post {
+                try {
+                    val downloads = downloadAction.invoke()
                     uiHandler.post {
-                        func2.call(error)
+                        downloads.forEach {
+                            logger.d("Cancelled download $it")
+                            listenerCoordinator.mainListener.onCancelled(it)
+                        }
+                        func?.call(downloads)
+                    }
+                } catch (e: Exception) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
                     }
                 }
             }
