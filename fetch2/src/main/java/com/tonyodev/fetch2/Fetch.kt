@@ -753,17 +753,6 @@ interface Fetch {
 
         /**
          * Sets the default Configuration settings on the default Fetch instance.
-         * @param context context
-         * */
-        fun setDefaultInstanceConfiguration(context: Context) {
-            val config = FetchConfiguration.Builder(context)
-                    .setNamespace(DEFAULT_INSTANCE_NAMESPACE)
-                    .build()
-            setDefaultInstanceConfiguration(config)
-        }
-
-        /**
-         * Sets the default Configuration settings on the default Fetch instance.
          * @param fetchConfiguration custom Fetch Configuration
          * */
         fun setDefaultInstanceConfiguration(fetchConfiguration: FetchConfiguration) {

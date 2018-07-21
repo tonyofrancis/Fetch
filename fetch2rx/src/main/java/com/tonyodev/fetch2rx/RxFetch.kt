@@ -464,17 +464,6 @@ interface RxFetch {
 
         /**
          * Sets the default Configuration settings on the default Fetch instance.
-         * @param context context
-         * */
-        fun setDefaultRxInstanceConfiguration(context: Context) {
-            val config = FetchConfiguration.Builder(context)
-                    .setNamespace(DEFAULT_INSTANCE_NAMESPACE)
-                    .build()
-            setDefaultRxInstanceConfiguration(config)
-        }
-
-        /**
-         * Sets the default Configuration settings on the default Fetch instance.
          * @param fetchConfiguration custom Fetch Configuration
          * */
         fun setDefaultRxInstanceConfiguration(fetchConfiguration: FetchConfiguration) {
