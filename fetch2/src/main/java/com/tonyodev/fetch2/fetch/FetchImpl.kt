@@ -20,7 +20,9 @@ open class FetchImpl constructor(override val namespace: String,
     @Volatile
     private var closed = false
     override val isClosed: Boolean
-        get() = closed
+        get() {
+            return closed
+        }
 
     init {
         handlerWrapper.post {

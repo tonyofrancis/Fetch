@@ -73,7 +73,7 @@ interface RxFetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with paused download if successful otherwise null.
      * */
-    fun pause(id: Int): Convertible<Download?>
+    fun pause(id: Int): Convertible<Download>
 
     /**
      * Pause all queued or downloading downloads within the specified group.
@@ -105,7 +105,7 @@ interface RxFetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with resumed download that was paused.
      * */
-    fun resume(id: Int): Convertible<Download?>
+    fun resume(id: Int): Convertible<Download>
 
     /**
      * Resume all paused downloads within the specified group.
@@ -138,7 +138,7 @@ interface RxFetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with download that was removed if successful.
      * */
-    fun remove(id: Int): Convertible<Download?>
+    fun remove(id: Int): Convertible<Download>
 
     /**
      * Remove all downloads in the specified group managed by this instance of Fetch.
@@ -191,7 +191,7 @@ interface RxFetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with download that was deleted if successful.
      * */
-    fun delete(id: Int): Convertible<Download?>
+    fun delete(id: Int): Convertible<Download>
 
     /**
      * Deletes all downloads in the specified group managed by this instance of Fetch.
@@ -244,7 +244,7 @@ interface RxFetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with download that was cancelled if successful.
      * */
-    fun cancel(id: Int): Convertible<Download?>
+    fun cancel(id: Int): Convertible<Download>
 
     /**
      * Cancels all non completed downloads in the specified group managed by this instance of Fetch.
@@ -277,7 +277,7 @@ interface RxFetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with the download that was successfully queued or null.
      * */
-    fun retry(id: Int): Convertible<Download?>
+    fun retry(id: Int): Convertible<Download>
 
     /** Updates an existing request.
      * @see com.tonyodev.fetch2.Request for more details.
@@ -286,7 +286,7 @@ interface RxFetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with the successfully updated download or null.
      * */
-    fun updateRequest(requestId: Int, updatedRequest: Request): Convertible<Download?>
+    fun updateRequest(requestId: Int, updatedRequest: Request): Convertible<Download>
 
     /**
      * Gets all downloads managed by this instance of Fetch.
@@ -377,7 +377,7 @@ interface RxFetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun addCompletedDownload(completedDownload: CompletedDownload): Convertible<Download?>
+    fun addCompletedDownload(completedDownload: CompletedDownload): Convertible<Download>
 
     /**
      * Adds a list of completed downloads to Fetch for management. If Fetch is already managing another download with the same file as this completed download's

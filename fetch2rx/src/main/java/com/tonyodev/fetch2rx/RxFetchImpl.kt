@@ -12,7 +12,6 @@ import com.tonyodev.fetch2core.*
 import com.tonyodev.fetch2rx.util.toConvertible
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 
 open class RxFetchImpl(override val namespace: String,
                        private val handlerWrapper: HandlerWrapper,
@@ -22,12 +21,14 @@ open class RxFetchImpl(override val namespace: String,
                        private val listenerCoordinator: ListenerCoordinator) : RxFetch {
 
     private val scheduler = AndroidSchedulers.from(handlerWrapper.getLooper())
-    private val uiSceduler = AndroidSchedulers.mainThread()
+    private val uiScheduler = AndroidSchedulers.mainThread()
     private val lock = Object()
     @Volatile
     private var closed = false
     override val isClosed: Boolean
-        get() = closed
+        get() {
+            return closed
+        }
 
     init {
         handlerWrapper.post {
@@ -36,31 +37,12 @@ open class RxFetchImpl(override val namespace: String,
     }
 
     override fun enqueue(request: Request): Convertible<Request> {
-        return synchronized(lock) {
-            throwExceptionIfClosed()
-            Flowable.just(request)
-                    .subscribeOn(scheduler)
-                    .flatMap {
-                        throwExceptionIfClosed()
-                        val download: Download
-                        try {
-                            download = fetchHandler.enqueue(it)
-                            uiHandler.post {
-                                listenerCoordinator.mainListener.onAdded(download)
-                                logger.d("Added Download $download")
-                                if (download.status == Status.QUEUED) {
-                                    listenerCoordinator.mainListener.onQueued(download, false)
-                                    logger.d("Queued $download for download")
-                                }
-                            }
-                        } catch (e: Exception) {
-                            throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
-                        }
-                        Flowable.just(download.request)
-                    }
-                    .observeOn(uiSceduler)
-                    .toConvertible()
-        }
+        return enqueue(listOf(request))
+                .flowable
+                .subscribeOn(scheduler)
+                .flatMap { Flowable.just(it.first()) }
+                .observeOn(uiScheduler)
+                .toConvertible()
     }
 
     override fun enqueue(requests: List<Request>): Convertible<List<Request>> {
@@ -70,28 +52,24 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap {
                         throwExceptionIfClosed()
-                        val downloads: List<Download>
-                        try {
-                            downloads = fetchHandler.enqueue(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    listenerCoordinator.mainListener.onAdded(it)
-                                    logger.d("Added $it")
-                                    if (it.status == Status.QUEUED) {
-                                        listenerCoordinator.mainListener.onQueued(it, false)
-                                        logger.d("Queued $it for download")
-                                    }
+                        val downloads: List<Download> = fetchHandler.enqueue(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                listenerCoordinator.mainListener.onAdded(it)
+                                logger.d("Added $it")
+                                if (it.status == Status.QUEUED) {
+                                    listenerCoordinator.mainListener.onQueued(it, false)
+                                    logger.d("Queued $it for download")
                                 }
                             }
-                        } catch (e: Exception) {
-                            throw FetchException(e.message ?: FAILED_TO_ENQUEUE_REQUEST)
                         }
                         Flowable.just(downloads.map { it.request })
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
+
 
     override fun pause(ids: List<Int>): Convertible<List<Download>> {
         return synchronized(lock) {
@@ -99,33 +77,27 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(ids)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.pause(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Paused download $it")
-                                    listenerCoordinator.mainListener.onPaused(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.pause(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Paused download $it")
+                                listenerCoordinator.mainListener.onPaused(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
 
-    override fun pause(id: Int): Convertible<Download?> {
+    override fun pause(id: Int): Convertible<Download> {
         return pause(listOf(id))
                 .flowable
                 .subscribeOn(scheduler)
-                .flatMap {
-                    Flowable.just(it.firstOrNull())
-                }
-                .observeOn(uiSceduler)
+                .flatMap { Flowable.just(it.first()) }
+                .observeOn(uiScheduler)
                 .toConvertible()
     }
 
@@ -135,21 +107,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(id)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.pausedGroup(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Paused download $it")
-                                    listenerCoordinator.mainListener.onPaused(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.pausedGroup(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Paused download $it")
+                                listenerCoordinator.mainListener.onPaused(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -160,15 +128,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(Any())
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            fetchHandler.freeze()
-                            Flowable.just(true)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(false)
-                        }
+                        throwExceptionIfClosed()
+                        fetchHandler.freeze()
+                        Flowable.just(true)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -179,15 +143,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(Any())
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            fetchHandler.unfreeze()
-                            Flowable.just(true)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(false)
-                        }
+                        throwExceptionIfClosed()
+                        fetchHandler.unfreeze()
+                        Flowable.just(true)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -198,35 +158,31 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(ids)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.resume(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Queued download $it")
-                                    listenerCoordinator.mainListener.onQueued(it, false)
-                                    logger.d("Resumed download $it")
-                                    listenerCoordinator.mainListener.onResumed(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.resume(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Queued download $it")
+                                listenerCoordinator.mainListener.onQueued(it, false)
+                                logger.d("Resumed download $it")
+                                listenerCoordinator.mainListener.onResumed(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
 
-    override fun resume(id: Int): Convertible<Download?> {
+    override fun resume(id: Int): Convertible<Download> {
         return resume(listOf(id))
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.firstOrNull())
+                    Flowable.just(it.first())
                 }
-                .observeOn(uiSceduler)
+                .observeOn(uiScheduler)
                 .toConvertible()
     }
 
@@ -236,21 +192,19 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(id)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.resumeGroup(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Resumed download $it")
-                                    listenerCoordinator.mainListener.onResumed(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.resumeGroup(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Queued download $it")
+                                listenerCoordinator.mainListener.onQueued(it, false)
+                                logger.d("Resumed download $it")
+                                listenerCoordinator.mainListener.onResumed(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -261,33 +215,29 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(ids)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.remove(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Removed download $it")
-                                    listenerCoordinator.mainListener.onRemoved(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.remove(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Removed download $it")
+                                listenerCoordinator.mainListener.onRemoved(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
 
-    override fun remove(id: Int): Convertible<Download?> {
+    override fun remove(id: Int): Convertible<Download> {
         return remove(listOf(id))
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.firstOrNull())
+                    Flowable.just(it.first())
                 }
-                .observeOn(uiSceduler)
+                .observeOn(uiScheduler)
                 .toConvertible()
     }
 
@@ -297,21 +247,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(id)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.removeGroup(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Removed download $it")
-                                    listenerCoordinator.mainListener.onRemoved(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.removeGroup(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Removed download $it")
+                                listenerCoordinator.mainListener.onRemoved(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -322,21 +268,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(Any())
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.removeAll()
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Removed download $it")
-                                    listenerCoordinator.mainListener.onRemoved(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.removeAll()
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Removed download $it")
+                                listenerCoordinator.mainListener.onRemoved(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -347,21 +289,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(status)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.removeAllWithStatus(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Removed download $it")
-                                    listenerCoordinator.mainListener.onRemoved(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.removeAllWithStatus(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Removed download $it")
+                                listenerCoordinator.mainListener.onRemoved(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -372,21 +310,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(Pair(id, status))
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.removeAllInGroupWithStatus(it.first, it.second)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Removed download $it")
-                                    listenerCoordinator.mainListener.onRemoved(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.removeAllInGroupWithStatus(it.first, it.second)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Removed download $it")
+                                listenerCoordinator.mainListener.onRemoved(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -397,33 +331,29 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(ids)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.delete(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Deleted download $it")
-                                    listenerCoordinator.mainListener.onDeleted(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.delete(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Deleted download $it")
+                                listenerCoordinator.mainListener.onDeleted(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
 
-    override fun delete(id: Int): Convertible<Download?> {
+    override fun delete(id: Int): Convertible<Download> {
         return delete(listOf(id))
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.firstOrNull())
+                    Flowable.just(it.first())
                 }
-                .observeOn(uiSceduler)
+                .observeOn(uiScheduler)
                 .toConvertible()
     }
 
@@ -433,21 +363,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(id)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.deleteGroup(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Deleted download $it")
-                                    listenerCoordinator.mainListener.onDeleted(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.deleteGroup(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Deleted download $it")
+                                listenerCoordinator.mainListener.onDeleted(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -458,21 +384,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(Any())
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.deleteAll()
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Deleted download $it")
-                                    listenerCoordinator.mainListener.onDeleted(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.deleteAll()
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Deleted download $it")
+                                listenerCoordinator.mainListener.onDeleted(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -483,21 +405,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(status)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.deleteAllWithStatus(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Deleted download $it")
-                                    listenerCoordinator.mainListener.onDeleted(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.deleteAllWithStatus(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Deleted download $it")
+                                listenerCoordinator.mainListener.onDeleted(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -508,21 +426,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(Pair(id, status))
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.deleteAllInGroupWithStatus(it.first, it.second)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Deleted download $it")
-                                    listenerCoordinator.mainListener.onDeleted(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.deleteAllInGroupWithStatus(it.first, it.second)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Deleted download $it")
+                                listenerCoordinator.mainListener.onDeleted(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -533,33 +447,29 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(ids)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.cancel(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Cancelled download $it")
-                                    listenerCoordinator.mainListener.onCancelled(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.cancel(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Cancelled download $it")
+                                listenerCoordinator.mainListener.onCancelled(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
 
-    override fun cancel(id: Int): Convertible<Download?> {
+    override fun cancel(id: Int): Convertible<Download> {
         return cancel(listOf(id))
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.firstOrNull())
+                    Flowable.just(it.first())
                 }
-                .observeOn(uiSceduler)
+                .observeOn(uiScheduler)
                 .toConvertible()
     }
 
@@ -569,21 +479,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(id)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.cancelGroup(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Cancelled download $it")
-                                    listenerCoordinator.mainListener.onCancelled(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.cancelGroup(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Cancelled download $it")
+                                listenerCoordinator.mainListener.onCancelled(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -594,21 +500,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(Any())
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.cancelAll()
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Cancelled download $it")
-                                    listenerCoordinator.mainListener.onCancelled(it)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.cancelAll()
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Cancelled download $it")
+                                listenerCoordinator.mainListener.onCancelled(it)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -619,33 +521,29 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(ids)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.retry(it)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    logger.d("Queued $it for download")
-                                    listenerCoordinator.mainListener.onQueued(it, false)
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.retry(it)
+                        uiHandler.post {
+                            downloads.forEach {
+                                logger.d("Queued $it for download")
+                                listenerCoordinator.mainListener.onQueued(it, false)
                             }
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
 
-    override fun retry(id: Int): Convertible<Download?> {
+    override fun retry(id: Int): Convertible<Download> {
         return retry(listOf(id))
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.firstOrNull())
+                    Flowable.just(it.first())
                 }
-                .observeOn(uiSceduler)
+                .observeOn(uiScheduler)
                 .toConvertible()
     }
 
@@ -673,21 +571,17 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
-    override fun updateRequest(requestId: Int, updatedRequest: Request): Convertible<Download?> {
+    override fun updateRequest(requestId: Int, updatedRequest: Request): Convertible<Download> {
         return synchronized(lock) {
             throwExceptionIfClosed()
             Flowable.just(Pair(requestId, updatedRequest))
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val download = fetchHandler.updateRequest(it.first, it.second)
-                            Flowable.just(download)
-                        } catch (e: Exception) {
-                            logger.e("Failed to update request with id $requestId", e)
-                            throw FetchException(e.message ?: FAILED_TO_UPDATE_REQUEST)
-                        }
+                        throwExceptionIfClosed()
+                        val download = fetchHandler.updateRequest(it.first, it.second)
+                        Flowable.just(download)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -698,15 +592,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(Any())
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.getDownloads()
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
-                        }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloads()
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -717,16 +607,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(idList)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.getDownloads(idList)
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
-
-                        }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloads(idList)
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -737,15 +622,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(id)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val download = fetchHandler.getDownload(id)
-                            Flowable.just(download)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(null)
-                        }
+                        throwExceptionIfClosed()
+                        val download = fetchHandler.getDownload(id)
+                        Flowable.just(download)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -756,15 +637,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(groupId)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.getDownloadsInGroup(groupId)
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
-                        }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloadsInGroup(groupId)
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -775,15 +652,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(status)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.getDownloadsWithStatus(status)
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
-                        }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloadsWithStatus(status)
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -794,15 +667,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(status)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.getDownloadsInGroupWithStatus(groupId, status)
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
-                        }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloadsInGroupWithStatus(groupId, status)
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -813,40 +682,24 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(identifier)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.getDownloadsByRequestIdentifier(identifier)
-                            Flowable.just(downloads)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<Download>())
-                        }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloadsByRequestIdentifier(identifier)
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
 
-    override fun addCompletedDownload(completedDownload: CompletedDownload): Convertible<Download?> {
-        return synchronized(lock) {
-            throwExceptionIfClosed()
-            Flowable.just(completedDownload)
-                    .subscribeOn(scheduler)
-                    .flatMap {
-                        try {
-                            val download = fetchHandler.enqueueCompletedDownload(completedDownload)
-                            uiHandler.post {
-                                listenerCoordinator.mainListener.onCompleted(download)
-                                logger.d("Added CompletedDownload $download")
-                            }
-                            Flowable.just(download)
-                        } catch (e: Exception) {
-                            logger.e("Failed to add CompletedDownload $completedDownload", e)
-                            throw  FetchException(e.message ?: FAILED_TO_ADD_COMPLETED_DOWNLOAD)
-                        }
-                    }
-                    .observeOn(uiSceduler)
-                    .toConvertible()
-        }
+    override fun addCompletedDownload(completedDownload: CompletedDownload): Convertible<Download> {
+        return addCompletedDownloads(listOf(completedDownload))
+                .flowable
+                .subscribeOn(scheduler)
+                .flatMap {
+                    Flowable.just(it.first())
+                }
+                .observeOn(uiScheduler)
+                .toConvertible()
     }
 
     override fun addCompletedDownloads(completedDownloads: List<CompletedDownload>): Convertible<List<Download>> {
@@ -855,21 +708,17 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(completedDownloads)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloads = fetchHandler.enqueueCompletedDownloads(completedDownloads)
-                            uiHandler.post {
-                                downloads.forEach {
-                                    listenerCoordinator.mainListener.onCompleted(it)
-                                    logger.d("Added CompletedDownload $it")
-                                }
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.enqueueCompletedDownloads(completedDownloads)
+                        uiHandler.post {
+                            downloads.forEach {
+                                listenerCoordinator.mainListener.onCompleted(it)
+                                logger.d("Added CompletedDownload $it")
                             }
-                            Flowable.just(downloads)
-                        } catch (e: Exception) {
-                            logger.e("Failed to add CompletedDownload list $completedDownloads")
-                            throw  FetchException(e.message ?: FAILED_TO_ADD_COMPLETED_DOWNLOAD)
                         }
+                        Flowable.just(downloads)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -880,15 +729,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(downloadId)
                     .subscribeOn(scheduler)
                     .flatMap {
-                        try {
-                            val downloadBlocksList = fetchHandler.getDownloadBlocks(downloadId)
-                            Flowable.just(downloadBlocksList)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            Flowable.just(emptyList<DownloadBlock>())
-                        }
+                        throwExceptionIfClosed()
+                        val downloadBlocksList = fetchHandler.getDownloadBlocks(downloadId)
+                        Flowable.just(downloadBlocksList)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -899,15 +744,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(Pair(request, fromServer))
                     .subscribeOn(AndroidSchedulers.from(handlerWrapper.getWorkTaskLooper()))
                     .flatMap {
-                        try {
-                            val contentLength = fetchHandler.getContentLengthForRequest(it.first, it.second)
-                            Flowable.just(contentLength)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            throw e
-                        }
+                        throwExceptionIfClosed()
+                        val contentLength = fetchHandler.getContentLengthForRequest(it.first, it.second)
+                        Flowable.just(contentLength)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -918,15 +759,11 @@ open class RxFetchImpl(override val namespace: String,
             Flowable.just(request)
                     .subscribeOn(AndroidSchedulers.from(handlerWrapper.getWorkTaskLooper()))
                     .flatMap {
-                        try {
-                            val catalogList = fetchHandler.getFetchFileServerCatalog(request)
-                            Flowable.just(catalogList)
-                        } catch (e: FetchException) {
-                            logger.e("Fetch with namespace $namespace error", e)
-                            throw e
-                        }
+                        throwExceptionIfClosed()
+                        val catalogList = fetchHandler.getFetchFileServerCatalog(request)
+                        Flowable.just(catalogList)
                     }
-                    .observeOn(uiSceduler)
+                    .observeOn(uiScheduler)
                     .toConvertible()
         }
     }
@@ -935,11 +772,7 @@ open class RxFetchImpl(override val namespace: String,
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    fetchHandler.enableLogging(enabled)
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
+                fetchHandler.enableLogging(enabled)
             }
             return this
         }
@@ -949,11 +782,7 @@ open class RxFetchImpl(override val namespace: String,
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    fetchHandler.setGlobalNetworkType(networkType)
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
+                fetchHandler.setGlobalNetworkType(networkType)
             }
             return this
         }
