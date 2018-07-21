@@ -367,7 +367,7 @@ class FetchHandlerImpl(private val namespace: String,
                 }
             }
         } else {
-            throw FetchException(REQUEST_DOES_NOT_EXIST)
+            return emptyList()
         }
     }
 
