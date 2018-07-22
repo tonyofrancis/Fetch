@@ -24,14 +24,14 @@ data class FileRequest(val type: Int = TYPE_INVALID,
                     .append('{')
                     .append("\"Type\":").append(type).append(',')
                     .append("\"FileResourceId\":").append("\"$fileResourceId\"").append(',')
-                    .append("\"RangeStart\":").append(rangeStart).append(',')
-                    .append("\"RangeEnd\":").append(rangeEnd).append(',')
+                    .append("\"Range-Start\":").append(rangeStart).append(',')
+                    .append("\"Range-End\":").append(rangeEnd).append(',')
                     .append("\"Authorization\":").append("\"$authorization\"").append(',')
                     .append("\"Client\":").append("\"$client\"").append(',')
-                    .append("\"CustomData\":").append("\"$customData\"").append(',')
+                    .append("\"Custom-Data\":").append("\"$customData\"").append(',')
                     .append("\"Page\":").append(page).append(',')
                     .append("\"Size\":").append(size).append(',')
-                    .append("\"PersistConnection\":").append(persistConnection)
+                    .append("\"Persist-Connection\":").append(persistConnection)
                     .append('}')
             return builder.toString()
         }
@@ -63,14 +63,14 @@ data class FileRequest(val type: Int = TYPE_INVALID,
         const val CATALOG_NAME = "Catalog.json"
         const val FIELD_TYPE = "Type"
         const val FIELD_FILE_RESOURCE_ID = "FileResourceId"
-        const val FIELD_RANGE_START = "RangeStart"
-        const val FIELD_RANGE_END = "RangeEnd"
+        const val FIELD_RANGE_START = "Range-Start"
+        const val FIELD_RANGE_END = "Range-End"
         const val FIELD_AUTHORIZATION = "Authorization"
         const val FIELD_CLIENT = "Client"
-        const val FIELD_CUSTOM_DATA = "CustomData"
+        const val FIELD_CUSTOM_DATA = "Custom-Data"
         const val FIELD_PAGE = "Page"
         const val FIELD_SIZE = "Size"
-        const val FIELD_PERSIST_CONNECTION = "PersistConnection"
+        const val FIELD_PERSIST_CONNECTION = "Persist-Connection"
 
 
         override fun createFromParcel(source: Parcel): FileRequest {

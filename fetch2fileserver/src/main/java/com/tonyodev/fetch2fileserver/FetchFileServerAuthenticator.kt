@@ -7,6 +7,7 @@ import com.tonyodev.fetch2core.server.FileRequest
 interface FetchFileServerAuthenticator {
 
     /** Method called when a client is attempting to connect to the Fetch File Server.
+     * This method is called on a background thread.
      * @param sessionId sessionId
      * @param authorization the authorization token
      * @param fileRequest the fileRequest the client sent.

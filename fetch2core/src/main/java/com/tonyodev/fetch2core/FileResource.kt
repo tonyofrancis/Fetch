@@ -9,7 +9,7 @@ class FileResource : Parcelable {
 
     /** Unique File Resource Identifier.
      * Clients can request data from the server using the file resource id
-     * example Url: fetchlocal://127.0.0.1/:7428/84562
+     * example Url: fetchlocal://127.0.0.1:7428/84562
      * */
     var id: Long = 0L
 

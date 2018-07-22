@@ -2,11 +2,10 @@ package com.tonyodev.fetch2fileserver.provider
 
 import android.os.Handler
 import com.tonyodev.fetch2core.*
-import com.tonyodev.fetch2fileserver.database.toFileResource
 import com.tonyodev.fetch2core.server.FileRequest
 import com.tonyodev.fetch2core.server.FileResponse
-import com.tonyodev.fetch2core.server.FileResponse.Companion.CLOSE_CONNECTION
-import com.tonyodev.fetch2core.server.FileResponse.Companion.OPEN_CONNECTION
+import com.tonyodev.fetch2core.server.FileResponse.CREATOR.CLOSE_CONNECTION
+import com.tonyodev.fetch2core.server.FileResponse.CREATOR.OPEN_CONNECTION
 import com.tonyodev.fetch2core.server.FileResourceTransporter
 import com.tonyodev.fetch2core.server.FetchFileResourceTransporter
 import java.io.ByteArrayInputStream
@@ -19,10 +18,12 @@ import java.util.*
 class FetchFileResourceProvider(private val client: Socket,
                                 private val fileResourceProviderDelegate: FileResourceProviderDelegate,
                                 private val logger: FetchLogger,
-                                private val ioHandler: Handler) : FileResourceProvider {
+                                private val ioHandler: Handler,
+                                private val progressReportingInMillis: Long,
+                                private val persistentTimeoutInMillis: Long) : FileResourceProvider {
 
+    override val id = UUID.randomUUID().toString()
     private val lock = Any()
-    val id = UUID.randomUUID()
     private val transporter: FileResourceTransporter = FetchFileResourceTransporter(client)
     @Volatile
     private var interrupted: Boolean = false
@@ -39,7 +40,7 @@ class FetchFileResourceProvider(private val client: Socket,
         Thread {
             try {
                 while (persistConnection && !interrupted) {
-                    ioHandler.postDelayed(persistentRunnable, 600000)
+                    ioHandler.postDelayed(persistentRunnable, persistentTimeoutInMillis)
                     clientRequest = getFileResourceClientRequest()
                     ioHandler.removeCallbacks(persistentRunnable)
                     val request = clientRequest
@@ -49,7 +50,9 @@ class FetchFileResourceProvider(private val client: Socket,
                             logger.d("FetchFileServerProvider - ClientRequestAccepted - ${request.toJsonString}")
                             logger.d("FetchFileServerProvider - Client Connected - $client")
                             fileResourceProviderDelegate.onClientConnected(sessionId, request)
-                            fileResourceProviderDelegate.onClientDidProvideCustomData(sessionId, request.customData, request)
+                            if (request.customData.isNotEmpty()) {
+                                fileResourceProviderDelegate.onClientDidProvideCustomData(sessionId, request.customData, request)
+                            }
                             when (request.type) {
                                 FileRequest.TYPE_PING -> {
                                     if (!interrupted) {
@@ -68,20 +71,19 @@ class FetchFileResourceProvider(private val client: Socket,
                                     }
                                 }
                                 FileRequest.TYPE_FILE -> {
-                                    val fileResourceInfo = fileResourceProviderDelegate.getFileResource(request.fileResourceId)
+                                    val fileResource = fileResourceProviderDelegate.getFileResource(request.fileResourceId)
                                     if (!interrupted) {
-                                        if (fileResourceInfo != null) {
-                                            val fileResource = fileResourceInfo.toFileResource()
+                                        if (fileResource != null) {
                                             this.fileResource = fileResource
                                             inputResourceWrapper = fileResourceProviderDelegate.getFileInputResourceWrapper(sessionId, request, fileResource, request.rangeStart)
                                             if (inputResourceWrapper == null) {
-                                                if (fileResourceInfo.id == FileRequest.CATALOG_ID) {
-                                                    val catalog = fileResourceInfo.customData.toByteArray(Charsets.UTF_8)
-                                                    fileResourceInfo.length = if (request.rangeEnd == -1L) catalog.size.toLong() else request.rangeEnd
-                                                    fileResourceInfo.md5 = getMd5String(catalog)
+                                                if (fileResource.id == FileRequest.CATALOG_ID) {
+                                                    val catalog = fileResource.customData.toByteArray(Charsets.UTF_8)
+                                                    fileResource.length = if (request.rangeEnd == -1L) catalog.size.toLong() else request.rangeEnd
+                                                    fileResource.md5 = getMd5String(catalog)
                                                     inputResourceWrapper = object : InputResourceWrapper() {
 
-                                                        private val inputStream = ByteArrayInputStream(catalog, request.rangeStart.toInt(), fileResourceInfo.length.toInt())
+                                                        private val inputStream = ByteArrayInputStream(catalog, request.rangeStart.toInt(), fileResource.length.toInt())
 
                                                         override fun read(byteArray: ByteArray, offSet: Int, length: Int): Int {
                                                             return inputStream.read(byteArray, offSet, length)
@@ -98,7 +100,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                                 } else {
                                                     inputResourceWrapper = object : InputResourceWrapper() {
 
-                                                        val randomAccessFile = RandomAccessFile(fileResourceInfo.file, "r")
+                                                        val randomAccessFile = RandomAccessFile(fileResource.file, "r")
 
                                                         override fun read(byteArray: ByteArray, offSet: Int, length: Int): Int {
                                                             return randomAccessFile.read(byteArray, offSet, length)
@@ -118,9 +120,9 @@ class FetchFileResourceProvider(private val client: Socket,
                                             if (!interrupted) {
                                                 var reportingStopTime: Long
                                                 val byteArray = ByteArray(FileResourceTransporter.BUFFER_SIZE)
-                                                val contentLength = (if (request.rangeEnd == -1L) fileResourceInfo.length else request.rangeEnd) - request.rangeStart
+                                                val contentLength = (if (request.rangeEnd == -1L) fileResource.length else request.rangeEnd) - request.rangeStart
                                                 var remainderBytes = contentLength
-                                                sendFileResourceResponse(contentLength, fileResourceInfo.md5)
+                                                sendFileResourceResponse(contentLength, fileResource.md5)
                                                 var reportingStartTime = System.nanoTime()
                                                 var read = inputResourceWrapper?.read(byteArray)
                                                         ?: -1
@@ -138,7 +140,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                                         remainderBytes -= streamBytes
                                                         reportingStopTime = System.nanoTime()
                                                         val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
-                                                                reportingStopTime, DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS)
+                                                                reportingStopTime, progressReportingInMillis)
                                                         if (hasReportingTimeElapsed && !interrupted) {
                                                             val progress = calculateProgress(contentLength - remainderBytes, contentLength)
                                                             fileResourceProviderDelegate.onProgress(sessionId, request, fileResource, progress)
@@ -198,14 +200,13 @@ class FetchFileResourceProvider(private val client: Socket,
                         logger.e("FetchFileServerProvider - ${e.message}")
                     }
                 }
+                ioHandler.removeCallbacks(persistentRunnable)
                 transporter.close()
                 cleanFileStreams()
                 this.fileResource = null
-                try {
-                    fileResourceProviderDelegate.onFinished(id)
-                } catch (e: Exception) {
-                    logger.e("FetchFileServerProvider - ${e.message}")
-                }
+                this.persistConnection = false
+                this.clientRequest = null
+                fileResourceProviderDelegate.onFinished(id)
             }
         }.start()
     }
@@ -238,52 +239,50 @@ class FetchFileResourceProvider(private val client: Socket,
 
     private fun sendPingResponse() {
         val response = FileResponse(status = HttpURLConnection.HTTP_OK,
-                type = clientRequest?.type
-                        ?: FileRequest.TYPE_PING,
+                type = FileRequest.TYPE_PING,
                 connection = OPEN_CONNECTION,
                 date = Date().time,
-                contentLength = 0)
+                contentLength = 0,
+                sessionId = sessionId)
         transporter.sendFileResponse(response)
     }
 
     private fun sendInvalidResponse(status: Int) {
         val response = FileResponse(status = status,
-                type = clientRequest?.type
-                        ?: FileRequest.TYPE_INVALID,
+                type = FileRequest.TYPE_INVALID,
                 connection = CLOSE_CONNECTION,
                 date = Date().time,
-                contentLength = 0)
+                contentLength = 0,
+                sessionId = sessionId)
         transporter.sendFileResponse(response)
         interrupted = true
     }
 
     private fun sendCatalogResponse(contentLength: Long, md5: String) {
         val response = FileResponse(status = HttpURLConnection.HTTP_OK,
-                type = clientRequest?.type
-                        ?: FileRequest.TYPE_CATALOG,
+                type = FileRequest.TYPE_CATALOG,
                 connection = OPEN_CONNECTION,
                 date = Date().time,
                 contentLength = contentLength,
-                md5 = md5)
+                md5 = md5,
+                sessionId = sessionId)
         transporter.sendFileResponse(response)
     }
 
     private fun sendFileResourceResponse(contentLength: Long, md5: String) {
         val response = FileResponse(status = HttpURLConnection.HTTP_PARTIAL,
-                type = clientRequest?.type
-                        ?: FileRequest.TYPE_FILE,
+                type = FileRequest.TYPE_FILE,
                 connection = OPEN_CONNECTION,
                 date = Date().time,
                 contentLength = contentLength,
-                md5 = md5)
+                md5 = md5,
+                sessionId = sessionId)
         transporter.sendFileResponse(response)
     }
 
     override fun interrupt() {
         synchronized(lock) {
-            if (!interrupted) {
-                interrupted = true
-            }
+            interrupted = true
         }
     }
 
