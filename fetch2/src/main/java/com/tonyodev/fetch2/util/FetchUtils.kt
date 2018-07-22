@@ -4,8 +4,10 @@ package com.tonyodev.fetch2.util
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchConfiguration
+import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.*
+import com.tonyodev.fetch2core.server.FileRequest
 import kotlin.math.ceil
 
 fun canPauseDownload(download: Download): Boolean {
@@ -64,13 +66,40 @@ fun getRequestForDownload(download: Download,
             requestMethod = requestMethod)
 }
 
-fun deleteRequestTempFiles(fileTempDir: String,
+fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
+    return Downloader.ServerRequest(
+            id = request.id,
+            url = request.url,
+            headers = request.headers,
+            tag = request.tag,
+            identifier = request.identifier,
+            requestMethod = GET_REQUEST_METHOD,
+            file = request.file)
+}
+
+fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerRequest {
+    val headers = request.headers.toMutableMap()
+    headers["Range"] = "bytes=0-"
+    headers[FileRequest.FIELD_PAGE] = "-1"
+    headers[FileRequest.FIELD_SIZE] = "-1"
+    headers[FileRequest.FIELD_TYPE] = FileRequest.TYPE_FILE.toString()
+    return Downloader.ServerRequest(
+            id = request.id,
+            url = request.url,
+            headers = headers,
+            tag = request.tag,
+            identifier = request.identifier,
+            requestMethod = GET_REQUEST_METHOD,
+            file = request.file)
+}
+
+fun deleteRequestTempFiles(defaultTempFilesDir: String,
                            downloader: Downloader,
                            download: Download) {
     try {
         val request = getRequestForDownload(download)
         val tempDirPath = downloader.getDirectoryForFileDownloaderTypeParallel(request)
-                ?: fileTempDir
+                ?: defaultTempFilesDir
         val tempDir = getFile(tempDirPath)
         if (tempDir.exists()) {
             val tempFiles = tempDir.listFiles()
@@ -186,8 +215,8 @@ fun createConfigWithNewNamespace(fetchConfiguration: FetchConfiguration,
             .enableAutoStart(fetchConfiguration.autoStart)
             .enableLogging(fetchConfiguration.loggingEnabled)
             .enableRetryOnNetworkGain(fetchConfiguration.retryOnNetworkGain)
-            .setDownloadBufferSize(fetchConfiguration.downloadBufferSizeBytes)
             .setHttpDownloader(fetchConfiguration.httpDownloader)
+            .setFileServerDownloader(fetchConfiguration.fileServerDownloader)
             .setDownloadConcurrentLimit(fetchConfiguration.concurrentLimit)
             .setProgressReportingInterval(fetchConfiguration.progressReportingIntervalMillis)
             .setGlobalNetworkType(fetchConfiguration.globalNetworkType)

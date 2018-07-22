@@ -1,6 +1,6 @@
 
 [![Build Status](https://travis-ci.org/tonyofrancis/Fetch.svg?branch=v2)](https://travis-ci.org/tonyofrancis/Fetch)
-[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch2/images/download.svg?version=2.1.0-RC15) ](https://bintray.com/tonyofrancis/maven/fetch2/2.1.0-RC15/link)
+[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch2/images/download.svg?version=2.2.0-RC1) ](https://bintray.com/tonyofrancis/maven/fetch2/2.2.0-RC1/link)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Networking-blue.svg?style=flat)](https://android-arsenal.com/details/1/5196)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tonyofrancis/Fetch/blob/master/LICENSE)
 
@@ -48,7 +48,7 @@ How to use Fetch
 Using Fetch is easy! Just add the Gradle dependency to your application's build.gradle file.
 
 ```java
-implementation "com.tonyodev.fetch2:fetch2:2.1.0-RC15"
+implementation "com.tonyodev.fetch2:fetch2:2.2.0-RC1"
 ```
 
 Next, get an instance of Fetch and request a download.
@@ -214,7 +214,7 @@ to use the OkHttp Downloader instead. You can create your own custom downloaders
 if necessary. See the Java docs for details.
 
 ```java
-implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:2.1.0-RC15"
+implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:2.2.0-RC1"
 ```
 Set the OkHttp Downloader for Fetch to use.
 ```java
@@ -235,7 +235,7 @@ If you would like to take advantage of RxJava2 features when using Fetch,
 add the following gradle dependency to your application's build.gradle file.
 
 ```java
-implementation "com.tonyodev.fetch2rx:fetch2rx:2.1.0-RC15"
+implementation "com.tonyodev.fetch2rx:fetch2rx:2.2.0-RC1"
 ```
 
 RxFetch makes it super easy to enqueue download requests and query downloads using rxJava2 functional methods.
@@ -271,7 +271,7 @@ added in the coming days.
 
 Start using FetchFileServer by adding the gradle dependency to your application's build.gradle file.
 ```java
-implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:2.1.0-RC15"
+implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:2.2.0-RC1"
 ```
 
 Start a FetchFileServer instance and add resource files that it can server to connected clients.
@@ -306,13 +306,7 @@ public class TestActivity extends AppCompatActivity {
 }
 ```
 
-Download a file from a FetchFileServer using the Fetch. Add the FetchFileServerDownloader
-dependency to you app's build.gradle file.
-```java
-implementation "com.tonyodev.fetch2downloaders:fetch2downloaders:2.1.0-RC15"
-```
-
-Then create an instance of Fetch and enqueue the download.
+Downloading a file from a FetchFileServer using the Fetch is easy.
 
 ```java
 public class TestActivity extends AppCompatActivity {
@@ -380,90 +374,13 @@ public class TestActivity extends AppCompatActivity {
     };
 }
 ```
-A FetchFileResourceDownloadTask can also be used to download files from the FetchFileServer.
-Be sure to add the fetch2downloaders module to your dependencies.
-
-```java
-public class TestActivity extends AppCompatActivity {
-
-    FetchFileResourceDownloadTask<File> task;
-
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        task = new FetchFileResourceDownloadTask<File>() {
-            @NotNull
-            @Override
-            public FileResourceRequest getRequest() {
-                FileResourceRequest fileResourceRequest = new FileResourceRequest();
-                fileResourceRequest.setHostAddress("127.0.0.1");
-                fileResourceRequest.setPort(6886);
-                fileResourceRequest.setResourceIdentifier("testfile.txt");
-                fileResourceRequest.addHeader("Authorization", "5adWEDG36FGTTBX23B");
-                return fileResourceRequest;
-            }
-
-            @Override
-            public File doWork(@NotNull InputStream inputStream, long contentLength, @NotNull String md5CheckSum) {
-                File file = new File("/downloads/sample.txt");
-                try {
-                   BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
-                   BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file));
-                   byte[] buffer = new byte[1024];
-                   int read;
-                   int bytesRead = 0;
-                   while ((read = bufferedInputStream.read(buffer, 0, 1024)) != -1 && !isCancelled()) { //isCancelled() checks if the task was cancelled.
-                       bufferedOutputStream.write(buffer, 0, read);
-                       bytesRead += read;
-                       setProgress(calculateProgress(bytesRead, contentLength));
-                   }
-                   bufferedInputStream.close();
-                   bufferedOutputStream.flush();
-                   bufferedOutputStream.close();
-               } catch (IOException e) {
-                   e.printStackTrace();
-                }
-                return file;
-            }
-
-            @Override
-            protected void onProgress(int progress) {
-                Log.d("TestActivity", "Progress: " + progress);
-
-            }
-
-            @Override
-            protected void onError(int httpStatusCode, @org.jetbrains.annotations.Nullable Throwable throwable) {
-                Log.d("TestActivity", "Error: " + httpStatusCode);
-            }
-
-            @Override
-            protected void onComplete(File result) {
-                Log.d("TestActivity", "Complete");
-            }
-        };
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        task.execute();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        task.cancel();
-
-    }
-```
 
 Fetch1 Migration
 ----------------
 
 Migrate downloads from Fetch1 to Fetch2 using the migration assistant. Add the following gradle dependency to your application's build.gradle file.
 ```java
-implementation "com.tonyodev.fetchmigrator:fetchmigrator:2.1.0-RC15"
+implementation "com.tonyodev.fetchmigrator:fetchmigrator:2.2.0-RC1"
 ```
 
 Then run the Migrator.

@@ -13,17 +13,13 @@ interface FileDownloader : Runnable {
 
     interface Delegate {
 
-        fun onStarted(download: Download,
-                      etaInMilliseconds: Long,
-                      downloadedBytesPerSecond: Long)
+        val interrupted: Boolean
 
-        fun onDownloadBlockUpdated(download: Download,
-                                   downloadBlock: DownloadBlock,
-                                   totalBlocks: Int)
+        fun onStarted(download: Download)
 
-        fun onProgress(download: Download,
-                       etaInMilliSeconds: Long,
-                       downloadedBytesPerSecond: Long)
+        fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int)
+
+        fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long)
 
         fun onError(download: Download)
 

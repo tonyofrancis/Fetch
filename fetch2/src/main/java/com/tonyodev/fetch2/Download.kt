@@ -94,4 +94,9 @@ interface Download : Parcelable {
      * */
     val downloadOnEnqueue: Boolean
 
+    /** Store custom data/ key value pairs with a request.
+     *  Update extras by calling fetch.updateRequest(requestId, updatedRequest, func, func).
+     * */
+    val extras: Map<String, String>
+
 }

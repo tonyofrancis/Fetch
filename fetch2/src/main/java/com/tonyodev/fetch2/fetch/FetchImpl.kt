@@ -10,17 +10,19 @@ import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2core.*
 
 open class FetchImpl constructor(override val namespace: String,
-                                 protected val handlerWrapper: HandlerWrapper,
-                                 protected val uiHandler: Handler,
-                                 val fetchHandler: FetchHandler,
-                                 protected val logger: Logger,
-                                 protected val listenerCoordinator: ListenerCoordinator) : Fetch {
+                                 private val handlerWrapper: HandlerWrapper,
+                                 private val uiHandler: Handler,
+                                 private val fetchHandler: FetchHandler,
+                                 private val logger: Logger,
+                                 private val listenerCoordinator: ListenerCoordinator) : Fetch {
 
-    protected val lock = Object()
+    private val lock = Object()
     @Volatile
     private var closed = false
     override val isClosed: Boolean
-        get() = closed
+        get() {
+            return closed
+        }
 
     init {
         handlerWrapper.post {
@@ -29,49 +31,21 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun enqueue(request: Request, func: Func<Request>?, func2: Func<Error>?): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val download = fetchHandler.enqueue(request)
-                    if (func != null) {
-                        uiHandler.post {
-                            func.call(download.request)
-                        }
-                    }
-                    uiHandler.post {
-                        listenerCoordinator.mainListener.onAdded(download)
-                        logger.d("Added Download $download")
-                        if (download.status == Status.QUEUED) {
-                            listenerCoordinator.mainListener.onQueued(download, false)
-                            logger.d("Queued $download for download")
-                        }
-                    }
-                } catch (e: Exception) {
-                    logger.e("Failed to enqueue request $request", e)
-                    val error = getErrorFromMessage(e.message)
-                    if (func2 != null) {
-                        uiHandler.post {
-                            func2.call(error)
-                        }
-                    }
-                }
-            }
-            return this
-        }
+        enqueueRequest(listOf(request), Func { result -> func?.call(result.first()) }, func2)
+        return this
     }
 
     override fun enqueue(requests: List<Request>, func: Func<List<Request>>?, func2: Func<Error>?): Fetch {
+        enqueueRequest(requests, func, func2)
+        return this
+    }
+
+    private fun enqueueRequest(requests: List<Request>, func: Func<List<Request>>?, func2: Func<Error>?) {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
                     val downloads = fetchHandler.enqueue(requests)
-                    if (func != null) {
-                        uiHandler.post {
-                            func.call(downloads.map { it.request })
-                        }
-                    }
                     uiHandler.post {
                         downloads.forEach {
                             listenerCoordinator.mainListener.onAdded(it)
@@ -81,6 +55,7 @@ open class FetchImpl constructor(override val namespace: String,
                                 logger.d("Queued $it for download")
                             }
                         }
+                        func?.call(downloads.map { it.request })
                     }
                 } catch (e: Exception) {
                     logger.e("Failed to enqueue list $requests")
@@ -93,84 +68,167 @@ open class FetchImpl constructor(override val namespace: String,
                 }
 
             }
-            return this
         }
     }
 
-    override fun pause(vararg ids: Int): Fetch {
+    override fun pause(ids: List<Int>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        pauseDownloads(ids, null, func, func2)
+        return this
+    }
+
+    override fun pause(ids: List<Int>): Fetch {
+        return pause(ids, null, null)
+    }
+
+    override fun pause(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
+        return pause(listOf(id), Func { func?.call(it.first()) }, func2)
+    }
+
+    override fun pause(id: Int): Fetch {
+        return pause(id, null, null)
+    }
+
+    override fun pauseGroup(id: Int, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        pauseDownloads(null, id, func, func2)
+        return this
+    }
+
+    private fun pauseDownloads(ids: List<Int>?, groupId: Int?, func: Func<List<Download>>?, func2: Func<Error>?) {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.pause(ids)
+                    val downloads = if (ids != null) {
+                        fetchHandler.pause(ids)
+                    } else {
+                        if (groupId != null) {
+                            fetchHandler.pausedGroup(groupId)
+                        } else {
+                            listOf()
+                        }
+                    }
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Paused download $it")
                             listenerCoordinator.mainListener.onPaused(it)
                         }
+                        func?.call(downloads)
                     }
-                } catch (e: FetchException) {
+                } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
                 }
             }
-            return this
         }
     }
 
     override fun pauseGroup(id: Int): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.pausedGroup(id)
-                    uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Paused download $it")
-                            listenerCoordinator.mainListener.onPaused(it)
-                        }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
+        return pauseGroup(id, null, null)
     }
 
-    override fun freeze(): Fetch {
-        synchronized(lock) {
+    override fun freeze(func: Func<Boolean>?, func2: Func<Error>?): Fetch {
+        return synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
                     fetchHandler.freeze()
-                } catch (e: FetchException) {
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(true)
+                        }
+                    }
+                } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
                 }
             }
-            return this
+            this
         }
     }
 
-    override fun unfreeze(): Fetch {
-        synchronized(lock) {
+    override fun freeze(): Fetch {
+        return freeze(null, null)
+    }
+
+    override fun unfreeze(func: Func<Boolean>?, func2: Func<Error>?): Fetch {
+        return synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
                     fetchHandler.unfreeze()
-                } catch (e: FetchException) {
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(true)
+                        }
+                    }
+                } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
                 }
             }
-            return this
+            this
         }
     }
 
-    override fun resume(vararg ids: Int): Fetch {
+    override fun unfreeze(): Fetch {
+        return unfreeze(null, null)
+    }
+
+    override fun resume(ids: List<Int>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        resumeDownloads(ids, null, func, func2)
+        return this
+    }
+
+    override fun resume(ids: List<Int>): Fetch {
+        return resume(ids, null, null)
+    }
+
+    override fun resume(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
+        return resume(listOf(id), Func { func?.call(it.first()) }, func2)
+    }
+
+    override fun resume(id: Int): Fetch {
+        return resume(id, null, null)
+    }
+
+    override fun resumeGroup(id: Int, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        resumeDownloads(null, id, func, func2)
+        return this
+    }
+
+    override fun resumeGroup(id: Int): Fetch {
+        return resumeGroup(id, null, null)
+    }
+
+    private fun resumeDownloads(ids: List<Int>?, groupId: Int?, func: Func<List<Download>>?, func2: Func<Error>?) {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.resume(ids)
+                    val downloads = if (ids != null) {
+                        fetchHandler.resume(ids)
+                    } else {
+                        if (groupId != null) {
+                            fetchHandler.resumeGroup(groupId)
+                        } else {
+                            listOf()
+                        }
+                    }
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Queued download $it")
@@ -178,258 +236,232 @@ open class FetchImpl constructor(override val namespace: String,
                             logger.d("Resumed download $it")
                             listenerCoordinator.mainListener.onResumed(it)
                         }
+                        func?.call(downloads)
                     }
-                } catch (e: FetchException) {
+                } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
                 }
             }
-            return this
         }
     }
 
-    override fun resumeGroup(id: Int): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.resumeGroup(id)
-                    uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Resumed download $it")
-                            listenerCoordinator.mainListener.onResumed(it)
-                        }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
+    override fun remove(ids: List<Int>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeRemoveAction({ fetchHandler.remove(ids) }, func, func2)
     }
 
-    override fun remove(vararg ids: Int): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.remove(ids)
-                    uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Removed download $it")
-                            listenerCoordinator.mainListener.onRemoved(it)
-                        }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
+    override fun remove(ids: List<Int>): Fetch {
+        return remove(ids, null, null)
+    }
+
+    override fun remove(id: Int): Fetch {
+        return remove(id, null, null)
+    }
+
+    override fun remove(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
+        return remove(listOf(id), Func { func?.call(it.first()) }, func2)
+    }
+
+    override fun removeGroup(id: Int, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeRemoveAction({ fetchHandler.removeGroup(id) }, func, func2)
     }
 
     override fun removeGroup(id: Int): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.removeGroup(id)
-                    uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Removed download $it")
-                            listenerCoordinator.mainListener.onRemoved(it)
-                        }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
+        return removeGroup(id, null, null)
+    }
+
+    override fun removeAll(func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeRemoveAction({ fetchHandler.removeAll() }, func, func2)
     }
 
     override fun removeAll(): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.removeAll()
-                    uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Removed download $it")
-                            listenerCoordinator.mainListener.onRemoved(it)
-                        }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
+        return removeAll(null, null)
+    }
+
+    override fun removeAllWithStatus(status: Status, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeRemoveAction({ fetchHandler.removeAllWithStatus(status) }, func, func2)
     }
 
     override fun removeAllWithStatus(status: Status): Fetch {
-        synchronized(lock) {
+        return removeAllWithStatus(status, null, null)
+    }
+
+    override fun removeAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeRemoveAction({ fetchHandler.removeAllInGroupWithStatus(id, status) }, func, func2)
+    }
+
+    override fun removeAllInGroupWithStatus(id: Int, status: Status): Fetch {
+        return removeAllInGroupWithStatus(id, status, null, null)
+    }
+
+    private fun executeRemoveAction(downloadAction: () -> List<Download>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.removeAllWithStatus(status)
+                    val downloads = downloadAction.invoke()
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Removed download $it")
                             listenerCoordinator.mainListener.onRemoved(it)
                         }
+                        func?.call(downloads)
                     }
-                } catch (e: FetchException) {
+                } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
                 }
             }
-            return this
+            this
         }
     }
 
-    override fun delete(vararg ids: Int): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.delete(ids)
-                    uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Deleted download $it")
-                            listenerCoordinator.mainListener.onDeleted(it)
-                        }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
+    override fun delete(ids: List<Int>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeDeleteAction({ fetchHandler.delete(ids) }, func, func2)
+    }
+
+    override fun delete(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
+        return delete(listOf(id), Func { func?.call(it.first()) }, func2)
+    }
+
+    override fun deleteGroup(id: Int, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeDeleteAction({ fetchHandler.deleteGroup(id) }, func, func2)
+    }
+
+    override fun delete(ids: List<Int>): Fetch {
+        return delete(ids, null, null)
+    }
+
+    override fun delete(id: Int): Fetch {
+        return delete(id, null, null)
     }
 
     override fun deleteGroup(id: Int): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.deleteGroup(id)
-                    uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Deleted download $it")
-                            listenerCoordinator.mainListener.onDeleted(it)
-                        }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
+        return deleteGroup(id, null, null)
+    }
+
+    override fun deleteAll(func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeDeleteAction({ fetchHandler.deleteAll() }, func, func2)
     }
 
     override fun deleteAll(): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.deleteAll()
-                    uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Deleted download $it")
-                            listenerCoordinator.mainListener.onDeleted(it)
-                        }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
+        return deleteAll(null, null)
+    }
+
+    override fun deleteAllWithStatus(status: Status, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeDeleteAction({ fetchHandler.deleteAllWithStatus(status) }, func, func2)
     }
 
     override fun deleteAllWithStatus(status: Status): Fetch {
-        synchronized(lock) {
+        return deleteAllWithStatus(status, null, null)
+    }
+
+    override fun deleteAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeDeleteAction({ fetchHandler.deleteAllInGroupWithStatus(id, status) }, func, func2)
+    }
+
+    override fun deleteAllInGroupWithStatus(id: Int, status: Status): Fetch {
+        return deleteAllInGroupWithStatus(id, status, null, null)
+    }
+
+    private fun executeDeleteAction(downloadAction: () -> List<Download>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.deleteAllWithStatus(status)
+                    val downloads = downloadAction.invoke()
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Deleted download $it")
                             listenerCoordinator.mainListener.onDeleted(it)
                         }
+                        func?.call(downloads)
                     }
-                } catch (e: FetchException) {
+                } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
                 }
             }
-            return this
+            this
         }
     }
 
-    override fun cancel(vararg ids: Int): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.cancel(ids)
-                    uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Cancelled download $it")
-                            listenerCoordinator.mainListener.onCancelled(it)
-                        }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
+    override fun cancel(ids: List<Int>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeCancelAction({ fetchHandler.cancel(ids) }, func, func2)
+    }
+
+    override fun cancel(ids: List<Int>): Fetch {
+        return cancel(ids, null, null)
+    }
+
+    override fun cancel(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
+        return cancel(listOf(id), Func { func?.call(it.first()) }, func2)
+    }
+
+    override fun cancel(id: Int): Fetch {
+        return cancel(id, null, null)
+    }
+
+    override fun cancelGroup(id: Int, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeCancelAction({ fetchHandler.cancelGroup(id) }, func, func2)
     }
 
     override fun cancelGroup(id: Int): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.cancelGroup(id)
-                    uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Cancelled download $it")
-                            listenerCoordinator.mainListener.onCancelled(it)
-                        }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
+        return cancelGroup(id, null, null)
     }
 
+    override fun cancelAll(func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeCancelAction({ fetchHandler.cancelAll() }, func, func2)
+    }
 
     override fun cancelAll(): Fetch {
-        synchronized(lock) {
+        return cancelAll(null, null)
+    }
+
+    private fun executeCancelAction(downloadAction: () -> List<Download>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val downloads = fetchHandler.cancelAll()
+                    val downloads = downloadAction.invoke()
                     uiHandler.post {
                         downloads.forEach {
                             logger.d("Cancelled download $it")
                             listenerCoordinator.mainListener.onCancelled(it)
                         }
+                        func?.call(downloads)
                     }
-                } catch (e: FetchException) {
+                } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
                 }
             }
-            return this
+            this
         }
     }
 
-    override fun retry(vararg ids: Int): Fetch {
-        synchronized(lock) {
+    override fun retry(ids: List<Int>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
@@ -439,34 +471,10 @@ open class FetchImpl constructor(override val namespace: String,
                             logger.d("Queued $it for download")
                             listenerCoordinator.mainListener.onQueued(it, false)
                         }
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
-            }
-            return this
-        }
-    }
-
-    override fun updateRequest(oldRequestId: Int, newRequest: Request, func: Func<Download>?,
-                               func2: Func<Error>?): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val download = fetchHandler.updateRequest(oldRequestId, newRequest)
-                    if (download != null && func != null) {
-                        uiHandler.post {
-                            func.call(download)
-                        }
-                    }
-                    if (download == null && func2 != null) {
-                        uiHandler.post {
-                            func2.call(Error.DOWNLOAD_NOT_FOUND)
-                        }
+                        func?.call(downloads)
                     }
                 } catch (e: Exception) {
-                    logger.e("Failed to update request with id $oldRequestId", e)
+                    logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
                     if (func2 != null) {
                         uiHandler.post {
@@ -475,38 +483,68 @@ open class FetchImpl constructor(override val namespace: String,
                     }
                 }
             }
-            return this
+            this
+        }
+    }
+
+    override fun retry(ids: List<Int>): Fetch {
+        return retry(ids, null, null)
+    }
+
+    override fun retry(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
+        return retry(listOf(id), Func { func?.call(it.first()) }, func2)
+    }
+
+    override fun retry(id: Int): Fetch {
+        return retry(id, null, null)
+    }
+
+    override fun updateRequest(requestId: Int, updatedRequest: Request, func: Func<Download>?,
+                               func2: Func<Error>?): Fetch {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val download = fetchHandler.updateRequest(requestId, updatedRequest)
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(download)
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.e("Failed to update request with id $requestId", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
+                }
+            }
+            this
         }
     }
 
     override fun getDownloads(func: Func<List<Download>>): Fetch {
-        synchronized(lock) {
+        return synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.getDownloads()
-                    uiHandler.post {
-                        func.call(downloads)
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
+                val downloads = fetchHandler.getDownloads()
+                uiHandler.post {
+                    func.call(downloads)
                 }
             }
-            return this
+            this
         }
     }
 
-    override fun getDownload(id: Int, func: Func2<Download?>): Fetch {
+    override fun getDownload(id: Int, func2: Func2<Download?>): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    val download = fetchHandler.getDownload(id)
-                    uiHandler.post {
-                        func.call(download)
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
+                val download = fetchHandler.getDownload(id)
+                uiHandler.post {
+                    func2.call(download)
                 }
             }
             return this
@@ -517,13 +555,9 @@ open class FetchImpl constructor(override val namespace: String,
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.getDownloads(idList)
-                    uiHandler.post {
-                        func.call(downloads)
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
+                val downloads = fetchHandler.getDownloads(idList)
+                uiHandler.post {
+                    func.call(downloads)
                 }
             }
             return this
@@ -534,13 +568,9 @@ open class FetchImpl constructor(override val namespace: String,
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.getDownloadsInGroup(groupId)
-                    uiHandler.post {
-                        func.call(downloads)
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
+                val downloads = fetchHandler.getDownloadsInGroup(groupId)
+                uiHandler.post {
+                    func.call(downloads)
                 }
             }
             return this
@@ -551,13 +581,9 @@ open class FetchImpl constructor(override val namespace: String,
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.getDownloadsWithStatus(status)
-                    uiHandler.post {
-                        func.call(downloads)
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
+                val downloads = fetchHandler.getDownloadsWithStatus(status)
+                uiHandler.post {
+                    func.call(downloads)
                 }
             }
             return this
@@ -568,13 +594,9 @@ open class FetchImpl constructor(override val namespace: String,
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.getDownloadsInGroupWithStatus(groupId, status)
-                    uiHandler.post {
-                        func.call(downloads)
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
+                val downloads = fetchHandler.getDownloadsInGroupWithStatus(groupId, status)
+                uiHandler.post {
+                    func.call(downloads)
                 }
             }
             return this
@@ -585,13 +607,9 @@ open class FetchImpl constructor(override val namespace: String,
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    val downloads = fetchHandler.getDownloadsByRequestIdentifier(identifier)
-                    uiHandler.post {
-                        func.call(downloads)
-                    }
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
+                val downloads = fetchHandler.getDownloadsByRequestIdentifier(identifier)
+                uiHandler.post {
+                    func.call(downloads)
                 }
             }
             return this
@@ -599,32 +617,7 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun addCompletedDownload(completedDownload: CompletedDownload, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            handlerWrapper.post {
-                try {
-                    val download = fetchHandler.enqueueCompletedDownload(completedDownload)
-                    if (func != null) {
-                        uiHandler.post {
-                            func.call(download)
-                        }
-                    }
-                    uiHandler.post {
-                        listenerCoordinator.mainListener.onCompleted(download)
-                        logger.d("Added CompletedDownload $download")
-                    }
-                } catch (e: Exception) {
-                    logger.e("Failed to add CompletedDownload $completedDownload", e)
-                    val error = getErrorFromMessage(e.message)
-                    if (func2 != null) {
-                        uiHandler.post {
-                            func2.call(error)
-                        }
-                    }
-                }
-            }
-            return this
-        }
+        return addCompletedDownloads(listOf(completedDownload), Func { func?.call(it.first()) }, func2)
     }
 
     override fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
@@ -633,16 +626,12 @@ open class FetchImpl constructor(override val namespace: String,
             handlerWrapper.post {
                 try {
                     val downloads = fetchHandler.enqueueCompletedDownloads(completedDownloads)
-                    if (func != null) {
-                        uiHandler.post {
-                            func.call(downloads)
-                        }
-                    }
                     uiHandler.post {
                         downloads.forEach {
                             listenerCoordinator.mainListener.onCompleted(it)
                             logger.d("Added CompletedDownload $it")
                         }
+                        func?.call(downloads)
                     }
                 } catch (e: Exception) {
                     logger.e("Failed to add CompletedDownload list $completedDownloads")
@@ -687,13 +676,55 @@ open class FetchImpl constructor(override val namespace: String,
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
+                val downloadBlocksList = fetchHandler.getDownloadBlocks(downloadId)
+                uiHandler.post {
+                    func.call(downloadBlocksList)
+                }
+            }
+            return this
+        }
+    }
+
+    override fun getContentLengthForRequest(request: Request, fromServer: Boolean, func: Func<Long>, func2: Func<Error>?): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.executeWorkerTask {
                 try {
-                    val downloadBlocksList = fetchHandler.getDownloadBlocks(downloadId)
+                    val contentLength = fetchHandler.getContentLengthForRequest(request, fromServer)
                     uiHandler.post {
-                        func.call(downloadBlocksList)
+                        func.call(contentLength)
                     }
-                } catch (e: FetchException) {
+                } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
+                }
+            }
+            return this
+        }
+    }
+
+    override fun getFetchFileServerCatalog(request: Request, func: Func<List<FileResource>>, func2: Func<Error>?): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.executeWorkerTask {
+                try {
+                    val fileResourceList = fetchHandler.getFetchFileServerCatalog(request)
+                    uiHandler.post {
+                        func.call(fileResourceList)
+                    }
+                } catch (e: Exception) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
                 }
             }
             return this
@@ -704,11 +735,7 @@ open class FetchImpl constructor(override val namespace: String,
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    fetchHandler.setGlobalNetworkType(networkType)
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
+                fetchHandler.setGlobalNetworkType(networkType)
             }
             return this
         }
@@ -718,11 +745,7 @@ open class FetchImpl constructor(override val namespace: String,
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                try {
-                    fetchHandler.enableLogging(enabled)
-                } catch (e: FetchException) {
-                    logger.e("Fetch with namespace $namespace error", e)
-                }
+                fetchHandler.enableLogging(enabled)
             }
             return this
         }
@@ -745,11 +768,10 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
-    protected fun throwExceptionIfClosed() {
+    private fun throwExceptionIfClosed() {
         if (closed) {
             throw FetchException("This fetch instance has been closed. Create a new " +
-                    "instance using the builder.",
-                    FetchException.Code.CLOSED)
+                    "instance using the builder.")
         }
     }
 

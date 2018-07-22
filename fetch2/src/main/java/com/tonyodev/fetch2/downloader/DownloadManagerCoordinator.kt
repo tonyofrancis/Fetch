@@ -1,26 +1,21 @@
-package com.tonyodev.fetch2.fetch
-
-import com.tonyodev.fetch2.downloader.FileDownloader
+package com.tonyodev.fetch2.downloader
 
 class DownloadManagerCoordinator(val namespace: String) {
 
     private val lock = Any()
-    private val fileDownloaderMap = mutableMapOf<Int, FileDownloader>()
+    private val fileDownloaderMap = mutableMapOf<Int, FileDownloader?>()
 
     fun interruptDownload(downloadId: Int) {
         synchronized(lock) {
             val fileDownloader = fileDownloaderMap[downloadId]
             if (fileDownloader != null) {
                 fileDownloader.interrupted = true
-                while (!fileDownloader.terminated) {
-                    //Wait until download runnable terminates
-                }
                 fileDownloaderMap.remove(downloadId)
             }
         }
     }
 
-    fun addFileDownloader(downloadId: Int, fileDownloader: FileDownloader) {
+    fun addFileDownloader(downloadId: Int, fileDownloader: FileDownloader?) {
         synchronized(lock) {
             fileDownloaderMap[downloadId] = fileDownloader
         }
@@ -32,7 +27,7 @@ class DownloadManagerCoordinator(val namespace: String) {
         }
     }
 
-    fun getFileDownloaderList(): List<FileDownloader> {
+    fun getFileDownloaderList(): List<FileDownloader?> {
         return synchronized(lock) {
             fileDownloaderMap.values.toList()
         }
@@ -40,8 +35,7 @@ class DownloadManagerCoordinator(val namespace: String) {
 
     fun containsFileDownloader(downloadId: Int): Boolean {
         return synchronized(lock) {
-            val fileDownloader = fileDownloaderMap[downloadId]
-            fileDownloader != null
+            fileDownloaderMap.containsKey(downloadId)
         }
     }
 

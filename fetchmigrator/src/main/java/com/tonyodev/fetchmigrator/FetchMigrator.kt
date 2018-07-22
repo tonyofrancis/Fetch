@@ -8,6 +8,7 @@ import android.support.annotation.WorkerThread
 import com.tonyodev.fetch2.database.DatabaseManagerImpl
 import com.tonyodev.fetch2.database.DownloadDatabase
 import com.tonyodev.fetch2.database.DownloadInfo
+import com.tonyodev.fetch2.fetch.LiveSettings
 import com.tonyodev.fetch2core.FetchLogger
 import com.tonyodev.fetchmigrator.fetch1.DatabaseHelper
 import com.tonyodev.fetchmigrator.fetch1.DownloadTransferPair
@@ -41,6 +42,7 @@ fun migrateFromV1toV2(context: Context, v2Namespace: String): List<DownloadTrans
     fetchOneDatabaseHelper.clean()
     fetchOneDatabaseHelper.verifyOK()
     val downloadInfoList = mutableListOf<DownloadTransferPair>()
+    val liveSettings = LiveSettings(v2Namespace)
     val cursor = fetchOneDatabaseHelper.get()
     if (cursor != null) {
         cursor.moveToFirst()
@@ -54,8 +56,8 @@ fun migrateFromV1toV2(context: Context, v2Namespace: String): List<DownloadTrans
         val fetchTwoDatabaseManager = DatabaseManagerImpl(
                 context = context,
                 namespace = v2Namespace,
-                logger = FetchLogger(),
-                migrations = DownloadDatabase.getMigrations())
+                migrations = DownloadDatabase.getMigrations(),
+                liveSettings = liveSettings)
         fetchTwoDatabaseManager.insert(downloadInfoList.map { it.newDownload as DownloadInfo })
         fetchTwoDatabaseManager.close()
     }

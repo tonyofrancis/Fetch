@@ -115,6 +115,22 @@ class ListenerCoordinator(val namespace: String) {
             }
         }
 
+        override fun onStarted(download: Download) {
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onStarted(download)
+                        }
+                    }
+                }
+            }
+        }
+
         override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
             synchronized(lock) {
                 listenerMap.values.forEach {
@@ -213,7 +229,9 @@ class ListenerCoordinator(val namespace: String) {
     }
 
     fun clearAll() {
-        listenerMap.clear()
+        synchronized(lock) {
+            listenerMap.clear()
+        }
     }
 
 }

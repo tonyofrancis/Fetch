@@ -1,9 +1,6 @@
 package com.tonyodev.fetch2okhttp
 
-import com.tonyodev.fetch2core.Downloader
-import com.tonyodev.fetch2core.InterruptMonitor
-import com.tonyodev.fetch2core.OutputResourceWrapper
-import com.tonyodev.fetch2core.getFileMd5String
+import com.tonyodev.fetch2core.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -41,7 +38,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
             .retryOnConnectionFailure(false)
             .build()
 
-    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
         val okHttpRequestBuilder = Request.Builder()
                 .url(request.url)
                 .method(request.requestMethod, null)
@@ -131,7 +128,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
+    override fun getRequestFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
         return fileDownloaderType
     }
 
@@ -148,7 +145,19 @@ open class OkHttpDownloader @JvmOverloads constructor(
     }
 
     override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
-        return true
+        return false
+    }
+
+    override fun getRequestBufferSize(request: Downloader.ServerRequest): Int {
+        return DEFAULT_BUFFER_SIZE
+    }
+
+    override fun getRequestContentLength(request: Downloader.ServerRequest): Long {
+        return getRequestContentLength(request, this)
+    }
+
+    override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        return getRequestSupportedFileDownloaderTypes(request, this)
     }
 
 }

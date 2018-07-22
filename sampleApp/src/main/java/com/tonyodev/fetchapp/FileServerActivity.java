@@ -20,11 +20,9 @@ import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FileResource;
-import com.tonyodev.fetch2downloaders.FetchFileResourceDownloadTask;
-import com.tonyodev.fetch2downloaders.FileDownloadTask;
 import com.tonyodev.fetch2fileserver.FetchFileServer;
-import com.tonyodev.fetch2downloaders.FetchFileServerDownloader;
-import com.tonyodev.fetch2core.FetchFileServerUrlBuilder;
+import com.tonyodev.fetch2.FetchFileServerDownloader;
+import com.tonyodev.fetch2core.FetchFileServerUriBuilder;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +46,6 @@ public class FileServerActivity extends AppCompatActivity {
     private TextView textView;
     private FetchFileServer fetchFileServer;
     private Fetch fetch;
-    private FetchFileResourceDownloadTask<File> downloadTask;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -114,31 +111,9 @@ public class FileServerActivity extends AppCompatActivity {
         fetchFileServer.addFileResource(fileResource);
 
         downloadFileResourceUsingFetch();
-
-        //Can download with Fetch or a FetchFileResourceDownloadTask
-        downloadTask = new FileDownloadTask(fileResource.getName(),
-                getFile("(2)"),
-                fetchFileServer.getAddress(),
-                fetchFileServer.getPort(),
-                "password") {
-
-            @Override
-            protected void onProgress(int progress) {
-                Timber.d("Download From FileServer Progress: " + progress + "%");
-            }
-
-            @Override
-            public void onError(@org.jetbrains.annotations.Nullable Integer httpStatusCode, @org.jetbrains.annotations.Nullable Throwable throwable) {
-                Timber.d("Download From FileServer Error " + httpStatusCode);
-            }
-
-            @Override
-            public void onComplete(@org.jetbrains.annotations.NotNull File result) {
-                Timber.d("Download From FileServer completed");
-            }
-
-        };
-        downloadTask.execute();
+        fetch.getFetchFileServerCatalog(getCatalogRequest(),
+                result -> Timber.d("Catalog:" + result.toString()),
+                error -> Timber.d("Catalog Fetch error:" + error.toString()));
     }
 
     private void downloadFileResourceUsingFetch() {
@@ -150,10 +125,21 @@ public class FileServerActivity extends AppCompatActivity {
     }
 
     private Request getRequest() {
-        final String url = new FetchFileServerUrlBuilder()
+        final String url = new FetchFileServerUriBuilder()
                 .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
                 .setFileResourceIdentifier(CONTENT_PATH)
-                .create();
+                .toString();
+        final Request request = new Request(url, getFile("(1)"));
+        request.addHeader("Authorization", "password");
+        request.setPriority(Priority.HIGH);
+        return request;
+    }
+
+    private Request getCatalogRequest() {
+        final String url = new FetchFileServerUriBuilder()
+                .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
+                .setFileResourceIdentifier("Catalog.json")
+                .toString();
         final Request request = new Request(url, getFile("(1)"));
         request.addHeader("Authorization", "password");
         request.setPriority(Priority.HIGH);
@@ -167,9 +153,6 @@ public class FileServerActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (downloadTask != null && downloadTask.isRunning()) {
-            downloadTask.cancel();
-        }
         fetch.addListener(fetchListener);
     }
 
@@ -183,9 +166,6 @@ public class FileServerActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         fetch.close();
-        if (downloadTask != null && downloadTask.isRunning()) {
-            downloadTask.cancel();
-        }
         fetchFileServer.shutDown(false);
     }
 

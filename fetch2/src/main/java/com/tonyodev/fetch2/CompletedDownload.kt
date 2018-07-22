@@ -32,6 +32,9 @@ open class CompletedDownload : Parcelable {
     /** The timestamp when this download was created.*/
     var created: Long = Date().time
 
+    /** The extras associated with this download. */
+    var extras: Map<String, String> = mapOf()
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -43,6 +46,7 @@ open class CompletedDownload : Parcelable {
         if (tag != other.tag) return false
         if (identifier != other.identifier) return false
         if (created != other.created) return false
+        if (extras != other.extras) return false
         return true
     }
 
@@ -54,12 +58,14 @@ open class CompletedDownload : Parcelable {
         result = 31 * result + (tag?.hashCode() ?: 0)
         result = 31 * result + identifier.hashCode()
         result = 31 * result + created.hashCode()
+        result = 31 * result + extras.hashCode()
         return result
     }
 
     override fun toString(): String {
         return "CompletedDownload(url='$url', file='$file', groupId=$group, " +
-                "headers=$headers, tag=$tag, identifier=$identifier, created=$created)"
+                "headers=$headers, tag=$tag, identifier=$identifier, created=$created, " +
+                "extras=$extras)"
     }
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
@@ -71,6 +77,7 @@ open class CompletedDownload : Parcelable {
         dest.writeString(tag)
         dest.writeLong(identifier)
         dest.writeLong(created)
+        dest.writeSerializable(HashMap(extras))
     }
 
     override fun describeContents(): Int {
@@ -89,6 +96,7 @@ open class CompletedDownload : Parcelable {
             val tag = source.readString()
             val identifier = source.readLong()
             val created = source.readLong()
+            val extras = source.readSerializable() as Map<String, String>
 
             val completedDownload = CompletedDownload()
             completedDownload.url = url
@@ -99,6 +107,7 @@ open class CompletedDownload : Parcelable {
             completedDownload.tag = tag
             completedDownload.identifier = identifier
             completedDownload.created = created
+            completedDownload.extras = extras
             return completedDownload
         }
 

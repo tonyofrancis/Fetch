@@ -1,3 +1,38 @@
+Version 2.2.0-RC1
+This version has so many fixes and improvements that I forgot half of them. Listing all I can remember and marked correctly in the commits.
+Big thanks to @duncanokeyo on Github for continuously pointing out issues and improvements.
+- Fixed issue where DownloadConcurrent issue was not working.
+- Fixed issue where Sequential Downloader reported download progress in the wrong order.
+- Added new onStarted(download) method on FetchListener
+- Request class has a new field call extras of type Map<String, String>. Use this field to store additional data with a request.
+- Download interface has new field called extras of type Map<String, String> that returns the extras of a request.
+- Control a download's speed by overriding downloader method getRequestBufferSize(request): Int
+- To update information on a request. Call Fetch method updateRequest(requestId, updatedRequest, func, func2)
+- FetchListener method onDownloadBlockUpdated(download, downloadBlock, totalBlocks) is now called in a timely fashion
+- Added new Fetch method getContentLengthForRequest(request, fromServer, func, func2)that returns the content-length
+ of a download. You can call this method before or after enqueuing a download. It works independently of other Fetch actions.
+- Added new Fetch method getFetchFileServerCatalog(request, func, func2). Use this method to get the full file resource catalog of a FetchFileServer.
+- Many Fetch action methods(pause, resume, retry, etc) now take two additional callback to are notified of the success and failure of an
+  action. Read the Javadocs for more information on what data is returned to the callback methods.
+- RxFetch no longer extends Fetch interface. The allowed several fixes and improvements.
+- Downloader method getHeadRequestMethodSupported(request) now default to false unless you override
+- Downloader interface has several new methods and improvements.
+- Downloader method getRequestFileDownloaderType now take an additional parameter of type Set<Downloader.FileDownloaderType>
+  that returns a set of supported FileDownloaderTypes for a request.
+- Sequential downloader has been improved
+- Parallel downloader has been improved.
+- Many fixes when more that one fetch instances share the same namespace.
+- Download status reporting fixes.
+- FetchFileServerDownloader class now moved into package com.tonyodev.fetch2
+- Fetch action methods(pause, resume, retry, etc) now return the proper error when the action fails. Use action methods with callback params.
+- HttpUrlConnectionDownloader, OkHttpDownloader, FetchFileServerDownloader improvements
+- General error reporting improvements.
+- FetchFileServer improvements
+- FileResource class updates
+- Removed FetchFileResourceDownloadTask class
+- General bug fixes and improvements
+
+
 Version 2.1.0-RC15
 - Downloader improvements
 - Added new method fun getHeadRequestMethodSupported(request: ServerRequest): Boolean for downloader. True by default.

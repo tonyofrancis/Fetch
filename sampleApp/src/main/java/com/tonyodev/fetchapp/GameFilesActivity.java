@@ -109,7 +109,8 @@ public class GameFilesActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        rxFetch.deleteAll().close();
+        rxFetch.deleteAll();
+        rxFetch.close();
         if (enqueueDisposable != null && !enqueueDisposable.isDisposed()) {
             enqueueDisposable.dispose();
         }

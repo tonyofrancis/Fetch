@@ -22,7 +22,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                                             private val listenerCoordinator: ListenerCoordinator)
     : PriorityListProcessor<Download> {
 
-    private val lock = Object()
+    private val lock = Any()
     @Volatile
     override var globalNetworkType = NetworkType.GLOBAL_OFF
     @Volatile
@@ -39,41 +39,34 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
             if (downloadManager.canAccommodateNewDownload()) {
                 val priorityList = getPriorityList()
                 for (index in 0..priorityList.lastIndex) {
-                    val download = priorityList[index]
-                    val isFetchServerRequest = try {
-                        isFetchFileServerUrl(download.url)
-                    } catch (e: Exception) {
-                        false
-                    }
-                    if (canContinueToProcess() && (isFetchServerRequest || networkInfoProvider.isNetworkAvailable)) {
-                        val networkType = when {
-                            globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
-                            download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
-                            else -> download.networkType
-                        }
-                        val properNetworkCondition = networkInfoProvider.isOnAllowedNetwork(networkType)
-                        if (!properNetworkCondition) {
-                            uiHandler.post {
-                                listenerCoordinator.mainListener.onQueued(download, true)
+                    if (downloadManager.canAccommodateNewDownload()) {
+                        val download = priorityList[index]
+                        val isFetchServerRequest = isFetchFileServerUrl(download.url)
+                        if (isFetchServerRequest || networkInfoProvider.isNetworkAvailable) {
+                            val networkType = when {
+                                globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
+                                download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
+                                else -> download.networkType
                             }
-                        }
-                        if ((isFetchServerRequest || properNetworkCondition) && canContinueToProcess()
-                                && !downloadManager.contains(download.id)) {
-                            downloadManager.start(download)
+                            val properNetworkConditions = networkInfoProvider.isOnAllowedNetwork(networkType)
+                            if (!properNetworkConditions) {
+                                uiHandler.post {
+                                    listenerCoordinator.mainListener.onQueued(download, true)
+                                }
+                            }
+                            if ((isFetchServerRequest || properNetworkConditions) && !downloadManager.contains(download.id)) {
+                                downloadManager.start(download)
+                            }
+                        } else {
+                            break
                         }
                     } else {
                         break
                     }
                 }
             }
-            if (canContinueToProcess()) {
-                registerPriorityIterator()
-            }
+            registerPriorityIterator()
         }
-    }
-
-    private fun canContinueToProcess(): Boolean {
-        return !stopped && !paused
     }
 
     override fun start() {
@@ -128,6 +121,10 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
 
     private fun unregisterPriorityIterator() {
         handlerWrapper.removeCallbacks(priorityIteratorRunnable)
+    }
+
+    private fun canContinueToProcess(): Boolean {
+        return !stopped && !paused
     }
 
 }

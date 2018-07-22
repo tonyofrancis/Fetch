@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2core.transporter
+package com.tonyodev.fetch2core.server
 
 interface FileResourceTransporterWriter {
 

@@ -1,7 +1,6 @@
 package com.tonyodev.fetchapp;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -31,7 +30,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
     @NonNull
     private final ActionListener actionListener;
 
-    public FileAdapter(@NonNull final ActionListener actionListener) {
+    FileAdapter(@NonNull final ActionListener actionListener) {
         this.actionListener = actionListener;
     }
 
@@ -134,12 +133,11 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         //Set delete action
         holder.itemView.setOnLongClickListener(v -> {
             final Uri uri12 = Uri.parse(downloadData.download.getUrl());
-            new AlertDialog.Builder(context).setMessage(context.getString(R.string.delete_title, uri12.getLastPathSegment())).setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    actionListener.onRemoveDownload(downloadData.download.getId());
-                }
-            }).setNegativeButton(R.string.cancel, null).show();
+            new AlertDialog.Builder(context)
+                    .setMessage(context.getString(R.string.delete_title, uri12.getLastPathSegment()))
+                    .setPositiveButton(R.string.delete, (dialog, which) -> actionListener.onRemoveDownload(downloadData.download.getId()))
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
 
             return true;
         });
@@ -199,7 +197,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         }
     }
 
-    public String getStatusString(Status status) {
+    private String getStatusString(Status status) {
         switch (status) {
             case COMPLETED:
                 return "Done";
@@ -223,12 +221,12 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         public final TextView titleTextView;
-        public final TextView statusTextView;
+        final TextView statusTextView;
         public final ProgressBar progressBar;
         public final TextView progressTextView;
         public final Button actionButton;
-        public final TextView timeRemainingTextView;
-        public final TextView downloadedBytesPerSecondTextView;
+        final TextView timeRemainingTextView;
+        final TextView downloadedBytesPerSecondTextView;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -247,8 +245,8 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         public int id;
         @Nullable
         public Download download;
-        public long eta = -1;
-        public long downloadedBytesPerSecond = 0;
+        long eta = -1;
+        long downloadedBytesPerSecond = 0;
 
         @Override
         public int hashCode() {

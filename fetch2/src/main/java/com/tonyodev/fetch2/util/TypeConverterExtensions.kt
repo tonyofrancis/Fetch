@@ -22,6 +22,7 @@ fun Request.toDownloadInfo(): DownloadInfo {
     downloadInfo.enqueueAction = enqueueAction
     downloadInfo.identifier = identifier
     downloadInfo.downloadOnEnqueue = downloadOnEnqueue
+    downloadInfo.extras = extras
     return downloadInfo
 }
 
@@ -44,6 +45,7 @@ fun Download.toDownloadInfo(): DownloadInfo {
     downloadInfo.enqueueAction = enqueueAction
     downloadInfo.identifier = identifier
     downloadInfo.downloadOnEnqueue = downloadOnEnqueue
+    downloadInfo.extras = extras
     return downloadInfo
 }
 
@@ -65,5 +67,6 @@ fun CompletedDownload.toDownloadInfo(): DownloadInfo {
     downloadInfo.enqueueAction = EnqueueAction.REPLACE_EXISTING
     downloadInfo.identifier = identifier
     downloadInfo.downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
+    downloadInfo.extras = extras
     return downloadInfo
 }

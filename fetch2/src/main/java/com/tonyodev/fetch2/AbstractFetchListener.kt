@@ -62,6 +62,16 @@ abstract class AbstractFetchListener : FetchListener {
 
     }
 
+    /**
+     * Called to report that the download process has started for a request. The status of the download
+     * will be Status.DOWNLOADING.
+     * @param download An immutable object which contains a current snapshot of all the information
+     * about a specific download managed by Fetch.
+     * */
+    override fun onStarted(download: Download) {
+
+    }
+
     /** Called several times to report the progress of a download when downloading.
      * The status of the download will be Status.DOWNLOADING.
      * @param download An immutable object which contains a current snapshot of all the information

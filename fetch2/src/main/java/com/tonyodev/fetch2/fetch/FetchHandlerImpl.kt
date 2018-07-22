@@ -22,6 +22,7 @@ class FetchHandlerImpl(private val namespace: String,
                        private val logger: Logger,
                        private val autoStart: Boolean,
                        private val httpDownloader: Downloader,
+                       private val fileServerDownloader: FileServerDownloader,
                        private val fileTempDir: String,
                        private val listenerCoordinator: ListenerCoordinator,
                        private val uiHandler: Handler) : FetchHandler {
@@ -33,45 +34,21 @@ class FetchHandlerImpl(private val namespace: String,
     private var isTerminating = false
 
     override fun init() {
-        databaseManager.sanitize(true)
+        databaseManager.sanitizeOnFirstEntry()
         if (autoStart) {
             priorityListProcessor.start()
         }
     }
 
     override fun enqueue(request: Request): Download {
-        val downloadInfo = request.toDownloadInfo()
-        downloadInfo.namespace = namespace
-        downloadInfo.status = if (request.downloadOnEnqueue) {
-            Status.QUEUED
-        } else {
-            Status.ADDED
-        }
-        prepareDownloadInfoForEnqueue(downloadInfo)
-        databaseManager.insert(downloadInfo)
-        startPriorityQueueIfNotStarted()
-        return downloadInfo
-    }
-
-    private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
-        val existingDownload = databaseManager.getByFile(downloadInfo.file)
-        if (downloadInfo.enqueueAction == EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING && existingDownload != null) {
-            throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST, FetchException.Code.REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
-        } else if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
-            if (isDownloading(existingDownload.id)) {
-                downloadManager.cancel(downloadInfo.id)
-            }
-            deleteRequestTempFiles(fileTempDir, httpDownloader, existingDownload)
-            databaseManager.delete(existingDownload)
-        } else if (downloadInfo.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME && existingDownload != null) {
-            val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
-            downloadInfo.file = file.absolutePath
-            downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
-            createFileIfPossible(file)
-        }
+        return enqueueRequests(listOf(request)).first()
     }
 
     override fun enqueue(requests: List<Request>): List<Download> {
+        return enqueueRequests(requests)
+    }
+
+    private fun enqueueRequests(requests: List<Request>): List<Download> {
         val downloadInfoList = requests.map {
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
@@ -93,14 +70,22 @@ class FetchHandlerImpl(private val namespace: String,
         return results
     }
 
+    private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
+        val existingDownload = databaseManager.getByFile(downloadInfo.file)
+        if (downloadInfo.enqueueAction == EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING && existingDownload != null) {
+            throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+        } else if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
+            deleteDownloads(listOf(downloadInfo))
+        } else if (downloadInfo.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME && existingDownload != null) {
+            val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
+            downloadInfo.file = file.absolutePath
+            downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
+            createFileIfPossible(file)
+        }
+    }
+
     override fun enqueueCompletedDownload(completedDownload: CompletedDownload): Download {
-        val downloadInfo = completedDownload.toDownloadInfo()
-        downloadInfo.namespace = namespace
-        downloadInfo.status = Status.COMPLETED
-        prepareCompletedDownloadInfoForEnqueue(downloadInfo)
-        databaseManager.insert(downloadInfo)
-        startPriorityQueueIfNotStarted()
-        return downloadInfo
+        return enqueueCompletedDownloads(listOf(completedDownload)).first()
     }
 
     override fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download> {
@@ -111,272 +96,127 @@ class FetchHandlerImpl(private val namespace: String,
             prepareCompletedDownloadInfoForEnqueue(downloadInfo)
             downloadInfo
         }
-        val results = databaseManager.insert(downloadInfoList)
+        return databaseManager.insert(downloadInfoList)
                 .filter { it.second }
                 .map {
                     logger.d("Enqueued CompletedDownload ${it.first}")
                     it.first
                 }
-        startPriorityQueueIfNotStarted()
-        return results
     }
 
     private fun prepareCompletedDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
         val existingDownload = databaseManager.getByFile(downloadInfo.file)
         if (existingDownload != null) {
-            if (isDownloading(existingDownload.id)) {
-                downloadManager.cancel(downloadInfo.id)
-            }
-            deleteRequestTempFiles(fileTempDir, httpDownloader, existingDownload)
-            databaseManager.delete(existingDownload)
+            deleteDownloads(listOf(downloadInfo))
         }
     }
 
-    override fun pause(ids: IntArray): List<Download> {
-        startPriorityQueueIfNotStarted()
-        ids.forEach {
-            if (isDownloading(it)) {
-                cancelDownload(it)
-            }
-        }
-        val downloadsInfoList = databaseManager.get(ids.toList()).filterNotNull()
-        downloadsInfoList.forEach {
-            if (canPauseDownload(it)) {
-                it.status = Status.PAUSED
-            }
-        }
-        return try {
-            databaseManager.update(downloadsInfoList)
-            downloadsInfoList
-        } catch (e: Exception) {
-            logger.e(FETCH_DATABASE_ERROR, e)
-            listOf()
-        }
+    override fun pause(ids: List<Int>): List<Download> {
+        return pauseDownloads(databaseManager.get(ids).filterNotNull())
     }
 
     override fun pausedGroup(id: Int): List<Download> {
-        startPriorityQueueIfNotStarted()
-        var downloadInfoList = databaseManager.getByGroup(id)
-        downloadInfoList.forEach {
-            if (isDownloading(it.id)) {
-                cancelDownload(it.id)
-            }
-        }
-        downloadInfoList = databaseManager.getByGroup(id)
-        downloadInfoList.forEach {
+        return pauseDownloads(databaseManager.getByGroup(id))
+    }
+
+    private fun pauseDownloads(downloads: List<DownloadInfo>): List<Download> {
+        cancelDownloadsIfDownloading(downloads.map { it.id })
+        val pausedDownloads = mutableListOf<DownloadInfo>()
+        downloads.forEach {
             if (canPauseDownload(it)) {
                 it.status = Status.PAUSED
+                pausedDownloads.add(it)
             }
         }
-        return try {
-            databaseManager.update(downloadInfoList)
-            downloadInfoList
-        } catch (e: Exception) {
-            logger.e(FETCH_DATABASE_ERROR, e)
-            listOf()
-        }
+        databaseManager.update(pausedDownloads)
+        return pausedDownloads
     }
 
     override fun freeze() {
-        startPriorityQueueIfNotStarted()
         priorityListProcessor.pause()
         downloadManager.cancelAll()
-        databaseManager.sanitize(true)
     }
 
     override fun unfreeze() {
-        startPriorityQueueIfNotStarted()
-        databaseManager.sanitize(true)
         priorityListProcessor.resume()
     }
 
-    override fun resume(ids: IntArray): List<Download> {
-        startPriorityQueueIfNotStarted()
-        ids.forEach {
-            if (isDownloading(it)) {
-                cancelDownload(it)
-            }
-        }
-        val downloadsInfoList = databaseManager.get(ids.toList()).filterNotNull()
-        downloadsInfoList.forEach {
-            if (!isDownloading(it.id) && canResumeDownload(it)) {
-                it.status = Status.QUEUED
-            }
-        }
-        return try {
-            databaseManager.update(downloadsInfoList)
-            downloadsInfoList
-        } catch (e: Exception) {
-            logger.e(FETCH_DATABASE_ERROR, e)
-            listOf()
-        }
+    override fun resume(ids: List<Int>): List<Download> {
+        return resumeDownloads(databaseManager.get(ids).filterNotNull())
     }
 
     override fun resumeGroup(id: Int): List<Download> {
-        startPriorityQueueIfNotStarted()
-        val downloadsInfoList = databaseManager.getByGroup(id)
-                .filter {
-                    !isDownloading(it.id) && canResumeDownload(it)
-                }
-        downloadsInfoList.forEach {
-            it.status = Status.QUEUED
-        }
-        return try {
-            databaseManager.update(downloadsInfoList)
-            downloadsInfoList
-        } catch (e: Exception) {
-            logger.e(FETCH_DATABASE_ERROR, e)
-            listOf()
-        }
+        return resumeDownloads(databaseManager.getByGroup(id))
     }
 
-    override fun remove(ids: IntArray): List<Download> {
+    private fun resumeDownloads(downloads: List<DownloadInfo>): List<Download> {
         startPriorityQueueIfNotStarted()
-        ids.forEach {
-            if (isDownloading(it)) {
-                cancelDownload(it)
+        val resumedDownloads = mutableListOf<DownloadInfo>()
+        downloads.forEach {
+            if (!downloadManager.contains(it.id) && canResumeDownload(it)) {
+                it.status = Status.QUEUED
+                resumedDownloads.add(it)
             }
         }
-        val downloadsList = databaseManager.get(ids.toList()).filterNotNull()
-        databaseManager.delete(downloadsList)
-        val removedStatus = Status.REMOVED
-        downloadsList.forEach {
-            it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
-        }
-        return downloadsList
+        databaseManager.update(resumedDownloads)
+        return resumedDownloads
+    }
+
+    override fun remove(ids: List<Int>): List<Download> {
+        return removeDownloads(databaseManager.get(ids).filterNotNull())
     }
 
     override fun removeGroup(id: Int): List<Download> {
-        startPriorityQueueIfNotStarted()
-        val downloadInfoList = databaseManager.getByGroup(id)
-        downloadInfoList.forEach {
-            if (isDownloading(it.id)) {
-                cancelDownload(it.id)
-            }
-        }
-        databaseManager.delete(downloadInfoList)
-        val removedStatus = Status.REMOVED
-        downloadInfoList.forEach {
-            it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
-        }
-        return downloadInfoList
+        return removeDownloads(databaseManager.getByGroup(id))
     }
 
     override fun removeAll(): List<Download> {
-        startPriorityQueueIfNotStarted()
-        downloadManager.cancelAll()
-        val downloadInfoList = databaseManager.get()
-        databaseManager.deleteAll()
-        val removedStatus = Status.REMOVED
-        downloadInfoList.forEach {
-            it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
-        }
-        return downloadInfoList
+        return removeDownloads(databaseManager.get())
     }
 
     override fun removeAllWithStatus(status: Status): List<Download> {
-        startPriorityQueueIfNotStarted()
-        val downloadInfoList = databaseManager.getByStatus(status)
-        downloadInfoList.forEach {
-            if (isDownloading(it.id)) {
-                cancelDownload(it.id)
-            }
-        }
-        databaseManager.delete(downloadInfoList)
-        val removedStatus = Status.REMOVED
-        downloadInfoList.forEach {
-            it.status = removedStatus
-            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
-        }
-        return downloadInfoList
+        return removeDownloads(databaseManager.getByStatus(status))
     }
 
-    override fun delete(ids: IntArray): List<Download> {
-        startPriorityQueueIfNotStarted()
-        ids.forEach {
-            if (isDownloading(it)) {
-                cancelDownload(it)
-            }
-        }
-        val downloadsList = databaseManager.get(ids.toList()).filterNotNull()
-        databaseManager.delete(downloadsList)
-        val deletedStatus = Status.DELETED
-        downloadsList.forEach {
-            it.status = deletedStatus
-            try {
-                val file = File(it.file)
-                if (file.exists()) {
-                    file.delete()
-                }
-            } catch (e: Exception) {
-                logger.d("Failed to delete file ${it.file}", e)
-            }
+    override fun removeAllInGroupWithStatus(groupId: Int, status: Status): List<Download> {
+        return removeDownloads(databaseManager.getDownloadsInGroupWithStatus(groupId, status))
+    }
+
+    private fun removeDownloads(downloads: List<DownloadInfo>): List<Download> {
+        cancelDownloadsIfDownloading(downloads.map { it.id })
+        databaseManager.delete(downloads)
+        downloads.forEach {
+            it.status = Status.REMOVED
             deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
-        return downloadsList
+        return downloads
+    }
+
+    override fun delete(ids: List<Int>): List<Download> {
+        return deleteDownloads(databaseManager.get(ids).filterNotNull())
     }
 
     override fun deleteGroup(id: Int): List<Download> {
-        startPriorityQueueIfNotStarted()
-        val downloadInfoList = databaseManager.getByGroup(id)
-        downloadInfoList.forEach {
-            if (isDownloading(it.id)) {
-                cancelDownload(it.id)
-            }
-        }
-        databaseManager.delete(downloadInfoList)
-        val deletedStatus = Status.DELETED
-        downloadInfoList.forEach {
-            it.status = deletedStatus
-            try {
-                val file = File(it.file)
-                if (file.exists()) {
-                    file.delete()
-                }
-            } catch (e: Exception) {
-                logger.d("Failed to delete file ${it.file}", e)
-            }
-            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
-        }
-        return downloadInfoList
+        return deleteDownloads(databaseManager.getByGroup(id))
     }
 
     override fun deleteAll(): List<Download> {
-        startPriorityQueueIfNotStarted()
-        downloadManager.cancelAll()
-        val downloadInfoList = databaseManager.get()
-        databaseManager.deleteAll()
-        val deletedStatus = Status.DELETED
-        downloadInfoList.forEach {
-            it.status = deletedStatus
-            try {
-                val file = File(it.file)
-                if (file.exists()) {
-                    file.delete()
-                }
-            } catch (e: Exception) {
-                logger.d("Failed to delete file ${it.file}", e)
-            }
-            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
-        }
-        return downloadInfoList
+        return deleteDownloads(databaseManager.get())
     }
 
     override fun deleteAllWithStatus(status: Status): List<Download> {
-        startPriorityQueueIfNotStarted()
-        val downloadInfoList = databaseManager.getByStatus(status)
-        downloadInfoList.forEach {
-            if (isDownloading(it.id)) {
-                cancelDownload(it.id)
-            }
-        }
-        databaseManager.delete(downloadInfoList)
-        val deletedStatus = Status.DELETED
-        downloadInfoList.forEach {
-            it.status = deletedStatus
+        return deleteDownloads(databaseManager.getByStatus(status))
+    }
+
+    override fun deleteAllInGroupWithStatus(groupId: Int, status: Status): List<Download> {
+        return deleteDownloads(databaseManager.getDownloadsInGroupWithStatus(groupId, status))
+    }
+
+    private fun deleteDownloads(downloads: List<DownloadInfo>): List<Download> {
+        cancelDownloadsIfDownloading(downloads.map { it.id })
+        databaseManager.delete(downloads)
+        downloads.forEach {
+            it.status = Status.DELETED
             try {
                 val file = File(it.file)
                 if (file.exists()) {
@@ -387,100 +227,52 @@ class FetchHandlerImpl(private val namespace: String,
             }
             deleteRequestTempFiles(fileTempDir, httpDownloader, it)
         }
-        return downloadInfoList
+        return downloads
     }
 
-    override fun cancel(ids: IntArray): List<Download> {
-        startPriorityQueueIfNotStarted()
-        ids.forEach {
-            if (isDownloading(it)) {
-                cancelDownload(it)
-            }
-        }
-        val downloadInfoList = databaseManager.get(ids.toList()).filterNotNull()
-        downloadInfoList.forEach {
-            if (canCancelDownload(it)) {
-                it.status = Status.CANCELLED
-                it.error = defaultNoError
-            }
-        }
-        return try {
-            databaseManager.update(downloadInfoList)
-            downloadInfoList
-        } catch (e: Exception) {
-            logger.e(FETCH_DATABASE_ERROR, e)
-            listOf()
-        }
+    override fun cancel(ids: List<Int>): List<Download> {
+        return cancelDownloads(databaseManager.get(ids).filterNotNull())
     }
 
     override fun cancelGroup(id: Int): List<Download> {
-        startPriorityQueueIfNotStarted()
-        var downloadInfoList = databaseManager.getByGroup(id)
-        downloadInfoList.forEach {
-            if (isDownloading(it.id)) {
-                downloadManager.cancel(it.id)
-            }
-        }
-        downloadInfoList = databaseManager.getByGroup(id)
-        downloadInfoList.forEach {
-            if (canCancelDownload(it)) {
-                it.status = Status.CANCELLED
-                it.error = defaultNoError
-            }
-        }
-        return try {
-            databaseManager.update(downloadInfoList)
-            downloadInfoList
-        } catch (e: Exception) {
-            logger.e(FETCH_DATABASE_ERROR, e)
-            listOf()
-        }
+        return cancelDownloads(databaseManager.getByGroup(id))
     }
 
     override fun cancelAll(): List<Download> {
-        startPriorityQueueIfNotStarted()
-        var downloadInfoList = databaseManager.get()
-        downloadInfoList.forEach {
-            if (isDownloading(it.id)) {
-                downloadManager.cancel(it.id)
-            }
-        }
-        downloadInfoList = databaseManager.get()
-        downloadInfoList.forEach {
+        return cancelDownloads(databaseManager.get())
+    }
+
+    private fun cancelDownloads(downloads: List<DownloadInfo>): List<Download> {
+        cancelDownloadsIfDownloading(downloads.map { it.id })
+        val cancelledDownloads = mutableListOf<DownloadInfo>()
+        downloads.forEach {
             if (canCancelDownload(it)) {
                 it.status = Status.CANCELLED
                 it.error = defaultNoError
+                cancelledDownloads.add(it)
             }
         }
-        return try {
-            databaseManager.update(downloadInfoList)
-            downloadInfoList
-        } catch (e: Exception) {
-            logger.e(FETCH_DATABASE_ERROR, e)
-            listOf()
-        }
+        databaseManager.update(cancelledDownloads)
+        return cancelledDownloads
     }
 
-    override fun retry(ids: IntArray): List<Download> {
+    override fun retry(ids: List<Int>): List<Download> {
         startPriorityQueueIfNotStarted()
-        val downloadInfoList = databaseManager.get(ids.toList()).filterNotNull()
+        val downloadInfoList = databaseManager.get(ids).filterNotNull()
+        val retryDownloads = mutableListOf<DownloadInfo>()
         downloadInfoList.forEach {
             if (canRetryDownload(it)) {
                 it.status = Status.QUEUED
                 it.error = defaultNoError
+                retryDownloads.add(it)
             }
         }
-        return try {
-            databaseManager.update(downloadInfoList)
-            downloadInfoList
-        } catch (e: Exception) {
-            logger.e(FETCH_DATABASE_ERROR, e)
-            listOf()
-        }
+        databaseManager.update(retryDownloads)
+        return retryDownloads
     }
 
-    override fun updateRequest(oldRequestId: Int, newRequest: Request): Download? {
-        val oldDownloadInfo = databaseManager.get(oldRequestId)
+    override fun updateRequest(requestId: Int, newRequest: Request): Download {
+        val oldDownloadInfo = databaseManager.get(requestId)
         if (oldDownloadInfo != null) {
             val newDownloadInfo = newRequest.toDownloadInfo()
             newDownloadInfo.status = if (newRequest.downloadOnEnqueue) {
@@ -495,61 +287,49 @@ class FetchHandlerImpl(private val namespace: String,
                     newDownloadInfo.downloaded = oldDownloadInfo.downloaded
                     newDownloadInfo.total = oldDownloadInfo.total
                 }
-                remove(intArrayOf(oldRequestId))
+                remove(listOf(requestId))
             } else {
-                delete(intArrayOf(oldRequestId))
+                delete(listOf(requestId))
             }
             prepareDownloadInfoForEnqueue(newDownloadInfo)
             startPriorityQueueIfNotStarted()
             databaseManager.insert(newDownloadInfo)
             return newDownloadInfo
+        } else {
+            throw FetchException(REQUEST_DOES_NOT_EXIST)
         }
-        return null
     }
 
     override fun getDownloads(): List<Download> {
-        startPriorityQueueIfNotStarted()
         return databaseManager.get()
     }
 
     override fun getDownload(id: Int): Download? {
-        startPriorityQueueIfNotStarted()
         return databaseManager.get(id)
     }
 
     override fun getDownloads(idList: List<Int>): List<Download> {
-        startPriorityQueueIfNotStarted()
-        val downloads = databaseManager.get(idList)
-        val results = mutableListOf<Download>()
-        downloads.filterNotNull().forEach {
-            results.add(it)
-        }
-        return results
+        return databaseManager.get(idList).filterNotNull()
     }
 
     override fun getDownloadsInGroup(id: Int): List<Download> {
-        startPriorityQueueIfNotStarted()
         return databaseManager.getByGroup(id)
     }
 
     override fun getDownloadsWithStatus(status: Status): List<Download> {
-        startPriorityQueueIfNotStarted()
         return databaseManager.getByStatus(status)
     }
 
     override fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<Download> {
-        startPriorityQueueIfNotStarted()
         return databaseManager.getDownloadsInGroupWithStatus(groupId, status)
     }
 
     override fun getDownloadsByRequestIdentifier(identifier: Long): List<Download> {
-        startPriorityQueueIfNotStarted()
         return databaseManager.getDownloadsByRequestIdentifier(identifier)
     }
 
-    override fun getDownloadBlocks(downloadId: Int): List<DownloadBlock> {
-        startPriorityQueueIfNotStarted()
-        val download = databaseManager.get(downloadId)
+    override fun getDownloadBlocks(id: Int): List<DownloadBlock> {
+        val download = databaseManager.get(id)
         return if (download != null) {
             val fileTempDir = downloadManager.getDownloadFileTempDir(download)
             val fileSliceInfo = getFileSliceInfo(getPreviousSliceCount(download.id, fileTempDir), download.total)
@@ -587,8 +367,28 @@ class FetchHandlerImpl(private val namespace: String,
                 }
             }
         } else {
-            listOf()
+            return emptyList()
         }
+    }
+
+    override fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long {
+        val download = databaseManager.get(request.id)
+        if (download != null && download.total > 0) {
+            return download.total
+        }
+        return if (fromServer) {
+            if (isFetchFileServerUrl(request.url)) {
+                fileServerDownloader.getRequestContentLength(getServerRequestFromRequest(request))
+            } else {
+                httpDownloader.getRequestContentLength(getServerRequestFromRequest(request))
+            }
+        } else {
+            -1L
+        }
+    }
+
+    override fun getFetchFileServerCatalog(request: Request): List<FileResource> {
+        return fileServerDownloader.getFetchFileServerCatalog(getCatalogServerRequestFromRequest(request))
     }
 
     override fun close() {
@@ -606,20 +406,16 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun setGlobalNetworkType(networkType: NetworkType) {
-        startPriorityQueueIfNotStarted()
         priorityListProcessor.globalNetworkType = networkType
         downloadManager.cancelAll()
-        databaseManager.sanitize(true)
     }
 
     override fun enableLogging(enabled: Boolean) {
-        startPriorityQueueIfNotStarted()
         logger.d("Enable logging - $enabled")
         logger.enabled = enabled
     }
 
     override fun addListener(listener: FetchListener, notify: Boolean) {
-        startPriorityQueueIfNotStarted()
         listenerSet.add(listener)
         listenerCoordinator.addListener(listenerId, listener)
         if (notify) {
@@ -663,7 +459,6 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun removeListener(listener: FetchListener) {
-        startPriorityQueueIfNotStarted()
         val iterator = listenerSet.iterator()
         while (iterator.hasNext()) {
             val fetchListener = iterator.next()
@@ -676,14 +471,12 @@ class FetchHandlerImpl(private val namespace: String,
         listenerCoordinator.removeListener(listenerId, listener)
     }
 
-    override fun isDownloading(id: Int): Boolean {
-        startPriorityQueueIfNotStarted()
-        return downloadManager.contains(id)
-    }
-
-    override fun cancelDownload(id: Int): Boolean {
-        startPriorityQueueIfNotStarted()
-        return downloadManager.cancel(id)
+    private fun cancelDownloadsIfDownloading(ids: List<Int>) {
+        ids.forEach { id ->
+            if (downloadManager.contains(id)) {
+                downloadManager.cancel(id)
+            }
+        }
     }
 
     private fun startPriorityQueueIfNotStarted() {

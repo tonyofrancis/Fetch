@@ -179,6 +179,11 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     @Override
+    public void onStarted(@NotNull Download download) {
+        updateViews(download, 0, 0, null);
+    }
+
+    @Override
     public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
         updateViews(download, etaInMilliseconds, downloadedBytesPerSecond, null);
     }

@@ -2,6 +2,7 @@ package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.FileResource
 import java.io.Closeable
 
 /**
@@ -14,25 +15,27 @@ interface FetchHandler : Closeable {
     fun enqueue(requests: List<Request>): List<Download>
     fun enqueueCompletedDownload(completedDownload: CompletedDownload): Download
     fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download>
-    fun pause(ids: IntArray): List<Download>
+    fun pause(ids: List<Int>): List<Download>
     fun pausedGroup(id: Int): List<Download>
     fun freeze()
     fun unfreeze()
-    fun resume(ids: IntArray): List<Download>
+    fun resume(ids: List<Int>): List<Download>
     fun resumeGroup(id: Int): List<Download>
-    fun remove(ids: IntArray): List<Download>
+    fun remove(ids: List<Int>): List<Download>
     fun removeGroup(id: Int): List<Download>
     fun removeAll(): List<Download>
     fun removeAllWithStatus(status: Status): List<Download>
-    fun delete(ids: IntArray): List<Download>
+    fun removeAllInGroupWithStatus(groupId: Int, status: Status): List<Download>
+    fun delete(ids: List<Int>): List<Download>
     fun deleteGroup(id: Int): List<Download>
     fun deleteAll(): List<Download>
     fun deleteAllWithStatus(status: Status): List<Download>
-    fun cancel(ids: IntArray): List<Download>
+    fun deleteAllInGroupWithStatus(groupId: Int, status: Status): List<Download>
+    fun cancel(ids: List<Int>): List<Download>
     fun cancelGroup(id: Int): List<Download>
     fun cancelAll(): List<Download>
-    fun retry(ids: IntArray): List<Download>
-    fun updateRequest(oldRequestId: Int, newRequest: Request): Download?
+    fun retry(ids: List<Int>): List<Download>
+    fun updateRequest(requestId: Int, newRequest: Request): Download
     fun getDownloads(): List<Download>
     fun getDownload(id: Int): Download?
     fun getDownloads(idList: List<Int>): List<Download>
@@ -44,8 +47,8 @@ interface FetchHandler : Closeable {
     fun enableLogging(enabled: Boolean)
     fun addListener(listener: FetchListener, notify: Boolean)
     fun removeListener(listener: FetchListener)
-    fun isDownloading(id: Int): Boolean
-    fun cancelDownload(id: Int): Boolean
-    fun getDownloadBlocks(downloadId: Int): List<DownloadBlock>
+    fun getDownloadBlocks(id: Int): List<DownloadBlock>
+    fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long
+    fun getFetchFileServerCatalog(request: Request): List<FileResource>
 
 }

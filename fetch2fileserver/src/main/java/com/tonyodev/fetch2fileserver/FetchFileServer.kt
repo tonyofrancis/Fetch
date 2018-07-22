@@ -1,8 +1,7 @@
 package com.tonyodev.fetch2fileserver
 
 import android.content.Context
-import com.tonyodev.fetch2core.FileResource
-import com.tonyodev.fetch2core.Func
+import com.tonyodev.fetch2core.*
 import java.net.ServerSocket
 
 /** A lightweight TCP File Server that acts like an HTTP file server
@@ -78,9 +77,9 @@ interface FetchFileServer {
 
     /** Queries the File Server instance for a managed file resource if it exist.
      * @param fileResourceId file resource id
-     * @param func callback the result will be returned on. Result maybe null.
+     * @param func2 callback the result will be returned on. Result maybe null if it does not exist.
      * */
-    fun getFileResource(fileResourceId: Long, func: Func<FileResource?>)
+    fun getFileResource(fileResourceId: Long, func2: Func2<FileResource?>)
 
     /** Creates an instance of FetchFileServer.*/
     class Builder(
@@ -94,6 +93,8 @@ interface FetchFileServer {
         private var fileServerDelegate: FetchFileServerDelegate? = null
         private var transferListener: FetchTransferListener? = null
         private var fileResourceDatabaseName = "LibFetchFileServerDatabaseLib.db"
+        private var progressReportingInMillis = DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS
+        private var persistentConnectionTimeout = DEFAULT_PERSISTENT_TIME_OUT_IN_MILLISECONDS
 
         /** Set Custom Server Socket
          * @param serverSocket
@@ -163,6 +164,36 @@ interface FetchFileServer {
             return this
         }
 
+        /**
+         * Sets the progress reporting interval in milliseconds. This controls how often
+         * client serving progress is reported. The default value is 2 seconds.
+         * This method can only accept values greater than 0.
+         * @param progressReportingIntervalMillis Progress reporting interval in milliseconds
+         * @throws IllegalArgumentException the passed in progress reporting interval is less than 0.
+         * @return Builder
+         * */
+        fun setProgressReportingInterval(progressReportingIntervalMillis: Long): Builder {
+            if (progressReportingIntervalMillis < 0) {
+                throw IllegalArgumentException("progressReportingIntervalMillis cannot be less than 0")
+            }
+            this.progressReportingInMillis = progressReportingIntervalMillis
+            return this
+        }
+
+        /** Set the client persistent connection timeout in milliseconds. The client connection
+         * will be closed if inactive at the specified timeout. Default is 1 minute.
+         * @param persistentConnectionTimeout Persistent Connection Timeout in milliseconds
+         * @throws IllegalArgumentException the passed in Persistent Connection Timeout is less than 0.
+         * @return Builder
+         * */
+        fun setPersistentConnectionTimeout(persistentConnectionTimeout: Long): Builder {
+            if (persistentConnectionTimeout < 0) {
+                throw IllegalArgumentException("persistentConnectionTimeout cannot be less than 0")
+            }
+            this.persistentConnectionTimeout = persistentConnectionTimeout
+            return this
+        }
+
         /** Build the FetchFileServer Instance.
          * @return new Fetch File Server instance.
          * */
@@ -174,7 +205,9 @@ interface FetchFileServer {
                     databaseName = fileResourceDatabaseName,
                     fetchFileServerAuthenticator = fileServerAuthenticator,
                     fetchFileServerDelegate = fileServerDelegate,
-                    fetchTransferListener = transferListener)
+                    fetchTransferListener = transferListener,
+                    progressReportingInMillis = progressReportingInMillis,
+                    persistentTimeoutInMillis = persistentConnectionTimeout)
         }
 
     }

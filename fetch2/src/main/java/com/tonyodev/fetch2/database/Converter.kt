@@ -21,9 +21,9 @@ class Converter {
     }
 
     @TypeConverter
-    fun fromHeaderString(headerString: String): Map<String, String> {
+    fun fromJsonString(jsonString: String): Map<String, String> {
         val map = mutableMapOf<String, String>()
-        val json = JSONObject(headerString)
+        val json = JSONObject(jsonString)
         json.keys().forEach {
             map[it] = json.getString(it)
         }
@@ -31,7 +31,7 @@ class Converter {
     }
 
     @TypeConverter
-    fun toHeaderString(headerMap: Map<String, String>): String {
+    fun toHeaderStringsMap(headerMap: Map<String, String>): String {
         return if (headerMap.isEmpty()) {
             EMPTY_JSON_OBJECT_STRING
         } else {

@@ -1,6 +1,6 @@
 ext {
     kotlin_version = '1.2.51'
-    okhttp_version = '3.10.0'
+    okhttp_version = '3.11.0'
     android_support_version = '27.1.1'
     constraint_layout_version = "1.1.2"
     room_version = '1.1.1'
@@ -16,6 +16,6 @@ ext {
     rxAndroid2_version = "2.0.2"
     timber_version = "4.7.1"
     novoda_bintray_version = "0.8.0"
-    library_version = "2.1.0-RC15"
-    library_version_code = 38
+    library_version = "2.2.0-RC1"
+    library_version_code = 39
 }

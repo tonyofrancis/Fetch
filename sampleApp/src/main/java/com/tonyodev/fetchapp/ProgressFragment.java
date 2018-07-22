@@ -83,6 +83,11 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     @Override
+    public void onStarted(@NotNull Download download) {
+        updateProgressForDownload(download);
+    }
+
+    @Override
     public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
         updateProgressForDownload(download);
     }

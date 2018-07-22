@@ -27,7 +27,7 @@ interface Downloader : Closeable {
      * For an example:
      * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader.execute
      * */
-    fun execute(request: ServerRequest, interruptMonitor: InterruptMonitor?): Response?
+    fun execute(request: ServerRequest, interruptMonitor: InterruptMonitor): Response?
 
     /**
      * This method is called by Fetch to disconnect the connection for the passed in response.
@@ -53,6 +53,7 @@ interface Downloader : Closeable {
      * This method is called by Fetch if the FileDownloaderType.Parallel type was set
      * for the download request. Returns the desired slices that the file will be divided in for parallel downloading.
      * If null is returned, Fetch will automatically select an appropriate slicing size based on the content length.
+     * This method is called on a background thread.
      * @param request the request information for the download.
      * @param contentLength the total content length in bytes.
      * @return the slicing size for the request file. Can be null.
@@ -60,11 +61,13 @@ interface Downloader : Closeable {
     fun getFileSlicingCount(request: ServerRequest, contentLength: Long): Int?
 
     /** This method is called by Fetch to select the FileDownloaderType for each
-     * download request. The Default is FileDownloaderType.SEQUENTIAL
+     * download request. The Default is FileDownloaderType.SEQUENTIAL.
+     * This method is called on a background thread.
      * @param request the request information for the download.
+     * @param supportedFileDownloaderTypes a set of file downloader types supported by the request.
      * @return the FileDownloaderType.
      * */
-    fun getFileDownloaderType(request: ServerRequest): FileDownloaderType
+    fun getRequestFileDownloaderType(request: ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): FileDownloaderType
 
     /**
      * This method is called by Fetch for download requests that are downloading using the
@@ -72,6 +75,7 @@ interface Downloader : Closeable {
      * temp files for the request. If the return directory is null, Fetch
      * will select the default directory. Temp files in this directory are automatically
      * deleted by Fetch once a download completes or a request is removed.
+     * This method is called on a background thread.
      * @param request the request information for the download.
      * @return the directory where the temp files will be stored. Can be null.
      * */
@@ -80,6 +84,7 @@ interface Downloader : Closeable {
     /**
      * This method should be used to verify that the download file MD5 matches the
      * passed in MD5 returned by the server for the content.
+     * This method is called on a background thread.
      * @param request the request information for the download.
      * @param md5 MD5 returned by the server for the content
      * @return return true if the md5 values match otherwise false. If false is returned,
@@ -102,6 +107,32 @@ interface Downloader : Closeable {
      * @return true if HEAD Request Method is supported. Otherwise false
      * */
     fun getHeadRequestMethodSupported(request: ServerRequest): Boolean
+
+    /**
+     * Attempts to get the ContentLength for a file located at the specified url.
+     * This method runs on the calling thread.
+     * @param request The request information for the download.
+     * @return ContentLength if successful, or -1 if failed.
+     * */
+    fun getRequestContentLength(request: ServerRequest): Long
+
+    /**
+     * Attempts to get the buffer size for a specific download.
+     * This method runs on a background thread. Note Android Framework may limit
+     * the buffer size of io streams. So a very large buffer size may be limited to 8192
+     * by the framework.
+     * @param request The request information for the download.
+     * @return buffer size or null. If the buffer size is not set. The default
+     * buffer size will be 8192 bytes. Can be null.
+     * */
+    fun getRequestBufferSize(request: ServerRequest): Int
+
+    /**
+     * Gets a set of supported FileDownloaderTypes for a request.
+     * @param request The request information for the download.
+     * @return set of supported FileDownloaderTypes
+     * */
+    fun getRequestSupportedFileDownloaderTypes(request: ServerRequest): Set<FileDownloaderType>
 
     /**
      * A class that contains the information used by the Downloader to create a connection

@@ -9,7 +9,7 @@ import com.tonyodev.fetch2.database.DatabaseManagerImpl;
 import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
-import com.tonyodev.fetch2.util.FetchDatabaseExtensions;
+import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
 import com.tonyodev.fetch2core.FetchLogger;
 
@@ -42,8 +42,9 @@ public class DatabaseInstrumentedTest {
         assertEquals("com.tonyodev.fetch2.test", appContext.getPackageName());
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
+        final LiveSettings liveSettings = new LiveSettings(namespace);
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings);
     }
 
     @After
@@ -343,7 +344,7 @@ public class DatabaseInstrumentedTest {
         databaseManager.insert(downloadInfoList);
         int size = databaseManager.get().size();
         assertEquals(20, size);
-        FetchDatabaseExtensions.sanitize(databaseManager, true);
+        databaseManager.sanitizeOnFirstEntry();
         final List<DownloadInfo> downloads = databaseManager.get();
         for (DownloadInfo download : downloads) {
             assertNotNull(download);

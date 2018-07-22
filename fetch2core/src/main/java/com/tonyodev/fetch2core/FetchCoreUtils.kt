@@ -6,6 +6,8 @@ import android.content.Context
 import android.net.Uri
 import java.io.*
 import java.math.BigInteger
+import java.net.HttpURLConnection
+import java.net.URL
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -136,9 +138,13 @@ fun getSingleLineTextFromFile(filePath: String): String? {
 //eg: fetchlocal://192.168.0.1:80/45
 //eg: fetchlocal://192.168.0.1:80/file.txt
 fun isFetchFileServerUrl(url: String): Boolean {
-    return url.startsWith("fetchlocal://")
-            && getFetchFileServerHostAddress(url).isNotEmpty()
-            && getFetchFileServerPort(url) > -1
+    return try {
+        url.startsWith("fetchlocal://")
+                && getFetchFileServerHostAddress(url).isNotEmpty()
+                && getFetchFileServerPort(url) > -1
+    } catch (e: Exception) {
+        false
+    }
 }
 
 fun getFetchFileServerPort(url: String): Int {
@@ -209,5 +215,50 @@ fun getFileMd5String(file: String): String? {
         md5
     } catch (e: Exception) {
         null
+    }
+}
+
+fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): Boolean {
+    val transferEncoding = responseHeaders["Transfer-Encoding"]?.firstOrNull()
+            ?: responseHeaders["TransferEncoding"]?.firstOrNull()
+            ?: ""
+    val contentLength = (responseHeaders["Content-Length"]?.firstOrNull()?.toLongOrNull()
+            ?: responseHeaders["ContentLength"]?.firstOrNull()?.toLongOrNull())
+            ?: -1L
+    return transferEncoding != "chunked" && contentLength > -1L
+}
+
+fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, downloader: Downloader): Set<Downloader.FileDownloaderType> {
+    val fileDownloaderTypeSet = mutableSetOf(Downloader.FileDownloaderType.SEQUENTIAL)
+    return try {
+        val response = downloader.execute(request, object : InterruptMonitor {
+            override val isInterrupted: Boolean
+                get() = false
+        })
+        if (response != null) {
+            if (isParallelDownloadingSupported(response.responseHeaders)) {
+                fileDownloaderTypeSet.add(Downloader.FileDownloaderType.PARALLEL)
+            }
+            downloader.disconnect(response)
+        }
+        fileDownloaderTypeSet
+    } catch (e: Exception) {
+        fileDownloaderTypeSet
+    }
+}
+
+fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downloader): Long {
+    return try {
+        val response = downloader.execute(request, object : InterruptMonitor {
+            override val isInterrupted: Boolean
+                get() = false
+        })
+        val contentLength = response?.contentLength ?: -1L
+        if (response != null) {
+            downloader.disconnect(response)
+        }
+        contentLength
+    } catch (e: Exception) {
+        -1L
     }
 }

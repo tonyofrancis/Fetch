@@ -2,17 +2,17 @@ package com.tonyodev.fetch2fileserver.provider
 
 import com.tonyodev.fetch2core.FileResource
 import com.tonyodev.fetch2core.InputResourceWrapper
-import com.tonyodev.fetch2core.transporter.FileRequest
+import com.tonyodev.fetch2core.server.FileRequest
 import com.tonyodev.fetch2core.InterruptMonitor
 import com.tonyodev.fetch2fileserver.database.FileResourceInfo
-import com.tonyodev.fetch2core.transporter.FileResourceTransporterWriter
+import com.tonyodev.fetch2core.server.FileResourceTransporterWriter
 import java.util.*
 
 interface FileResourceProviderDelegate {
 
-    fun getFileResource(fileResourceIdentifier: String): FileResourceInfo?
+    fun getFileResource(fileResourceIdentifier: String): FileResource?
 
-    fun onFinished(providerId: UUID)
+    fun onFinished(providerId: String)
 
     fun acceptAuthorization(sessionId: String, authorization: String, fileRequest: FileRequest): Boolean
 
@@ -34,7 +34,6 @@ interface FileResourceProviderDelegate {
 
     fun getFileInputResourceWrapper(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, fileOffset: Long): InputResourceWrapper?
 
-    fun onCustomRequest(sessionId: String, fileRequest: FileRequest,
-                        fileResourceTransporterWriter: FileResourceTransporterWriter, interruptMonitor: InterruptMonitor)
+    fun onCustomRequest(sessionId: String, fileRequest: FileRequest, fileResourceTransporterWriter: FileResourceTransporterWriter, interruptMonitor: InterruptMonitor)
 
 }

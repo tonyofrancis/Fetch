@@ -1,12 +1,14 @@
-package com.tonyodev.fetch2downloaders
+package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2core.*
 
-import com.tonyodev.fetch2core.transporter.FileRequest.CREATOR.TYPE_FILE
-import com.tonyodev.fetch2core.transporter.FetchFileResourceTransporter
-import com.tonyodev.fetch2core.transporter.FileRequest
-import com.tonyodev.fetch2core.transporter.FileResponse
+import com.tonyodev.fetch2core.server.FileRequest.CREATOR.TYPE_FILE
+import com.tonyodev.fetch2core.server.FetchFileResourceTransporter
+import com.tonyodev.fetch2core.server.FileRequest
+import com.tonyodev.fetch2core.server.FileResponse
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.InputStreamReader
 
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
@@ -30,7 +32,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
 
     protected val connections: MutableMap<Downloader.Response, FetchFileResourceTransporter> = Collections.synchronizedMap(HashMap<Downloader.Response, FetchFileResourceTransporter>())
 
-    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
         val headers = request.headers
         val range = getRangeForFetchFileServerRequest(headers["Range"] ?: "bytes=0-")
         val authorization = headers[FileRequest.FIELD_AUTHORIZATION] ?: ""
@@ -50,14 +52,14 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 client = headers[FileRequest.FIELD_CLIENT]
                         ?: UUID.randomUUID().toString(),
                 customData = headers[FileRequest.FIELD_CUSTOM_DATA]
-                        ?: "",
+                        ?: "{}",
                 page = headers[FileRequest.FIELD_PAGE]?.toIntOrNull()
                         ?: 0,
                 size = headers[FileRequest.FIELD_SIZE]?.toIntOrNull()
                         ?: 0,
                 persistConnection = false)
         transporter.sendFileRequest(fileRequest)
-        while (interruptMonitor?.isInterrupted == false) {
+        while (!interruptMonitor.isInterrupted) {
             val serverResponse = transporter.receiveFileResponse()
             if (serverResponse != null) {
                 val code = serverResponse.status
@@ -137,7 +139,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
+    override fun getRequestFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
         return fileDownloaderType
     }
 
@@ -158,6 +160,81 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
     }
 
     override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
-        return true
+        return false
     }
+
+    override fun getRequestBufferSize(request: Downloader.ServerRequest): Int {
+        return DEFAULT_BUFFER_SIZE
+    }
+
+    override fun getRequestContentLength(request: Downloader.ServerRequest): Long {
+        return getRequestContentLength(request, this)
+    }
+
+    override fun getFetchFileServerCatalog(serverRequest: Downloader.ServerRequest): List<FileResource> {
+        val response = execute(serverRequest, object : InterruptMonitor {
+            override val isInterrupted: Boolean
+                get() = false
+        })
+        if (response?.byteStream != null) {
+            try {
+                val type = response.responseHeaders[FileRequest.FIELD_TYPE]?.firstOrNull()?.toInt()
+                        ?: -1
+                if (type != FileRequest.TYPE_FILE) {
+                    disconnect(response)
+                    throw Exception(FETCH_FILE_SERVER_INVALID_RESPONSE_TYPE)
+                }
+                val bufferSize = 1024
+                val buffer = CharArray(bufferSize)
+                val stringBuilder = StringBuilder()
+                val inputReader = InputStreamReader(response.byteStream, Charsets.UTF_8)
+                var read = inputReader.read(buffer, 0, bufferSize)
+                while (read != -1) {
+                    stringBuilder.append(buffer, 0, read)
+                    read = inputReader.read(buffer, 0, bufferSize)
+                }
+                inputReader.close()
+                val data = stringBuilder.toString()
+                if (data.isNotEmpty()) {
+                    val json = JSONObject(data)
+                    val catalogArray = JSONArray(json.getString("catalog"))
+                    val size = catalogArray.length()
+                    val fileResourceList = mutableListOf<FileResource>()
+                    for (index in 0 until size) {
+                        val fileResource = FileResource()
+                        val catalogItem = catalogArray.getJSONObject(index)
+                        fileResource.id = catalogItem.getLong("id")
+                        fileResource.name = catalogItem.getString("name")
+                        fileResource.length = catalogItem.getLong("length")
+                        fileResource.customData = try {
+                            val map = mutableMapOf<String, String>()
+                            val customJson = JSONObject(catalogItem.getString("customData"))
+                            customJson.keys().forEach {
+                                map[it] = customJson.getString(it)
+                            }
+                            map
+                        } catch (e: Exception) {
+                            mutableMapOf()
+                        }
+                        fileResource.md5 = catalogItem.getString("md5")
+                        fileResourceList.add(fileResource)
+                    }
+                    disconnect(response)
+                    return fileResourceList
+                } else {
+                    throw Exception(EMPTY_RESPONSE_BODY)
+                }
+            } catch (e: Exception) {
+                disconnect(response)
+                throw e
+            }
+        } else {
+            throw Exception(EMPTY_RESPONSE_BODY)
+        }
+    }
+
+    override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        return getRequestSupportedFileDownloaderTypes(request, this)
+    }
+
 }

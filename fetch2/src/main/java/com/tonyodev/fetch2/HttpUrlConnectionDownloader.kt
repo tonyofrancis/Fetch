@@ -1,9 +1,6 @@
 package com.tonyodev.fetch2
 
-import com.tonyodev.fetch2core.Downloader
-import com.tonyodev.fetch2core.InterruptMonitor
-import com.tonyodev.fetch2core.OutputResourceWrapper
-import com.tonyodev.fetch2core.getFileMd5String
+import com.tonyodev.fetch2core.*
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -33,7 +30,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
     protected val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
 
-    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
         val httpUrl = URL(request.url)
         val client = httpUrl.openConnection() as HttpURLConnection
         client.requestMethod = request.requestMethod
@@ -126,7 +123,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
+    override fun getRequestFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
         return fileDownloaderType
     }
 
@@ -143,7 +140,19 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     }
 
     override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
-        return true
+        return false
+    }
+
+    override fun getRequestBufferSize(request: Downloader.ServerRequest): Int {
+        return DEFAULT_BUFFER_SIZE
+    }
+
+    override fun getRequestContentLength(request: Downloader.ServerRequest): Long {
+        return getRequestContentLength(request, this)
+    }
+
+    override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        return getRequestSupportedFileDownloaderTypes(request, this)
     }
 
     /**
