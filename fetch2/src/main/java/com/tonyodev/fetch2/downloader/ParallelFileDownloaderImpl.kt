@@ -147,12 +147,14 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     throw FetchException(INVALID_CONTENT_MD5)
                                 }
                             } else {
-                                delegate?.onProgress(
-                                        download = downloadInfo,
-                                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                                delegate?.onComplete(
-                                        download = downloadInfo)
+                                if (!interrupted && !terminated) {
+                                    delegate?.onProgress(
+                                            download = downloadInfo,
+                                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                    delegate?.onComplete(
+                                            download = downloadInfo)
+                                }
                             }
                         }
                         if (!completedDownload && !terminated && !interrupted) {
@@ -321,11 +323,17 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
                     reportingStopTime, progressReportingIntervalMillis)
             if (hasReportingTimeElapsed) {
-                delegate?.saveDownloadProgress(downloadInfo)
-                delegate?.onProgress(
-                        download = downloadInfo,
-                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                synchronized(lock) {
+                    if (!interrupted && !terminated) {
+                        downloadInfo.downloaded = downloaded
+                        downloadInfo.total = total
+                        delegate?.saveDownloadProgress(downloadInfo)
+                        delegate?.onProgress(
+                                download = downloadInfo,
+                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                    }
+                }
                 reportingStartTime = System.nanoTime()
             }
             if (downloadSpeedCheckTimeElapsed) {
@@ -399,32 +407,27 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     if (!interrupted && !terminated) {
                                         outputResourceWrapper?.setWriteOffset(seekPosition)
                                         outputResourceWrapper?.write(buffer, 0, streamBytes)
-                                        fileSlice.downloaded += streamBytes
-                                        downloaded += streamBytes
-                                    }
-                                }
-                                if (!interrupted && !terminated) {
-                                    reportingStopTime = System.nanoTime()
-                                    val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
-                                            reportingStopTime, DEFAULT_DOWNLOAD_SPEED_REPORTING_INTERVAL_IN_MILLISECONDS)
-                                    if (hasReportingTimeElapsed) {
                                         if (!interrupted && !terminated) {
+                                            fileSlice.downloaded += streamBytes
                                             saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded, fileTempDir)
-                                            downloadBlock.downloadedBytes = fileSlice.downloaded
-                                            delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                                            downloaded += streamBytes
                                         }
-                                        reportingStartTime = System.nanoTime()
-                                    }
-                                    if (read != -1) {
-                                        read = downloadResponse.byteStream?.read(buffer, 0, bufferSize) ?: -1
-                                        remainderBytes = fileSlice.endBytes - (fileSlice.startBytes + fileSlice.downloaded)
+                                        reportingStopTime = System.nanoTime()
+                                        val hasReportingTimeElapsed = hasIntervalTimeElapsed(reportingStartTime,
+                                                reportingStopTime, progressReportingIntervalMillis)
+                                        if (hasReportingTimeElapsed) {
+                                            if (!interrupted && !terminated) {
+                                                downloadBlock.downloadedBytes = fileSlice.downloaded
+                                                delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                                            }
+                                            reportingStartTime = System.nanoTime()
+                                        }
                                     }
                                 }
-                            }
-                            if (!interrupted && !terminated) {
-                                saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded, fileTempDir)
-                                downloadBlock.downloadedBytes = fileSlice.downloaded
-                                delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                                if (!interrupted && !terminated && read != -1) {
+                                    read = downloadResponse.byteStream?.read(buffer, 0, bufferSize) ?: -1
+                                    remainderBytes = fileSlice.endBytes - (fileSlice.startBytes + fileSlice.downloaded)
+                                }
                             }
                         } else if (downloadResponse == null && !interrupted && !terminated) {
                             throw FetchException(EMPTY_RESPONSE_BODY)
