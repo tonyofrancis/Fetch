@@ -8,10 +8,10 @@ import com.tonyodev.fetch2fileserver.database.FileResourceInfoDatabase.Companion
 @Dao
 interface FileResourceInfoDao {
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(fileResourceInfo: FileResourceInfo): Long
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(fileResourceInfoList: List<FileResourceInfo>): List<Long>
 
     @Delete

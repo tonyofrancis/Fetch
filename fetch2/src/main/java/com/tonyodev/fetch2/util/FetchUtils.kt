@@ -82,6 +82,7 @@ fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerReque
     headers["Range"] = "bytes=0-"
     headers[FileRequest.FIELD_PAGE] = "-1"
     headers[FileRequest.FIELD_SIZE] = "-1"
+    headers[FileRequest.FIELD_TYPE] = FileRequest.TYPE_FILE.toString()
     return Downloader.ServerRequest(
             id = request.id,
             url = request.url,

@@ -14,7 +14,7 @@ class FetchFileResourceInfoDatabase(context: Context,
 
     val isClosed: Boolean
         get() {
-            return  closed
+            return closed
         }
 
     private val fileResourceInfoDatabase = Room.databaseBuilder(context,

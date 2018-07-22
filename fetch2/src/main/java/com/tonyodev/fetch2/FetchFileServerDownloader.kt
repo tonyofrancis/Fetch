@@ -5,8 +5,8 @@ import com.tonyodev.fetch2core.*
 import com.tonyodev.fetch2core.server.FileRequest.CREATOR.TYPE_FILE
 import com.tonyodev.fetch2core.server.FetchFileResourceTransporter
 import com.tonyodev.fetch2core.server.FileRequest
-import com.tonyodev.fetch2core.server.FileRequest.CREATOR.TYPE_CATALOG
 import com.tonyodev.fetch2core.server.FileResponse
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.InputStreamReader
 
@@ -44,7 +44,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         val timeoutStart = System.nanoTime()
         transporter.connect(inetSocketAddress)
         val fileRequest = FileRequest(
-                type = getFileRequestType(request),
+                type = TYPE_FILE,
                 fileResourceId = getFileResourceIdFromUrl(request.url),
                 rangeStart = range.first,
                 rangeEnd = range.second,
@@ -52,11 +52,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 client = headers[FileRequest.FIELD_CLIENT]
                         ?: UUID.randomUUID().toString(),
                 customData = headers[FileRequest.FIELD_CUSTOM_DATA]
-                        ?: try {
-                            JSONObject(headers).toString()
-                        } catch (e: Exception) {
-                            "{}"
-                        },
+                        ?: "{}",
                 page = headers[FileRequest.FIELD_PAGE]?.toIntOrNull()
                         ?: 0,
                 size = headers[FileRequest.FIELD_SIZE]?.toIntOrNull()
@@ -175,16 +171,6 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         return getRequestContentLength(request, this)
     }
 
-    override fun getFileRequestType(serverRequest: Downloader.ServerRequest): Int {
-        val resourceId = getFileResourceIdFromUrl(serverRequest.url)
-        return if (resourceId == FileRequest.CATALOG_ID.toString()
-                || resourceId == FileRequest.CATALOG_NAME) {
-            TYPE_CATALOG
-        } else {
-            TYPE_FILE
-        }
-    }
-
     override fun getFetchFileServerCatalog(serverRequest: Downloader.ServerRequest): List<FileResource> {
         val response = execute(serverRequest, object : InterruptMonitor {
             override val isInterrupted: Boolean
@@ -194,7 +180,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
             try {
                 val type = response.responseHeaders[FileRequest.FIELD_TYPE]?.firstOrNull()?.toInt()
                         ?: -1
-                if (type != FileRequest.TYPE_CATALOG) {
+                if (type != FileRequest.TYPE_FILE) {
                     disconnect(response)
                     throw Exception(FETCH_FILE_SERVER_INVALID_RESPONSE_TYPE)
                 }
@@ -211,7 +197,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 val data = stringBuilder.toString()
                 if (data.isNotEmpty()) {
                     val json = JSONObject(data)
-                    val catalogArray = json.getJSONArray("catalog")
+                    val catalogArray = JSONArray(json.getString("catalog"))
                     val size = catalogArray.length()
                     val fileResourceList = mutableListOf<FileResource>()
                     for (index in 0 until size) {

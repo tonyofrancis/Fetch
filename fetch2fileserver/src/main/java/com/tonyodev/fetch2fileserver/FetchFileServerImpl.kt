@@ -133,19 +133,27 @@ class FetchFileServerImpl(context: Context,
             return try {
                 val id: Long = fileResourceIdentifier.toLong()
                 if (id == FileRequest.CATALOG_ID) {
-                    val catalog = fileResourceServerDatabase.getRequestedCatalog()
-                    val catalogFileResourceInfo = FileResourceInfo()
-                    catalogFileResourceInfo.id = FileRequest.CATALOG_ID
-                    catalogFileResourceInfo.customData = catalog
-                    catalogFileResourceInfo.name = "Catalog.json"
-                    catalogFileResourceInfo.file = "/Catalog.json"
-                    catalogFileResourceInfo.toFileResource()
+                    getCatalogResourceFile()
                 } else {
                     fileResourceServerDatabase.get(id)?.toFileResource()
                 }
             } catch (e: Exception) {
-                fileResourceServerDatabase.get(fileResourceIdentifier)?.toFileResource()
+                if (fileResourceIdentifier == FileRequest.CATALOG_NAME) {
+                    getCatalogResourceFile()
+                } else {
+                    fileResourceServerDatabase.get(fileResourceIdentifier)?.toFileResource()
+                }
             }
+        }
+
+        private fun getCatalogResourceFile(): FileResource {
+            val catalog = fileResourceServerDatabase.getRequestedCatalog()
+            val catalogFileResourceInfo = FileResourceInfo()
+            catalogFileResourceInfo.id = FileRequest.CATALOG_ID
+            catalogFileResourceInfo.customData = catalog
+            catalogFileResourceInfo.name = FileRequest.CATALOG_NAME
+            catalogFileResourceInfo.file = FileRequest.CATALOG_FILE
+            return catalogFileResourceInfo.toFileResource()
         }
 
         override fun acceptAuthorization(sessionId: String, authorization: String, fileRequest: FileRequest): Boolean {
@@ -429,8 +437,8 @@ class FetchFileServerImpl(context: Context,
 
     private fun throwIfAddingReservedCatalogInfo(fileResource: FileResource) {
         if (fileResource.id == FileRequest.CATALOG_ID
-                || fileResource.name == "Catalog.json"
-                || fileResource.file == "/Catalog.json") {
+                || fileResource.name == FileRequest.CATALOG_NAME
+                || fileResource.file == FileRequest.CATALOG_FILE) {
             throw IllegalArgumentException("File Resources 'id' cannot be: ${FileRequest.CATALOG_ID} " +
                     "and 'name' cannot be: Catalog.json and " +
                     "'file' cannot be: /Catalog.json")
