@@ -52,7 +52,11 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 client = headers[FileRequest.FIELD_CLIENT]
                         ?: UUID.randomUUID().toString(),
                 customData = headers[FileRequest.FIELD_CUSTOM_DATA]
-                        ?: "",
+                        ?: try {
+                            JSONObject(headers).toString()
+                        } catch (e: Exception) {
+                            "{}"
+                        },
                 page = headers[FileRequest.FIELD_PAGE]?.toIntOrNull()
                         ?: 0,
                 size = headers[FileRequest.FIELD_SIZE]?.toIntOrNull()
