@@ -29,6 +29,7 @@ Big thanks to @duncanokeyo on Github for continuously pointing out issues and im
 - General error reporting improvements.
 - FetchFileServer improvements
 - FileResource class updates
+- Removed FetchFileResourceDownloadTask class
 - General bug fixes and improvements
 
 

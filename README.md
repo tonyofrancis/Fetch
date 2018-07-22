@@ -306,13 +306,7 @@ public class TestActivity extends AppCompatActivity {
 }
 ```
 
-Download a file from a FetchFileServer using the Fetch. Add the FetchFileServerDownloader
-dependency to you app's build.gradle file.
-```java
-implementation "com.tonyodev.fetch2downloaders:fetch2downloaders:2.2.0-RC1"
-```
-
-Then create an instance of Fetch and enqueue the download.
+Downloading a file from a FetchFileServer using the Fetch is easy.
 
 ```java
 public class TestActivity extends AppCompatActivity {
@@ -379,83 +373,6 @@ public class TestActivity extends AppCompatActivity {
         }
     };
 }
-```
-A FetchFileResourceDownloadTask can also be used to download files from the FetchFileServer.
-Be sure to add the fetch2downloaders module to your dependencies.
-
-```java
-public class TestActivity extends AppCompatActivity {
-
-    FetchFileResourceDownloadTask<File> task;
-
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        task = new FetchFileResourceDownloadTask<File>() {
-            @NotNull
-            @Override
-            public FileResourceRequest getRequest() {
-                FileResourceRequest fileResourceRequest = new FileResourceRequest();
-                fileResourceRequest.setHostAddress("127.0.0.1");
-                fileResourceRequest.setPort(6886);
-                fileResourceRequest.setResourceIdentifier("testfile.txt");
-                fileResourceRequest.addHeader("Authorization", "5adWEDG36FGTTBX23B");
-                return fileResourceRequest;
-            }
-
-            @Override
-            public File doWork(@NotNull InputStream inputStream, long contentLength, @NotNull String md5CheckSum) {
-                File file = new File("/downloads/sample.txt");
-                try {
-                   BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
-                   BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file));
-                   byte[] buffer = new byte[1024];
-                   int read;
-                   int bytesRead = 0;
-                   while ((read = bufferedInputStream.read(buffer, 0, 1024)) != -1 && !isCancelled()) { //isCancelled() checks if the task was cancelled.
-                       bufferedOutputStream.write(buffer, 0, read);
-                       bytesRead += read;
-                       setProgress(calculateProgress(bytesRead, contentLength));
-                   }
-                   bufferedInputStream.close();
-                   bufferedOutputStream.flush();
-                   bufferedOutputStream.close();
-               } catch (IOException e) {
-                   e.printStackTrace();
-                }
-                return file;
-            }
-
-            @Override
-            protected void onProgress(int progress) {
-                Log.d("TestActivity", "Progress: " + progress);
-
-            }
-
-            @Override
-            protected void onError(int httpStatusCode, @org.jetbrains.annotations.Nullable Throwable throwable) {
-                Log.d("TestActivity", "Error: " + httpStatusCode);
-            }
-
-            @Override
-            protected void onComplete(File result) {
-                Log.d("TestActivity", "Complete");
-            }
-        };
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        task.execute();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        task.cancel();
-
-    }
 ```
 
 Fetch1 Migration
