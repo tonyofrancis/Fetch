@@ -26,7 +26,7 @@ class FileResource : Parcelable {
     var name: String = ""
 
     /** Custom data that will be sent in the server response to the client if available.*/
-    var customData: String = ""
+    var customData: MutableMap<String, String> = mutableMapOf()
 
     /** The File Resource md5 checksum string. If Empty Fetch File Server will generate the md5
      * checksum when added to a file server instance.
@@ -66,7 +66,7 @@ class FileResource : Parcelable {
         dest.writeString(name)
         dest.writeLong(length)
         dest.writeString(file)
-        dest.writeString(customData)
+        dest.writeSerializable(HashMap(customData))
         dest.writeString(md5)
     }
 
@@ -83,7 +83,7 @@ class FileResource : Parcelable {
             fileResource.name = source.readString()
             fileResource.length = source.readLong()
             fileResource.file = source.readString()
-            fileResource.customData = source.readString()
+            fileResource.customData = source.readSerializable() as HashMap<String, String>
             fileResource.md5 = source.readString()
             return fileResource
         }

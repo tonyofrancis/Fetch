@@ -8,6 +8,7 @@ import com.tonyodev.fetch2core.server.FileResponse.CREATOR.CLOSE_CONNECTION
 import com.tonyodev.fetch2core.server.FileResponse.CREATOR.OPEN_CONNECTION
 import com.tonyodev.fetch2core.server.FileResourceTransporter
 import com.tonyodev.fetch2core.server.FetchFileResourceTransporter
+import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.RandomAccessFile
 import java.net.HttpURLConnection
@@ -78,7 +79,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                             inputResourceWrapper = fileResourceProviderDelegate.getFileInputResourceWrapper(sessionId, request, fileResource, request.rangeStart)
                                             if (inputResourceWrapper == null) {
                                                 if (fileResource.id == FileRequest.CATALOG_ID) {
-                                                    val catalog = fileResource.customData.toByteArray(Charsets.UTF_8)
+                                                    val catalog = JSONObject(fileResource.customData).toString().toByteArray(Charsets.UTF_8)
                                                     fileResource.length = if (request.rangeEnd == -1L) catalog.size.toLong() else request.rangeEnd
                                                     fileResource.md5 = getMd5String(catalog)
                                                     inputResourceWrapper = object : InputResourceWrapper() {

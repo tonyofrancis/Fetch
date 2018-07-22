@@ -216,7 +216,16 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         fileResource.id = catalogItem.getLong("id")
                         fileResource.name = catalogItem.getString("name")
                         fileResource.length = catalogItem.getLong("length")
-                        fileResource.customData = catalogItem.getString("customData")
+                        fileResource.customData = try {
+                            val map = mutableMapOf<String, String>()
+                            val customJson = JSONObject(catalogItem.getString("customData"))
+                            customJson.keys().forEach {
+                                map[it] = customJson.getString(it)
+                            }
+                            map
+                        } catch (e: Exception) {
+                            mutableMapOf()
+                        }
                         fileResource.md5 = catalogItem.getString("md5")
                         fileResourceList.add(fileResource)
                     }
