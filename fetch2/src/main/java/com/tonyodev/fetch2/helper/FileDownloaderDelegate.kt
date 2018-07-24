@@ -65,7 +65,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         }
     }
 
-    override fun onError(download: Download) {
+    override fun onError(download: Download, error: Error, throwable: Throwable?) {
         if (!interrupted) {
             val downloadInfo = download as DownloadInfo
             try {
@@ -80,7 +80,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                     downloadInfo.status = Status.FAILED
                     downloadInfoUpdater.update(downloadInfo)
                     uiHandler.post {
-                        fetchListener.onError(downloadInfo)
+                        fetchListener.onError(downloadInfo, error, throwable)
                     }
                 }
             } catch (e: Exception) {

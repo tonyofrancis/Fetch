@@ -209,7 +209,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 downloadInfo.total = total
                 downloadInfo.error = error
                 if (!terminated && !interrupted) {
-                    delegate?.onError(download = downloadInfo)
+                    delegate?.onError(download = downloadInfo, error = error, throwable = e)
                 }
             }
         } finally {

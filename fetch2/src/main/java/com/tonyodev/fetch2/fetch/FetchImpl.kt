@@ -60,6 +60,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Failed to enqueue list $requests")
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -117,6 +118,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -145,6 +147,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -174,6 +177,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -241,6 +245,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -315,6 +320,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -390,6 +396,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -449,6 +456,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -476,6 +484,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -514,6 +523,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Failed to update request with id $requestId", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -636,6 +646,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Failed to add CompletedDownload list $completedDownloads")
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -697,6 +708,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)
@@ -720,6 +732,7 @@ open class FetchImpl constructor(override val namespace: String,
                 } catch (e: Exception) {
                     logger.e("Fetch with namespace $namespace error", e)
                     val error = getErrorFromMessage(e.message)
+                    error.throwable = e
                     if (func2 != null) {
                         uiHandler.post {
                             func2.call(error)

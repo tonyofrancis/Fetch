@@ -438,7 +438,7 @@ class FetchHandlerImpl(private val namespace: String,
                             listener.onCompleted(it)
                         }
                         Status.FAILED -> {
-                            listener.onError(it)
+                            listener.onError(it, it.error, null)
                         }
                         Status.CANCELLED -> {
                             listener.onCancelled(it)

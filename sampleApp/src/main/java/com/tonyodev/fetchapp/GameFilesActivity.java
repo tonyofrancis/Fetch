@@ -211,7 +211,8 @@ public class GameFilesActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onError(@NotNull Download download) {
+        public void onError(@NotNull Download download, @NotNull Error error, @org.jetbrains.annotations.Nullable Throwable throwable) {
+            super.onError(download, error, throwable);
             reset();
             Snackbar.make(mainView, R.string.game_download_error, Snackbar.LENGTH_INDEFINITE).show();
         }

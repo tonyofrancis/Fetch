@@ -11,6 +11,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.tonyodev.fetch2.Download;
+import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.DownloadBlock;
@@ -75,7 +76,7 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     @Override
-    public void onError(@NotNull Download download) {
+    public void onError(@NotNull Download download, @NotNull Error error, @org.jetbrains.annotations.Nullable Throwable throwable) {
         updateProgressForDownload(download);
     }
 

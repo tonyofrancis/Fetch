@@ -43,8 +43,10 @@ abstract class AbstractFetchListener : FetchListener {
      * on the specific error that occurred.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
+     * @param error the error that occurred
+     * @param throwable the throwable that caused the error to occur. Maybe null.
      * */
-    override fun onError(download: Download) {
+    override fun onError(download: Download, error: Error, throwable: Throwable?) {
 
     }
 

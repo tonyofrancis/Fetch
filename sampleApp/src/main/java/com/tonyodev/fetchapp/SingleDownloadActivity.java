@@ -171,7 +171,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     @Override
-    public void onError(@NotNull Download download) {
+    public void onError(@NotNull Download download, @NotNull Error error, @Nullable Throwable throwable) {
         updateViews(download, 0, 0, download.getError());
     }
 

@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2.downloader
 
 import com.tonyodev.fetch2.Download
+import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2core.DownloadBlock
 
 interface FileDownloader : Runnable {
@@ -21,7 +22,7 @@ interface FileDownloader : Runnable {
 
         fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long)
 
-        fun onError(download: Download)
+        fun onError(download: Download, error: Error, throwable: Throwable?)
 
         fun onComplete(download: Download)
 

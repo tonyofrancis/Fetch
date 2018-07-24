@@ -37,8 +37,10 @@ interface FetchListener {
      * on the specific error that occurred.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
+     * @param error the error that occurred
+     * @param throwable the throwable that caused the error to occur. Maybe null.
      * */
-    fun onError(download: Download)
+    fun onError(download: Download, error: Error, throwable: Throwable?)
 
     /** Called several times to report the progress of a download block belonging to a download.
      * The status of the download will be Status.DOWNLOADING. A download may be downloaded using
