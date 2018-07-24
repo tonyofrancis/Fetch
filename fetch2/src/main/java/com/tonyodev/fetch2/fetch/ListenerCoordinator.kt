@@ -115,7 +115,7 @@ class ListenerCoordinator(val namespace: String) {
             }
         }
 
-        override fun onStarted(download: Download) {
+        override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     val iterator = it.iterator()
@@ -124,7 +124,7 @@ class ListenerCoordinator(val namespace: String) {
                         if (reference.get() == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onStarted(download)
+                            reference.get()?.onStarted(download, downloadBlocks, totalBlocks)
                         }
                     }
                 }

@@ -67,8 +67,10 @@ abstract class AbstractFetchListener : FetchListener {
      * will be Status.DOWNLOADING.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
+     * @param downloadBlocks list of download's downloading blocks information.
+     * @param totalBlocks total downloading blocks for a download.
      * */
-    override fun onStarted(download: Download) {
+    override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int) {
 
     }
 

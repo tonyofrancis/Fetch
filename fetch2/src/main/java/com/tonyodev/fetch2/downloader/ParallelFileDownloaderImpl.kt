@@ -105,15 +105,20 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                     if (!interrupted && !terminated) {
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
-                        delegate?.onStarted(
-                                download = downloadInfo)
-                        fileSlices.forEach {
+                        val downloadBlocks = fileSlices.map {
                             val downloadBlock = DownloadBlockInfo()
                             downloadBlock.downloadId = it.id
                             downloadBlock.blockPosition = it.position
                             downloadBlock.downloadedBytes = it.downloaded
                             downloadBlock.startByte = it.startBytes
                             downloadBlock.endByte = it.endBytes
+                            downloadBlock
+                        }
+                        delegate?.onStarted(
+                                download = downloadInfo,
+                                downloadBlocks = downloadBlocks,
+                                totalBlocks = totalDownloadBlocks)
+                        downloadBlocks.forEach { downloadBlock ->
                             delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                         }
                         if (sliceFileDownloadsList.isNotEmpty()) {

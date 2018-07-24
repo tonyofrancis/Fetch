@@ -123,7 +123,9 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         downloadBlock.endByte = total
                         if (!terminated && !interrupted) {
                             delegate?.onStarted(
-                                    download = downloadInfo)
+                                    download = downloadInfo,
+                                    downloadBlocks = listOf(downloadBlock),
+                                    totalBlocks = totalDownloadBlocks)
                             delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                         }
                         writeToOutput(input, outputResourceWrapper, response, bufferSize)

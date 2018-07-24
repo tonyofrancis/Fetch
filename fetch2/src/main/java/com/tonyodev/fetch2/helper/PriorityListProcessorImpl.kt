@@ -19,7 +19,8 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                                             private val networkInfoProvider: NetworkInfoProvider,
                                             private val logger: Logger,
                                             private val uiHandler: Handler,
-                                            private val listenerCoordinator: ListenerCoordinator)
+                                            private val listenerCoordinator: ListenerCoordinator,
+                                            private val downloadConcurrentLimit: Int)
     : PriorityListProcessor<Download> {
 
     private val lock = Any()
@@ -116,11 +117,15 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     }
 
     private fun registerPriorityIterator() {
-        handlerWrapper.postDelayed(priorityIteratorRunnable, PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS)
+        if (downloadConcurrentLimit > 0) {
+            handlerWrapper.postDelayed(priorityIteratorRunnable, PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS)
+        }
     }
 
     private fun unregisterPriorityIterator() {
-        handlerWrapper.removeCallbacks(priorityIteratorRunnable)
+        if (downloadConcurrentLimit > 0) {
+            handlerWrapper.removeCallbacks(priorityIteratorRunnable)
+        }
     }
 
     private fun canContinueToProcess(): Boolean {

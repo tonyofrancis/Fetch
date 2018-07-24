@@ -17,6 +17,8 @@ import com.tonyodev.fetch2core.DownloadBlock;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class ProgressFragment extends Fragment implements FetchListener {
 
     private ProgressBar progressBar;
@@ -83,7 +85,7 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     @Override
-    public void onStarted(@NotNull Download download) {
+    public void onStarted(@NotNull Download download, @NotNull List<? extends DownloadBlock> downloadBlocks, int totalBlocks) {
         updateProgressForDownload(download);
     }
 
