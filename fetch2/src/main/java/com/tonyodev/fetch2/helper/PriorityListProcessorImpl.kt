@@ -18,11 +18,9 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                                             private val downloadManager: DownloadManager,
                                             private val networkInfoProvider: NetworkInfoProvider,
                                             private val logger: Logger,
-                                            private val uiHandler: Handler,
                                             private val listenerCoordinator: ListenerCoordinator,
                                             @Volatile
-                                            override var downloadConcurrentLimit: Int,
-                                            private val progressReportingIntervalInMillis: Long)
+                                            override var downloadConcurrentLimit: Int)
     : PriorityListProcessor<Download> {
 
     private val lock = Any()
@@ -52,9 +50,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                             }
                             val properNetworkConditions = networkInfoProvider.isOnAllowedNetwork(networkType)
                             if (!properNetworkConditions) {
-                                uiHandler.postDelayed({
-                                    listenerCoordinator.mainListener.onQueued(download, true)
-                                }, progressReportingIntervalInMillis)
+                                listenerCoordinator.mainListener.onWaitingNetwork(download)
                             }
                             if ((isFetchServerRequest || properNetworkConditions) && !downloadManager.contains(download.id)
                                     && canContinueToProcess()) {

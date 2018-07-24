@@ -30,6 +30,16 @@ abstract class AbstractFetchListener : FetchListener {
 
     }
 
+    /** Called when a download is queued and waiting for the right network conditions to start downloading.
+     * The status of the download will be Status.QUEUED. Note this method is called several time on
+     * a background thread.
+     * @param download An immutable object which contains a current snapshot of all the information
+     * about a specific download managed by Fetch.
+     * */
+    override fun onWaitingNetwork(download: Download) {
+
+    }
+
     /** Called when a download completes. The status of the download will be Status.COMPLETED.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.

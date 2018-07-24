@@ -124,4 +124,9 @@ public class ProgressFragment extends Fragment implements FetchListener {
     public void onAdded(@NotNull Download download) {
         updateProgressForDownload(download);
     }
+
+    @Override
+    public void onWaitingNetwork(@NotNull Download download) {
+        //Called on background thread
+    }
 }

@@ -221,4 +221,10 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         setProgressView(download.getStatus(), download.getProgress());
         updateViews(download, 0, 0, null);
     }
+
+    @Override
+    public void onWaitingNetwork(@NotNull Download download) {
+        //Called on background thread
+    }
+
 }

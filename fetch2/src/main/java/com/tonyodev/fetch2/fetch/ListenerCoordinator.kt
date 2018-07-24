@@ -68,6 +68,22 @@ class ListenerCoordinator(val namespace: String) {
             }
         }
 
+        override fun onWaitingNetwork(download: Download) {
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onWaitingNetwork(download)
+                        }
+                    }
+                }
+            }
+        }
+
         override fun onCompleted(download: Download) {
             synchronized(lock) {
                 listenerMap.values.forEach {
