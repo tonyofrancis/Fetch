@@ -74,33 +74,43 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
             val downloadExecutor = executor
             if (downloadExecutor != null && !downloadExecutor.isShutdown) {
                 downloadExecutor.execute {
-                    val fileDownloader = getNewFileDownloaderForDownload(download)
-                    val runDownload = synchronized(lock) {
-                        if (currentDownloadsMap.containsKey(download.id)) {
-                            fileDownloader.delegate = getFileDownloaderDelegate()
-                            currentDownloadsMap[download.id] = fileDownloader
-                            downloadManagerCoordinator.addFileDownloader(download.id, fileDownloader)
-                            logger.d("DownloadManager starting download $download")
-                            true
-                        } else {
-                            false
+                    try {
+                        val fileDownloader = getNewFileDownloaderForDownload(download)
+                        val runDownload = synchronized(lock) {
+                            if (currentDownloadsMap.containsKey(download.id)) {
+                                fileDownloader.delegate = getFileDownloaderDelegate()
+                                currentDownloadsMap[download.id] = fileDownloader
+                                downloadManagerCoordinator.addFileDownloader(download.id, fileDownloader)
+                                logger.d("DownloadManager starting download $download")
+                                true
+                            } else {
+                                false
+                            }
                         }
-                    }
-                    if (runDownload) {
-                        fileDownloader.run()
-                    }
-                    synchronized(lock) {
-                        if (currentDownloadsMap.containsKey(download.id)) {
-                            currentDownloadsMap.remove(download.id)
-                            downloadCounter -= 1
+                        if (runDownload) {
+                            fileDownloader.run()
                         }
-                        downloadManagerCoordinator.removeFileDownloader(download.id)
+                        removeDownloadMappings(download)
+                    } catch (e: Exception) {
+
+                    } finally {
+                        removeDownloadMappings(download)
                     }
                 }
-                true
+                return true
             } else {
                 false
             }
+        }
+    }
+
+    private fun removeDownloadMappings(download: Download) {
+        synchronized(lock) {
+            if (currentDownloadsMap.containsKey(download.id)) {
+                currentDownloadsMap.remove(download.id)
+                downloadCounter -= 1
+            }
+            downloadManagerCoordinator.removeFileDownloader(download.id)
         }
     }
 
