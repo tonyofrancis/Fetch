@@ -22,6 +22,8 @@ import com.tonyodev.fetch2core.DownloadBlock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 import timber.log.Timber;
 
 
@@ -169,7 +171,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     @Override
-    public void onError(@NotNull Download download) {
+    public void onError(@NotNull Download download, @NotNull Error error, @Nullable Throwable throwable) {
         updateViews(download, 0, 0, download.getError());
     }
 
@@ -179,7 +181,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     @Override
-    public void onStarted(@NotNull Download download) {
+    public void onStarted(@NotNull Download download, @NotNull List<? extends DownloadBlock> downloadBlocks, int totalBlocks) {
         updateViews(download, 0, 0, null);
     }
 
@@ -219,4 +221,10 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         setProgressView(download.getStatus(), download.getProgress());
         updateViews(download, 0, 0, null);
     }
+
+    @Override
+    public void onWaitingNetwork(@NotNull Download download) {
+        //Called on background thread
+    }
+
 }

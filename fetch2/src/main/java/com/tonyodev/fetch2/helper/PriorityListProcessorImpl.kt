@@ -18,8 +18,9 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                                             private val downloadManager: DownloadManager,
                                             private val networkInfoProvider: NetworkInfoProvider,
                                             private val logger: Logger,
-                                            private val uiHandler: Handler,
-                                            private val listenerCoordinator: ListenerCoordinator)
+                                            private val listenerCoordinator: ListenerCoordinator,
+                                            @Volatile
+                                            override var downloadConcurrentLimit: Int)
     : PriorityListProcessor<Download> {
 
     private val lock = Any()
@@ -33,16 +34,15 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     private var stopped = false
     override val isStopped: Boolean
         get() = stopped
-
     private val priorityIteratorRunnable = Runnable {
         if (canContinueToProcess()) {
-            if (downloadManager.canAccommodateNewDownload()) {
+            if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
                 val priorityList = getPriorityList()
                 for (index in 0..priorityList.lastIndex) {
-                    if (downloadManager.canAccommodateNewDownload()) {
+                    if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
                         val download = priorityList[index]
                         val isFetchServerRequest = isFetchFileServerUrl(download.url)
-                        if (isFetchServerRequest || networkInfoProvider.isNetworkAvailable) {
+                        if ((isFetchServerRequest || networkInfoProvider.isNetworkAvailable) && canContinueToProcess()) {
                             val networkType = when {
                                 globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
                                 download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
@@ -50,11 +50,10 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                             }
                             val properNetworkConditions = networkInfoProvider.isOnAllowedNetwork(networkType)
                             if (!properNetworkConditions) {
-                                uiHandler.post {
-                                    listenerCoordinator.mainListener.onQueued(download, true)
-                                }
+                                listenerCoordinator.mainListener.onWaitingNetwork(download)
                             }
-                            if ((isFetchServerRequest || properNetworkConditions) && !downloadManager.contains(download.id)) {
+                            if ((isFetchServerRequest || properNetworkConditions) && !downloadManager.contains(download.id)
+                                    && canContinueToProcess()) {
                                 downloadManager.start(download)
                             }
                         } else {
@@ -116,11 +115,15 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     }
 
     private fun registerPriorityIterator() {
-        handlerWrapper.postDelayed(priorityIteratorRunnable, PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS)
+        if (downloadConcurrentLimit > 0) {
+            handlerWrapper.postDelayed(priorityIteratorRunnable, PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS)
+        }
     }
 
     private fun unregisterPriorityIterator() {
-        handlerWrapper.removeCallbacks(priorityIteratorRunnable)
+        if (downloadConcurrentLimit > 0) {
+            handlerWrapper.removeCallbacks(priorityIteratorRunnable)
+        }
     }
 
     private fun canContinueToProcess(): Boolean {

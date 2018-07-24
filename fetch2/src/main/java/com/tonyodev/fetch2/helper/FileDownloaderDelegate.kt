@@ -20,14 +20,14 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
     @Volatile
     override var interrupted = false
 
-    override fun onStarted(download: Download) {
+    override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int) {
         if (!interrupted) {
             val downloadInfo = download as DownloadInfo
             downloadInfo.status = Status.DOWNLOADING
             try {
                 downloadInfoUpdater.update(downloadInfo)
                 uiHandler.post {
-                    fetchListener.onStarted(download)
+                    fetchListener.onStarted(download, downloadBlocks, totalBlocks)
                 }
             } catch (e: Exception) {
                 logger.e("DownloadManagerDelegate", e)
@@ -65,7 +65,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         }
     }
 
-    override fun onError(download: Download) {
+    override fun onError(download: Download, error: Error, throwable: Throwable?) {
         if (!interrupted) {
             val downloadInfo = download as DownloadInfo
             try {
@@ -80,7 +80,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                     downloadInfo.status = Status.FAILED
                     downloadInfoUpdater.update(downloadInfo)
                     uiHandler.post {
-                        fetchListener.onError(downloadInfo)
+                        fetchListener.onError(downloadInfo, error, throwable)
                     }
                 }
             } catch (e: Exception) {

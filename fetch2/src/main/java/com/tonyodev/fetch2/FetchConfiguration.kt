@@ -106,14 +106,17 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /** Sets the number of parallel downloads Fetch should perform at any given time.
-         * Default value is 1. This method can only accept values greater than 0.
+         * Default value is 1. This method can only accept values greater than 0. Setting
+         * concurrent limit to zero prevents the instance of Fetch to pull and download request
+         * from the waiting queue but allows the instance of Fetch to act on and observe changes to
+         * requests/downloads.
          * @param downloadConcurrentLimit Number of parallel downloads.
-         * @throws FetchException if the passed in download concurrent limit is less than 1.
+         * @throws FetchException if the passed in download concurrent limit is less than 0.
          * @return Builder
          * */
         fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int): Builder {
-            if (downloadConcurrentLimit < 1) {
-                throw FetchException("Concurrent limit cannot be less than 1")
+            if (downloadConcurrentLimit < 0) {
+                throw FetchException("Concurrent limit cannot be less than 0")
             }
             this.concurrentLimit = downloadConcurrentLimit
             return this

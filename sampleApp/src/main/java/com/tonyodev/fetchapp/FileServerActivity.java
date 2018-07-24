@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Download;
+import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
@@ -186,12 +187,12 @@ public class FileServerActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onError(@NotNull Download download) {
-            final String error = "Download From FileServer Error " + download.getError().toString();
-            textView.setText(error);
-            Timber.d(error);
+        public void onError(@NotNull Download download, @NotNull Error error, @org.jetbrains.annotations.Nullable Throwable throwable) {
+            super.onError(download, error, throwable);
+            final String err = "Download From FileServer Error " + download.getError().toString();
+            textView.setText(err);
+            Timber.d(err);
         }
-
     };
 
     @Override

@@ -30,6 +30,16 @@ abstract class AbstractFetchListener : FetchListener {
 
     }
 
+    /** Called when a download is queued and waiting for the right network conditions to start downloading.
+     * The status of the download will be Status.QUEUED. Note this method is called several time on
+     * a background thread.
+     * @param download An immutable object which contains a current snapshot of all the information
+     * about a specific download managed by Fetch.
+     * */
+    override fun onWaitingNetwork(download: Download) {
+
+    }
+
     /** Called when a download completes. The status of the download will be Status.COMPLETED.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
@@ -43,8 +53,10 @@ abstract class AbstractFetchListener : FetchListener {
      * on the specific error that occurred.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
+     * @param error the error that occurred
+     * @param throwable the throwable that caused the error to occur. Maybe null.
      * */
-    override fun onError(download: Download) {
+    override fun onError(download: Download, error: Error, throwable: Throwable?) {
 
     }
 
@@ -67,8 +79,10 @@ abstract class AbstractFetchListener : FetchListener {
      * will be Status.DOWNLOADING.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
+     * @param downloadBlocks list of download's downloading blocks information.
+     * @param totalBlocks total downloading blocks for a download.
      * */
-    override fun onStarted(download: Download) {
+    override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int) {
 
     }
 

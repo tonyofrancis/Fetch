@@ -26,6 +26,14 @@ interface FetchListener {
      * */
     fun onQueued(download: Download, waitingOnNetwork: Boolean)
 
+    /** Called when a download is queued and waiting for the right network conditions to start downloading.
+     * The status of the download will be Status.QUEUED. Note this method is called several time on
+     * a background thread.
+     * @param download An immutable object which contains a current snapshot of all the information
+     * about a specific download managed by Fetch.
+     * */
+    fun onWaitingNetwork(download: Download)
+
     /** Called when a download completes. The status of the download will be Status.COMPLETED.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
@@ -37,8 +45,10 @@ interface FetchListener {
      * on the specific error that occurred.
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
+     * @param error the error that occurred
+     * @param throwable the throwable that caused the error to occur. Maybe null.
      * */
-    fun onError(download: Download)
+    fun onError(download: Download, error: Error, throwable: Throwable?)
 
     /** Called several times to report the progress of a download block belonging to a download.
      * The status of the download will be Status.DOWNLOADING. A download may be downloaded using
@@ -56,9 +66,11 @@ interface FetchListener {
      * Called to report that the download process has started for a request. The status of the download
      * will be Status.DOWNLOADING.
      * @param download An immutable object which contains a current snapshot of all the information
+     * @param downloadBlocks list of download's downloading blocks information.
+     * @param totalBlocks total downloading blocks for a download.
      * about a specific download managed by Fetch.
      * */
-    fun onStarted(download: Download)
+    fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int)
 
     /** Called several times to report the progress of a download when downloading.
      * The status of the download will be Status.DOWNLOADING.

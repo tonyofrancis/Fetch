@@ -5,6 +5,7 @@ import com.tonyodev.fetch2.NetworkType
 
 interface PriorityListProcessor<out T> {
 
+    var downloadConcurrentLimit: Int
     var globalNetworkType: NetworkType
     val isPaused: Boolean
     val isStopped: Boolean

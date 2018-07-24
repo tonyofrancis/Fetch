@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.Download
+import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.FetchListener
 import com.tonyodev.fetch2core.DownloadBlock
 import java.lang.ref.WeakReference
@@ -67,6 +68,22 @@ class ListenerCoordinator(val namespace: String) {
             }
         }
 
+        override fun onWaitingNetwork(download: Download) {
+            synchronized(lock) {
+                listenerMap.values.forEach {
+                    val iterator = it.iterator()
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == null) {
+                            iterator.remove()
+                        } else {
+                            reference.get()?.onWaitingNetwork(download)
+                        }
+                    }
+                }
+            }
+        }
+
         override fun onCompleted(download: Download) {
             synchronized(lock) {
                 listenerMap.values.forEach {
@@ -83,7 +100,7 @@ class ListenerCoordinator(val namespace: String) {
             }
         }
 
-        override fun onError(download: Download) {
+        override fun onError(download: Download, error: Error, throwable: Throwable?) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     val iterator = it.iterator()
@@ -92,7 +109,7 @@ class ListenerCoordinator(val namespace: String) {
                         if (reference.get() == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onError(download)
+                            reference.get()?.onError(download, error, throwable)
                         }
                     }
                 }
@@ -115,7 +132,7 @@ class ListenerCoordinator(val namespace: String) {
             }
         }
 
-        override fun onStarted(download: Download) {
+        override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int) {
             synchronized(lock) {
                 listenerMap.values.forEach {
                     val iterator = it.iterator()
@@ -124,7 +141,7 @@ class ListenerCoordinator(val namespace: String) {
                         if (reference.get() == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onStarted(download)
+                            reference.get()?.onStarted(download, downloadBlocks, totalBlocks)
                         }
                     }
                 }

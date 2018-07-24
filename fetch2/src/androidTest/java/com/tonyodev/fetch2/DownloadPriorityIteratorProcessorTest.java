@@ -73,8 +73,8 @@ public class DownloadPriorityIteratorProcessorTest {
                 downloadManager,
                 new NetworkInfoProvider(appContext),
                 fetchLogger,
-                uiHandler,
-                listenerCoordinator);
+                listenerCoordinator,
+                concurrentLimit);
     }
 
     @Test

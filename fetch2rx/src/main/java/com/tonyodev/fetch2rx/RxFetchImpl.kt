@@ -788,6 +788,19 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int): RxFetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            if (downloadConcurrentLimit < 0) {
+                throw FetchException("Concurrent limit cannot be less than 0")
+            }
+            handlerWrapper.post {
+                fetchHandler.setDownloadConcurrentLimit(downloadConcurrentLimit)
+            }
+            return this
+        }
+    }
+
     override fun close() {
         synchronized(lock) {
             if (closed) {

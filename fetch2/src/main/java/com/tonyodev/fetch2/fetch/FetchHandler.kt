@@ -50,5 +50,6 @@ interface FetchHandler : Closeable {
     fun getDownloadBlocks(id: Int): List<DownloadBlock>
     fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long
     fun getFetchFileServerCatalog(request: Request): List<FileResource>
+    fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int)
 
 }

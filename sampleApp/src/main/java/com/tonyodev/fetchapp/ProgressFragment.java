@@ -11,11 +11,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.tonyodev.fetch2.Download;
+import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.DownloadBlock;
 
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class ProgressFragment extends Fragment implements FetchListener {
 
@@ -73,7 +76,7 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     @Override
-    public void onError(@NotNull Download download) {
+    public void onError(@NotNull Download download, @NotNull Error error, @org.jetbrains.annotations.Nullable Throwable throwable) {
         updateProgressForDownload(download);
     }
 
@@ -83,7 +86,7 @@ public class ProgressFragment extends Fragment implements FetchListener {
     }
 
     @Override
-    public void onStarted(@NotNull Download download) {
+    public void onStarted(@NotNull Download download, @NotNull List<? extends DownloadBlock> downloadBlocks, int totalBlocks) {
         updateProgressForDownload(download);
     }
 
@@ -120,5 +123,10 @@ public class ProgressFragment extends Fragment implements FetchListener {
     @Override
     public void onAdded(@NotNull Download download) {
         updateProgressForDownload(download);
+    }
+
+    @Override
+    public void onWaitingNetwork(@NotNull Download download) {
+        //Called on background thread
     }
 }
