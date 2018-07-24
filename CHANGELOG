@@ -1,3 +1,13 @@
+Version 2.2.0-RC2
+- Allow downloadConcurrentLimit to be set to 0. Effectively that instance of Fetch can perform all normal actions except downloading requests.
+- Can now set download concurrent limit on Fetch instance at runtime using method fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int): Fetch
+- Errors Fetch throws now have an attached throwable: eg `error.getThrowable()` that you can retrieve the exception that caused the Error. Note throwable may be null.
+- Added new Parameters to FetchListener onStart method now: fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int)
+- Added new Parameters to FetchListener onError method now: fun onError(download: Download, error: Error, throwable: Throwable?)
+- Added new FetchListener method fun onWaitingNetwork(download: Download). This method is always called on a background thread.
+- Download Manager bug and crash fixes
+- Fixed GlobalNetworkType bug causing it to not work correctly
+
 Version 2.2.0-RC1
 This version has so many fixes and improvements that I forgot half of them. Listing all I can remember and marked correctly in the commits.
 Big thanks to @duncanokeyo on Github for continuously pointing out issues and improvements.
