@@ -406,8 +406,19 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun setGlobalNetworkType(networkType: NetworkType) {
+        priorityListProcessor.stop()
         priorityListProcessor.globalNetworkType = networkType
-        downloadManager.cancelAll()
+        val ids = downloadManager.getActiveDownloads().map { it.id }
+        cancelDownloadsIfDownloading(ids)
+        val downloads = databaseManager.get(ids).filterNotNull()
+        downloads.forEach {
+            if (canRetryDownload(it)) {
+                it.status = Status.QUEUED
+                it.error = defaultNoError
+            }
+        }
+        databaseManager.update(downloads)
+        priorityListProcessor.start()
     }
 
     override fun enableLogging(enabled: Boolean) {
