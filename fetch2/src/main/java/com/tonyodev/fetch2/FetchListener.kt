@@ -56,9 +56,11 @@ interface FetchListener {
      * Called to report that the download process has started for a request. The status of the download
      * will be Status.DOWNLOADING.
      * @param download An immutable object which contains a current snapshot of all the information
+     * @param downloadBlocks list of download's downloading blocks information.
+     * @param totalBlocks total downloading blocks for a download.
      * about a specific download managed by Fetch.
      * */
-    fun onStarted(download: Download)
+    fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int)
 
     /** Called several times to report the progress of a download when downloading.
      * The status of the download will be Status.DOWNLOADING.

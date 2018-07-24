@@ -9,6 +9,7 @@ import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.getRequestForDownload
 import com.tonyodev.fetch2core.*
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class DownloadManagerImpl(private val httpDownloader: Downloader,
@@ -26,7 +27,13 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val md5CheckingEnabled: Boolean) : DownloadManager {
 
     private val lock = Any()
-    private val executor = Executors.newFixedThreadPool(concurrentLimit)
+    private val executor: ExecutorService? = {
+        if (concurrentLimit > 0) {
+            Executors.newFixedThreadPool(concurrentLimit)
+        } else {
+            null
+        }
+    }()
     private val currentDownloadsMap = hashMapOf<Int, FileDownloader?>()
     @Volatile
     private var downloadCounter = 0
@@ -52,7 +59,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
             downloadCounter += 1
             currentDownloadsMap[download.id] = null
             downloadManagerCoordinator.addFileDownloader(download.id, null)
-            if (!executor.isShutdown) {
+            if (executor?.isShutdown == false) {
                 executor.execute {
                     val fileDownloader = getNewFileDownloaderForDownload(download)
                     val runDownload = synchronized(lock) {
@@ -145,7 +152,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
             closed = true
             terminateAllDownloads()
             logger.d("DownloadManager closing download manager")
-            executor.shutdown()
+            executor?.shutdown()
         }
     }
 

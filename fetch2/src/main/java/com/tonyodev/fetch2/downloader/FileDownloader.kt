@@ -15,7 +15,7 @@ interface FileDownloader : Runnable {
 
         val interrupted: Boolean
 
-        fun onStarted(download: Download)
+        fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int)
 
         fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int)
 
