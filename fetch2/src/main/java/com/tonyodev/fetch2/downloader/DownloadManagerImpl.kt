@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class DownloadManagerImpl(private val httpDownloader: Downloader,
-                          private val concurrentLimit: Int,
+                          concurrentLimit: Int,
                           private val progressReportingIntervalMillis: Long,
                           private val logger: Logger,
                           private val networkInfoProvider: NetworkInfoProvider,
@@ -27,13 +27,25 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val md5CheckingEnabled: Boolean) : DownloadManager {
 
     private val lock = Any()
-    private val executor: ExecutorService? = {
-        if (concurrentLimit > 0) {
-            Executors.newFixedThreadPool(concurrentLimit)
-        } else {
-            null
+    private var executor: ExecutorService? = getNewDownloadExecutorService(concurrentLimit)
+    @Volatile
+    override var concurrentLimit: Int = concurrentLimit
+        set(value) {
+            synchronized(lock) {
+                try {
+                    getActiveDownloadsIds().forEach { id ->
+                        cancelDownloadNoLock(id)
+                    }
+                } catch (e: Exception) {
+                }
+                try {
+                    executor?.shutdown()
+                } catch (e: Exception) {
+                }
+                executor = getNewDownloadExecutorService(concurrentLimit)
+                field = value
+            }
         }
-    }()
     private val currentDownloadsMap = hashMapOf<Int, FileDownloader?>()
     @Volatile
     private var downloadCounter = 0
@@ -59,8 +71,9 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
             downloadCounter += 1
             currentDownloadsMap[download.id] = null
             downloadManagerCoordinator.addFileDownloader(download.id, null)
-            if (executor?.isShutdown == false) {
-                executor.execute {
+            val downloadExecutor = executor
+            if (downloadExecutor != null && !downloadExecutor.isShutdown) {
+                downloadExecutor.execute {
                     val fileDownloader = getNewFileDownloaderForDownload(download)
                     val runDownload = synchronized(lock) {
                         if (currentDownloadsMap.containsKey(download.id)) {
@@ -92,22 +105,26 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
     }
 
     override fun cancel(downloadId: Int): Boolean {
-        synchronized(lock) {
-            throwExceptionIfClosed()
-            return if (currentDownloadsMap.containsKey(downloadId)) {
-                val fileDownloader = currentDownloadsMap[downloadId]
-                fileDownloader?.interrupted = true
-                currentDownloadsMap.remove(downloadId)
-                downloadCounter -= 1
-                downloadManagerCoordinator.removeFileDownloader(downloadId)
-                if (fileDownloader != null) {
-                    logger.d("DownloadManager cancelled download ${fileDownloader.download}")
-                }
-                true
-            } else {
-                downloadManagerCoordinator.interruptDownload(downloadId)
-                false
+        return synchronized(lock) {
+            cancelDownloadNoLock(downloadId)
+        }
+    }
+
+    private fun cancelDownloadNoLock(downloadId: Int): Boolean {
+        throwExceptionIfClosed()
+        return if (currentDownloadsMap.containsKey(downloadId)) {
+            val fileDownloader = currentDownloadsMap[downloadId]
+            fileDownloader?.interrupted = true
+            currentDownloadsMap.remove(downloadId)
+            downloadCounter -= 1
+            downloadManagerCoordinator.removeFileDownloader(downloadId)
+            if (fileDownloader != null) {
+                logger.d("DownloadManager cancelled download ${fileDownloader.download}")
             }
+            true
+        } else {
+            downloadManagerCoordinator.interruptDownload(downloadId)
+            false
         }
     }
 
@@ -175,10 +192,17 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
         }
     }
 
-    override fun getActiveDownloads(): List<Download> {
+    override fun getActiveDownloads(): List<Download?> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return currentDownloadsMap.values.filterNotNull().map { it.download }
+            return currentDownloadsMap.values.map { it?.download }
+        }
+    }
+
+    override fun getActiveDownloadsIds(): List<Int> {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            return currentDownloadsMap.keys.toList()
         }
     }
 
@@ -240,6 +264,14 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
         } else {
             httpDownloader.getDirectoryForFileDownloaderTypeParallel(request)
                     ?: fileTempDir
+        }
+    }
+
+    private fun getNewDownloadExecutorService(concurrentLimit: Int): ExecutorService? {
+        return if (concurrentLimit > 0) {
+            Executors.newFixedThreadPool(concurrentLimit)
+        } else {
+            null
         }
     }
 

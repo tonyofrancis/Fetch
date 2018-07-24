@@ -408,11 +408,28 @@ class FetchHandlerImpl(private val namespace: String,
     override fun setGlobalNetworkType(networkType: NetworkType) {
         priorityListProcessor.stop()
         priorityListProcessor.globalNetworkType = networkType
-        val ids = downloadManager.getActiveDownloads().map { it.id }
+        val ids = downloadManager.getActiveDownloadsIds()
         cancelDownloadsIfDownloading(ids)
         val downloads = databaseManager.get(ids).filterNotNull()
         downloads.forEach {
-            if (canRetryDownload(it)) {
+            if (it.status == Status.DOWNLOADING) {
+                it.status = Status.QUEUED
+                it.error = defaultNoError
+            }
+        }
+        databaseManager.update(downloads)
+        priorityListProcessor.start()
+    }
+
+    override fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int) {
+        priorityListProcessor.stop()
+        val ids = downloadManager.getActiveDownloadsIds()
+        cancelDownloadsIfDownloading(ids)
+        downloadManager.concurrentLimit = downloadConcurrentLimit
+        priorityListProcessor.downloadConcurrentLimit = downloadConcurrentLimit
+        val downloads = databaseManager.get(ids).filterNotNull()
+        downloads.forEach {
+            if (it.status == Status.DOWNLOADING) {
                 it.status = Status.QUEUED
                 it.error = defaultNoError
             }

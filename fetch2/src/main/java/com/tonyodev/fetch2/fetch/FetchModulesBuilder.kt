@@ -108,7 +108,8 @@ object FetchModulesBuilder {
                     logger = fetchConfiguration.logger,
                     uiHandler = uiHandler,
                     listenerCoordinator = listenerCoordinator,
-                    downloadConcurrentLimit = fetchConfiguration.concurrentLimit)
+                    downloadConcurrentLimit = fetchConfiguration.concurrentLimit,
+                    progressReportingIntervalInMillis = fetchConfiguration.progressReportingIntervalMillis)
             priorityListProcessor.globalNetworkType = fetchConfiguration.globalNetworkType
             fetchHandler = FetchHandlerImpl(
                     namespace = fetchConfiguration.namespace,

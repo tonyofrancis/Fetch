@@ -75,7 +75,8 @@ public class DownloadPriorityIteratorProcessorTest {
                 fetchLogger,
                 uiHandler,
                 listenerCoordinator,
-                concurrentLimit);
+                concurrentLimit,
+                progessInterval);
     }
 
     @Test
