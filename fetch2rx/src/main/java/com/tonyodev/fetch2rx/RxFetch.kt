@@ -470,6 +470,8 @@ interface RxFetch {
         @SuppressLint("StaticFieldLeak")
         @Volatile
         private var defaultRxFetchConfiguration: FetchConfiguration? = null
+        @Volatile
+        private var defaultRxFetchInstance: RxFetch? = null
 
         /**
          * Sets the default Configuration settings on the default Fetch instance.
@@ -497,9 +499,18 @@ interface RxFetch {
          * @return Get default RxFetch instance
          * */
         fun getDefaultRxInstance(): RxFetch {
-            val fetchConfiguration = defaultRxFetchConfiguration
-                    ?: throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
-            return RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(fetchConfiguration))
+            return synchronized(lock) {
+                val rxFetchConfiguration = defaultRxFetchConfiguration
+                        ?: throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
+                val defaultRxFetch = defaultRxFetchInstance
+                if (defaultRxFetch == null || defaultRxFetch.isClosed) {
+                    val newDefaultRxFetch = RxFetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(rxFetchConfiguration))
+                    defaultRxFetchInstance = newDefaultRxFetch
+                    newDefaultRxFetch
+                } else {
+                    defaultRxFetch
+                }
+            }
         }
 
         /**

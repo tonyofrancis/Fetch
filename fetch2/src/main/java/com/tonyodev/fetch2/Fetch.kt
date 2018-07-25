@@ -759,6 +759,8 @@ interface Fetch {
         @SuppressLint("StaticFieldLeak")
         @Volatile
         private var defaultFetchConfiguration: FetchConfiguration? = null
+        @Volatile
+        private var defaultFetchInstance: Fetch? = null
 
         /**
          * Sets the default Configuration settings on the default Fetch instance.
@@ -786,9 +788,18 @@ interface Fetch {
          * @return Get default Fetch instance
          * */
         fun getDefaultInstance(): Fetch {
-            val fetchConfiguration = defaultFetchConfiguration
-                    ?: throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
-            return FetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(fetchConfiguration))
+            return synchronized(lock) {
+                val fetchConfiguration = defaultFetchConfiguration
+                        ?: throw FetchException(GLOBAL_FETCH_CONFIGURATION_NOT_SET)
+                val defaultFetch = defaultFetchInstance
+                if (defaultFetch == null || defaultFetch.isClosed) {
+                    val newDefaultFetch = FetchImpl.newInstance(FetchModulesBuilder.buildModulesFromPrefs(fetchConfiguration))
+                    defaultFetchInstance = newDefaultFetch
+                    newDefaultFetch
+                } else {
+                    defaultFetch
+                }
+            }
         }
 
         /**
