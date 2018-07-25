@@ -27,7 +27,9 @@ open class RxFetchImpl(override val namespace: String,
     private var closed = false
     override val isClosed: Boolean
         get() {
-            return closed
+            synchronized(lock) {
+                return closed
+            }
         }
 
     init {

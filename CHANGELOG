@@ -1,3 +1,7 @@
+Version 2.2.0-RC3
+- Fixed Fetch.Impl.getDefaultInstance()
+- Fixed RxFetch.Impl.getDefaultInstance()
+
 Version 2.2.0-RC2
 - Allow downloadConcurrentLimit to be set to 0. Effectively that instance of Fetch can perform all normal actions except downloading requests.
 - Can now set download concurrent limit on Fetch instance at runtime using method fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int): Fetch
