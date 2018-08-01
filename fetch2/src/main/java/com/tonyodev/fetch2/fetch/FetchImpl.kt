@@ -33,7 +33,13 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun enqueue(request: Request, func: Func<Request>?, func2: Func<Error>?): Fetch {
-        enqueueRequest(listOf(request), Func { result -> func?.call(result.first()) }, func2)
+        enqueueRequest(listOf(request), Func { result ->
+            if (result.isNotEmpty()) {
+                func?.call(result.first())
+            } else {
+                func2?.call(Error.ENQUEUE_NOT_SUCCESSFUL)
+            }
+        }, func2)
         return this
     }
 
@@ -84,7 +90,13 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun pause(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return pause(listOf(id), Func { func?.call(it.first()) }, func2)
+        return pause(listOf(id), Func { downloads ->
+            if (downloads.isNotEmpty()) {
+                func?.call(downloads.first())
+            } else {
+                func2?.call(Error.REQUEST_DOES_NOT_EXIST)
+            }
+        }, func2)
     }
 
     override fun pause(id: Int): Fetch {
@@ -205,7 +217,13 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun resume(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return resume(listOf(id), Func { func?.call(it.first()) }, func2)
+        return resume(listOf(id), Func { downloads ->
+            if (downloads.isNotEmpty()) {
+                func?.call(downloads.first())
+            } else {
+                func2?.call(Error.REQUEST_DOES_NOT_EXIST)
+            }
+        }, func2)
     }
 
     override fun resume(id: Int): Fetch {
@@ -271,7 +289,13 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun remove(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return remove(listOf(id), Func { func?.call(it.first()) }, func2)
+        return remove(listOf(id), Func { downloads ->
+            if (downloads.isNotEmpty()) {
+                func?.call(downloads.first())
+            } else {
+                func2?.call(Error.REQUEST_DOES_NOT_EXIST)
+            }
+        }, func2)
     }
 
     override fun removeGroup(id: Int, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
@@ -339,7 +363,13 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun delete(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return delete(listOf(id), Func { func?.call(it.first()) }, func2)
+        return delete(listOf(id), Func { downloads ->
+            if (downloads.isNotEmpty()) {
+                func?.call(downloads.first())
+            } else {
+                func2?.call(Error.REQUEST_DOES_NOT_EXIST)
+            }
+        }, func2)
     }
 
     override fun deleteGroup(id: Int, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
@@ -419,7 +449,13 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun cancel(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return cancel(listOf(id), Func { func?.call(it.first()) }, func2)
+        return cancel(listOf(id), Func { downloads ->
+            if (downloads.isNotEmpty()) {
+                func?.call(downloads.first())
+            } else {
+                func2?.call(Error.REQUEST_DOES_NOT_EXIST)
+            }
+        }, func2)
     }
 
     override fun cancel(id: Int): Fetch {
@@ -503,7 +539,13 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun retry(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return retry(listOf(id), Func { func?.call(it.first()) }, func2)
+        return retry(listOf(id), Func { downloads ->
+            if (downloads.isNotEmpty()) {
+                func?.call(downloads.first())
+            } else {
+                func2?.call(Error.REQUEST_DOES_NOT_EXIST)
+            }
+        }, func2)
     }
 
     override fun retry(id: Int): Fetch {
@@ -629,7 +671,13 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun addCompletedDownload(completedDownload: CompletedDownload, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return addCompletedDownloads(listOf(completedDownload), Func { func?.call(it.first()) }, func2)
+        return addCompletedDownloads(listOf(completedDownload), Func { downloads ->
+            if (downloads.isNotEmpty()) {
+                func?.call(downloads.first())
+            } else {
+                func2?.call(Error.COMPLETED_NOT_ADDED_SUCCESSFULLY)
+            }
+        }, func2)
     }
 
     override fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
