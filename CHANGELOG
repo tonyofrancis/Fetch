@@ -1,3 +1,7 @@
+Version 2.2.0-RC4
+- Fixed action methods throwing a collection empty exception.
+- Big fixes and improvements.
+
 Version 2.2.0-RC3
 - Fixed Fetch.Impl.getDefaultInstance()
 - Fixed RxFetch.Impl.getDefaultInstance()
