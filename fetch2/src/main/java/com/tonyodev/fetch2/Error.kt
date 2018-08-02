@@ -100,7 +100,13 @@ enum class Error constructor(
     FETCH_FILE_SERVER_INVALID_RESPONSE(23),
 
     /** Indicates that the Request Being Queried does not exist.*/
-    REQUEST_DOES_NOT_EXIST(24);
+    REQUEST_DOES_NOT_EXIST(24),
+
+    /** Indicates that the Request was not enqueued.*/
+    ENQUEUE_NOT_SUCCESSFUL(25),
+
+    /** Indicates that the Completed download was not added successfully.*/
+    COMPLETED_NOT_ADDED_SUCCESSFULLY(26);
 
     companion object {
 
@@ -130,6 +136,8 @@ enum class Error constructor(
                 22 -> FAILED_TO_ADD_COMPLETED_DOWNLOAD
                 23 -> FETCH_FILE_SERVER_INVALID_RESPONSE
                 24 -> REQUEST_DOES_NOT_EXIST
+                25 -> ENQUEUE_NOT_SUCCESSFUL
+                26 -> COMPLETED_NOT_ADDED_SUCCESSFULLY
                 else -> UNKNOWN
             }
         }
