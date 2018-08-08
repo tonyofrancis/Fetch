@@ -1,3 +1,9 @@
+Version 2.2.0-RC5
+- EnqueueAction.REPLACE_EXISTING fixes
+- Fixed bug where deleted download returns the wrong status
+- fixed bug when fetching the catalog from a Fetch file server causes Json Exceptions
+
+
 Version 2.2.0-RC4
 - Fixed action methods throwing a collection empty exception.
 - Big fixes and improvements.
