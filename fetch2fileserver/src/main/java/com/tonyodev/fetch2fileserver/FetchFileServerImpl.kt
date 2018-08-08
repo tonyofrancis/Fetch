@@ -15,6 +15,7 @@ import com.tonyodev.fetch2fileserver.provider.FileResourceProviderDelegate
 import com.tonyodev.fetch2fileserver.provider.FetchFileResourceProvider
 import com.tonyodev.fetch2core.server.FileRequest
 import com.tonyodev.fetch2core.server.FileResourceTransporterWriter
+import org.json.JSONObject
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.*
@@ -150,7 +151,9 @@ class FetchFileServerImpl(context: Context,
             val catalog = fileResourceServerDatabase.getRequestedCatalog()
             val catalogFileResourceInfo = FileResourceInfo()
             catalogFileResourceInfo.id = FileRequest.CATALOG_ID
-            catalogFileResourceInfo.customData = catalog
+            val catalogMap = mutableMapOf<String, String>()
+            catalogMap["data"] = catalog
+            catalogFileResourceInfo.customData = JSONObject(catalogMap).toString()
             catalogFileResourceInfo.name = FileRequest.CATALOG_NAME
             catalogFileResourceInfo.file = FileRequest.CATALOG_FILE
             return catalogFileResourceInfo.toFileResource()

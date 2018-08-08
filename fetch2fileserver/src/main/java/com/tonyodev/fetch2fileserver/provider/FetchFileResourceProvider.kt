@@ -79,7 +79,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                             inputResourceWrapper = fileResourceProviderDelegate.getFileInputResourceWrapper(sessionId, request, fileResource, request.rangeStart)
                                             if (inputResourceWrapper == null) {
                                                 if (fileResource.id == FileRequest.CATALOG_ID) {
-                                                    val catalog = JSONObject(fileResource.customData).toString().toByteArray(Charsets.UTF_8)
+                                                    val catalog = fileResource.customData["data"]!!.toByteArray(Charsets.UTF_8)
                                                     fileResource.length = if (request.rangeEnd == -1L) catalog.size.toLong() else request.rangeEnd
                                                     fileResource.md5 = getMd5String(catalog)
                                                     inputResourceWrapper = object : InputResourceWrapper() {

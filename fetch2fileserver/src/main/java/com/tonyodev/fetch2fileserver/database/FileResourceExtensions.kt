@@ -13,10 +13,8 @@ fun FileResource.toFileResourceInfo(): FileResourceInfo {
     fileResourceInfo.customData = if (customData.isEmpty()) {
         "{}"
     } else {
-        val json = JSONObject()
-        customData.iterator().forEach {
-            json.put(it.key, it.value)
-        }
+
+        val json = JSONObject(customData)
         json.toString()
     }
     return fileResourceInfo
