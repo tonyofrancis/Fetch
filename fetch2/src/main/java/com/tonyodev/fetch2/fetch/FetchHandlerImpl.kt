@@ -52,12 +52,12 @@ class FetchHandlerImpl(private val namespace: String,
         val downloadInfoList = requests.map {
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
+            prepareDownloadInfoForEnqueue(downloadInfo)
             downloadInfo.status = if (it.downloadOnEnqueue) {
                 Status.QUEUED
             } else {
                 Status.ADDED
             }
-            prepareDownloadInfoForEnqueue(downloadInfo)
             downloadInfo
         }
         val results = databaseManager.insert(downloadInfoList)
