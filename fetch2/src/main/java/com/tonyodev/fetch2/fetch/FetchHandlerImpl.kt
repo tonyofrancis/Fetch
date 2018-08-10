@@ -49,7 +49,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     private fun enqueueRequests(requests: List<Request>): List<Download> {
-        val downloadInfoList = requests.map {
+        val results = requests.map {
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
             prepareDownloadInfoForEnqueue(downloadInfo)
@@ -58,14 +58,10 @@ class FetchHandlerImpl(private val namespace: String,
             } else {
                 Status.ADDED
             }
-            downloadInfo
+            val downloadPair = databaseManager.insert(downloadInfo)
+            logger.d("Enqueued download ${downloadPair.first}")
+            downloadPair.first
         }
-        val results = databaseManager.insert(downloadInfoList)
-                .filter { it.second }
-                .map {
-                    logger.d("Enqueued download ${it.first}")
-                    it.first
-                }
         startPriorityQueueIfNotStarted()
         return results
     }
@@ -89,19 +85,15 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download> {
-        val downloadInfoList = completedDownloads.map {
+        return completedDownloads.map {
             val downloadInfo = it.toDownloadInfo()
             downloadInfo.namespace = namespace
             downloadInfo.status = Status.COMPLETED
             prepareCompletedDownloadInfoForEnqueue(downloadInfo)
-            downloadInfo
+            val downloadPair = databaseManager.insert(downloadInfo)
+            logger.d("Enqueued CompletedDownload ${downloadPair.first}")
+            downloadPair.first
         }
-        return databaseManager.insert(downloadInfoList)
-                .filter { it.second }
-                .map {
-                    logger.d("Enqueued CompletedDownload ${it.first}")
-                    it.first
-                }
     }
 
     private fun prepareCompletedDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
