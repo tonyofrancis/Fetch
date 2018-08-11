@@ -374,6 +374,20 @@ public class TestActivity extends AppCompatActivity {
     };
 }
 ```
+This is a quick example of coarse that uses the same device as the server and client. With the server configuration above, fetch serves the files using multicast, meaning you can use any private ip address to access them. It also randomly assigns the port that the file server serves the files on.
+You can specify a host address and port to serve the files on by setting a custom `ServerSocket`.
+```java
+String address =  "192.168.43.1"; //the address to serve the files at
+int port = 26250; //the port to serve the files at
+int backlog = 50; //requested maximum length of the queue of incoming connections
+
+FetchFileServer fetchFileServer = new FetchFileServer.Builder(this)
+                    .setServerSocket(new ServerSocket(port, backlog, InetAddress.getByName(address)))
+                    .build();
+```
+You would then download the files using the specified address and port. When using multiple devices, the devices should be on the same network, for example with one acting as the wireless hotspot. Lastly, note that the address `127.0.0.1` strictly refers to the device itself as the server and can therefore not be used by a client device other than the server itself.
+
+It is often helpful to get a list of the files the server is currently serving. You can use the `getFetchFileServerCatalog` method on the fetch instance for this. An example is implemented in the sample app.
 
 Fetch1 Migration
 ----------------
