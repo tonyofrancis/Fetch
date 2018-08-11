@@ -1,3 +1,6 @@
+Version 2.2.0-RC6
+- Fixed multi enqueue issues.
+
 Version 2.2.0-RC5
 - EnqueueAction.REPLACE_EXISTING fixes
 - Fixed bug where deleted download returns the wrong status
