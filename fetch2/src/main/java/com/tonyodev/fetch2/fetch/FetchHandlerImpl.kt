@@ -484,6 +484,7 @@ class FetchHandlerImpl(private val namespace: String,
             }
         }
         logger.d("Added listener $listener")
+        startPriorityQueueIfNotStarted()
     }
 
     override fun removeListener(listener: FetchListener) {
