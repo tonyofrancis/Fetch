@@ -114,9 +114,9 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
 
     override fun disconnect(response: Downloader.Response) {
         if (connections.contains(response)) {
-            val transporter = connections[response] as FetchFileResourceTransporter
+            val transporter = connections[response]
             connections.remove(response)
-            transporter.close()
+            transporter?.close()
         }
     }
 
