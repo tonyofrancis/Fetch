@@ -24,14 +24,6 @@ class HandlerWrapper(val namespace: String) {
         }
     }
 
-    fun post(runnable: Runnable) {
-        synchronized(lock) {
-            if (!closed) {
-                handler.post(runnable)
-            }
-        }
-    }
-
     fun postDelayed(runnable: Runnable, delayMillis: Long) {
         synchronized(lock) {
             if (!closed) {

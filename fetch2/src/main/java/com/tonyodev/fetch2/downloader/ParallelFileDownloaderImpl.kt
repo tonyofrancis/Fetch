@@ -140,6 +140,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             completedDownload = true
                             if (md5CheckingEnabled) {
                                 if (downloader.verifyContentMD5(openingResponse.request, openingResponse.md5)) {
+                                    deleteAllInFolderForId(downloadInfo.id, fileTempDir)
                                     if (!interrupted && !terminated) {
                                         delegate?.onProgress(
                                                 download = downloadInfo,
@@ -149,9 +150,11 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                                 download = downloadInfo)
                                     }
                                 } else {
+                                    deleteAllInFolderForId(downloadInfo.id, fileTempDir)
                                     throw FetchException(INVALID_CONTENT_MD5)
                                 }
                             } else {
+                                deleteAllInFolderForId(downloadInfo.id, fileTempDir)
                                 if (!interrupted && !terminated) {
                                     delegate?.onProgress(
                                             download = downloadInfo,
