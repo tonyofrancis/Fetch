@@ -49,25 +49,29 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     private fun enqueueRequests(requests: List<Request>): List<Download> {
-        val results = requests.map {
-            val downloadInfo = it.toDownloadInfo()
-            downloadInfo.namespace = namespace
-            prepareDownloadInfoForEnqueue(downloadInfo)
-            downloadInfo.status = if (it.downloadOnEnqueue) {
-                Status.QUEUED
-            } else {
-                Status.ADDED
-            }
-            val downloadPair = databaseManager.insert(downloadInfo)
-            logger.d("Enqueued download ${downloadPair.first}")
-            downloadPair.first
-        }
+        val results = requests.distinctBy { it.file }
+                .map {
+                    val downloadInfo = it.toDownloadInfo()
+                    downloadInfo.namespace = namespace
+                    prepareDownloadInfoForEnqueue(downloadInfo)
+                    downloadInfo.status = if (it.downloadOnEnqueue) {
+                        Status.QUEUED
+                    } else {
+                        Status.ADDED
+                    }
+                    val downloadPair = databaseManager.insert(downloadInfo)
+                    logger.d("Enqueued download ${downloadPair.first}")
+                    downloadPair.first
+                }
         startPriorityQueueIfNotStarted()
         return results
     }
 
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
         val existingDownload = databaseManager.getByFile(downloadInfo.file)
+        if (existingDownload == null) {
+            createFileIfPossible(File(downloadInfo.file))
+        }
         if (downloadInfo.enqueueAction == EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING && existingDownload != null) {
             throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
         } else if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
