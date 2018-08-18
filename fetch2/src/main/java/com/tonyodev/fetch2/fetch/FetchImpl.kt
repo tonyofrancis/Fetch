@@ -53,6 +53,10 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
+                    val distinctCount = requests.distinctBy { it.file }.count()
+                    if (distinctCount != requests.size) {
+                        throw FetchException(ENQUEUED_REQUESTS_ARE_NOT_DISTINCT)
+                    }
                     val downloads = fetchHandler.enqueue(requests)
                     uiHandler.post {
                         downloads.forEach {
@@ -75,7 +79,6 @@ open class FetchImpl constructor(override val namespace: String,
                         }
                     }
                 }
-
             }
         }
     }

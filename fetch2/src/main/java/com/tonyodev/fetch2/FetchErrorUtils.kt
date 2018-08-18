@@ -70,6 +70,8 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FILE_NOT_FOUND
     } else if (message.contains(FETCH_FILE_SERVER_URL_INVALID, true)) {
         Error.FETCH_FILE_SERVER_URL_INVALID
+    } else if (message.contains(ENQUEUED_REQUESTS_ARE_NOT_DISTINCT, true)) {
+        Error.ENQUEUED_REQUESTS_ARE_NOT_DISTINCT
     } else {
         Error.UNKNOWN
     }
