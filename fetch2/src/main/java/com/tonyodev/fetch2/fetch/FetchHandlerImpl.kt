@@ -23,7 +23,6 @@ class FetchHandlerImpl(private val namespace: String,
                        private val autoStart: Boolean,
                        private val httpDownloader: Downloader,
                        private val fileServerDownloader: FileServerDownloader,
-                       private val fileTempDir: String,
                        private val listenerCoordinator: ListenerCoordinator,
                        private val uiHandler: Handler) : FetchHandler {
 
@@ -75,7 +74,7 @@ class FetchHandlerImpl(private val namespace: String,
         if (downloadInfo.enqueueAction == EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING && existingDownload != null) {
             throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
         } else if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
-            deleteDownloads(listOf(downloadInfo))
+            deleteDownloads(listOf(downloadInfo.id))
         } else if (downloadInfo.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME && existingDownload != null) {
             val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
             downloadInfo.file = file.absolutePath
@@ -103,20 +102,21 @@ class FetchHandlerImpl(private val namespace: String,
     private fun prepareCompletedDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
         val existingDownload = databaseManager.getByFile(downloadInfo.file)
         if (existingDownload != null) {
-            deleteDownloads(listOf(downloadInfo))
+            deleteDownloads(listOf(downloadInfo.id))
         }
     }
 
     override fun pause(ids: List<Int>): List<Download> {
-        return pauseDownloads(databaseManager.get(ids).filterNotNull())
+        return pauseDownloads(ids)
     }
 
     override fun pausedGroup(id: Int): List<Download> {
-        return pauseDownloads(databaseManager.getByGroup(id))
+        return pauseDownloads(listOf(id))
     }
 
-    private fun pauseDownloads(downloads: List<DownloadInfo>): List<Download> {
-        cancelDownloadsIfDownloading(downloads.map { it.id })
+    private fun pauseDownloads(downloadIds: List<Int>): List<Download> {
+        cancelDownloadsIfDownloading(downloadIds)
+        val downloads = databaseManager.get(downloadIds).filterNotNull()
         val pausedDownloads = mutableListOf<DownloadInfo>()
         downloads.forEach {
             if (canPauseDownload(it)) {
@@ -138,15 +138,16 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun resume(ids: List<Int>): List<Download> {
-        return resumeDownloads(databaseManager.get(ids).filterNotNull())
+        return resumeDownloads(ids)
     }
 
     override fun resumeGroup(id: Int): List<Download> {
-        return resumeDownloads(databaseManager.getByGroup(id))
+        return resumeDownloads(listOf(id))
     }
 
-    private fun resumeDownloads(downloads: List<DownloadInfo>): List<Download> {
+    private fun resumeDownloads(downloadIds: List<Int>): List<Download> {
         startPriorityQueueIfNotStarted()
+        val downloads = databaseManager.get(downloadIds).filterNotNull()
         val resumedDownloads = mutableListOf<DownloadInfo>()
         downloads.forEach {
             if (!downloadManager.contains(it.id) && canResumeDownload(it)) {
@@ -159,57 +160,59 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun remove(ids: List<Int>): List<Download> {
-        return removeDownloads(databaseManager.get(ids).filterNotNull())
+        return removeDownloads(ids)
     }
 
     override fun removeGroup(id: Int): List<Download> {
-        return removeDownloads(databaseManager.getByGroup(id))
+        return removeDownloads(databaseManager.getByGroup(id).map { it.id })
     }
 
     override fun removeAll(): List<Download> {
-        return removeDownloads(databaseManager.get())
+        return removeDownloads(databaseManager.get().map { it.id })
     }
 
     override fun removeAllWithStatus(status: Status): List<Download> {
-        return removeDownloads(databaseManager.getByStatus(status))
+        return removeDownloads(databaseManager.getByStatus(status).map { it.id })
     }
 
     override fun removeAllInGroupWithStatus(groupId: Int, status: Status): List<Download> {
-        return removeDownloads(databaseManager.getDownloadsInGroupWithStatus(groupId, status))
+        return removeDownloads(databaseManager.getDownloadsInGroupWithStatus(groupId, status).map { it.id })
     }
 
-    private fun removeDownloads(downloads: List<DownloadInfo>): List<Download> {
-        cancelDownloadsIfDownloading(downloads.map { it.id })
+    private fun removeDownloads(downloadIds: List<Int>): List<Download> {
+        cancelDownloadsIfDownloading(downloadIds)
+        val downloads = databaseManager.get(downloadIds).filterNotNull()
         databaseManager.delete(downloads)
         downloads.forEach {
             it.status = Status.REMOVED
-            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
+            databaseManager.delegate?.deleteTempFilesForDownload(it)
         }
         return downloads
     }
 
     override fun delete(ids: List<Int>): List<Download> {
-        return deleteDownloads(databaseManager.get(ids).filterNotNull())
+        return deleteDownloads(ids)
     }
 
     override fun deleteGroup(id: Int): List<Download> {
-        return deleteDownloads(databaseManager.getByGroup(id))
+        return deleteDownloads(databaseManager.getByGroup(id).map { it.id })
     }
 
     override fun deleteAll(): List<Download> {
-        return deleteDownloads(databaseManager.get())
+        return deleteDownloads(databaseManager.get().map { it.id })
     }
 
     override fun deleteAllWithStatus(status: Status): List<Download> {
-        return deleteDownloads(databaseManager.getByStatus(status))
+        return deleteDownloads(databaseManager.getByStatus(status).map { it.id })
     }
 
     override fun deleteAllInGroupWithStatus(groupId: Int, status: Status): List<Download> {
-        return deleteDownloads(databaseManager.getDownloadsInGroupWithStatus(groupId, status))
+        return deleteDownloads(databaseManager.getDownloadsInGroupWithStatus(groupId, status).map { it.id })
     }
 
-    private fun deleteDownloads(downloads: List<DownloadInfo>): List<Download> {
-        cancelDownloadsIfDownloading(downloads.map { it.id })
+    private fun deleteDownloads(downloadIds: List<Int>): List<Download> {
+        cancelDownloadsIfDownloading(downloadIds)
+        val downloads = databaseManager.get(downloadIds).filterNotNull()
         databaseManager.delete(downloads)
         downloads.forEach {
             it.status = Status.DELETED
@@ -221,25 +224,26 @@ class FetchHandlerImpl(private val namespace: String,
             } catch (e: Exception) {
                 logger.d("Failed to delete file ${it.file}", e)
             }
-            deleteRequestTempFiles(fileTempDir, httpDownloader, it)
+            databaseManager.delegate?.deleteTempFilesForDownload(it)
         }
         return downloads
     }
 
     override fun cancel(ids: List<Int>): List<Download> {
-        return cancelDownloads(databaseManager.get(ids).filterNotNull())
+        return cancelDownloads(ids)
     }
 
     override fun cancelGroup(id: Int): List<Download> {
-        return cancelDownloads(databaseManager.getByGroup(id))
+        return cancelDownloads(databaseManager.getByGroup(id).map { it.id })
     }
 
     override fun cancelAll(): List<Download> {
-        return cancelDownloads(databaseManager.get())
+        return cancelDownloads(databaseManager.get().map { it.id })
     }
 
-    private fun cancelDownloads(downloads: List<DownloadInfo>): List<Download> {
-        cancelDownloadsIfDownloading(downloads.map { it.id })
+    private fun cancelDownloads(downloadIds: List<Int>): List<Download> {
+        cancelDownloadsIfDownloading(downloadIds)
+        val downloads = databaseManager.get(downloadIds).filterNotNull()
         val cancelledDownloads = mutableListOf<DownloadInfo>()
         downloads.forEach {
             if (canCancelDownload(it)) {

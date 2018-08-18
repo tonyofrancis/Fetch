@@ -122,7 +122,6 @@ object FetchModulesBuilder {
                     autoStart = fetchConfiguration.autoStart,
                     httpDownloader = fetchConfiguration.httpDownloader,
                     fileServerDownloader = fetchConfiguration.fileServerDownloader,
-                    fileTempDir = getFileTempDir(fetchConfiguration.appContext),
                     listenerCoordinator = listenerCoordinator,
                     uiHandler = uiHandler)
             databaseManager.delegate = object : DatabaseManager.Delegate {

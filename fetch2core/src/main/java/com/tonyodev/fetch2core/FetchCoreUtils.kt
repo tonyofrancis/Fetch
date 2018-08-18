@@ -6,8 +6,6 @@ import android.content.Context
 import android.net.Uri
 import java.io.*
 import java.math.BigInteger
-import java.net.HttpURLConnection
-import java.net.URL
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -17,8 +15,6 @@ import kotlin.math.ceil
 const val GET_REQUEST_METHOD = "GET"
 
 const val HEAD_REQUEST_METHOD = "HEAD"
-
-const val POST_REQUEST_METHOD = "POST"
 
 fun calculateProgress(downloaded: Long, total: Long): Int {
     return when {
