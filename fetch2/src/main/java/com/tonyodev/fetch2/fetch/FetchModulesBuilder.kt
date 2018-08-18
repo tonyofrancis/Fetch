@@ -97,7 +97,6 @@ object FetchModulesBuilder {
                     logger = fetchConfiguration.logger,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = fetchConfiguration.retryOnNetworkGain,
-                    uiHandler = uiHandler,
                     downloadInfoUpdater = downloadInfoUpdater,
                     fileTempDir = getFileTempDir(fetchConfiguration.appContext),
                     downloadManagerCoordinator = downloadManagerCoordinator,

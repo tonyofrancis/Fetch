@@ -18,7 +18,6 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val logger: Logger,
                           private val networkInfoProvider: NetworkInfoProvider,
                           private val retryOnNetworkGain: Boolean,
-                          private val uiHandler: Handler,
                           private val downloadInfoUpdater: DownloadInfoUpdater,
                           private val fileTempDir: String,
                           private val downloadManagerCoordinator: DownloadManagerCoordinator,
@@ -267,7 +266,6 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
     override fun getFileDownloaderDelegate(): FileDownloader.Delegate {
         return FileDownloaderDelegate(
                 downloadInfoUpdater = downloadInfoUpdater,
-                uiHandler = uiHandler,
                 fetchListener = listenerCoordinator.mainListener,
                 logger = logger,
                 retryOnNetworkGain = retryOnNetworkGain)
