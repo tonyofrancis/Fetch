@@ -12,6 +12,7 @@ import com.tonyodev.fetch2.NetworkType
 import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.calculateProgress
+import java.util.*
 
 
 @Entity(tableName = DownloadDatabase.TABLE_NAME,
@@ -57,7 +58,7 @@ class DownloadInfo : Download {
     override var networkType: NetworkType = defaultNetworkType
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_CREATED, typeAffinity = ColumnInfo.INTEGER)
-    override var created: Long = System.nanoTime()
+    override var created: Long = Calendar.getInstance().timeInMillis
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_TAG, typeAffinity = ColumnInfo.TEXT)
     override var tag: String? = null

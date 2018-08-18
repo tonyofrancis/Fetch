@@ -30,7 +30,7 @@ open class CompletedDownload : Parcelable {
     var identifier: Long = 0
 
     /** The timestamp when this download was created.*/
-    var created: Long = Date().time
+    var created: Long = Calendar.getInstance().timeInMillis
 
     /** The extras associated with this download. */
     var extras: Map<String, String> = mapOf()
