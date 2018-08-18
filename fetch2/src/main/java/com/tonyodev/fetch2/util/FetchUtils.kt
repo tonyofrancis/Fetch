@@ -8,6 +8,7 @@ import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.*
 import com.tonyodev.fetch2core.server.FileRequest
+import java.io.File
 import kotlin.math.ceil
 
 fun canPauseDownload(download: Download): Boolean {
@@ -161,6 +162,27 @@ fun deleteMetaFile(id: Int, fileTempDir: String) {
         val textFile = getFile(getMetaFilePath(id, fileTempDir))
         if (textFile.exists()) {
             textFile.delete()
+        }
+    } catch (e: Exception) {
+
+    }
+}
+
+fun deleteAllInFolderForId(id: Int, fileTempDir: String) {
+    try {
+        val dir = File(fileTempDir)
+        if (dir.exists()) {
+            val files = dir.listFiles()
+            if (files != null) {
+                val filteredFilesList = files.filter { file ->
+                    file.nameWithoutExtension.startsWith("$id.")
+                }
+                filteredFilesList.forEach { file ->
+                    if (file.exists()) {
+                        file.delete()
+                    }
+                }
+            }
         }
     } catch (e: Exception) {
 
