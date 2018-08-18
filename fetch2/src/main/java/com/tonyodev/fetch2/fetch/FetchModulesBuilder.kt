@@ -7,6 +7,7 @@ import com.tonyodev.fetch2.FetchConfiguration
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DatabaseManagerImpl
 import com.tonyodev.fetch2.database.DownloadDatabase
+import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl
@@ -15,8 +16,11 @@ import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.helper.PriorityListProcessorImpl
 import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
+import com.tonyodev.fetch2.util.deleteAllInFolderForId
+import com.tonyodev.fetch2.util.getRequestForDownload
 import com.tonyodev.fetch2core.HandlerWrapper
 import com.tonyodev.fetch2core.getFileTempDir
+import com.tonyodev.fetch2core.isFetchFileServerUrl
 
 object FetchModulesBuilder {
 
@@ -121,6 +125,20 @@ object FetchModulesBuilder {
                     fileTempDir = getFileTempDir(fetchConfiguration.appContext),
                     listenerCoordinator = listenerCoordinator,
                     uiHandler = uiHandler)
+            databaseManager.delegate = object : DatabaseManager.Delegate {
+                override fun deleteTempFilesForDownload(downloadInfo: DownloadInfo) {
+                    val tempDir = if (isFetchFileServerUrl(downloadInfo.url)) {
+                        fetchConfiguration.fileServerDownloader
+                                .getDirectoryForFileDownloaderTypeParallel(getRequestForDownload(downloadInfo))
+                                ?: getFileTempDir(fetchConfiguration.appContext)
+                    } else {
+                        fetchConfiguration.httpDownloader
+                                .getDirectoryForFileDownloaderTypeParallel(getRequestForDownload(downloadInfo))
+                                ?: getFileTempDir(fetchConfiguration.appContext)
+                    }
+                    deleteAllInFolderForId(downloadInfo.id, tempDir)
+                }
+            }
         }
 
     }

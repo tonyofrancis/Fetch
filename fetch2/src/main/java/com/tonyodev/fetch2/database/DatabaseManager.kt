@@ -8,6 +8,7 @@ interface DatabaseManager : Closeable {
 
     val isClosed: Boolean
     val didSanitizeOnFirstEntry: Boolean
+    var delegate: DatabaseManager.Delegate?
 
     fun insert(downloadInfo: DownloadInfo): Pair<DownloadInfo, Boolean>
     fun insert(downloadInfoList: List<DownloadInfo>): List<Pair<DownloadInfo, Boolean>>
@@ -28,4 +29,8 @@ interface DatabaseManager : Closeable {
     fun getDownloadsByRequestIdentifier(identifier: Long): List<DownloadInfo>
     fun getPendingDownloadsSorted(): List<DownloadInfo>
     fun sanitizeOnFirstEntry()
+
+    interface Delegate {
+        fun deleteTempFilesForDownload(downloadInfo: DownloadInfo)
+    }
 }

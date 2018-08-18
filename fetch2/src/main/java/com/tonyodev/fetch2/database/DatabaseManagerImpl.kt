@@ -28,6 +28,7 @@ class DatabaseManagerImpl constructor(context: Context,
         get() {
             return liveSettings.didSanitizeDatabaseOnFirstEntry
         }
+    override var delegate: DatabaseManager.Delegate? = null
     private val requestDatabase: DownloadDatabase
     private val database: SupportSQLiteDatabase
 
@@ -234,15 +235,15 @@ class DatabaseManagerImpl constructor(context: Context,
                 Status.PAUSED,
                 Status.COMPLETED,
                 Status.CANCELLED,
-                Status.REMOVED,
                 Status.FAILED,
                 Status.QUEUED -> {
-                    if (!fileExist && downloadInfo.status == Status.COMPLETED) {
+                    if (!fileExist) {
                         downloadInfo.status = Status.FAILED
                         downloadInfo.error = Error.FILE_NOT_FOUND
                         downloadInfo.downloaded = 0L
                         downloadInfo.total = -1L
                         changedDownloadsList.add(downloadInfo)
+                        delegate?.deleteTempFilesForDownload(downloadInfo)
                     } else {
                         update = false
                         if (downloadInfo.status == Status.COMPLETED && downloadInfo.total < 1
@@ -263,7 +264,8 @@ class DatabaseManagerImpl constructor(context: Context,
                 }
                 Status.ADDED,
                 Status.NONE,
-                Status.DELETED -> {
+                Status.DELETED,
+                Status.REMOVED -> {
                 }
             }
         }
