@@ -3,7 +3,6 @@
 package com.tonyodev.fetch2.util
 
 import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.FetchConfiguration
 import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.*
@@ -101,20 +100,7 @@ fun deleteRequestTempFiles(defaultTempFilesDir: String,
         val request = getRequestForDownload(download)
         val tempDirPath = downloader.getDirectoryForFileDownloaderTypeParallel(request)
                 ?: defaultTempFilesDir
-        val tempDir = getFile(tempDirPath)
-        if (tempDir.exists()) {
-            val tempFiles = tempDir.listFiles()
-            for (tempFile in tempFiles) {
-                val match = tempFile.name.startsWith("${download.id}.")
-                if (match && tempFile.exists()) {
-                    try {
-                        tempFile.delete()
-                    } catch (e: Exception) {
-
-                    }
-                }
-            }
-        }
+        deleteAllInFolderForId(download.id, tempDirPath)
     } catch (e: Exception) {
 
     }
@@ -144,28 +130,6 @@ fun saveCurrentSliceCount(id: Int, SliceCount: Int, fileTempDir: String) {
 
 fun getDownloadedInfoFilePath(id: Int, position: Int, fileTempDir: String): String {
     return "$fileTempDir/$id.$position.txt"
-}
-
-fun deleteTempFile(id: Int, position: Int, fileTempDir: String) {
-    try {
-        val textFile = getFile(getDownloadedInfoFilePath(id, position, fileTempDir))
-        if (textFile.exists()) {
-            textFile.delete()
-        }
-    } catch (e: Exception) {
-
-    }
-}
-
-fun deleteMetaFile(id: Int, fileTempDir: String) {
-    try {
-        val textFile = getFile(getMetaFilePath(id, fileTempDir))
-        if (textFile.exists()) {
-            textFile.delete()
-        }
-    } catch (e: Exception) {
-
-    }
 }
 
 fun deleteAllInFolderForId(id: Int, fileTempDir: String) {
@@ -228,20 +192,4 @@ fun getFileSliceInfo(fileSliceSize: Int, totalBytes: Long): FileSliceInfo {
         val bytesPerSlice = ceil((totalBytes.toFloat() / fileSliceSize.toFloat())).toLong()
         return FileSliceInfo(fileSliceSize, bytesPerSlice)
     }
-}
-
-fun createConfigWithNewNamespace(fetchConfiguration: FetchConfiguration,
-                                 namespace: String): FetchConfiguration {
-    return FetchConfiguration.Builder(fetchConfiguration.appContext)
-            .setNamespace(namespace)
-            .enableAutoStart(fetchConfiguration.autoStart)
-            .enableLogging(fetchConfiguration.loggingEnabled)
-            .enableRetryOnNetworkGain(fetchConfiguration.retryOnNetworkGain)
-            .setHttpDownloader(fetchConfiguration.httpDownloader)
-            .setFileServerDownloader(fetchConfiguration.fileServerDownloader)
-            .setDownloadConcurrentLimit(fetchConfiguration.concurrentLimit)
-            .setProgressReportingInterval(fetchConfiguration.progressReportingIntervalMillis)
-            .setGlobalNetworkType(fetchConfiguration.globalNetworkType)
-            .setLogger(fetchConfiguration.logger)
-            .build()
 }
