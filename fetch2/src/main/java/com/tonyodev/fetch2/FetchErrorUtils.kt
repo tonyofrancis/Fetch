@@ -72,6 +72,8 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FETCH_FILE_SERVER_URL_INVALID
     } else if (message.contains(ENQUEUED_REQUESTS_ARE_NOT_DISTINCT, true)) {
         Error.ENQUEUED_REQUESTS_ARE_NOT_DISTINCT
+    } else if (message.contains(ENQUEUE_NOT_SUCCESSFUL, true)) {
+        Error.ENQUEUE_NOT_SUCCESSFUL
     } else {
         Error.UNKNOWN
     }

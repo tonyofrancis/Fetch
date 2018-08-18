@@ -42,7 +42,13 @@ open class RxFetchImpl(override val namespace: String,
         return enqueue(listOf(request))
                 .flowable
                 .subscribeOn(scheduler)
-                .flatMap { Flowable.just(it.first()) }
+                .flatMap {
+                    if (it.isNotEmpty()) {
+                        Flowable.just(it.first())
+                    } else {
+                        throw FetchException(ENQUEUE_NOT_SUCCESSFUL)
+                    }
+                }
                 .observeOn(uiScheduler)
                 .toConvertible()
     }
@@ -52,9 +58,9 @@ open class RxFetchImpl(override val namespace: String,
             throwExceptionIfClosed()
             Flowable.just(requests)
                     .subscribeOn(scheduler)
-                    .flatMap {
+                    .flatMap { requests ->
                         throwExceptionIfClosed()
-                        val downloads: List<Download> = fetchHandler.enqueue(it)
+                        val downloads: List<Download> = fetchHandler.enqueue(requests)
                         uiHandler.post {
                             downloads.forEach {
                                 listenerCoordinator.mainListener.onAdded(it)
@@ -78,9 +84,9 @@ open class RxFetchImpl(override val namespace: String,
             throwExceptionIfClosed()
             Flowable.just(ids)
                     .subscribeOn(scheduler)
-                    .flatMap {
+                    .flatMap { ids ->
                         throwExceptionIfClosed()
-                        val downloads = fetchHandler.pause(it)
+                        val downloads = fetchHandler.pause(ids)
                         uiHandler.post {
                             downloads.forEach {
                                 logger.d("Paused download $it")
@@ -98,7 +104,13 @@ open class RxFetchImpl(override val namespace: String,
         return pause(listOf(id))
                 .flowable
                 .subscribeOn(scheduler)
-                .flatMap { Flowable.just(it.first()) }
+                .flatMap {
+                    if (it.isNotEmpty()) {
+                        Flowable.just(it.first())
+                    } else {
+                        throw FetchException(REQUEST_DOES_NOT_EXIST)
+                    }
+                }
                 .observeOn(uiScheduler)
                 .toConvertible()
     }
@@ -112,9 +124,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.pausedGroup(it)
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Paused download $it")
-                                listenerCoordinator.mainListener.onPaused(it)
+                            downloads.forEach { download ->
+                                logger.d("Paused download $download")
+                                listenerCoordinator.mainListener.onPaused(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -159,9 +171,9 @@ open class RxFetchImpl(override val namespace: String,
             throwExceptionIfClosed()
             Flowable.just(ids)
                     .subscribeOn(scheduler)
-                    .flatMap {
+                    .flatMap { ids ->
                         throwExceptionIfClosed()
-                        val downloads = fetchHandler.resume(it)
+                        val downloads = fetchHandler.resume(ids)
                         uiHandler.post {
                             downloads.forEach {
                                 logger.d("Queued download $it")
@@ -182,7 +194,11 @@ open class RxFetchImpl(override val namespace: String,
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.first())
+                    if (it.isNotEmpty()) {
+                        Flowable.just(it.first())
+                    } else {
+                        throw FetchException(REQUEST_DOES_NOT_EXIST)
+                    }
                 }
                 .observeOn(uiScheduler)
                 .toConvertible()
@@ -197,11 +213,11 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.resumeGroup(it)
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Queued download $it")
-                                listenerCoordinator.mainListener.onQueued(it, false)
-                                logger.d("Resumed download $it")
-                                listenerCoordinator.mainListener.onResumed(it)
+                            downloads.forEach { download ->
+                                logger.d("Queued download $download")
+                                listenerCoordinator.mainListener.onQueued(download, false)
+                                logger.d("Resumed download $download")
+                                listenerCoordinator.mainListener.onResumed(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -220,9 +236,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.remove(it)
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Removed download $it")
-                                listenerCoordinator.mainListener.onRemoved(it)
+                            downloads.forEach { download ->
+                                logger.d("Removed download $download")
+                                listenerCoordinator.mainListener.onRemoved(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -237,7 +253,11 @@ open class RxFetchImpl(override val namespace: String,
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.first())
+                    if (it.isNotEmpty()) {
+                        Flowable.just(it.first())
+                    } else {
+                        throw FetchException(REQUEST_DOES_NOT_EXIST)
+                    }
                 }
                 .observeOn(uiScheduler)
                 .toConvertible()
@@ -252,9 +272,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.removeGroup(it)
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Removed download $it")
-                                listenerCoordinator.mainListener.onRemoved(it)
+                            downloads.forEach { download ->
+                                logger.d("Removed download $download")
+                                listenerCoordinator.mainListener.onRemoved(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -273,9 +293,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.removeAll()
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Removed download $it")
-                                listenerCoordinator.mainListener.onRemoved(it)
+                            downloads.forEach { download ->
+                                logger.d("Removed download $download")
+                                listenerCoordinator.mainListener.onRemoved(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -294,9 +314,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.removeAllWithStatus(it)
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Removed download $it")
-                                listenerCoordinator.mainListener.onRemoved(it)
+                            downloads.forEach { download ->
+                                logger.d("Removed download $download")
+                                listenerCoordinator.mainListener.onRemoved(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -315,9 +335,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.removeAllInGroupWithStatus(it.first, it.second)
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Removed download $it")
-                                listenerCoordinator.mainListener.onRemoved(it)
+                            downloads.forEach { download ->
+                                logger.d("Removed download $download")
+                                listenerCoordinator.mainListener.onRemoved(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -332,9 +352,9 @@ open class RxFetchImpl(override val namespace: String,
             throwExceptionIfClosed()
             Flowable.just(ids)
                     .subscribeOn(scheduler)
-                    .flatMap {
+                    .flatMap { ids ->
                         throwExceptionIfClosed()
-                        val downloads = fetchHandler.delete(it)
+                        val downloads = fetchHandler.delete(ids)
                         uiHandler.post {
                             downloads.forEach {
                                 logger.d("Deleted download $it")
@@ -353,7 +373,11 @@ open class RxFetchImpl(override val namespace: String,
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.first())
+                    if (it.isNotEmpty()) {
+                        Flowable.just(it.first())
+                    } else {
+                        throw  FetchException(REQUEST_DOES_NOT_EXIST)
+                    }
                 }
                 .observeOn(uiScheduler)
                 .toConvertible()
@@ -364,9 +388,9 @@ open class RxFetchImpl(override val namespace: String,
             throwExceptionIfClosed()
             Flowable.just(id)
                     .subscribeOn(scheduler)
-                    .flatMap {
+                    .flatMap { id ->
                         throwExceptionIfClosed()
-                        val downloads = fetchHandler.deleteGroup(it)
+                        val downloads = fetchHandler.deleteGroup(id)
                         uiHandler.post {
                             downloads.forEach {
                                 logger.d("Deleted download $it")
@@ -389,9 +413,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.deleteAll()
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Deleted download $it")
-                                listenerCoordinator.mainListener.onDeleted(it)
+                            downloads.forEach { download ->
+                                logger.d("Deleted download $download")
+                                listenerCoordinator.mainListener.onDeleted(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -410,9 +434,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.deleteAllWithStatus(it)
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Deleted download $it")
-                                listenerCoordinator.mainListener.onDeleted(it)
+                            downloads.forEach { download ->
+                                logger.d("Deleted download $download")
+                                listenerCoordinator.mainListener.onDeleted(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -431,9 +455,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.deleteAllInGroupWithStatus(it.first, it.second)
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Deleted download $it")
-                                listenerCoordinator.mainListener.onDeleted(it)
+                            downloads.forEach { download ->
+                                logger.d("Deleted download $download")
+                                listenerCoordinator.mainListener.onDeleted(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -448,9 +472,9 @@ open class RxFetchImpl(override val namespace: String,
             throwExceptionIfClosed()
             Flowable.just(ids)
                     .subscribeOn(scheduler)
-                    .flatMap {
+                    .flatMap { ids ->
                         throwExceptionIfClosed()
-                        val downloads = fetchHandler.cancel(it)
+                        val downloads = fetchHandler.cancel(ids)
                         uiHandler.post {
                             downloads.forEach {
                                 logger.d("Cancelled download $it")
@@ -469,7 +493,11 @@ open class RxFetchImpl(override val namespace: String,
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.first())
+                    if (it.isNotEmpty()) {
+                        Flowable.just(it.first())
+                    } else {
+                        throw FetchException(REQUEST_DOES_NOT_EXIST)
+                    }
                 }
                 .observeOn(uiScheduler)
                 .toConvertible()
@@ -480,9 +508,9 @@ open class RxFetchImpl(override val namespace: String,
             throwExceptionIfClosed()
             Flowable.just(id)
                     .subscribeOn(scheduler)
-                    .flatMap {
+                    .flatMap { id ->
                         throwExceptionIfClosed()
-                        val downloads = fetchHandler.cancelGroup(it)
+                        val downloads = fetchHandler.cancelGroup(id)
                         uiHandler.post {
                             downloads.forEach {
                                 logger.d("Cancelled download $it")
@@ -505,9 +533,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.cancelAll()
                         uiHandler.post {
-                            downloads.forEach {
-                                logger.d("Cancelled download $it")
-                                listenerCoordinator.mainListener.onCancelled(it)
+                            downloads.forEach { download ->
+                                logger.d("Cancelled download $download")
+                                listenerCoordinator.mainListener.onCancelled(download)
                             }
                         }
                         Flowable.just(downloads)
@@ -522,9 +550,9 @@ open class RxFetchImpl(override val namespace: String,
             throwExceptionIfClosed()
             Flowable.just(ids)
                     .subscribeOn(scheduler)
-                    .flatMap {
+                    .flatMap { ids ->
                         throwExceptionIfClosed()
-                        val downloads = fetchHandler.retry(it)
+                        val downloads = fetchHandler.retry(ids)
                         uiHandler.post {
                             downloads.forEach {
                                 logger.d("Queued $it for download")
@@ -543,7 +571,11 @@ open class RxFetchImpl(override val namespace: String,
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.first())
+                    if (it.isNotEmpty()) {
+                        Flowable.just(it.first())
+                    } else {
+                        throw FetchException(REQUEST_DOES_NOT_EXIST)
+                    }
                 }
                 .observeOn(uiScheduler)
                 .toConvertible()
@@ -698,7 +730,11 @@ open class RxFetchImpl(override val namespace: String,
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
-                    Flowable.just(it.first())
+                    if (it.isNotEmpty()) {
+                        Flowable.just(it.first())
+                    } else {
+                        throw FetchException(FAILED_TO_ADD_COMPLETED_DOWNLOAD)
+                    }
                 }
                 .observeOn(uiScheduler)
                 .toConvertible()
@@ -713,9 +749,9 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloads = fetchHandler.enqueueCompletedDownloads(completedDownloads)
                         uiHandler.post {
-                            downloads.forEach {
-                                listenerCoordinator.mainListener.onCompleted(it)
-                                logger.d("Added CompletedDownload $it")
+                            downloads.forEach { download ->
+                                listenerCoordinator.mainListener.onCompleted(download)
+                                logger.d("Added CompletedDownload $download")
                             }
                         }
                         Flowable.just(downloads)
@@ -814,7 +850,7 @@ open class RxFetchImpl(override val namespace: String,
                 try {
                     fetchHandler.close()
                 } catch (e: Exception) {
-                    logger.e("exception occurred whiles shutting down Fetch with namespace:$namespace", e)
+                    logger.e("exception occurred whiles shutting down RxFetch with namespace:$namespace", e)
                 }
             }
         }
@@ -822,7 +858,7 @@ open class RxFetchImpl(override val namespace: String,
 
     private fun throwExceptionIfClosed() {
         if (closed) {
-            throw FetchException("This fetch instance has been closed. Create a new " +
+            throw FetchException("This rxFetch instance has been closed. Create a new " +
                     "instance using the builder.")
         }
     }
