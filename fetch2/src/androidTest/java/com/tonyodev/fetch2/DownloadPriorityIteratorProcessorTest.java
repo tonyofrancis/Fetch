@@ -65,7 +65,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
+                 downloadInfoUpdater, tempDir, downloadManagerCoordinator,
                 listenerCoordinator, serverDownloader, false);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 new HandlerWrapper(namespace),
