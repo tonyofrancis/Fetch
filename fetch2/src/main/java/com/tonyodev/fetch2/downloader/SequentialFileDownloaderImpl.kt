@@ -152,7 +152,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             }
         } catch (e: Exception) {
             if (!interrupted && !terminated) {
-                logger.e("FileDownloader", e)
+                logger.e("FileDownloader download:$download", e)
                 var error = getErrorFromThrowable(e)
                 error.throwable = e
                 if (retryOnNetworkGain) {
@@ -178,9 +178,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 downloadInfo.error = error
                 downloadBlock.downloadedBytes = downloaded
                 downloadBlock.endByte = total
-                if (!terminated) {
-                    delegate?.onError(download = downloadInfo, error = error, throwable = e)
-                }
+                delegate?.onError(download = downloadInfo, error = error, throwable = e)
             }
         } finally {
             try {
