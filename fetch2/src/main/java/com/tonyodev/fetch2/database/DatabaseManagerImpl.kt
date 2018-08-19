@@ -4,7 +4,6 @@ import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.content.Context
 import android.database.sqlite.SQLiteException
-import android.util.Log
 import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
