@@ -395,7 +395,10 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                     downloadBlock.endByte = fileSlice.endBytes
                     val downloadRequest = getRequestForDownload(downloadInfo, fileSlice.startBytes + fileSlice.downloaded)
                     var downloadResponse: Downloader.Response? = null
+                    var saveRandomAccessFile: RandomAccessFile? = null
                     try {
+                        val file = getFile(getDownloadedInfoFilePath(fileSlice.id, fileSlice.position, fileTempDir))
+                        saveRandomAccessFile = RandomAccessFile(file, "rw")
                         downloadResponse = downloader.execute(downloadRequest, interruptMonitor)
                         if (!terminated && !interrupted && downloadResponse?.isSuccessful == true) {
                             var reportingStopTime: Long
@@ -421,7 +424,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                         outputResourceWrapper?.write(buffer, 0, streamBytes)
                                         if (!interrupted && !terminated) {
                                             fileSlice.downloaded += streamBytes
-                                            saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded, fileTempDir)
+                                            saveRandomAccessFile.seek(0)
+                                            saveRandomAccessFile.setLength(0)
+                                            saveRandomAccessFile.writeLong(fileSlice.downloaded)
                                             downloaded += streamBytes
                                         }
                                         reportingStopTime = System.nanoTime()
@@ -456,6 +461,11 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             if (downloadResponse != null) {
                                 downloader.disconnect(downloadResponse)
                             }
+                        } catch (e: Exception) {
+                            logger.e("FileDownloader", e)
+                        }
+                        try {
+                            saveRandomAccessFile?.close()
                         } catch (e: Exception) {
                             logger.e("FileDownloader", e)
                         }

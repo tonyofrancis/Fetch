@@ -93,23 +93,10 @@ fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerReque
             file = request.file)
 }
 
-fun deleteRequestTempFiles(defaultTempFilesDir: String,
-                           downloader: Downloader,
-                           download: Download) {
-    try {
-        val request = getRequestForDownload(download)
-        val tempDirPath = downloader.getDirectoryForFileDownloaderTypeParallel(request)
-                ?: defaultTempFilesDir
-        deleteAllInFolderForId(download.id, tempDirPath)
-    } catch (e: Exception) {
-
-    }
-}
-
 fun getPreviousSliceCount(id: Int, fileTempDir: String): Int {
     var sliceCount = -1
     try {
-        sliceCount = getSingleLineTextFromFile(getMetaFilePath(id, fileTempDir))?.toInt() ?: -1
+        sliceCount = getLongDataFromFile(getMetaFilePath(id, fileTempDir))?.toInt() ?: -1
     } catch (e: Exception) {
 
     }
@@ -117,19 +104,19 @@ fun getPreviousSliceCount(id: Int, fileTempDir: String): Int {
 }
 
 fun getMetaFilePath(id: Int, fileTempDir: String): String {
-    return "$fileTempDir/$id.meta.txt"
+    return "$fileTempDir/$id.meta.data"
 }
 
 fun saveCurrentSliceCount(id: Int, SliceCount: Int, fileTempDir: String) {
     try {
-        writeTextToFile(getMetaFilePath(id, fileTempDir), SliceCount.toString())
+        writeLongToFile(getMetaFilePath(id, fileTempDir), SliceCount.toLong())
     } catch (e: Exception) {
 
     }
 }
 
 fun getDownloadedInfoFilePath(id: Int, position: Int, fileTempDir: String): String {
-    return "$fileTempDir/$id.$position.txt"
+    return "$fileTempDir/$id.$position.data"
 }
 
 fun deleteAllInFolderForId(id: Int, fileTempDir: String) {
@@ -156,19 +143,11 @@ fun deleteAllInFolderForId(id: Int, fileTempDir: String) {
 fun getSavedDownloadedInfo(id: Int, position: Int, fileTempDir: String): Long {
     var downloaded = 0L
     try {
-        downloaded = getSingleLineTextFromFile(getDownloadedInfoFilePath(id, position, fileTempDir))?.toLong() ?: 0L
+        downloaded = getLongDataFromFile(getDownloadedInfoFilePath(id, position, fileTempDir)) ?: 0L
     } catch (e: Exception) {
 
     }
     return downloaded
-}
-
-fun saveDownloadedInfo(id: Int, position: Int, downloaded: Long, fileTempDir: String) {
-    try {
-        writeTextToFile(getDownloadedInfoFilePath(id, position, fileTempDir), downloaded.toString())
-    } catch (e: Exception) {
-
-    }
 }
 
 fun getFileSliceInfo(fileSliceSize: Int, totalBytes: Long): FileSliceInfo {
