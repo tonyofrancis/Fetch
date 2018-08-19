@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
+import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2core.*
 
@@ -717,10 +718,14 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun addListener(listener: FetchListener, notify: Boolean): Fetch {
+        return addListener(listener, notify, DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED)
+    }
+
+    override fun addListener(listener: FetchListener, notify: Boolean, autoStart: Boolean): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                fetchHandler.addListener(listener, notify)
+                fetchHandler.addListener(listener, notify, autoStart)
             }
             return this
         }

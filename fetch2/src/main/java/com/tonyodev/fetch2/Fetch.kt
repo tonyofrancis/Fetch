@@ -643,6 +643,17 @@ interface Fetch {
      * */
     fun addListener(listener: FetchListener, notify: Boolean = DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED): Fetch
 
+
+    /** Attaches a FetchListener to this instance of Fetch.
+     * @param listener Fetch Listener
+     * @param notify Allows Fetch to notify the newly attached listener instantly of the download status
+     * of all downloads managed by the namespace. Default is false.
+     * @param autoStart Allows Fetch to start processing requests if it is not already doing so.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun addListener(listener: FetchListener, notify: Boolean = DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED, autoStart: Boolean): Fetch
+
     /** Detaches a FetchListener from this instance of Fetch.
      * @param listener Fetch Listener
      * @throws FetchException if this instance of Fetch has been closed.

@@ -45,7 +45,7 @@ interface FetchHandler : Closeable {
     fun getDownloadsByRequestIdentifier(identifier: Long): List<Download>
     fun setGlobalNetworkType(networkType: NetworkType)
     fun enableLogging(enabled: Boolean)
-    fun addListener(listener: FetchListener, notify: Boolean)
+    fun addListener(listener: FetchListener, notify: Boolean, autoStart: Boolean)
     fun removeListener(listener: FetchListener)
     fun getDownloadBlocks(id: Int): List<DownloadBlock>
     fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long

@@ -443,7 +443,7 @@ class FetchHandlerImpl(private val namespace: String,
         logger.enabled = enabled
     }
 
-    override fun addListener(listener: FetchListener, notify: Boolean) {
+    override fun addListener(listener: FetchListener, notify: Boolean, autoStart: Boolean) {
         listenerSet.add(listener)
         listenerCoordinator.addListener(listenerId, listener)
         if (notify) {
@@ -484,7 +484,9 @@ class FetchHandlerImpl(private val namespace: String,
             }
         }
         logger.d("Added listener $listener")
-        startPriorityQueueIfNotStarted()
+        if (autoStart) {
+            startPriorityQueueIfNotStarted()
+        }
     }
 
     override fun removeListener(listener: FetchListener) {

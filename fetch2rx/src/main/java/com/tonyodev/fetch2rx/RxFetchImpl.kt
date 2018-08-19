@@ -7,6 +7,8 @@ import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
 import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.util.DEFAULT_AUTO_START
+import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2core.*
 import com.tonyodev.fetch2rx.util.toConvertible
@@ -586,10 +588,14 @@ open class RxFetchImpl(override val namespace: String,
     }
 
     override fun addListener(listener: FetchListener, notify: Boolean): RxFetch {
+        return addListener(listener, notify, DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED)
+    }
+
+    override fun addListener(listener: FetchListener, notify: Boolean, autoStart: Boolean): RxFetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                fetchHandler.addListener(listener, notify)
+                fetchHandler.addListener(listener, notify, autoStart)
             }
             return this
         }
