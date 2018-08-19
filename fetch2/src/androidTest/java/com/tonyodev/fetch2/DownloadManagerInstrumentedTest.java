@@ -69,7 +69,7 @@ public class DownloadManagerInstrumentedTest {
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 downloadInfoUpdater, tempDir, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false);
+                listenerCoordinator, serverDownloader, false, uiHandler);
     }
 
     @After

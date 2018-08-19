@@ -23,7 +23,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val downloadManagerCoordinator: DownloadManagerCoordinator,
                           private val listenerCoordinator: ListenerCoordinator,
                           private val fileServerDownloader: FileServerDownloader,
-                          private val md5CheckingEnabled: Boolean) : DownloadManager {
+                          private val md5CheckingEnabled: Boolean,
+                          private val uiHandler: Handler) : DownloadManager {
 
     private val lock = Any()
     private var executor: ExecutorService? = getNewDownloadExecutorService(concurrentLimit)
@@ -267,7 +268,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
         return FileDownloaderDelegate(
                 downloadInfoUpdater = downloadInfoUpdater,
                 fetchListener = listenerCoordinator.mainListener,
-                logger = logger,
+                uiHandler = uiHandler,
                 retryOnNetworkGain = retryOnNetworkGain)
     }
 

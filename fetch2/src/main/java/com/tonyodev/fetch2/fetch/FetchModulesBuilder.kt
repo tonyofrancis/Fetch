@@ -102,7 +102,8 @@ object FetchModulesBuilder {
                     downloadManagerCoordinator = downloadManagerCoordinator,
                     listenerCoordinator = listenerCoordinator,
                     fileServerDownloader = fetchConfiguration.fileServerDownloader,
-                    md5CheckingEnabled = fetchConfiguration.md5CheckingEnabled)
+                    md5CheckingEnabled = fetchConfiguration.md5CheckingEnabled,
+                    uiHandler = uiHandler)
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,
                     downloadProvider = downloadProvider,
