@@ -7,6 +7,7 @@ import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.util.DEFAULT_DOWNLOAD_ON_ENQUEUE
+import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetchmigrator.fetch1.DatabaseHelper
 import com.tonyodev.fetchmigrator.fetch1.DownloadTransferPair
 import com.tonyodev.fetchmigrator.fetch1.FetchConst
@@ -36,7 +37,7 @@ fun v1CursorToV2DownloadInfo(cursor: Cursor): DownloadTransferPair {
     downloadInfo.enqueueAction = EnqueueAction.REPLACE_EXISTING
     downloadInfo.identifier = downloadInfo.id.toLong()
     downloadInfo.downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
-    downloadInfo.extras = emptyMap()
+    downloadInfo.extras = Extras()
     return DownloadTransferPair(downloadInfo, id)
 }
 

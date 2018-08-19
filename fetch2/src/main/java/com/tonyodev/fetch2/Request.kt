@@ -2,6 +2,7 @@ package com.tonyodev.fetch2
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.getUniqueId
 
 /**
@@ -54,7 +55,7 @@ open class Request constructor(
         dest?.writeString(tag)
         dest?.writeInt(enqueueAction.value)
         dest?.writeInt(if (downloadOnEnqueue) 1 else 0)
-        dest?.writeSerializable(HashMap(extras))
+        dest?.writeSerializable(HashMap(extras.map))
     }
 
     override fun describeContents(): Int {
@@ -88,9 +89,7 @@ open class Request constructor(
             request.tag = tag
             request.enqueueAction = enqueueAction
             request.downloadOnEnqueue = downloadOnEnqueue
-            extras.forEach {
-                request.addExtra(it.key, it.value)
-            }
+            request.extras = Extras(extras)
             return request
         }
 

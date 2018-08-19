@@ -18,6 +18,8 @@ import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.Status;
 import com.tonyodev.fetch2core.DownloadBlock;
+import com.tonyodev.fetch2core.Extras;
+import com.tonyodev.fetch2core.MutableExtras;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,9 +103,21 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         final String url = Data.sampleUrls[0];
         final String filePath = Data.getSaveDir() + "/movies/" + Data.getNameFromUrl(url);
         request = new Request(url, filePath);
+        request.setExtras(getExtrasForRequest(request));
         fetch.enqueue(request, updatedRequest -> {
             request = updatedRequest;
         }, error -> Timber.d("SingleDownloadActivity Error: %1$s", error.toString()));
+    }
+
+    private Extras getExtrasForRequest(Request request) {
+        final MutableExtras extras = new MutableExtras();
+        extras.putBoolean("testBoolean", true);
+        extras.putString("testString", "test");
+        extras.putFloat("testFloat", Float.MIN_VALUE);
+        extras.putDouble("testDouble",Double.MIN_VALUE);
+        extras.putInt("testInt", Integer.MAX_VALUE);
+        extras.putLong("testLong", Long.MAX_VALUE);
+        return extras;
     }
 
     private void setTitleView(@NonNull final String fileName) {

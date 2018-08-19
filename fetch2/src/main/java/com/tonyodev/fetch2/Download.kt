@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2
 
 import android.os.Parcelable
+import com.tonyodev.fetch2core.Extras
 
 /**
  * An immutable object which contains a current snapshot of all the information
@@ -94,9 +95,9 @@ interface Download : Parcelable {
      * */
     val downloadOnEnqueue: Boolean
 
-    /** Store custom data/ key value pairs with a request.
-     *  Update extras by calling fetch.updateRequest(requestId, updatedRequest, func, func).
+    /** Stored custom data/ key value pairs with a request.
+     * todo: update method here
      * */
-    val extras: Map<String, String>
+    val extras: Extras
 
 }
