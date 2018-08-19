@@ -24,7 +24,6 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                 uiHandler.removeCallbacks(downloadBlockProgressRunnable)
                 uiHandler.removeCallbacks(errorReportingRunnable)
                 uiHandler.removeCallbacks(queuedReportingRunnable)
-               // uiHandler.removeCallbacks(completedReportingRunnable)
                 field = value
             }
         }

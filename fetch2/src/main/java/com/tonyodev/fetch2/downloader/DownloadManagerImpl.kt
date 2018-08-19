@@ -76,6 +76,11 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
             if (downloadExecutor != null && !downloadExecutor.isShutdown) {
                 downloadExecutor.execute {
                     try {
+                        Thread.currentThread().name = "${download.namespace}-${download.id}"
+                    } catch (e: Exception) {
+
+                    }
+                    try {
                         val fileDownloader = getNewFileDownloaderForDownload(download)
                         val runDownload = synchronized(lock) {
                             if (currentDownloadsMap.containsKey(download.id)) {
