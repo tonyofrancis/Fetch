@@ -584,6 +584,32 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun replaceExtras(id: Int, extras: Extras, func: Func<Download>?, func2: Func<Error>?): Fetch {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val download = fetchHandler.replaceExtras(id, extras)
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(download)
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.e("Failed to replace extras on download with id $id", e)
+                    val error = getErrorFromMessage(e.message)
+                    error.throwable = e
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
+                }
+            }
+            this
+        }
+    }
+
     override fun getDownloads(func: Func<List<Download>>): Fetch {
         return synchronized(lock) {
             throwExceptionIfClosed()

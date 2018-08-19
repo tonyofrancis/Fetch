@@ -300,6 +300,17 @@ class FetchHandlerImpl(private val namespace: String,
         }
     }
 
+    override fun replaceExtras(id: Int, extras: Extras): Download {
+        cancelDownloadsIfDownloading(listOf(id))
+        val downloadInfo = databaseManager.get(id)
+        return if (downloadInfo != null) {
+            val download = databaseManager.updateExtras(id, extras)
+            download ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
+        } else {
+            throw FetchException(REQUEST_DOES_NOT_EXIST)
+        }
+    }
+
     override fun getDownloads(): List<Download> {
         return databaseManager.get()
     }

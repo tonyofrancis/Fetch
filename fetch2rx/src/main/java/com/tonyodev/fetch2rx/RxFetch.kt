@@ -7,6 +7,7 @@ import com.tonyodev.fetch2.fetch.FetchModulesBuilder
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.FileResource
 import com.tonyodev.fetch2core.GLOBAL_FETCH_CONFIGURATION_NOT_SET
 
@@ -293,6 +294,14 @@ interface RxFetch {
      * @return Convertible with the successfully updated download or null.
      * */
     fun updateRequest(requestId: Int, updatedRequest: Request): Convertible<Download>
+
+    /** Replaces the existing extras object associated with an existing download/request with the newly passed in extras object.
+     * @param id Id of existing request/download
+     * @param extras new extras object
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Convertible with the successfully updated download or null.
+     * */
+    fun replaceExtras(id: Int, extras: Extras): Convertible<Download>
 
     /**
      * Gets all downloads managed by this instance of Fetch.

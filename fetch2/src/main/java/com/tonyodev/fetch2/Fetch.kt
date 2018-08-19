@@ -567,6 +567,17 @@ interface Fetch {
     fun updateRequest(requestId: Int, updatedRequest: Request, func: Func<Download>? = null,
                       func2: Func<Error>? = null): Fetch
 
+    /** Replaces the existing extras object associated with an existing download/request with the newly passed in extras object.
+     * @param id Id of existing request/download
+     * @param extras new extras object
+     * @param func Successful callback that the download will be returned on.
+     * @param func2 Failed callback that the error will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun replaceExtras(id: Int, extras: Extras, func: Func<Download>? = null,
+                                func2: Func<Error>? = null): Fetch
+
     /**
      * Gets all downloads managed by this instance of Fetch.
      * @param func Callback that the results will be returned on.

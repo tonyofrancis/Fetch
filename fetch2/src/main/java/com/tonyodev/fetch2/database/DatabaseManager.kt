@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2.database
 
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2core.Extras
 import java.io.Closeable
 
 
@@ -29,6 +30,7 @@ interface DatabaseManager : Closeable {
     fun getDownloadsByRequestIdentifier(identifier: Long): List<DownloadInfo>
     fun getPendingDownloadsSorted(): List<DownloadInfo>
     fun sanitizeOnFirstEntry()
+    fun updateExtras(id: Int, extras: Extras): DownloadInfo?
 
     interface Delegate {
         fun deleteTempFilesForDownload(downloadInfo: DownloadInfo)

@@ -37,7 +37,7 @@ open class CompletedDownload : Parcelable {
      * Set or get the extras for this request. Use this to
      * save and get custom key/value data for the request.
      * */
-    var extras: Extras = Extras()
+    var extras: Extras = Extras.emptyExtras
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

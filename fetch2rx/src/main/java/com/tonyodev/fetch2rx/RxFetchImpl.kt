@@ -627,6 +627,21 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun replaceExtras(id: Int, extras: Extras): Convertible<Download> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(Pair(id, extras))
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val download = fetchHandler.replaceExtras(it.first, it.second)
+                        Flowable.just(download)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
     override fun getDownloads(): Convertible<List<Download>> {
         return synchronized(lock) {
             throwExceptionIfClosed()

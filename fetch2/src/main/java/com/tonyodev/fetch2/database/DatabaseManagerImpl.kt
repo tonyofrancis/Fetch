@@ -4,11 +4,13 @@ import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.content.Context
 import android.database.sqlite.SQLiteException
+import android.util.Log
 import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.LiveSettings
+import com.tonyodev.fetch2core.Extras
 import java.io.File
 
 
@@ -115,6 +117,21 @@ class DatabaseManagerImpl constructor(context: Context,
             } catch (e: SQLiteException) {
 
             }
+        }
+    }
+
+    override fun updateExtras(id: Int, extras: Extras): DownloadInfo? {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            database.beginTransaction()
+            database.execSQL("UPDATE ${DownloadDatabase.TABLE_NAME} SET "
+                    + "${DownloadDatabase.COLUMN_EXTRAS} = '${extras.toJSONString()}' "
+                    + "WHERE ${DownloadDatabase.COLUMN_ID} = $id")
+            database.setTransactionSuccessful()
+            database.endTransaction()
+            val download = requestDatabase.requestDao().get(id)
+            sanitize(download)
+            download
         }
     }
 

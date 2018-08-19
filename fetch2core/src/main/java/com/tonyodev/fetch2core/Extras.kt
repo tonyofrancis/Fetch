@@ -4,7 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import org.json.JSONObject
 
-open class Extras(protected val data: Map<String, String> = emptyMap()) : Parcelable {
+open class Extras(protected val data: Map<String, String>) : Parcelable {
 
     fun getString(key: String, defaultValue: String): String {
         return data[key] ?: defaultValue
@@ -48,6 +48,10 @@ open class Extras(protected val data: Map<String, String> = emptyMap()) : Parcel
         } else {
             JSONObject(map)
         }
+    }
+
+    open fun copy(): Extras {
+       return Extras(data.toMap())
     }
 
     fun isEmpty(): Boolean {
@@ -98,6 +102,10 @@ open class Extras(protected val data: Map<String, String> = emptyMap()) : Parcel
         override fun newArray(size: Int): Array<Extras?> {
             return arrayOfNulls(size)
         }
+
+        @JvmStatic
+        val emptyExtras = Extras(emptyMap())
+
     }
 
 

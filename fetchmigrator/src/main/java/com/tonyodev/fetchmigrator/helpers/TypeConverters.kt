@@ -37,7 +37,7 @@ fun v1CursorToV2DownloadInfo(cursor: Cursor): DownloadTransferPair {
     downloadInfo.enqueueAction = EnqueueAction.REPLACE_EXISTING
     downloadInfo.identifier = downloadInfo.id.toLong()
     downloadInfo.downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
-    downloadInfo.extras = Extras()
+    downloadInfo.extras = Extras.emptyExtras
     return DownloadTransferPair(downloadInfo, id)
 }
 

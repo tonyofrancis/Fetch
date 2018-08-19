@@ -74,7 +74,7 @@ class DownloadInfo : Download {
     override var downloadOnEnqueue: Boolean = DEFAULT_DOWNLOAD_ON_ENQUEUE
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_EXTRAS, typeAffinity = ColumnInfo.TEXT)
-    override var extras: Extras = Extras()
+    override var extras: Extras = Extras.emptyExtras
 
     override val progress: Int
         get() {
