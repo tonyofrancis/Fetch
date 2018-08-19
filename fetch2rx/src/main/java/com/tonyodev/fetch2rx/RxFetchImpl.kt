@@ -16,6 +16,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 
 open class RxFetchImpl(override val namespace: String,
+                       override val fetchConfiguration: FetchConfiguration,
                        private val handlerWrapper: HandlerWrapper,
                        private val uiHandler: Handler,
                        private val fetchHandler: FetchHandler,
@@ -875,6 +876,7 @@ open class RxFetchImpl(override val namespace: String,
         fun newInstance(modules: Modules): RxFetchImpl {
             return RxFetchImpl(
                     namespace = modules.fetchConfiguration.namespace,
+                    fetchConfiguration = modules.fetchConfiguration,
                     handlerWrapper = modules.handlerWrapper,
                     uiHandler = modules.uiHandler,
                     fetchHandler = modules.fetchHandler,

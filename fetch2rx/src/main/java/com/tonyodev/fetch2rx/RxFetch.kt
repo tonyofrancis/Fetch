@@ -29,6 +29,12 @@ interface RxFetch {
      * */
     val namespace: String
 
+    /** Get the FetchConfiguration object that created this instance of Fetch.
+     * Note: If you have updated settings on this instance of Fetch, this object
+     * will not have these updated settings.
+     * */
+    val fetchConfiguration: FetchConfiguration
+
     /**
      * Queues a request for downloading. If Fetch fails to enqueue the request,
      * func2 will be called with the error.
