@@ -26,6 +26,12 @@ interface Fetch {
      * */
     val namespace: String
 
+    /** Get the FetchConfiguration object that created this instance of Fetch.
+     * Note: If you have updated settings on this instance of Fetch, this object
+     * will not have these updated settings.
+     * */
+    val fetchConfiguration: FetchConfiguration
+
     /**
      * Queues a request for downloading. If Fetch fails to enqueue the request,
      * func2 will be called with the error.
@@ -561,6 +567,17 @@ interface Fetch {
     fun updateRequest(requestId: Int, updatedRequest: Request, func: Func<Download>? = null,
                       func2: Func<Error>? = null): Fetch
 
+    /** Replaces the existing extras object associated with an existing download/request with the newly passed in extras object.
+     * @param id Id of existing request/download
+     * @param extras new extras object
+     * @param func Successful callback that the download will be returned on.
+     * @param func2 Failed callback that the error will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun replaceExtras(id: Int, extras: Extras, func: Func<Download>? = null,
+                                func2: Func<Error>? = null): Fetch
+
     /**
      * Gets all downloads managed by this instance of Fetch.
      * @param func Callback that the results will be returned on.
@@ -642,6 +659,17 @@ interface Fetch {
      * @return Instance
      * */
     fun addListener(listener: FetchListener, notify: Boolean = DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED): Fetch
+
+
+    /** Attaches a FetchListener to this instance of Fetch.
+     * @param listener Fetch Listener
+     * @param notify Allows Fetch to notify the newly attached listener instantly of the download status
+     * of all downloads managed by the namespace. Default is false.
+     * @param autoStart Allows Fetch to start processing requests if it is not already doing so.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun addListener(listener: FetchListener, notify: Boolean = DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED, autoStart: Boolean): Fetch
 
     /** Detaches a FetchListener from this instance of Fetch.
      * @param listener Fetch Listener

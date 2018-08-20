@@ -69,6 +69,7 @@ public class FetchHandlerInstrumentedTest {
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace);
         final Downloader client = FetchDefaults.getDefaultDownloader();
+        final FileServerDownloader serverClient = FetchDefaults.getDefaultFileServerDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
@@ -80,8 +81,8 @@ public class FetchHandlerInstrumentedTest {
         final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false);
+                 downloadInfoUpdater, tempDir, downloadManagerCoordinator,
+                listenerCoordinator, serverDownloader, false, uiHandler);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handlerWrapper,
                 new DownloadProvider(databaseManager),
@@ -92,7 +93,7 @@ public class FetchHandlerInstrumentedTest {
                 concurrentLimit);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
                 priorityListProcessorImpl, fetchLogger, autoStart,
-                client, null, tempDir, listenerCoordinator, uiHandler);
+                client, serverClient, listenerCoordinator, uiHandler);
     }
 
     @Test
@@ -199,7 +200,7 @@ public class FetchHandlerInstrumentedTest {
 
         final List<Download> downloads = fetchHandler.resumeGroup(groupId);
         assertNotNull(downloads);
-        assertEquals(0, downloads.size());
+        assertEquals(2, downloads.size());
 
     }
 

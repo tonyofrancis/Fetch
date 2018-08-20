@@ -8,7 +8,7 @@ interface FileDownloader : Runnable {
 
     var interrupted: Boolean
     var terminated: Boolean
-    var completedDownload: Boolean
+    val completedDownload: Boolean
     var delegate: Delegate?
     val download: Download
 

@@ -1,7 +1,5 @@
 package com.tonyodev.fetch2.helper
 
-
-import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2core.HandlerWrapper
@@ -73,6 +71,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
             stopped = false
             paused = false
             registerPriorityIterator()
+            logger.d("PriorityIterator started")
         }
     }
 
@@ -81,6 +80,8 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
             unregisterPriorityIterator()
             paused = false
             stopped = true
+            downloadManager.cancelAll()
+            logger.d("PriorityIterator stop")
         }
     }
 

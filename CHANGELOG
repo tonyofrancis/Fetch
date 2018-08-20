@@ -1,3 +1,32 @@
+Version 2.2.0-RC7
+- Many fixes and performance improvements to the Parallel ParallelDownloader.
+  Breaking changes Parallel Downloader: For a much needed performance and memory improvement changes has to be made
+  to the way the Parallel downloader stores download information. Partially
+  downloaded request from old versions of Fetch when moved to the new Parallel downloader will have to download from the start
+  using the new format but will continue to work as expected after the first run.
+- The created field for the Download and CompletedDownload objects are now in milliseconds.
+  Breaking changes Created Field. Previously those field stored the created time in a mix of nanoseconds and milliseconds.
+  You may need to do the conventions as necessary on downloads created with previous versions of Fetch.
+- Files deleted outside of Fetch for a completed download no longer caused the download status to change to failed.
+- Enqueuing downloads improvements
+- Download Progress reporting fixes.
+- Enqueue list method now ensures that each request in the list is distinct by file. If not, an error is thrown
+  with the appropriate reason when the requests are being enqueued.
+- RxFetch improvements and bug fixes
+- Added new Fetch and RxFetch method fun addListener(listener: FetchListener, notify: Boolean, autoStart)
+  You can now autoStart download processing after attaching a fetchListener.
+- Added new Fetch method fun getFetchConfiguration(). This method returns the configuration object that created the Fetch instance.
+- Added new object Extras and MutableExtras that makes to easy to store and get custom key/value pairs with type support for a request/download.
+  Breaking Changes. The extras field on Request, CompletedDownload, FileResource has all been updated to use Extras object. Existing extras maps (Map<String, String) are migrated to
+  the new extras object automatically.
+- Added new Fetch and RxFetch method fun replaceExtras(id: Int, extras: Extras, func, func2) to replace the extras
+  on an existing request/download stored in the Fetch database.
+- Threads created by Fetch are now named. Improves debugging.
+- FetchFileServer Delegate.Listener method names have been updated to better reflect their use.
+- FetchFileServer uses Extras object instead of custom json string where possible.
+- Bug fixes and performance improvements
+- Logging improvements
+
 Version 2.2.0-RC6
 - Fixed multi enqueue issues.
 

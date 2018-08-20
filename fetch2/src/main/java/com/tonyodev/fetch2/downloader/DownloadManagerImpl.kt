@@ -18,13 +18,13 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val logger: Logger,
                           private val networkInfoProvider: NetworkInfoProvider,
                           private val retryOnNetworkGain: Boolean,
-                          private val uiHandler: Handler,
                           private val downloadInfoUpdater: DownloadInfoUpdater,
                           private val fileTempDir: String,
                           private val downloadManagerCoordinator: DownloadManagerCoordinator,
                           private val listenerCoordinator: ListenerCoordinator,
                           private val fileServerDownloader: FileServerDownloader,
-                          private val md5CheckingEnabled: Boolean) : DownloadManager {
+                          private val md5CheckingEnabled: Boolean,
+                          private val uiHandler: Handler) : DownloadManager {
 
     private val lock = Any()
     private var executor: ExecutorService? = getNewDownloadExecutorService(concurrentLimit)
@@ -44,6 +44,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                 }
                 executor = getNewDownloadExecutorService(concurrentLimit)
                 field = value
+                logger.d("DownloadManager concurrentLimit changed from $field to $value")
             }
         }
     private val currentDownloadsMap = hashMapOf<Int, FileDownloader?>()
@@ -74,6 +75,11 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
             val downloadExecutor = executor
             if (downloadExecutor != null && !downloadExecutor.isShutdown) {
                 downloadExecutor.execute {
+                    try {
+                        Thread.currentThread().name = "${download.namespace}-${download.id}"
+                    } catch (e: Exception) {
+
+                    }
                     try {
                         val fileDownloader = getNewFileDownloaderForDownload(download)
                         val runDownload = synchronized(lock) {
@@ -146,27 +152,30 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
     }
 
     private fun cancelAllDownloads() {
-        downloadManagerCoordinator.getFileDownloaderList().iterator().forEach {
-            val fileDownloader = it
-            if (fileDownloader != null) {
-                fileDownloader.interrupted = true
-                downloadManagerCoordinator.removeFileDownloader(fileDownloader.download.id)
-                logger.d("DownloadManager cancelled download ${fileDownloader.download}")
-            }
-        }
+        downloadManagerCoordinator.getFileDownloaderList()
+                .iterator()
+                .forEach {
+                    val fileDownloader = it
+                    if (fileDownloader != null) {
+                        fileDownloader.interrupted = true
+                        downloadManagerCoordinator.removeFileDownloader(fileDownloader.download.id)
+                        logger.d("DownloadManager cancelled download ${fileDownloader.download}")
+                    }
+                }
         currentDownloadsMap.clear()
         downloadCounter = 0
     }
 
     private fun terminateAllDownloads() {
-        currentDownloadsMap.iterator().forEach {
-            val fileDownloader = it.value
-            if (fileDownloader != null) {
-                fileDownloader.terminated = true
-                logger.d("DownloadManager terminated download ${fileDownloader.download}")
-                downloadManagerCoordinator.removeFileDownloader(it.key)
-            }
-        }
+        currentDownloadsMap.iterator()
+                .forEach {
+                    val fileDownloader = it.value
+                    if (fileDownloader != null) {
+                        fileDownloader.terminated = true
+                        logger.d("DownloadManager terminated download ${fileDownloader.download}")
+                        downloadManagerCoordinator.removeFileDownloader(it.key)
+                    }
+                }
         currentDownloadsMap.clear()
         downloadCounter = 0
     }
@@ -179,7 +188,10 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
             closed = true
             terminateAllDownloads()
             logger.d("DownloadManager closing download manager")
-            executor?.shutdown()
+            try {
+                executor?.shutdown()
+            } catch (e: Exception) {
+            }
         }
     }
 
@@ -202,17 +214,17 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
         }
     }
 
-    override fun getActiveDownloads(): List<Download?> {
+    override fun getActiveDownloads(): List<Download> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return currentDownloadsMap.values.map { it?.download }
+            return currentDownloadsMap.values.filterNotNull().map { it.download }
         }
     }
 
     override fun getActiveDownloadsIds(): List<Int> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            return currentDownloadsMap.keys.toList()
+            return currentDownloadsMap.filter { it.value != null }.map { it.key }
         }
     }
 
@@ -260,9 +272,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
     override fun getFileDownloaderDelegate(): FileDownloader.Delegate {
         return FileDownloaderDelegate(
                 downloadInfoUpdater = downloadInfoUpdater,
-                uiHandler = uiHandler,
                 fetchListener = listenerCoordinator.mainListener,
-                logger = logger,
+                uiHandler = uiHandler,
                 retryOnNetworkGain = retryOnNetworkGain)
     }
 

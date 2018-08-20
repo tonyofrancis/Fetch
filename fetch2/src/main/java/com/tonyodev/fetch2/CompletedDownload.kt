@@ -2,6 +2,7 @@ package com.tonyodev.fetch2
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.tonyodev.fetch2core.Extras
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -30,10 +31,13 @@ open class CompletedDownload : Parcelable {
     var identifier: Long = 0
 
     /** The timestamp when this download was created.*/
-    var created: Long = Date().time
+    var created: Long = Calendar.getInstance().timeInMillis
 
-    /** The extras associated with this download. */
-    var extras: Map<String, String> = mapOf()
+    /**
+     * Set or get the extras for this request. Use this to
+     * save and get custom key/value data for the request.
+     * */
+    var extras: Extras = Extras.emptyExtras
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -77,7 +81,7 @@ open class CompletedDownload : Parcelable {
         dest.writeString(tag)
         dest.writeLong(identifier)
         dest.writeLong(created)
-        dest.writeSerializable(HashMap(extras))
+        dest.writeSerializable(HashMap(extras.map))
     }
 
     override fun describeContents(): Int {
@@ -107,7 +111,7 @@ open class CompletedDownload : Parcelable {
             completedDownload.tag = tag
             completedDownload.identifier = identifier
             completedDownload.created = created
-            completedDownload.extras = extras
+            completedDownload.extras = Extras(extras)
             return completedDownload
         }
 

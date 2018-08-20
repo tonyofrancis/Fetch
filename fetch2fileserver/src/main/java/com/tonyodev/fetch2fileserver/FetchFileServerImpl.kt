@@ -153,7 +153,7 @@ class FetchFileServerImpl(context: Context,
             catalogFileResourceInfo.id = FileRequest.CATALOG_ID
             val catalogMap = mutableMapOf<String, String>()
             catalogMap["data"] = catalog
-            catalogFileResourceInfo.customData = JSONObject(catalogMap).toString()
+            catalogFileResourceInfo.extras = JSONObject(catalogMap).toString()
             catalogFileResourceInfo.name = FileRequest.CATALOG_NAME
             catalogFileResourceInfo.file = FileRequest.CATALOG_FILE
             return catalogFileResourceInfo.toFileResource()
@@ -170,9 +170,9 @@ class FetchFileServerImpl(context: Context,
             }
         }
 
-        override fun onClientDidProvideCustomData(sessionId: String, customData: String, fileRequest: FileRequest) {
+        override fun onClientDidProvideExtras(sessionId: String, extras: Extras, fileRequest: FileRequest) {
             mainHandler.post {
-                fetchFileServerDelegate?.onClientDidProvideCustomData(sessionId, customData, fileRequest)
+                fetchFileServerDelegate?.onClientDidProvideExtras(sessionId, extras, fileRequest)
             }
         }
 

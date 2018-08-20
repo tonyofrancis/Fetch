@@ -38,6 +38,10 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         val authorization = headers[FileRequest.FIELD_AUTHORIZATION] ?: ""
         val port = getFetchFileServerPort(request.url)
         val address = getFetchFileServerHostAddress(request.url)
+        val extras = request.extras.toMutableExtras()
+        request.headers.forEach {
+            extras.putString(it.key, it.value)
+        }
         val inetSocketAddress = InetSocketAddress(address, port)
         val transporter = FetchFileResourceTransporter()
         var timeoutStop: Long
@@ -51,8 +55,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 authorization = authorization,
                 client = headers[FileRequest.FIELD_CLIENT]
                         ?: UUID.randomUUID().toString(),
-                customData = headers[FileRequest.FIELD_CUSTOM_DATA]
-                        ?: "{}",
+                extras = extras,
                 page = headers[FileRequest.FIELD_PAGE]?.toIntOrNull()
                         ?: 0,
                 size = headers[FileRequest.FIELD_SIZE]?.toIntOrNull()
@@ -114,9 +117,9 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
 
     override fun disconnect(response: Downloader.Response) {
         if (connections.contains(response)) {
-            val transporter = connections[response] as FetchFileResourceTransporter
+            val transporter = connections[response]
             connections.remove(response)
-            transporter.close()
+            transporter?.close()
         }
     }
 
@@ -206,15 +209,15 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         fileResource.id = catalogItem.getLong("id")
                         fileResource.name = catalogItem.getString("name")
                         fileResource.length = catalogItem.getLong("length")
-                        fileResource.customData = try {
+                        fileResource.extras = try {
                             val map = mutableMapOf<String, String>()
-                            val customJson = JSONObject(catalogItem.getString("customData"))
+                            val customJson = JSONObject(catalogItem.getString("extras"))
                             customJson.keys().forEach {
                                 map[it] = customJson.getString(it)
                             }
-                            map
+                            Extras(map)
                         } catch (e: Exception) {
-                            mutableMapOf()
+                            Extras.emptyExtras
                         }
                         fileResource.md5 = catalogItem.getString("md5")
                         fileResourceList.add(fileResource)

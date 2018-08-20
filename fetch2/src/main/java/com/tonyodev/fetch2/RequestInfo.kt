@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.Extras
 
 /**
  * A RequestInfo allows you to update an existing download managed by Fetch.
@@ -36,14 +37,6 @@ open class RequestInfo {
         this.headers[key] = value
     }
 
-    /** Adds an extra for the download.
-     * @param key Extra Key
-     * @param value Extra Value
-     * */
-    fun addExtra(key: String, value: String) {
-        this.extras[key] = value
-    }
-
     /** Associate a tag for this request*/
     var tag: String? = null
 
@@ -63,10 +56,15 @@ open class RequestInfo {
      * */
     var downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
 
-    /** Store custom data/ key value pairs with a request.
-     *  Update extras by calling fetch.updateRequest(requestId, updatedRequest, func, func).
+    /**
+     * Set or get the extras for this request. Use this to
+     * save and get custom key/value data for the request.
+     * Use fetch.replaceExtras(id, extras)
      * */
-    val extras = mutableMapOf<String, String>()
+    var extras: Extras = Extras.emptyExtras
+        set(value) {
+            field = value.copy()
+        }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

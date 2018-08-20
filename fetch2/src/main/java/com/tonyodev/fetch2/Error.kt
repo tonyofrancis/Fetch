@@ -106,7 +106,10 @@ enum class Error constructor(
     ENQUEUE_NOT_SUCCESSFUL(25),
 
     /** Indicates that the Completed download was not added successfully.*/
-    COMPLETED_NOT_ADDED_SUCCESSFULLY(26);
+    COMPLETED_NOT_ADDED_SUCCESSFULLY(26),
+
+    /** Indicates that the requests in the list are not distinct by file name.*/
+    ENQUEUED_REQUESTS_ARE_NOT_DISTINCT(27);
 
     companion object {
 
@@ -138,6 +141,7 @@ enum class Error constructor(
                 24 -> REQUEST_DOES_NOT_EXIST
                 25 -> ENQUEUE_NOT_SUCCESSFUL
                 26 -> COMPLETED_NOT_ADDED_SUCCESSFULLY
+                27 -> ENQUEUED_REQUESTS_ARE_NOT_DISTINCT
                 else -> UNKNOWN
             }
         }
