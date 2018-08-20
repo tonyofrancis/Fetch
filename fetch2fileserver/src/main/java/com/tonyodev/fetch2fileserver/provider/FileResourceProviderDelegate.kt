@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2fileserver.provider
 
+import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.FileResource
 import com.tonyodev.fetch2core.InputResourceWrapper
 import com.tonyodev.fetch2core.server.FileRequest
@@ -16,7 +17,7 @@ interface FileResourceProviderDelegate {
 
     fun acceptAuthorization(sessionId: String, authorization: String, fileRequest: FileRequest): Boolean
 
-    fun onClientDidProvideCustomData(sessionId: String, customData: String, fileRequest: FileRequest)
+    fun onClientDidProvideExtras(sessionId: String, extras: Extras, fileRequest: FileRequest)
 
     fun onClientConnected(sessionId: String, fileRequest: FileRequest)
 

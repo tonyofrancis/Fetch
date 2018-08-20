@@ -25,8 +25,14 @@ class FileResource : Parcelable {
      * */
     var name: String = ""
 
-    /** Custom data that will be sent in the server response to the client if available.*/
-    var customData: MutableMap<String, String> = mutableMapOf()
+    /**
+     * Set or get the extras for this file resource. Use this to
+     * save and get custom key/value data for the file resource.
+     * */
+    var extras: Extras = Extras.emptyExtras
+        set(value) {
+            field = value.copy()
+        }
 
     /** The File Resource md5 checksum string. If Empty Fetch File Server will generate the md5
      * checksum when added to a file server instance.
@@ -41,7 +47,7 @@ class FileResource : Parcelable {
         if (length != other.length) return false
         if (file != other.file) return false
         if (name != other.name) return false
-        if (customData != other.customData) return false
+        if (extras != other.extras) return false
         if (md5 != other.md5) return false
         return true
     }
@@ -51,14 +57,14 @@ class FileResource : Parcelable {
         result = 31 * result + length.hashCode()
         result = 31 * result + file.hashCode()
         result = 31 * result + name.hashCode()
-        result = 31 * result + customData.hashCode()
+        result = 31 * result + extras.hashCode()
         result = 31 * result + md5.hashCode()
         return result
     }
 
     override fun toString(): String {
         return "FileResource(id=$id, length=$length, file='$file'," +
-                " name='$name', customData='$customData', md5='$md5')"
+                " name='$name', extras='$extras', md5='$md5')"
     }
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
@@ -66,7 +72,7 @@ class FileResource : Parcelable {
         dest.writeString(name)
         dest.writeLong(length)
         dest.writeString(file)
-        dest.writeSerializable(HashMap(customData))
+        dest.writeSerializable(HashMap(extras.map))
         dest.writeString(md5)
     }
 
@@ -83,7 +89,7 @@ class FileResource : Parcelable {
             fileResource.name = source.readString()
             fileResource.length = source.readLong()
             fileResource.file = source.readString()
-            fileResource.customData = source.readSerializable() as HashMap<String, String>
+            fileResource.extras = Extras(source.readSerializable() as HashMap<String, String>)
             fileResource.md5 = source.readString()
             return fileResource
         }

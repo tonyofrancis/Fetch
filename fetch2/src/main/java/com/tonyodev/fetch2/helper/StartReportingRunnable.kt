@@ -3,14 +3,13 @@ package com.tonyodev.fetch2.helper
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2core.DownloadBlock
-import com.tonyodev.fetch2core.DownloadBlockInfo
 
-abstract class DownloadBlockReportingRunnable : Runnable {
+abstract class StartReportingRunnable : Runnable {
 
     var download: Download = DownloadInfo()
 
-    var downloadBlock: DownloadBlock = DownloadBlockInfo()
+    var downloadBlocks: List<DownloadBlock> = listOf()
 
-    var totalBlocks: Int = -1
+    var totalBlocks = 0
 
 }

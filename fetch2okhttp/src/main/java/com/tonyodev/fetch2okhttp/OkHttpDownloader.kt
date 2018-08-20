@@ -95,7 +95,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
 
     override fun disconnect(response: Downloader.Response) {
         if (connections.contains(response)) {
-            val okHttpResponse = connections[response] as Response
+            val okHttpResponse = connections[response]
             connections.remove(response)
             closeResponse(okHttpResponse)
         }

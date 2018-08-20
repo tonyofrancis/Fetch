@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2fileserver
 
+import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.FileResource
 import com.tonyodev.fetch2core.InputResourceWrapper
 import com.tonyodev.fetch2core.InterruptMonitor
@@ -24,10 +25,10 @@ abstract class AbstractFetchFileServerDelegate : FetchFileServerDelegate {
     /**
      * Called when a client provides custom data that the file server device can used or act on.
      * @param sessionId sessionId
-     * @param customData Custom data
+     * @param extras Custom data extras
      * @param fileRequest File request by the client
      * */
-    override fun onClientDidProvideCustomData(sessionId: String, customData: String, fileRequest: FileRequest) {
+    override fun onClientDidProvideExtras(sessionId: String, extras: Extras, fileRequest: FileRequest) {
 
     }
 

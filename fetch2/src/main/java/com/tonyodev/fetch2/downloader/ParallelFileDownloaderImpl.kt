@@ -140,6 +140,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             completedDownload = true
                             if (md5CheckingEnabled) {
                                 if (downloader.verifyContentMD5(openingResponse.request, openingResponse.md5)) {
+                                    deleteAllInFolderForId(downloadInfo.id, fileTempDir)
                                     if (!interrupted && !terminated) {
                                         delegate?.onProgress(
                                                 download = downloadInfo,
@@ -149,9 +150,11 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                                 download = downloadInfo)
                                     }
                                 } else {
+                                    deleteAllInFolderForId(downloadInfo.id, fileTempDir)
                                     throw FetchException(INVALID_CONTENT_MD5)
                                 }
                             } else {
+                                deleteAllInFolderForId(downloadInfo.id, fileTempDir)
                                 if (!interrupted && !terminated) {
                                     delegate?.onProgress(
                                             download = downloadInfo,
@@ -184,7 +187,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             }
         } catch (e: Exception) {
             if (!interrupted && !terminated) {
-                logger.e("FileDownloader", e)
+                logger.e("FileDownloader download:$download", e)
                 var error = getErrorFromThrowable(e)
                 error.throwable = e
                 if (retryOnNetworkGain) {
@@ -208,9 +211,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 downloadInfo.downloaded = downloaded
                 downloadInfo.total = total
                 downloadInfo.error = error
-                if (!terminated && !interrupted) {
-                    delegate?.onError(download = downloadInfo, error = error, throwable = e)
-                }
+                delegate?.onError(download = downloadInfo, error = error, throwable = e)
             }
         } finally {
             try {
@@ -237,13 +238,13 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     private fun getFileSliceList(acceptsRanges: Boolean, request: Downloader.ServerRequest): List<FileSlice> {
         val file = getFile(downloadInfo.file)
         if (!file.exists()) {
-            deleteAllTempFiles()
+            deleteAllInFolderForId(downloadInfo.id, fileTempDir)
         }
         val previousSliceSize = getPreviousSliceCount(downloadInfo.id, fileTempDir)
         return if (acceptsRanges) {
             val fileSliceInfo = getChuckInfo(request)
             if (previousSliceSize != fileSliceInfo.slicingCount) {
-                deleteAllTempFiles()
+                deleteAllInFolderForId(downloadInfo.id, fileTempDir)
             }
             saveCurrentSliceCount(downloadInfo.id, fileSliceInfo.slicingCount, fileTempDir)
             var counterBytes = 0L
@@ -273,7 +274,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             fileSlices
         } else {
             if (previousSliceSize != 1) {
-                deleteAllTempFiles()
+                deleteAllInFolderForId(downloadInfo.id, fileTempDir)
             }
             saveCurrentSliceCount(downloadInfo.id, 1, fileTempDir)
             val fileSlice = FileSlice(
@@ -377,9 +378,15 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 }
             }
         }
+        outputResourceWrapper?.setWriteOffset(0)
         for (fileSlice in fileSlicesDownloadsList) {
             if (!interrupted && !terminated) {
                 executorService?.execute {
+                    try {
+                        Thread.currentThread().name = "${downloadInfo.namespace}-${downloadInfo.id}-Slice-${fileSlice.position}"
+                    } catch (e: Exception) {
+
+                    }
                     val downloadBlock = DownloadBlockInfo()
                     downloadBlock.downloadId = fileSlice.id
                     downloadBlock.blockPosition = fileSlice.position
@@ -388,7 +395,10 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                     downloadBlock.endByte = fileSlice.endBytes
                     val downloadRequest = getRequestForDownload(downloadInfo, fileSlice.startBytes + fileSlice.downloaded)
                     var downloadResponse: Downloader.Response? = null
+                    var saveRandomAccessFile: RandomAccessFile? = null
                     try {
+                        val file = getFile(getDownloadedInfoFilePath(fileSlice.id, fileSlice.position, fileTempDir))
+                        saveRandomAccessFile = RandomAccessFile(file, "rw")
                         downloadResponse = downloader.execute(downloadRequest, interruptMonitor)
                         if (!terminated && !interrupted && downloadResponse?.isSuccessful == true) {
                             var reportingStopTime: Long
@@ -414,7 +424,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                         outputResourceWrapper?.write(buffer, 0, streamBytes)
                                         if (!interrupted && !terminated) {
                                             fileSlice.downloaded += streamBytes
-                                            saveDownloadedInfo(fileSlice.id, fileSlice.position, fileSlice.downloaded, fileTempDir)
+                                            saveRandomAccessFile.seek(0)
+                                            saveRandomAccessFile.setLength(0)
+                                            saveRandomAccessFile.writeLong(fileSlice.downloaded)
                                             downloaded += streamBytes
                                         }
                                         reportingStopTime = System.nanoTime()
@@ -442,6 +454,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             throw FetchException(UNKNOWN_ERROR)
                         }
                     } catch (e: Exception) {
+                        logger.e("FileDownloader downloads slice $fileSlice", e)
                         throwable = e
                     } finally {
                         try {
@@ -451,22 +464,17 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         } catch (e: Exception) {
                             logger.e("FileDownloader", e)
                         }
+                        try {
+                            saveRandomAccessFile?.close()
+                        } catch (e: Exception) {
+                            logger.e("FileDownloader", e)
+                        }
                         incrementActionCompletedCount()
                     }
                 }
             } else {
                 break
             }
-        }
-    }
-
-    private fun deleteAllTempFiles() {
-        try {
-            for (fileSlice in fileSlices) {
-                deleteTempFile(fileSlice.id, fileSlice.position, fileTempDir)
-            }
-            deleteMetaFile(downloadInfo.id, fileTempDir)
-        } catch (e: Exception) {
         }
     }
 

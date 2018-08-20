@@ -11,7 +11,9 @@ import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2.NetworkType
 import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.calculateProgress
+import java.util.*
 
 
 @Entity(tableName = DownloadDatabase.TABLE_NAME,
@@ -57,7 +59,7 @@ class DownloadInfo : Download {
     override var networkType: NetworkType = defaultNetworkType
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_CREATED, typeAffinity = ColumnInfo.INTEGER)
-    override var created: Long = System.nanoTime()
+    override var created: Long = Calendar.getInstance().timeInMillis
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_TAG, typeAffinity = ColumnInfo.TEXT)
     override var tag: String? = null
@@ -72,7 +74,7 @@ class DownloadInfo : Download {
     override var downloadOnEnqueue: Boolean = DEFAULT_DOWNLOAD_ON_ENQUEUE
 
     @ColumnInfo(name = DownloadDatabase.COLUMN_EXTRAS, typeAffinity = ColumnInfo.TEXT)
-    override var extras: Map<String, String> = mutableMapOf()
+    override var extras: Extras = Extras.emptyExtras
 
     override val progress: Int
         get() {
@@ -89,7 +91,7 @@ class DownloadInfo : Download {
             request.enqueueAction = enqueueAction
             request.identifier = identifier
             request.downloadOnEnqueue = downloadOnEnqueue
-            request.extras.putAll(extras)
+            request.extras = extras
             return request
         }
 
@@ -170,7 +172,7 @@ class DownloadInfo : Download {
         dest.writeInt(enqueueAction.value)
         dest.writeLong(identifier)
         dest.writeInt(if (downloadOnEnqueue) 1 else 0)
-        dest.writeSerializable(HashMap(extras))
+        dest.writeSerializable(HashMap(extras.map))
     }
 
     override fun describeContents(): Int {
@@ -218,7 +220,7 @@ class DownloadInfo : Download {
             downloadInfo.enqueueAction = enqueueAction
             downloadInfo.identifier = identifier
             downloadInfo.downloadOnEnqueue = downloadOnEnqueue
-            downloadInfo.extras = extras
+            downloadInfo.extras = Extras(extras)
             return downloadInfo
         }
 

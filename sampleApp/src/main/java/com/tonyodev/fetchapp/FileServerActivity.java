@@ -19,8 +19,10 @@ import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2core.Extras;
 import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FileResource;
+import com.tonyodev.fetch2core.MutableExtras;
 import com.tonyodev.fetch2fileserver.FetchFileServer;
 import com.tonyodev.fetch2.FetchFileServerDownloader;
 import com.tonyodev.fetch2core.FetchFileServerUriBuilder;
@@ -109,11 +111,18 @@ public class FileServerActivity extends AppCompatActivity {
         if (fileMd5 != null) {
             fileResource.setMd5(fileMd5);
         }
+        final MutableExtras extras = new MutableExtras();
+        extras.putLong("contentLength", fileLength);
+        extras.putString("contentName", file.getName());
+        extras.putString("contentSampleKey", "contentSampleText");
+        fileResource.setExtras(extras);
         fetchFileServer.addFileResource(fileResource);
 
         downloadFileResourceUsingFetch();
         fetch.getFetchFileServerCatalog(getCatalogRequest(),
-                result -> Timber.d("Catalog:" + result.toString()),
+                result -> {
+                    Timber.d("Catalog:" + result.toString());
+                },
                 error -> Timber.d("Catalog Fetch error:" + error.toString()));
     }
 
@@ -142,6 +151,9 @@ public class FileServerActivity extends AppCompatActivity {
                 .setFileResourceIdentifier("Catalog.json")
                 .toString();
         final Request request = new Request(url, getFile("(1)"));
+        final MutableExtras extras = new MutableExtras();
+        extras.putString("sampleKey", "sampleTextDataInExtras");
+        request.setExtras(extras);
         request.addHeader("Authorization", "password");
         request.setPriority(Priority.HIGH);
         return request;

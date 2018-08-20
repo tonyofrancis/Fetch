@@ -2,6 +2,7 @@ package com.tonyodev.fetch2core.server
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.tonyodev.fetch2core.Extras
 import java.lang.StringBuilder
 
 /**
@@ -13,7 +14,7 @@ data class FileRequest(val type: Int = TYPE_INVALID,
                        val rangeEnd: Long = -1L,
                        val authorization: String = "",
                        val client: String = "",
-                       val customData: String = "",
+                       val extras: Extras = Extras.emptyExtras,
                        val page: Int = 0,
                        val size: Int = 0,
                        val persistConnection: Boolean = true) : Parcelable {
@@ -28,7 +29,7 @@ data class FileRequest(val type: Int = TYPE_INVALID,
                     .append("\"Range-End\":").append(rangeEnd).append(',')
                     .append("\"Authorization\":").append("\"$authorization\"").append(',')
                     .append("\"Client\":").append("\"$client\"").append(',')
-                    .append("\"Custom-Data\":").append("\"$customData\"").append(',')
+                    .append("\"Extras\":").append(extras.toJSONString()).append(',')
                     .append("\"Page\":").append(page).append(',')
                     .append("\"Size\":").append(size).append(',')
                     .append("\"Persist-Connection\":").append(persistConnection)
@@ -43,7 +44,7 @@ data class FileRequest(val type: Int = TYPE_INVALID,
         dest.writeLong(rangeEnd)
         dest.writeString(authorization)
         dest.writeString(client)
-        dest.writeString(customData)
+        dest.writeSerializable(HashMap(extras.map))
         dest.writeInt(page)
         dest.writeInt(size)
         dest.writeInt(if (persistConnection) 1 else 0)
@@ -68,12 +69,12 @@ data class FileRequest(val type: Int = TYPE_INVALID,
         const val FIELD_RANGE_END = "Range-End"
         const val FIELD_AUTHORIZATION = "Authorization"
         const val FIELD_CLIENT = "Client"
-        const val FIELD_CUSTOM_DATA = "Custom-Data"
+        const val FIELD_EXTRAS = "Extras"
         const val FIELD_PAGE = "Page"
         const val FIELD_SIZE = "Size"
         const val FIELD_PERSIST_CONNECTION = "Persist-Connection"
 
-
+        @Suppress("UNCHECKED_CAST")
         override fun createFromParcel(source: Parcel): FileRequest {
             return FileRequest(
                     type = source.readInt(),
@@ -82,7 +83,7 @@ data class FileRequest(val type: Int = TYPE_INVALID,
                     rangeEnd = source.readLong(),
                     authorization = source.readString(),
                     client = source.readString(),
-                    customData = source.readString(),
+                    extras = Extras(source.readSerializable() as HashMap<String, String>),
                     page = source.readInt(),
                     size = source.readInt(),
                     persistConnection = source.readInt() == 1)

@@ -6,8 +6,6 @@ import android.content.Context
 import android.net.Uri
 import java.io.*
 import java.math.BigInteger
-import java.net.HttpURLConnection
-import java.net.URL
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -17,8 +15,6 @@ import kotlin.math.ceil
 const val GET_REQUEST_METHOD = "GET"
 
 const val HEAD_REQUEST_METHOD = "HEAD"
-
-const val POST_REQUEST_METHOD = "POST"
 
 fun calculateProgress(downloaded: Long, total: Long): Int {
     return when {
@@ -102,37 +98,40 @@ fun getFile(filePath: String): File {
     return file
 }
 
-fun writeTextToFile(filePath: String, text: String) {
+fun writeLongToFile(filePath: String, data: Long) {
     val file = getFile(filePath)
     if (file.exists()) {
-        val bufferedWriter = BufferedWriter(FileWriter(file))
+        val randomAccessFile = RandomAccessFile(file, "rw")
         try {
-            bufferedWriter.write(text)
+            randomAccessFile.seek(0)
+            randomAccessFile.setLength(0)
+            randomAccessFile.writeLong(data)
         } catch (e: Exception) {
         } finally {
             try {
-                bufferedWriter.close()
+                randomAccessFile.close()
             } catch (e: Exception) {
             }
         }
     }
 }
 
-fun getSingleLineTextFromFile(filePath: String): String? {
+fun getLongDataFromFile(filePath: String): Long? {
     val file = getFile(filePath)
+    var data: Long? = null
     if (file.exists()) {
-        val bufferedReader = BufferedReader(FileReader(file))
+        val randomAccessFile = RandomAccessFile(file, "r")
         try {
-            return bufferedReader.readLine()
+            data = randomAccessFile.readLong()
         } catch (e: Exception) {
         } finally {
             try {
-                bufferedReader.close()
+                randomAccessFile.close()
             } catch (e: Exception) {
             }
         }
     }
-    return null
+    return data
 }
 
 //eg: fetchlocal://192.168.0.1:80/45

@@ -23,8 +23,8 @@ class FileResourceInfo {
     @ColumnInfo(name = FileResourceInfoDatabase.COLUMN_NAME)
     var name: String = ""
 
-    @ColumnInfo(name = FileResourceInfoDatabase.COLUMN_CUSTOM_DATA)
-    var customData: String = ""
+    @ColumnInfo(name = FileResourceInfoDatabase.COLUMN_EXTRAS)
+    var extras: String = ""
 
     @ColumnInfo(name = FileResourceInfoDatabase.COLUMN_MD5)
     var md5: String = ""
@@ -37,7 +37,7 @@ class FileResourceInfo {
         if (length != other.length) return false
         if (file != other.file) return false
         if (name != other.name) return false
-        if (customData != other.customData) return false
+        if (extras != other.extras) return false
         if (md5 != other.md5) return false
         return true
     }
@@ -47,14 +47,14 @@ class FileResourceInfo {
         result = 31 * result + length.hashCode()
         result = 31 * result + file.hashCode()
         result = 31 * result + name.hashCode()
-        result = 31 * result + customData.hashCode()
+        result = 31 * result + extras.hashCode()
         result = 31 * result + md5.hashCode()
         return result
     }
 
     override fun toString(): String {
         return "FileResourceInfo(id=$id, length=$length, file='$file', name='$name'," +
-                " customData='$customData', md5='$md5')"
+                " extras='$extras', md5='$md5')"
     }
 
 }

@@ -107,7 +107,7 @@ class FetchFileResourceInfoDatabase(context: Context,
             val stringBuilder = StringBuilder("{\"catalog\":[")
             fileResources.forEachIndexed { index, fileResource ->
                 stringBuilder.append("{\"id\":${fileResource.id},\"name\":\"${fileResource.name}\"," +
-                        "\"length\":${fileResource.length},\"customData\":${fileResource.customData}," +
+                        "\"length\":${fileResource.length},\"extras\":${fileResource.extras}," +
                         "\"md5\":\"${fileResource.md5}\"}")
                 if (index != fileResources.size - 1) {
                     stringBuilder.append(",")

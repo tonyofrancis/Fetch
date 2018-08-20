@@ -6,10 +6,12 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
+import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2core.*
 
 open class FetchImpl constructor(override val namespace: String,
+                                 override val fetchConfiguration: FetchConfiguration,
                                  private val handlerWrapper: HandlerWrapper,
                                  private val uiHandler: Handler,
                                  private val fetchHandler: FetchHandler,
@@ -53,6 +55,10 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
+                    val distinctCount = requests.distinctBy { it.file }.count()
+                    if (distinctCount != requests.size) {
+                        throw FetchException(ENQUEUED_REQUESTS_ARE_NOT_DISTINCT)
+                    }
                     val downloads = fetchHandler.enqueue(requests)
                     uiHandler.post {
                         downloads.forEach {
@@ -75,7 +81,6 @@ open class FetchImpl constructor(override val namespace: String,
                         }
                     }
                 }
-
             }
         }
     }
@@ -579,6 +584,32 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun replaceExtras(id: Int, extras: Extras, func: Func<Download>?, func2: Func<Error>?): Fetch {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val download = fetchHandler.replaceExtras(id, extras)
+                    if (func != null) {
+                        uiHandler.post {
+                            func.call(download)
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.e("Failed to replace extras on download with id $id", e)
+                    val error = getErrorFromMessage(e.message)
+                    error.throwable = e
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
+                }
+            }
+            this
+        }
+    }
+
     override fun getDownloads(func: Func<List<Download>>): Fetch {
         return synchronized(lock) {
             throwExceptionIfClosed()
@@ -714,10 +745,14 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun addListener(listener: FetchListener, notify: Boolean): Fetch {
+        return addListener(listener, notify, DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED)
+    }
+
+    override fun addListener(listener: FetchListener, notify: Boolean, autoStart: Boolean): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                fetchHandler.addListener(listener, notify)
+                fetchHandler.addListener(listener, notify, autoStart)
             }
             return this
         }
@@ -857,6 +892,7 @@ open class FetchImpl constructor(override val namespace: String,
         fun newInstance(modules: Modules): FetchImpl {
             return FetchImpl(
                     namespace = modules.fetchConfiguration.namespace,
+                    fetchConfiguration = modules.fetchConfiguration,
                     handlerWrapper = modules.handlerWrapper,
                     uiHandler = modules.uiHandler,
                     fetchHandler = modules.fetchHandler,

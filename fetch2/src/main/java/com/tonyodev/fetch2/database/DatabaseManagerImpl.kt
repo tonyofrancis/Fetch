@@ -9,6 +9,7 @@ import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.LiveSettings
+import com.tonyodev.fetch2core.Extras
 import java.io.File
 
 
@@ -28,6 +29,7 @@ class DatabaseManagerImpl constructor(context: Context,
         get() {
             return liveSettings.didSanitizeDatabaseOnFirstEntry
         }
+    override var delegate: DatabaseManager.Delegate? = null
     private val requestDatabase: DownloadDatabase
     private val database: SupportSQLiteDatabase
 
@@ -114,6 +116,21 @@ class DatabaseManagerImpl constructor(context: Context,
             } catch (e: SQLiteException) {
 
             }
+        }
+    }
+
+    override fun updateExtras(id: Int, extras: Extras): DownloadInfo? {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            database.beginTransaction()
+            database.execSQL("UPDATE ${DownloadDatabase.TABLE_NAME} SET "
+                    + "${DownloadDatabase.COLUMN_EXTRAS} = '${extras.toJSONString()}' "
+                    + "WHERE ${DownloadDatabase.COLUMN_ID} = $id")
+            database.setTransactionSuccessful()
+            database.endTransaction()
+            val download = requestDatabase.requestDao().get(id)
+            sanitize(download)
+            download
         }
     }
 
@@ -232,27 +249,27 @@ class DatabaseManagerImpl constructor(context: Context,
             fileExist = file.exists()
             when (downloadInfo.status) {
                 Status.PAUSED,
-                Status.COMPLETED,
                 Status.CANCELLED,
-                Status.REMOVED,
                 Status.FAILED,
                 Status.QUEUED -> {
-                    if (!fileExist && downloadInfo.status == Status.COMPLETED) {
+                    if (!fileExist) {
                         downloadInfo.status = Status.FAILED
                         downloadInfo.error = Error.FILE_NOT_FOUND
                         downloadInfo.downloaded = 0L
                         downloadInfo.total = -1L
                         changedDownloadsList.add(downloadInfo)
-                    } else {
-                        update = false
-                        if (downloadInfo.status == Status.COMPLETED && downloadInfo.total < 1
-                                && downloadInfo.downloaded > 0 && fileExist) {
-                            downloadInfo.total = downloadInfo.downloaded
-                            update = true
-                        }
-                        if (update) {
-                            changedDownloadsList.add(downloadInfo)
-                        }
+                        delegate?.deleteTempFilesForDownload(downloadInfo)
+                    }
+                }
+                Status.COMPLETED -> {
+                    update = false
+                    if (downloadInfo.status == Status.COMPLETED && downloadInfo.total < 1
+                            && downloadInfo.downloaded > 0 && fileExist) {
+                        downloadInfo.total = downloadInfo.downloaded
+                        update = true
+                    }
+                    if (update) {
+                        changedDownloadsList.add(downloadInfo)
                     }
                 }
                 Status.DOWNLOADING -> {
@@ -263,7 +280,8 @@ class DatabaseManagerImpl constructor(context: Context,
                 }
                 Status.ADDED,
                 Status.NONE,
-                Status.DELETED -> {
+                Status.DELETED,
+                Status.REMOVED -> {
                 }
             }
         }

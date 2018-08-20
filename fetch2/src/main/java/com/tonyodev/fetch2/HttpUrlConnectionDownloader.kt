@@ -51,7 +51,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         var md5 = ""
         if (isResponseOk(code)) {
             success = true
-            contentLength = client.getHeaderField("Content-Length")?.toLong() ?: -1
+            contentLength = client.getHeaderField("Content-Length")?.toLong() ?: -1L
             byteStream = client.inputStream
             md5 = client.getHeaderField("Content-MD5") ?: ""
         }
@@ -90,7 +90,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     override fun disconnect(response: Downloader.Response) {
         if (connections.contains(response)) {
-            val client = connections[response] as HttpURLConnection
+            val client = connections[response]
             connections.remove(response)
             disconnectClient(client)
         }

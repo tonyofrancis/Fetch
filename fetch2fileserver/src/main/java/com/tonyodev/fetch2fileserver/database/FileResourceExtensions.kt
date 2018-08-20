@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2fileserver.database
 
+import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.FileResource
 import org.json.JSONObject
 
@@ -10,13 +11,7 @@ fun FileResource.toFileResourceInfo(): FileResourceInfo {
     fileResourceInfo.length = length
     fileResourceInfo.name = name
     fileResourceInfo.md5 = md5
-    fileResourceInfo.customData = if (customData.isEmpty()) {
-        "{}"
-    } else {
-
-        val json = JSONObject(customData)
-        json.toString()
-    }
+    fileResourceInfo.extras = extras.toJSONString()
     return fileResourceInfo
 }
 
@@ -27,15 +22,15 @@ fun FileResourceInfo.toFileResource(): FileResource {
     fileResource.length = length
     fileResource.name = name
     fileResource.md5 = md5
-    fileResource.customData = try {
+    fileResource.extras = try {
         val map = mutableMapOf<String, String>()
-        val json = JSONObject(customData)
+        val json = JSONObject(extras)
         json.keys().forEach {
             map[it] = json.getString(it)
         }
-        map
+        Extras(map)
     } catch (e: Exception) {
-        mutableMapOf()
+        Extras.emptyExtras
     }
     return fileResource
 }
