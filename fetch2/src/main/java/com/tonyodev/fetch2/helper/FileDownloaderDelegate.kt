@@ -92,7 +92,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
     private val queuedReportingRunnable: QueuedReportingRunnable = object : QueuedReportingRunnable() {
 
         override fun run() {
-            fetchListener.onQueued(download, true)
+            fetchListener.onQueued(download, waitingOnNetwork)
         }
 
     }
@@ -105,10 +105,15 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                     downloadInfo.status = Status.QUEUED
                     downloadInfo.error = defaultNoError
                     downloadInfoUpdater.update(downloadInfo)
+                    queuedReportingRunnable.download = download
+                    queuedReportingRunnable.waitingOnNetwork = true
                     uiHandler.post(queuedReportingRunnable)
                 } else {
                     downloadInfo.status = Status.FAILED
                     downloadInfoUpdater.update(downloadInfo)
+                    errorReportingRunnable.download = download
+                    errorReportingRunnable.error = error
+                    errorReportingRunnable.throwable = throwable
                     uiHandler.post(errorReportingRunnable)
                 }
             }
@@ -127,6 +132,7 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                         fetchListener.onCompleted(download)
                     }
                 }
+                completedReportingRunnable.download = download
                 uiHandler.post(completedReportingRunnable)
             }
         }
