@@ -111,7 +111,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun pausedGroup(id: Int): List<Download> {
-        return pauseDownloads(listOf(id))
+        return pauseDownloads(databaseManager.getByGroup(id).map { it.id })
     }
 
     private fun pauseDownloads(downloadIds: List<Int>): List<Download> {
@@ -142,7 +142,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun resumeGroup(id: Int): List<Download> {
-        return resumeDownloads(listOf(id))
+        return resumeDownloads(databaseManager.getByGroup(id).map { it.id })
     }
 
     private fun resumeDownloads(downloadIds: List<Int>): List<Download> {

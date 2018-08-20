@@ -21,6 +21,7 @@ fun canPauseDownload(download: Download): Boolean {
 fun canResumeDownload(download: Download): Boolean {
     return when (download.status) {
         Status.ADDED,
+        Status.QUEUED,
         Status.PAUSED -> true
         else -> false
     }

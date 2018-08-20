@@ -11,6 +11,7 @@ import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
+import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FetchLogger;
 
 import org.junit.After;
@@ -18,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -148,6 +150,7 @@ public class DatabaseInstrumentedTest {
     public void update() throws Exception {
         databaseManager.deleteAll();
         final Request request = getTestRequest();
+        final File file = FetchCoreUtils.getFile(request.getFile());
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
         databaseManager.insert(downloadInfo);
         final int groupId = 2;
@@ -340,6 +343,7 @@ public class DatabaseInstrumentedTest {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfo.setStatus(Status.DOWNLOADING);
             downloadInfoList.add(downloadInfo);
+            final File file = FetchCoreUtils.getFile(request.getFile());
         }
         databaseManager.insert(downloadInfoList);
         int size = databaseManager.get().size();

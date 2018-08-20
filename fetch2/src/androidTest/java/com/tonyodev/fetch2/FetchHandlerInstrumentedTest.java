@@ -200,7 +200,7 @@ public class FetchHandlerInstrumentedTest {
 
         final List<Download> downloads = fetchHandler.resumeGroup(groupId);
         assertNotNull(downloads);
-        assertEquals(0, downloads.size());
+        assertEquals(2, downloads.size());
 
     }
 
