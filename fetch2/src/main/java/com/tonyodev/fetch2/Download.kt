@@ -96,7 +96,7 @@ interface Download : Parcelable {
     val downloadOnEnqueue: Boolean
 
     /** Stored custom data/ key value pairs with a request.
-     * todo: update method here
+     * Use fetch.replaceExtras(id, extras)
      * */
     val extras: Extras
 

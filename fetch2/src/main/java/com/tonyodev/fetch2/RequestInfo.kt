@@ -59,6 +59,7 @@ open class RequestInfo {
     /**
      * Set or get the extras for this request. Use this to
      * save and get custom key/value data for the request.
+     * Use fetch.replaceExtras(id, extras)
      * */
     var extras: Extras = Extras.emptyExtras
         set(value) {
