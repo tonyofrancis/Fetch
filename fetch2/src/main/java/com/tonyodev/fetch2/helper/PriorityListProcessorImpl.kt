@@ -29,7 +29,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     override val isPaused: Boolean
         get() = paused
     @Volatile
-    private var stopped = false
+    private var stopped = true
     override val isStopped: Boolean
         get() = stopped
     private val priorityIteratorRunnable = Runnable {

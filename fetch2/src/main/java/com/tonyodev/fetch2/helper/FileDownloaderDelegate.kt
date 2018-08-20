@@ -22,8 +22,6 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                 uiHandler.removeCallbacks(startRunnable)
                 uiHandler.removeCallbacks(progressRunnable)
                 uiHandler.removeCallbacks(downloadBlockProgressRunnable)
-                uiHandler.removeCallbacks(errorReportingRunnable)
-                uiHandler.removeCallbacks(queuedReportingRunnable)
                 field = value
             }
         }
@@ -82,21 +80,6 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         }
     }
 
-    private val errorReportingRunnable: ErrorReportingRunnable = object : ErrorReportingRunnable() {
-
-        override fun run() {
-            fetchListener.onError(download, error, throwable)
-        }
-    }
-
-    private val queuedReportingRunnable: QueuedReportingRunnable = object : QueuedReportingRunnable() {
-
-        override fun run() {
-            fetchListener.onQueued(download, true)
-        }
-
-    }
-
     override fun onError(download: Download, error: Error, throwable: Throwable?) {
         synchronized(lock) {
             if (!interrupted) {
@@ -105,11 +88,15 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                     downloadInfo.status = Status.QUEUED
                     downloadInfo.error = defaultNoError
                     downloadInfoUpdater.update(downloadInfo)
-                    uiHandler.post(queuedReportingRunnable)
+                    uiHandler.post {
+                        fetchListener.onQueued(download, true)
+                    }
                 } else {
                     downloadInfo.status = Status.FAILED
                     downloadInfoUpdater.update(downloadInfo)
-                    uiHandler.post(errorReportingRunnable)
+                    uiHandler.post {
+                        fetchListener.onError(download, error, throwable)
+                    }
                 }
             }
         }
@@ -121,13 +108,9 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
                 val downloadInfo = download as DownloadInfo
                 downloadInfo.status = Status.COMPLETED
                 downloadInfoUpdater.update(downloadInfo)
-                val completedReportingRunnable: CompletedReportingRunnable = object : CompletedReportingRunnable() {
-
-                    override fun run() {
-                        fetchListener.onCompleted(download)
-                    }
+                uiHandler.post {
+                    fetchListener.onCompleted(download)
                 }
-                uiHandler.post(completedReportingRunnable)
             }
         }
     }

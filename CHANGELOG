@@ -1,3 +1,8 @@
+Version 2.2.0-RC8
+- Fixed issue where downloads will not start processing after calling autoStart.
+- Fixed issue where the callbacks returned wrong download object.
+- Fixed issue where the download callbacks where not called.
+
 Version 2.2.0-RC7
 - Many fixes and performance improvements to the Parallel ParallelDownloader.
   Breaking changes Parallel Downloader: For a much needed performance and memory improvement changes has to be made
