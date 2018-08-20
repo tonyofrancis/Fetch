@@ -249,7 +249,6 @@ class DatabaseManagerImpl constructor(context: Context,
             fileExist = file.exists()
             when (downloadInfo.status) {
                 Status.PAUSED,
-                Status.COMPLETED,
                 Status.CANCELLED,
                 Status.FAILED,
                 Status.QUEUED -> {
@@ -260,16 +259,17 @@ class DatabaseManagerImpl constructor(context: Context,
                         downloadInfo.total = -1L
                         changedDownloadsList.add(downloadInfo)
                         delegate?.deleteTempFilesForDownload(downloadInfo)
-                    } else {
-                        update = false
-                        if (downloadInfo.status == Status.COMPLETED && downloadInfo.total < 1
-                                && downloadInfo.downloaded > 0 && fileExist) {
-                            downloadInfo.total = downloadInfo.downloaded
-                            update = true
-                        }
-                        if (update) {
-                            changedDownloadsList.add(downloadInfo)
-                        }
+                    }
+                }
+                Status.COMPLETED -> {
+                    update = false
+                    if (downloadInfo.status == Status.COMPLETED && downloadInfo.total < 1
+                            && downloadInfo.downloaded > 0 && fileExist) {
+                        downloadInfo.total = downloadInfo.downloaded
+                        update = true
+                    }
+                    if (update) {
+                        changedDownloadsList.add(downloadInfo)
                     }
                 }
                 Status.DOWNLOADING -> {
