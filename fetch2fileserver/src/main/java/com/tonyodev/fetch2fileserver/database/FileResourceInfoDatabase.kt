@@ -15,7 +15,7 @@ abstract class FileResourceInfoDatabase : RoomDatabase() {
         const val COLUMN_LENGTH = "_length"
         const val COLUMN_FILE = "_file"
         const val COLUMN_NAME = "_name"
-        const val COLUMN_CUSTOM_DATA = "_customData"
+        const val COLUMN_EXTRAS = "_customData"
         const val COLUMN_MD5 = "_md5"
         const val OLD_DATABASE_VERSION = 0
         const val DATABASE_VERSION = 1

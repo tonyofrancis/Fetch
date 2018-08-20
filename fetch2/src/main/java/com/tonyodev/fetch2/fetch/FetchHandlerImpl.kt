@@ -308,7 +308,7 @@ class FetchHandlerImpl(private val namespace: String,
             download ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
         } else {
             throw FetchException(REQUEST_DOES_NOT_EXIST)
-        } 
+        }
     }
 
     override fun getDownloads(): List<Download> {

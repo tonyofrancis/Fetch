@@ -51,11 +51,15 @@ open class Extras(protected val data: Map<String, String>) : Parcelable {
     }
 
     open fun copy(): Extras {
-       return Extras(data.toMap())
+        return Extras(data.toMap())
     }
 
     fun isEmpty(): Boolean {
         return data.isEmpty()
+    }
+
+    fun isNotEmpty(): Boolean {
+        return data.isNotEmpty()
     }
 
     val size: Int

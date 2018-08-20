@@ -8,7 +8,6 @@ import com.tonyodev.fetch2core.server.FileResponse.CREATOR.CLOSE_CONNECTION
 import com.tonyodev.fetch2core.server.FileResponse.CREATOR.OPEN_CONNECTION
 import com.tonyodev.fetch2core.server.FileResourceTransporter
 import com.tonyodev.fetch2core.server.FetchFileResourceTransporter
-import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.RandomAccessFile
 import java.net.HttpURLConnection
@@ -51,8 +50,8 @@ class FetchFileResourceProvider(private val client: Socket,
                             logger.d("FetchFileServerProvider - ClientRequestAccepted - ${request.toJsonString}")
                             logger.d("FetchFileServerProvider - Client Connected - $client")
                             fileResourceProviderDelegate.onClientConnected(sessionId, request)
-                            if (request.customData.isNotEmpty()) {
-                                fileResourceProviderDelegate.onClientDidProvideCustomData(sessionId, request.customData, request)
+                            if (request.extras.isNotEmpty()) {
+                                fileResourceProviderDelegate.onClientDidProvideExtras(sessionId, request.extras, request)
                             }
                             when (request.type) {
                                 FileRequest.TYPE_PING -> {
@@ -79,7 +78,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                             inputResourceWrapper = fileResourceProviderDelegate.getFileInputResourceWrapper(sessionId, request, fileResource, request.rangeStart)
                                             if (inputResourceWrapper == null) {
                                                 if (fileResource.id == FileRequest.CATALOG_ID) {
-                                                    val catalog = fileResource.customData["data"]!!.toByteArray(Charsets.UTF_8)
+                                                    val catalog = fileResource.extras.getString("data", "{}").toByteArray(Charsets.UTF_8)
                                                     fileResource.length = if (request.rangeEnd == -1L) catalog.size.toLong() else request.rangeEnd
                                                     fileResource.md5 = getMd5String(catalog)
                                                     inputResourceWrapper = object : InputResourceWrapper() {
