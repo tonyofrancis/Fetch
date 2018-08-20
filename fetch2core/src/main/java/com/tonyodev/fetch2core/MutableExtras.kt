@@ -38,7 +38,7 @@ open class MutableExtras(protected val mutableData: MutableMap<String, String> =
     }
 
     override fun toString(): String {
-        return "MutableExtras(mutableData=$mutableData)"
+        return toJSONString()
     }
 
     override fun writeToParcel(dest: Parcel, flags: Int) {

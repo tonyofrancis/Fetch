@@ -73,7 +73,7 @@ open class Extras(protected val data: Map<String, String>) : Parcelable {
         }
 
     override fun toString(): String {
-        return "Extras(data=$data)"
+        return toJSONString()
     }
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
