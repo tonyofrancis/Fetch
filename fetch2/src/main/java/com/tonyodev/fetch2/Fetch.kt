@@ -564,8 +564,7 @@ interface Fetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun updateRequest(requestId: Int, updatedRequest: Request, func: Func<Download>? = null,
-                      func2: Func<Error>? = null): Fetch
+    fun updateRequest(requestId: Int, updatedRequest: Request, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
 
     /** Replaces the existing extras object associated with an existing download/request with the newly passed in extras object.
      * @param id Id of existing request/download
@@ -575,8 +574,7 @@ interface Fetch {
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun replaceExtras(id: Int, extras: Extras, func: Func<Download>? = null,
-                                func2: Func<Error>? = null): Fetch
+    fun replaceExtras(id: Int, extras: Extras, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
 
     /**
      * Gets all downloads managed by this instance of Fetch.
@@ -682,23 +680,25 @@ interface Fetch {
      * Adds a completed download to Fetch for management. If Fetch is already managing another download with the same file as this completed download's
      * file, Fetch will replace the already managed download with this completed download.
      * @param completedDownload Completed Download
+     * @param alertListeners boolean indicating whether to alert all listeners attached to this fetch's namespace of the downloads completed status.
      * @param func Callback that the added download will be returned on.
      * @param func2 Callback that is called when adding the completed download fails. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun addCompletedDownload(completedDownload: CompletedDownload, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
+    fun addCompletedDownload(completedDownload: CompletedDownload, alertListeners: Boolean = true, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
 
     /**
      * Adds a list of completed downloads to Fetch for management. If Fetch is already managing another download with the same file as this completed download's
      * file, Fetch will replace the already managed download with this completed download.
      * @param completedDownloads Completed Downloads list
+     * @param alertListeners boolean indicating whether to alert all listeners attached to this fetch's namespace of the downloads completed status.
      * @param func Callback that the added downloads list will be returned on.
      * @param func2 Callback that is called when adding the completed downloads fails. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, func: Func<List<Download>>? = null, func2: Func<Error>? = null): Fetch
+    fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, alertListeners: Boolean = true, func: Func<List<Download>>? = null, func2: Func<Error>? = null): Fetch
 
     /**
      * Gets the list of download blocks belonging to a download. List may be empty if

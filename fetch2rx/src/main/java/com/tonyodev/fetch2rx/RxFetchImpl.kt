@@ -747,8 +747,8 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
-    override fun addCompletedDownload(completedDownload: CompletedDownload): Convertible<Download> {
-        return addCompletedDownloads(listOf(completedDownload))
+    override fun addCompletedDownload(completedDownload: CompletedDownload, alertListeners: Boolean): Convertible<Download> {
+        return addCompletedDownloads(listOf(completedDownload), alertListeners)
                 .flowable
                 .subscribeOn(scheduler)
                 .flatMap {
@@ -762,7 +762,7 @@ open class RxFetchImpl(override val namespace: String,
                 .toConvertible()
     }
 
-    override fun addCompletedDownloads(completedDownloads: List<CompletedDownload>): Convertible<List<Download>> {
+    override fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, alertListeners: Boolean): Convertible<List<Download>> {
         return synchronized(lock) {
             throwExceptionIfClosed()
             Flowable.just(completedDownloads)
@@ -772,7 +772,9 @@ open class RxFetchImpl(override val namespace: String,
                         val downloads = fetchHandler.enqueueCompletedDownloads(completedDownloads)
                         uiHandler.post {
                             downloads.forEach { download ->
-                                listenerCoordinator.mainListener.onCompleted(download)
+                                if (alertListeners) {
+                                    listenerCoordinator.mainListener.onCompleted(download)
+                                }
                                 logger.d("Added CompletedDownload $download")
                             }
                         }

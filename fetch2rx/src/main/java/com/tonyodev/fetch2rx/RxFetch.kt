@@ -399,19 +399,21 @@ interface RxFetch {
      * Adds a completed download to Fetch for management. If Fetch is already managing another download with the same file as this completed download's
      * file, Fetch will replace the already managed download with this completed download.
      * @param completedDownload Completed Download
+     * @param alertListeners boolean indicating whether to alert all listeners attached to this fetch's namespace of the downloads completed status.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun addCompletedDownload(completedDownload: CompletedDownload): Convertible<Download>
+    fun addCompletedDownload(completedDownload: CompletedDownload, alertListeners: Boolean = true): Convertible<Download>
 
     /**
      * Adds a list of completed downloads to Fetch for management. If Fetch is already managing another download with the same file as this completed download's
      * file, Fetch will replace the already managed download with this completed download.
      * @param completedDownloads Completed Downloads list
+     * @param alertListeners boolean indicating whether to alert all listeners attached to this fetch's namespace of the downloads completed status.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible
      * */
-    fun addCompletedDownloads(completedDownloads: List<CompletedDownload>): Convertible<List<Download>>
+    fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, alertListeners: Boolean = true): Convertible<List<Download>>
 
     /**
      * Gets the list of download blocks belonging to a download. List may be empty if
