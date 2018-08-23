@@ -701,8 +701,8 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
-    override fun addCompletedDownload(completedDownload: CompletedDownload, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return addCompletedDownloads(listOf(completedDownload), Func { downloads ->
+    override fun addCompletedDownload(completedDownload: CompletedDownload, alertListeners: Boolean, func: Func<Download>?, func2: Func<Error>?): Fetch {
+        return addCompletedDownloads(listOf(completedDownload), alertListeners, Func { downloads ->
             if (downloads.isNotEmpty()) {
                 func?.call(downloads.first())
             } else {
@@ -711,16 +711,18 @@ open class FetchImpl constructor(override val namespace: String,
         }, func2)
     }
 
-    override fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+    override fun addCompletedDownloads(completedDownloads: List<CompletedDownload>, alertListeners: Boolean, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
                     val downloads = fetchHandler.enqueueCompletedDownloads(completedDownloads)
                     uiHandler.post {
-                        downloads.forEach {
-                            listenerCoordinator.mainListener.onCompleted(it)
-                            logger.d("Added CompletedDownload $it")
+                        if (alertListeners) {
+                            downloads.forEach {
+                                listenerCoordinator.mainListener.onCompleted(it)
+                                logger.d("Added CompletedDownload $it")
+                            }
                         }
                         func?.call(downloads)
                     }
