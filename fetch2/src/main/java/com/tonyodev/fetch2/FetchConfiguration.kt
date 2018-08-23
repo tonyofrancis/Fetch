@@ -40,7 +40,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var loggingEnabled = DEFAULT_LOGGING_ENABLED
         private var httpDownloader = defaultDownloader
         private var globalNetworkType = defaultGlobalNetworkType
-        private var logger: Logger = defaultLogger
+        private var logger: Logger = FetchLogger(DEFAULT_LOGGING_ENABLED, DEFAULT_TAG)
         private var autoStart = DEFAULT_AUTO_START
         private var retryOnNetworkGain = DEFAULT_RETRY_ON_NETWORK_GAIN
         private var fileServerDownloader: FileServerDownloader = defaultFileServerDownloader
@@ -194,7 +194,9 @@ class FetchConfiguration private constructor(val appContext: Context,
             val prefsLogger = logger
             if (prefsLogger is FetchLogger) {
                 prefsLogger.enabled = loggingEnabled
-                prefsLogger.tag = namespace
+                if (prefsLogger.tag == DEFAULT_TAG) {
+                    prefsLogger.tag = namespace
+                }
             } else {
                 logger.enabled = loggingEnabled
             }

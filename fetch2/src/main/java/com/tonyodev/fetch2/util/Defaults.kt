@@ -30,4 +30,3 @@ val defaultStatus = Status.NONE
 val defaultEnqueueAction = EnqueueAction.REPLACE_EXISTING
 val defaultDownloader: Downloader = HttpUrlConnectionDownloader()
 val defaultFileServerDownloader: FileServerDownloader = FetchFileServerDownloader()
-val defaultLogger: Logger = FetchLogger(DEFAULT_LOGGING_ENABLED, DEFAULT_TAG)
