@@ -81,11 +81,11 @@ object FetchModulesBuilder {
                               downloadManagerCoordinator: DownloadManagerCoordinator,
                               val listenerCoordinator: ListenerCoordinator) {
 
-        private val downloadManager: DownloadManager
-        private val priorityListProcessor: PriorityListProcessor<Download>
-        private val downloadProvider = DownloadProvider(databaseManager)
-        private val downloadInfoUpdater = DownloadInfoUpdater(databaseManager)
-        private val networkInfoProvider = NetworkInfoProvider(fetchConfiguration.appContext)
+        val downloadManager: DownloadManager
+        val priorityListProcessor: PriorityListProcessor<Download>
+        val downloadProvider = DownloadProvider(databaseManager)
+        val downloadInfoUpdater = DownloadInfoUpdater(databaseManager)
+        val networkInfoProvider = NetworkInfoProvider(fetchConfiguration.appContext)
         val fetchHandler: FetchHandler
         val uiHandler = Handler(Looper.getMainLooper())
 

@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
+import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2core.*
@@ -27,6 +28,9 @@ open class FetchImpl constructor(override val namespace: String,
                 return closed
             }
         }
+
+    @Volatile
+    override var hasActiveDownloads: Boolean = true
 
     init {
         handlerWrapper.post {
@@ -892,7 +896,7 @@ open class FetchImpl constructor(override val namespace: String,
 
         @JvmStatic
         fun newInstance(modules: Modules): FetchImpl {
-            return FetchImpl(
+            val impl = FetchImpl(
                     namespace = modules.fetchConfiguration.namespace,
                     fetchConfiguration = modules.fetchConfiguration,
                     handlerWrapper = modules.handlerWrapper,
@@ -900,6 +904,12 @@ open class FetchImpl constructor(override val namespace: String,
                     fetchHandler = modules.fetchHandler,
                     logger = modules.fetchConfiguration.logger,
                     listenerCoordinator = modules.listenerCoordinator)
+            modules.priorityListProcessor.delegate = object : PriorityListProcessor.Delegate {
+                override fun onHasActiveDownloads(hasActiveDownloads: Boolean) {
+                    impl.hasActiveDownloads = hasActiveDownloads
+                }
+            }
+            return impl
         }
 
     }

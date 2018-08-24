@@ -22,6 +22,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     : PriorityListProcessor<Download> {
 
     private val lock = Any()
+    override var delegate: PriorityListProcessor.Delegate? = null
     @Volatile
     override var globalNetworkType = NetworkType.GLOBAL_OFF
     @Volatile
@@ -36,6 +37,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
         if (canContinueToProcess()) {
             if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
                 val priorityList = getPriorityList()
+                delegate?.onHasActiveDownloads(priorityList.isNotEmpty())
                 for (index in 0..priorityList.lastIndex) {
                     if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
                         val download = priorityList[index]
