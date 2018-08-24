@@ -1,3 +1,8 @@
+Version 2.2.0-RC10
+- Added new Fetch field named hasActiveDownloads. This field indicates if the fetch namespace has
+active(downloading or queued) downloads. Use this field to keep background services using fetch
+alive. This field is thread safe.
+
 Version 2.2.0-RC9
 - Fixed issue where different namespace Fetch instances shared the same logger object
 - Breaking Change. Added new boolean param for add completed downloads method. Now:
