@@ -7,6 +7,7 @@ import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
 import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.DEFAULT_AUTO_START
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
@@ -34,6 +35,8 @@ open class RxFetchImpl(override val namespace: String,
                 return closed
             }
         }
+    @Volatile
+    override var hasActiveDownloads: Boolean = true
 
     init {
         handlerWrapper.post {
@@ -891,7 +894,7 @@ open class RxFetchImpl(override val namespace: String,
 
         @JvmStatic
         fun newInstance(modules: Modules): RxFetchImpl {
-            return RxFetchImpl(
+            val impl = RxFetchImpl(
                     namespace = modules.fetchConfiguration.namespace,
                     fetchConfiguration = modules.fetchConfiguration,
                     handlerWrapper = modules.handlerWrapper,
@@ -899,6 +902,14 @@ open class RxFetchImpl(override val namespace: String,
                     fetchHandler = modules.fetchHandler,
                     logger = modules.fetchConfiguration.logger,
                     listenerCoordinator = modules.listenerCoordinator)
+            modules.priorityListProcessor.delegate = object : PriorityListProcessor.Delegate {
+
+                override fun onHasActiveDownloads(hasActiveDownloads: Boolean) {
+                    impl.hasActiveDownloads = hasActiveDownloads
+                }
+
+            }
+            return impl
         }
 
     }

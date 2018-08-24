@@ -9,11 +9,18 @@ interface PriorityListProcessor<out T> {
     var globalNetworkType: NetworkType
     val isPaused: Boolean
     val isStopped: Boolean
+    var delegate: Delegate?
 
     fun start()
     fun stop()
     fun pause()
     fun resume()
     fun getPriorityList(): List<T>
+
+    interface Delegate {
+
+        fun onHasActiveDownloads(hasActiveDownloads: Boolean)
+
+    }
 
 }

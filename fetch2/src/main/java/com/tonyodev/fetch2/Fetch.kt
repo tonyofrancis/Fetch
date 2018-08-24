@@ -32,6 +32,12 @@ interface Fetch {
      * */
     val fetchConfiguration: FetchConfiguration
 
+    /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
+     * keep a background service using fetch ongoing until this field returns false.
+     * This field can be accessed from any thread.
+     * */
+    val hasActiveDownloads: Boolean
+
     /**
      * Queues a request for downloading. If Fetch fails to enqueue the request,
      * func2 will be called with the error.
