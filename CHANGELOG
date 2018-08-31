@@ -1,3 +1,8 @@
+Version 2.2.0-RC11
+- Fixed issue where downloads would get stuck in the queue and fetch would mark all downloads as failed.
+- Behavior change: Fetch no longer mark downloads with a Failed status if the file on the disk storage system is not found.
+                   If the file is not found and the download status is Queued or Paused, Fetch will simply start the download from the beginning.
+
 Version 2.2.0-RC10
 - Added new Fetch field named hasActiveDownloads. This field indicates if the fetch namespace has
 active(downloading or queued) downloads. Use this field to keep background services using fetch
