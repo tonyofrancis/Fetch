@@ -4,11 +4,11 @@ import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.content.Context
 import android.database.sqlite.SQLiteException
-import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.LiveSettings
+import com.tonyodev.fetch2.util.defaultNoError
 import com.tonyodev.fetch2core.Extras
 import java.io.File
 
@@ -237,47 +237,44 @@ class DatabaseManagerImpl constructor(context: Context,
         }
     }
 
+    private val updatedDownloadsList = mutableListOf<DownloadInfo>()
+
     private fun sanitize(downloads: List<DownloadInfo>, firstEntry: Boolean = false): Boolean {
-        val changedDownloadsList = mutableListOf<DownloadInfo>()
-        var file: File?
-        var fileExist: Boolean
+        updatedDownloadsList.clear()
         var downloadInfo: DownloadInfo
-        var update: Boolean
+        var file: File
         for (i in 0 until downloads.size) {
             downloadInfo = downloads[i]
-            file = File(downloadInfo.file)
-            fileExist = file.exists()
             when (downloadInfo.status) {
-                Status.PAUSED,
-                Status.CANCELLED,
-                Status.FAILED,
-                Status.QUEUED -> {
-                    if (!fileExist) {
-                        downloadInfo.status = Status.FAILED
-                        downloadInfo.error = Error.FILE_NOT_FOUND
-                        downloadInfo.downloaded = 0L
-                        downloadInfo.total = -1L
-                        changedDownloadsList.add(downloadInfo)
-                        delegate?.deleteTempFilesForDownload(downloadInfo)
-                    }
-                }
                 Status.COMPLETED -> {
-                    update = false
-                    if (downloadInfo.status == Status.COMPLETED && downloadInfo.total < 1
-                            && downloadInfo.downloaded > 0 && fileExist) {
+                    if (downloadInfo.total < 1 && downloadInfo.downloaded > 0) {
                         downloadInfo.total = downloadInfo.downloaded
-                        update = true
-                    }
-                    if (update) {
-                        changedDownloadsList.add(downloadInfo)
+                        downloadInfo.error = defaultNoError
+                        updatedDownloadsList.add(downloadInfo)
                     }
                 }
                 Status.DOWNLOADING -> {
                     if (firstEntry) {
                         downloadInfo.status = Status.QUEUED
-                        changedDownloadsList.add(downloadInfo)
+                        downloadInfo.error = defaultNoError
+                        updatedDownloadsList.add(downloadInfo)
                     }
                 }
+                Status.QUEUED,
+                Status.PAUSED -> {
+                    if (downloadInfo.downloaded > 0) {
+                        file = File(downloadInfo.file)
+                        if (!file.exists()) {
+                            downloadInfo.downloaded = 0
+                            downloadInfo.total = -1L
+                            downloadInfo.error = defaultNoError
+                            updatedDownloadsList.add(downloadInfo)
+                            delegate?.deleteTempFilesForDownload(downloadInfo)
+                        }
+                    }
+                }
+                Status.CANCELLED,
+                Status.FAILED,
                 Status.ADDED,
                 Status.NONE,
                 Status.DELETED,
@@ -285,13 +282,15 @@ class DatabaseManagerImpl constructor(context: Context,
                 }
             }
         }
-        if (changedDownloadsList.size > 0) {
+        val updatedCount = updatedDownloadsList.size
+        if (updatedCount > 0) {
             try {
-                updateNoLock(changedDownloadsList)
+                updateNoLock(updatedDownloadsList)
             } catch (e: Exception) {
             }
         }
-        return changedDownloadsList.size > 0
+        updatedDownloadsList.clear()
+        return updatedCount > 0
     }
 
     private fun sanitize(downloadInfo: DownloadInfo?, initializing: Boolean = false): Boolean {
