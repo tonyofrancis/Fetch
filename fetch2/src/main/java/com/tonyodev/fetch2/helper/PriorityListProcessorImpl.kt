@@ -72,6 +72,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
         synchronized(lock) {
             stopped = false
             paused = false
+            delegate?.onHasActiveDownloads(true)
             registerPriorityIterator()
             logger.d("PriorityIterator started")
         }
@@ -80,6 +81,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     override fun stop() {
         synchronized(lock) {
             unregisterPriorityIterator()
+            delegate?.onHasActiveDownloads(false)
             paused = false
             stopped = true
             downloadManager.cancelAll()
