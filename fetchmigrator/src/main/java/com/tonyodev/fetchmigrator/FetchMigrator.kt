@@ -57,7 +57,8 @@ fun migrateFromV1toV2(context: Context, v2Namespace: String): List<DownloadTrans
                 context = context,
                 namespace = v2Namespace,
                 migrations = DownloadDatabase.getMigrations(),
-                liveSettings = liveSettings)
+                liveSettings = liveSettings,
+                fileExistChecksEnabled = false)
         fetchTwoDatabaseManager.insert(downloadInfoList.map { it.newDownload as DownloadInfo })
         fetchTwoDatabaseManager.close()
     }
