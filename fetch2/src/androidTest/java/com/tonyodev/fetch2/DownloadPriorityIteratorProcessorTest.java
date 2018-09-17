@@ -51,7 +51,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final Migration[] migrations = DownloadDatabase.getMigrations();
         final LiveSettings liveSettings = new LiveSettings(namespace);
-        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings);
+        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;

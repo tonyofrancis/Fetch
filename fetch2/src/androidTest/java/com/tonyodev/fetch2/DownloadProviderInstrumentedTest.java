@@ -43,7 +43,7 @@ public class DownloadProviderInstrumentedTest {
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final LiveSettings liveSettings = new LiveSettings(namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
         downloadProvider = new DownloadProvider(databaseManager);
     }
 

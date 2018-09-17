@@ -46,7 +46,7 @@ public class DatabaseInstrumentedTest {
         final Migration[] migrations = DownloadDatabase.getMigrations();
         final LiveSettings liveSettings = new LiveSettings(namespace);
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
     }
 
     @After

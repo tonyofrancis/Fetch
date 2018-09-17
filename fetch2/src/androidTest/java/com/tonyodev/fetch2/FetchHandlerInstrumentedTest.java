@@ -65,7 +65,7 @@ public class FetchHandlerInstrumentedTest {
         final Boolean autoStart = true;
         final Migration[] migrations = DownloadDatabase.getMigrations();
         final LiveSettings liveSettings = new LiveSettings(namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace);
         final Downloader client = FetchDefaults.getDefaultDownloader();
