@@ -16,7 +16,8 @@ import java.io.File
 class DatabaseManagerImpl constructor(context: Context,
                                       private val namespace: String,
                                       migrations: Array<Migration>,
-                                      private val liveSettings: LiveSettings) : DatabaseManager {
+                                      private val liveSettings: LiveSettings,
+                                      private val fileExistChecksEnabled: Boolean) : DatabaseManager {
 
     private val lock = Object()
     @Volatile
@@ -263,13 +264,15 @@ class DatabaseManagerImpl constructor(context: Context,
                 Status.QUEUED,
                 Status.PAUSED -> {
                     if (downloadInfo.downloaded > 0) {
-                        file = File(downloadInfo.file)
-                        if (!file.exists()) {
-                            downloadInfo.downloaded = 0
-                            downloadInfo.total = -1L
-                            downloadInfo.error = defaultNoError
-                            updatedDownloadsList.add(downloadInfo)
-                            delegate?.deleteTempFilesForDownload(downloadInfo)
+                        if (fileExistChecksEnabled) {
+                            file = File(downloadInfo.file)
+                            if (!file.exists()) {
+                                downloadInfo.downloaded = 0
+                                downloadInfo.total = -1L
+                                downloadInfo.error = defaultNoError
+                                updatedDownloadsList.add(downloadInfo)
+                                delegate?.deleteTempFilesForDownload(downloadInfo)
+                            }
                         }
                     }
                 }

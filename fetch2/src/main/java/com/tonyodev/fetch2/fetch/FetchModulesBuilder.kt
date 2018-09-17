@@ -40,7 +40,8 @@ object FetchModulesBuilder {
                         context = fetchConfiguration.appContext,
                         namespace = fetchConfiguration.namespace,
                         migrations = DownloadDatabase.getMigrations(),
-                        liveSettings = liveSettings)
+                        liveSettings = liveSettings,
+                        fileExistChecksEnabled = fetchConfiguration.fileExistChecksEnabled)
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
                 val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace)
                 val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager,

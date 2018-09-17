@@ -20,7 +20,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val autoStart: Boolean,
                                              val retryOnNetworkGain: Boolean,
                                              val fileServerDownloader: FileServerDownloader,
-                                             val md5CheckingEnabled: Boolean) {
+                                             val md5CheckingEnabled: Boolean,
+                                             val fileExistChecksEnabled: Boolean) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -45,6 +46,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var retryOnNetworkGain = DEFAULT_RETRY_ON_NETWORK_GAIN
         private var fileServerDownloader: FileServerDownloader = defaultFileServerDownloader
         private var md5CheckEnabled = DEFAULT_MD5_CHECK_ENABLED
+        private var fileExistChecksEnabled = DEFAULT_FILE_EXIST_CHECKS
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -187,6 +189,17 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Allows Fetch to check if the file exist for a download. If the file does not exist,
+         * Fetch will update the database and queued, paused or downloading downloads will
+         * have to start at the beginning. Enabled by default. Set to false only if you are
+         * monitoring the file existence elsewhere.
+         * */
+        fun enableFileExistChecks(enabled: Boolean): Builder {
+            this.fileExistChecksEnabled = enabled
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -212,7 +225,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     autoStart = autoStart,
                     retryOnNetworkGain = retryOnNetworkGain,
                     fileServerDownloader = fileServerDownloader,
-                    md5CheckingEnabled = md5CheckEnabled)
+                    md5CheckingEnabled = md5CheckEnabled,
+                    fileExistChecksEnabled = fileExistChecksEnabled)
         }
 
     }
@@ -233,6 +247,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (retryOnNetworkGain != other.retryOnNetworkGain) return false
         if (fileServerDownloader != other.fileServerDownloader) return false
         if (md5CheckingEnabled != other.md5CheckingEnabled) return false
+        if (fileExistChecksEnabled != other.fileExistChecksEnabled) return false
         return true
     }
 
@@ -247,17 +262,19 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + logger.hashCode()
         result = 31 * result + autoStart.hashCode()
         result = 31 * result + retryOnNetworkGain.hashCode()
-        result = 31 * result + (fileServerDownloader.hashCode())
+        result = 31 * result + fileServerDownloader.hashCode()
         result = 31 * result + md5CheckingEnabled.hashCode()
+        result = 31 * result + fileExistChecksEnabled.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "FetchConfiguration(appContext=$appContext, namespace='$namespace', " +
-                "concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis," +
-                "loggingEnabled=$loggingEnabled, " + "httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType, logger=$logger, " +
-                "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
-                "fileServerDownloader=$fileServerDownloader, md5CheckingEnabled=$md5CheckingEnabled)"
+        return "FetchConfiguration(appContext=$appContext, namespace='$namespace'," +
+                " concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis," +
+                " loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType," +
+                " logger=$logger, autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
+                "fileServerDownloader=$fileServerDownloader, md5CheckingEnabled=$md5CheckingEnabled," +
+                " fileExistChecksEnabled=$fileExistChecksEnabled)"
     }
 
 }
