@@ -129,6 +129,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
                         if (!interrupted && !terminated) {
+                            throwExceptionIfFound()
                             var fileSlicesTotal = 0L
                             fileSlices.forEach {
                                 fileSlicesTotal += it.downloaded

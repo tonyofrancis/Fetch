@@ -1,3 +1,7 @@
+Version 2.2.0-RC12
+- Added new method enableFileExistChecks(enabled: Boolean) on FetchConfiguration class
+- Small fixes to ParallelDownloader
+
 Version 2.2.0-RC11
 - Fixed issue where downloads would get stuck in the queue and fetch would mark all downloads as failed.
 - Behavior change: Fetch no longer mark downloads with a Failed status if the file on the disk storage system is not found.
