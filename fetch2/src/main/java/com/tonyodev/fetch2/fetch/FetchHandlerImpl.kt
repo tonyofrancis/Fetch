@@ -522,6 +522,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     private fun startPriorityQueueIfNotStarted() {
+        priorityListProcessor.resetBackOffTime()
         if (priorityListProcessor.isStopped && !isTerminating) {
             priorityListProcessor.start()
         }
