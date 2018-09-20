@@ -1,3 +1,6 @@
+Version 2.2.0-RC13
+- Added new backoff logic for the queue processor
+
 Version 2.2.0-RC12
 - Added new method enableFileExistChecks(enabled: Boolean) on FetchConfiguration class
 - Small fixes to ParallelDownloader

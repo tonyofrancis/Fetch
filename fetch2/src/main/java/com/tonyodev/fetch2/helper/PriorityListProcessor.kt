@@ -16,6 +16,7 @@ interface PriorityListProcessor<out T> {
     fun pause()
     fun resume()
     fun getPriorityList(): List<T>
+    fun resetBackOffTime()
 
     interface Delegate {
 

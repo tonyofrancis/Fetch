@@ -47,7 +47,7 @@ object FetchModulesBuilder {
                 val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager,
                         downloadManagerCoordinator, listenerCoordinator)
                 holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager,
-                        downloadManagerCoordinator, listenerCoordinator)
+                        downloadManagerCoordinator, listenerCoordinator, newModules.networkInfoProvider)
                 newModules
             }
             modules.handlerWrapper.incrementUsageCounter()
@@ -65,6 +65,7 @@ object FetchModulesBuilder {
                     holder.listenerCoordinator.clearAll()
                     holder.databaseManager.close()
                     holder.downloadManagerCoordinator.clearAll()
+                    holder.networkInfoProvider.unregisterAllNetworkBroadcastReceivers()
                     holderMap.remove(namespace)
                 }
             }
@@ -74,7 +75,8 @@ object FetchModulesBuilder {
     data class Holder(val handlerWrapper: HandlerWrapper,
                       val databaseManager: DatabaseManager,
                       val downloadManagerCoordinator: DownloadManagerCoordinator,
-                      val listenerCoordinator: ListenerCoordinator)
+                      val listenerCoordinator: ListenerCoordinator,
+                      val networkInfoProvider: NetworkInfoProvider)
 
     class Modules constructor(val fetchConfiguration: FetchConfiguration,
                               val handlerWrapper: HandlerWrapper,
