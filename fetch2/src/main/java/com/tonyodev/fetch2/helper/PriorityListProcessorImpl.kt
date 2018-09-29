@@ -61,6 +61,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                     increaseBackOffTime()
                 }
                 delegate?.onHasActiveDownloads(priorityList.isNotEmpty())
+                var shouldBackOff = true
                 for (index in 0..priorityList.lastIndex) {
                     if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
                         val download = priorityList[index]
@@ -75,9 +76,11 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                             if (!properNetworkConditions) {
                                 listenerCoordinator.mainListener.onWaitingNetwork(download)
                             }
-                            if ((isFetchServerRequest || properNetworkConditions) && !downloadManager.contains(download.id)
-                                    && canContinueToProcess()) {
-                                downloadManager.start(download)
+                            if ((isFetchServerRequest || properNetworkConditions)) {
+                                shouldBackOff = false
+                                if (!downloadManager.contains(download.id) && canContinueToProcess()) {
+                                    downloadManager.start(download)
+                                }
                             }
                         } else {
                             break
@@ -85,6 +88,9 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                     } else {
                         break
                     }
+                }
+                if (shouldBackOff) {
+                    increaseBackOffTime()
                 }
             }
             registerPriorityIterator()
