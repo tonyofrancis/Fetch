@@ -9,6 +9,7 @@ import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
+import com.tonyodev.fetch2.util.toDownloadInfo
 import com.tonyodev.fetch2core.*
 
 open class FetchImpl constructor(override val namespace: String,
@@ -63,17 +64,35 @@ open class FetchImpl constructor(override val namespace: String,
                     if (distinctCount != requests.size) {
                         throw FetchException(ENQUEUED_REQUESTS_ARE_NOT_DISTINCT)
                     }
-                    val downloads = fetchHandler.enqueue(requests)
+                    val downloadPairs = fetchHandler.enqueue(requests)
                     uiHandler.post {
-                        downloads.forEach {
-                            listenerCoordinator.mainListener.onAdded(it)
-                            logger.d("Added $it")
-                            if (it.status == Status.QUEUED) {
-                                listenerCoordinator.mainListener.onQueued(it, false)
-                                logger.d("Queued $it for download")
+                        downloadPairs.forEach { downloadPair ->
+                            val download = downloadPair.first
+                            when (download.status) {
+                                Status.ADDED -> {
+                                    listenerCoordinator.mainListener.onAdded(download)
+                                    logger.d("Added $download")
+                                }
+                                Status.QUEUED -> {
+                                    if (!downloadPair.second) {
+                                        val downloadCopy = download.copy().toDownloadInfo()
+                                        downloadCopy.status = Status.ADDED
+                                        listenerCoordinator.mainListener.onAdded(downloadCopy)
+                                        logger.d("Added $download")
+                                    }
+                                    listenerCoordinator.mainListener.onQueued(download, false)
+                                    logger.d("Queued $download for download")
+                                }
+                                Status.COMPLETED -> {
+                                    listenerCoordinator.mainListener.onCompleted(download)
+                                    logger.d("Completed download $download")
+                                }
+                                else -> {
+
+                                }
                             }
                         }
-                        func?.call(downloads.map { it.request })
+                        func?.call(downloadPairs.map { it.first.request })
                     }
                 } catch (e: Exception) {
                     logger.e("Failed to enqueue list $requests")
@@ -561,17 +580,55 @@ open class FetchImpl constructor(override val namespace: String,
         return retry(id, null, null)
     }
 
-    override fun updateRequest(requestId: Int, updatedRequest: Request, func: Func<Download>?,
+    override fun updateRequest(requestId: Int, updatedRequest: Request, notifyListeners: Boolean, func: Func<Download>?,
                                func2: Func<Error>?): Fetch {
         return synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
                 try {
-                    val download = fetchHandler.updateRequest(requestId, updatedRequest)
-                    if (func != null) {
-                        uiHandler.post {
-                            func.call(download)
+                    val downloadPair = fetchHandler.updateRequest(requestId, updatedRequest)
+                    val download = downloadPair.first
+                    logger.d("UpdatedRequest with id: $requestId to $download")
+                    uiHandler.post {
+                        if (notifyListeners) {
+                            when (download.status) {
+                                Status.COMPLETED -> {
+                                    listenerCoordinator.mainListener.onCompleted(download)
+                                }
+                                Status.FAILED -> {
+                                    listenerCoordinator.mainListener.onError(download, download.error, null)
+                                }
+                                Status.CANCELLED -> {
+                                    listenerCoordinator.mainListener.onCancelled(download)
+                                }
+                                Status.DELETED -> {
+                                    listenerCoordinator.mainListener.onDeleted(download)
+                                }
+                                Status.PAUSED -> {
+                                    listenerCoordinator.mainListener.onPaused(download)
+                                }
+                                Status.QUEUED -> {
+                                    if (!downloadPair.second) {
+                                        val downloadCopy = download.copy().toDownloadInfo()
+                                        downloadCopy.status = Status.ADDED
+                                        listenerCoordinator.mainListener.onAdded(downloadCopy)
+                                        logger.d("Added $download")
+                                    }
+                                    listenerCoordinator.mainListener.onQueued(download, false)
+                                }
+                                Status.REMOVED -> {
+                                    listenerCoordinator.mainListener.onRemoved(download)
+                                }
+                                Status.DOWNLOADING -> {
+                                }
+                                Status.ADDED -> {
+                                    listenerCoordinator.mainListener.onAdded(download)
+                                }
+                                Status.NONE -> {
+                                }
+                            }
                         }
+                        func?.call(download)
                     }
                 } catch (e: Exception) {
                     logger.e("Failed to update request with id $requestId", e)
