@@ -15,7 +15,16 @@ enum class EnqueueAction(val value: Int) {
     INCREMENT_FILE_NAME(1),
 
     /** Fetch will not enqueue the new request if a request already managed by Fetch has the same file path. */
-    DO_NOT_ENQUEUE_IF_EXISTING(2);
+    DO_NOT_ENQUEUE_IF_EXISTING(2),
+
+    /** If Fetch is already managing an existing request with the same file path do one the following:
+     * 1: If existing download is completed, Fetch will call onComplete method on attached Fetch Listeners
+     * 2: If existing download is not completed, resume download normally
+     * 3: If not downloaded, download will proceed normally.
+     * Note: If download is existing, Fetch will not update the existing download with the settings from
+     * the new passed in request.
+     * */
+    UPDATE_ACCORDINGLY(3);
 
     companion object {
 
@@ -24,6 +33,7 @@ enum class EnqueueAction(val value: Int) {
             return when (value) {
                 1 -> INCREMENT_FILE_NAME
                 2 -> DO_NOT_ENQUEUE_IF_EXISTING
+                3 -> UPDATE_ACCORDINGLY
                 else -> REPLACE_EXISTING
             }
         }

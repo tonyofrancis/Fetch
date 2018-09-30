@@ -48,30 +48,46 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     private fun enqueueRequests(requests: List<Request>): List<Download> {
-        val results = requests.distinctBy { it.file }
+        val results = requests.asSequence().distinctBy { it.file }
                 .map {
                     val downloadInfo = it.toDownloadInfo()
                     downloadInfo.namespace = namespace
                     prepareDownloadInfoForEnqueue(downloadInfo)
-                    downloadInfo.status = if (it.downloadOnEnqueue) {
-                        Status.QUEUED
+                    if (downloadInfo.status != Status.COMPLETED) {
+                        downloadInfo.status = if (it.downloadOnEnqueue) {
+                            Status.QUEUED
+                        } else {
+                            Status.ADDED
+                        }
+                        val downloadPair = databaseManager.insert(downloadInfo)
+                        logger.d("Enqueued download ${downloadPair.first}")
+                        downloadPair.first
                     } else {
-                        Status.ADDED
+                        logger.d("Updating download $downloadInfo")
+                        databaseManager.update(downloadInfo)
+                        downloadInfo
                     }
-                    val downloadPair = databaseManager.insert(downloadInfo)
-                    logger.d("Enqueued download ${downloadPair.first}")
-                    downloadPair.first
-                }
+                }.toList()
         startPriorityQueueIfNotStarted()
         return results
     }
 
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
-        val existingDownload = databaseManager.getByFile(downloadInfo.file)
+        var existingDownload = databaseManager.getByFile(downloadInfo.file)
         if (existingDownload == null) {
             createFileIfPossible(File(downloadInfo.file))
         }
-        if (downloadInfo.enqueueAction == EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING && existingDownload != null) {
+        if (downloadInfo.enqueueAction == EnqueueAction.UPDATE_ACCORDINGLY && existingDownload != null) {
+            cancelDownloadsIfDownloading(listOf(existingDownload.id))
+            existingDownload = databaseManager.getByFile(downloadInfo.file)
+            if (existingDownload != null) {
+                if (existingDownload.status != Status.COMPLETED) {
+                    existingDownload.status = Status.QUEUED
+                    existingDownload.error = defaultNoError
+                }
+                downloadInfo.copyFrom(existingDownload)
+            }
+        } else if (downloadInfo.enqueueAction == EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING && existingDownload != null) {
             throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
         } else if (downloadInfo.enqueueAction == EnqueueAction.REPLACE_EXISTING && existingDownload != null) {
             deleteDownloads(listOf(downloadInfo.id))
@@ -275,14 +291,9 @@ class FetchHandlerImpl(private val namespace: String,
         val oldDownloadInfo = databaseManager.get(requestId)
         if (oldDownloadInfo != null) {
             val newDownloadInfo = newRequest.toDownloadInfo()
-            newDownloadInfo.status = if (newRequest.downloadOnEnqueue) {
-                Status.QUEUED
-            } else {
-                Status.ADDED
-            }
             newDownloadInfo.namespace = namespace
             val enqueueAction = newDownloadInfo.enqueueAction
-            if (enqueueAction == EnqueueAction.REPLACE_EXISTING) {
+            if (enqueueAction == EnqueueAction.REPLACE_EXISTING || enqueueAction == EnqueueAction.UPDATE_ACCORDINGLY) {
                 if (newRequest.file == oldDownloadInfo.file) {
                     newDownloadInfo.downloaded = oldDownloadInfo.downloaded
                     newDownloadInfo.total = oldDownloadInfo.total
@@ -290,6 +301,15 @@ class FetchHandlerImpl(private val namespace: String,
                 remove(listOf(requestId))
             } else {
                 delete(listOf(requestId))
+            }
+            if (oldDownloadInfo.status == Status.COMPLETED) {
+
+            } else {
+                newDownloadInfo.status = if (newRequest.downloadOnEnqueue) {
+                    Status.QUEUED
+                } else {
+                    Status.ADDED
+                }
             }
             prepareDownloadInfoForEnqueue(newDownloadInfo)
             startPriorityQueueIfNotStarted()
