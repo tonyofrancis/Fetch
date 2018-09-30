@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-kapt'
 
-apply plugin: 'com.novoda.bintray-release'
+//apply plugin: 'com.novoda.bintray-release'
 
 buildscript {
     apply from: '../versions.gradle'
@@ -15,7 +15,7 @@ buildscript {
     dependencies {
         classpath "com.android.tools.build:gradle:$gradle_tools_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.novoda:bintray-release:$novoda_bintray_version"
+//        classpath "com.novoda:bintray-release:$novoda_bintray_version"
     }
 }
 
@@ -68,14 +68,14 @@ dependencies {
     androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
 }
 
-publish {
-    userOrg = 'tonyofrancis'
-    groupId = 'com.tonyodev.fetch2fileserver'
-    artifactId = 'fetch2fileserver'
-    publishVersion = library_version
-    desc = 'Fetch File Server'
-    website = 'https://github.com/tonyofrancis/fetch'
-}
+//publish {
+//    userOrg = 'tonyofrancis'
+//    groupId = 'com.tonyodev.fetch2fileserver'
+//    artifactId = 'fetch2fileserver'
+//    publishVersion = library_version
+//    desc = 'Fetch File Server'
+//    website = 'https://github.com/tonyofrancis/fetch'
+//}
 
 tasks.withType(Javadoc).all {
     enabled = false
