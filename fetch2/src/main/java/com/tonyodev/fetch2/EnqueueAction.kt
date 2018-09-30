@@ -18,11 +18,11 @@ enum class EnqueueAction(val value: Int) {
     DO_NOT_ENQUEUE_IF_EXISTING(2),
 
     /** If Fetch is already managing an existing request with the same file path do one the following:
-     * 1: If existing download is completed, Fetch will call onComplete method on attached Fetch Listeners
-     * 2: If existing download is not completed, resume download normally
+     * 1: If existing download is completed, Fetch will call onComplete method on attached Fetch Listeners.
+     * 2: If existing download is not completed, resume download normally.
      * 3: If not downloaded, download will proceed normally.
      * Note: If download is existing, Fetch will not update the existing download with the settings from
-     * the new passed in request.
+     * the new passed in request. Use the updateRequest method instead.
      * */
     UPDATE_ACCORDINGLY(3);
 

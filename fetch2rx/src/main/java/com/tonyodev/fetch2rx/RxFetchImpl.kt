@@ -11,6 +11,7 @@ import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.DEFAULT_AUTO_START
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
+import com.tonyodev.fetch2.util.toDownloadInfo
 import com.tonyodev.fetch2core.*
 import com.tonyodev.fetch2rx.util.toConvertible
 import io.reactivex.Flowable
@@ -66,18 +67,40 @@ open class RxFetchImpl(override val namespace: String,
                     .subscribeOn(scheduler)
                     .flatMap { requests ->
                         throwExceptionIfClosed()
-                        val downloads: List<Download> = fetchHandler.enqueue(requests)
+                        val distinctCount = requests.distinctBy { it.file }.count()
+                        if (distinctCount != requests.size) {
+                            throw FetchException(ENQUEUED_REQUESTS_ARE_NOT_DISTINCT)
+                        }
+                        val downloadPairs = fetchHandler.enqueue(requests)
                         uiHandler.post {
-                            downloads.forEach {
-                                listenerCoordinator.mainListener.onAdded(it)
-                                logger.d("Added $it")
-                                if (it.status == Status.QUEUED) {
-                                    listenerCoordinator.mainListener.onQueued(it, false)
-                                    logger.d("Queued $it for download")
+                            downloadPairs.forEach { downloadPair ->
+                                val download = downloadPair.first
+                                when (download.status) {
+                                    Status.ADDED -> {
+                                        listenerCoordinator.mainListener.onAdded(download)
+                                        logger.d("Added $download")
+                                    }
+                                    Status.QUEUED -> {
+                                        if (!downloadPair.second) {
+                                            val downloadCopy = download.copy().toDownloadInfo()
+                                            downloadCopy.status = Status.ADDED
+                                            listenerCoordinator.mainListener.onAdded(downloadCopy)
+                                            logger.d("Added $download")
+                                        }
+                                        listenerCoordinator.mainListener.onQueued(download, false)
+                                        logger.d("Queued $download for download")
+                                    }
+                                    Status.COMPLETED -> {
+                                        listenerCoordinator.mainListener.onCompleted(download)
+                                        logger.d("Completed download $download")
+                                    }
+                                    else -> {
+
+                                    }
                                 }
                             }
                         }
-                        Flowable.just(downloads.map { it.request })
+                        Flowable.just(downloadPairs.map { it.first.request })
                     }
                     .observeOn(uiScheduler)
                     .toConvertible()
@@ -615,14 +638,55 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
-    override fun updateRequest(requestId: Int, updatedRequest: Request): Convertible<Download> {
+    override fun updateRequest(requestId: Int, updatedRequest: Request, notifyListeners: Boolean): Convertible<Download> {
         return synchronized(lock) {
             throwExceptionIfClosed()
             Flowable.just(Pair(requestId, updatedRequest))
                     .subscribeOn(scheduler)
                     .flatMap {
                         throwExceptionIfClosed()
-                        val download = fetchHandler.updateRequest(it.first, it.second)
+                        val downloadPair = fetchHandler.updateRequest(it.first, it.second)
+                        val download = downloadPair.first
+                        uiHandler.post {
+                            if (notifyListeners) {
+                                when (download.status) {
+                                    Status.COMPLETED -> {
+                                        listenerCoordinator.mainListener.onCompleted(download)
+                                    }
+                                    Status.FAILED -> {
+                                        listenerCoordinator.mainListener.onError(download, download.error, null)
+                                    }
+                                    Status.CANCELLED -> {
+                                        listenerCoordinator.mainListener.onCancelled(download)
+                                    }
+                                    Status.DELETED -> {
+                                        listenerCoordinator.mainListener.onDeleted(download)
+                                    }
+                                    Status.PAUSED -> {
+                                        listenerCoordinator.mainListener.onPaused(download)
+                                    }
+                                    Status.QUEUED -> {
+                                        if (!downloadPair.second) {
+                                            val downloadCopy = download.copy().toDownloadInfo()
+                                            downloadCopy.status = Status.ADDED
+                                            listenerCoordinator.mainListener.onAdded(downloadCopy)
+                                            logger.d("Added $download")
+                                        }
+                                        listenerCoordinator.mainListener.onQueued(download, false)
+                                    }
+                                    Status.REMOVED -> {
+                                        listenerCoordinator.mainListener.onRemoved(download)
+                                    }
+                                    Status.DOWNLOADING -> {
+                                    }
+                                    Status.ADDED -> {
+                                        listenerCoordinator.mainListener.onAdded(download)
+                                    }
+                                    Status.NONE -> {
+                                    }
+                                }
+                            }
+                        }
                         Flowable.just(download)
                     }
                     .observeOn(uiScheduler)

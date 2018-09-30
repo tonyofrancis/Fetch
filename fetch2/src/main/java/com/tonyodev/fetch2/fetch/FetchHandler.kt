@@ -13,7 +13,7 @@ interface FetchHandler : Closeable {
 
     fun init()
     fun enqueue(request: Request): Download
-    fun enqueue(requests: List<Request>): List<Download>
+    fun enqueue(requests: List<Request>): List<Pair<Download, Boolean>>
     fun enqueueCompletedDownload(completedDownload: CompletedDownload): Download
     fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download>
     fun pause(ids: List<Int>): List<Download>
@@ -36,7 +36,7 @@ interface FetchHandler : Closeable {
     fun cancelGroup(id: Int): List<Download>
     fun cancelAll(): List<Download>
     fun retry(ids: List<Int>): List<Download>
-    fun updateRequest(requestId: Int, newRequest: Request): Download
+    fun updateRequest(requestId: Int, newRequest: Request): Pair<Download, Boolean>
     fun getDownloads(): List<Download>
     fun getDownload(id: Int): Download?
     fun getDownloads(idList: List<Int>): List<Download>
