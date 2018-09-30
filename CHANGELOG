@@ -1,3 +1,10 @@
+Version 2.2.0-RC14
+- Added new EnqueueAction (UPDATE_ACCORDINGLY) which is now the default EnqueueAction. (NEW)
+- Bug fixes to Fetch and RxFetch enqueue methods.(BEHAVIOR CHANGE)
+- Bug fixes to Fetch and RXFetch updateRequest methods. (BEHAVIOR CHANGE)
+- Added new boolean param called updatedListeners for Fetch and RxFetch updateRequest methods. (BREAKING CHANGE)
+- Improvements and bug fixes to download processing backoff strategy.
+
 Version 2.2.0-RC13
 - Added new backoff logic for the queue processor
 
