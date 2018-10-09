@@ -48,14 +48,15 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         var success = false
         var contentLength = -1L
         var byteStream: InputStream? = null
-        var md5 = ""
+        val responseHeaders = client.headerFields
+
+        var hash = ""
         if (isResponseOk(code)) {
             success = true
             contentLength = client.getHeaderField("Content-Length")?.toLong() ?: -1L
             byteStream = client.inputStream
-            md5 = client.getHeaderField("Content-MD5") ?: ""
+            hash = getContentHash(responseHeaders)
         }
-        val responseHeaders = client.headerFields
 
         val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
                 responseHeaders["Accept-Ranges"]?.firstOrNull() == "bytes"
@@ -66,7 +67,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 contentLength = contentLength,
                 byteStream = null,
                 request = request,
-                md5 = md5,
+                hash = hash,
                 responseHeaders = responseHeaders,
                 acceptsRanges = acceptsRanges))
 
@@ -76,7 +77,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 contentLength = contentLength,
                 byteStream = byteStream,
                 request = request,
-                md5 = md5,
+                hash = hash,
                 responseHeaders = responseHeaders,
                 acceptsRanges = acceptsRanges)
 
@@ -94,6 +95,10 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
             connections.remove(response)
             disconnectClient(client)
         }
+    }
+
+    override fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String {
+        return responseHeaders["Content-MD5"]?.firstOrNull() ?: ""
     }
 
     override fun close() {
@@ -127,12 +132,12 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return fileDownloaderType
     }
 
-    override fun verifyContentMD5(request: Downloader.ServerRequest, md5: String): Boolean {
-        if (md5.isEmpty()) {
+    override fun verifyContentHash(request: Downloader.ServerRequest, hash: String): Boolean {
+        if (hash.isEmpty()) {
             return true
         }
-        val fileMd5 = getFileMd5String(request.file)
-        return fileMd5?.contentEquals(md5) ?: true
+        val fileHash = getFileMd5String(request.file)
+        return fileHash?.contentEquals(hash) ?: true
     }
 
     override fun onServerResponse(request: Downloader.ServerRequest, response: Downloader.Response) {
