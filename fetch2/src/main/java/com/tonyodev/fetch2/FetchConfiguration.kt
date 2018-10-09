@@ -20,7 +20,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val autoStart: Boolean,
                                              val retryOnNetworkGain: Boolean,
                                              val fileServerDownloader: FileServerDownloader,
-                                             val md5CheckingEnabled: Boolean,
+                                             val hashCheckingEnabled: Boolean,
                                              val fileExistChecksEnabled: Boolean) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
@@ -45,7 +45,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var autoStart = DEFAULT_AUTO_START
         private var retryOnNetworkGain = DEFAULT_RETRY_ON_NETWORK_GAIN
         private var fileServerDownloader: FileServerDownloader = defaultFileServerDownloader
-        private var md5CheckEnabled = DEFAULT_MD5_CHECK_ENABLED
+        private var hashCheckEnabled = DEFAULT_HASH_CHECK_ENABLED
         private var fileExistChecksEnabled = DEFAULT_FILE_EXIST_CHECKS
 
         /** Sets the namespace which Fetch operates in. Fetch uses
@@ -177,14 +177,14 @@ class FetchConfiguration private constructor(val appContext: Context,
             return this
         }
 
-        /** Allows Fetch to check the fully downloaded file md5 checksum after the download completes
-         * with md5 checksum returned by the server if supported. This check is only ran once.
+        /** Allows Fetch to check the fully downloaded file hash checksum after the download completes
+         * with hash checksum returned by the server if supported. This check is only ran once.
          * Default is false
-         * @param md5 md5 checking enabled
+         * @param enabled hash checking enabled
          * @return Builder
          * */
-        fun enableMd5Check(enabled: Boolean): Builder {
-            this.md5CheckEnabled = enabled
+        fun enableHashCheck(enabled: Boolean): Builder {
+            this.hashCheckEnabled = enabled
             return this
         }
 
@@ -225,7 +225,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                     autoStart = autoStart,
                     retryOnNetworkGain = retryOnNetworkGain,
                     fileServerDownloader = fileServerDownloader,
-                    md5CheckingEnabled = md5CheckEnabled,
+                    hashCheckingEnabled = hashCheckEnabled,
                     fileExistChecksEnabled = fileExistChecksEnabled)
         }
 
@@ -246,7 +246,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (autoStart != other.autoStart) return false
         if (retryOnNetworkGain != other.retryOnNetworkGain) return false
         if (fileServerDownloader != other.fileServerDownloader) return false
-        if (md5CheckingEnabled != other.md5CheckingEnabled) return false
+        if (hashCheckingEnabled != other.hashCheckingEnabled) return false
         if (fileExistChecksEnabled != other.fileExistChecksEnabled) return false
         return true
     }
@@ -263,7 +263,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + autoStart.hashCode()
         result = 31 * result + retryOnNetworkGain.hashCode()
         result = 31 * result + fileServerDownloader.hashCode()
-        result = 31 * result + md5CheckingEnabled.hashCode()
+        result = 31 * result + hashCheckingEnabled.hashCode()
         result = 31 * result + fileExistChecksEnabled.hashCode()
         return result
     }
@@ -273,7 +273,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                 " concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis," +
                 " loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType," +
                 " logger=$logger, autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
-                "fileServerDownloader=$fileServerDownloader, md5CheckingEnabled=$md5CheckingEnabled," +
+                "fileServerDownloader=$fileServerDownloader, hashCheckingEnabled=$hashCheckingEnabled," +
                 " fileExistChecksEnabled=$fileExistChecksEnabled)"
     }
 
