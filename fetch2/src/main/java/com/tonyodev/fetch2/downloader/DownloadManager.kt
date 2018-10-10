@@ -6,15 +6,18 @@ import java.io.Closeable
 interface DownloadManager : Closeable {
 
     val isClosed: Boolean
+    var concurrentLimit: Int
 
     fun start(download: Download): Boolean
-    fun cancel(id: Int): Boolean
+    fun cancel(downloadId: Int): Boolean
     fun cancelAll()
-    fun contains(id: Int): Boolean
+    fun contains(downloadId: Int): Boolean
     fun canAccommodateNewDownload(): Boolean
     fun getActiveDownloadCount(): Int
-    fun getDownloads(): List<Download>
+    fun getActiveDownloads(): List<Download>
+    fun getActiveDownloadsIds(): List<Int>
     fun getNewFileDownloaderForDownload(download: Download): FileDownloader?
     fun getFileDownloaderDelegate(): FileDownloader.Delegate
     fun getDownloadFileTempDir(download: Download): String
+
 }

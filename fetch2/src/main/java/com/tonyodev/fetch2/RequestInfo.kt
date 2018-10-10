@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2.util.*
+import com.tonyodev.fetch2core.Extras
 
 /**
  * A RequestInfo allows you to update an existing download managed by Fetch.
@@ -28,7 +29,7 @@ open class RequestInfo {
      * @see com.tonyodev.fetch2.NetworkType*/
     var networkType: NetworkType = defaultNetworkType
 
-    /** Adds a header for a download.
+    /** Adds a header for the download.
      * @param key Header Key
      * @param value Header Value
      * */
@@ -55,6 +56,16 @@ open class RequestInfo {
      * */
     var downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
 
+    /**
+     * Set or get the extras for this request. Use this to
+     * save and get custom key/value data for the request.
+     * Use fetch.replaceExtras(id, extras)
+     * */
+    var extras: Extras = Extras.emptyExtras
+        set(value) {
+            field = value.copy()
+        }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -67,6 +78,7 @@ open class RequestInfo {
         if (tag != other.tag) return false
         if (enqueueAction != other.enqueueAction) return false
         if (downloadOnEnqueue != other.downloadOnEnqueue) return false
+        if (extras != other.extras) return false
         return true
     }
 
@@ -79,12 +91,14 @@ open class RequestInfo {
         result = 31 * result + (tag?.hashCode() ?: 0)
         result = 31 * result + enqueueAction.hashCode()
         result = 31 * result + downloadOnEnqueue.hashCode()
+        result = 31 * result + extras.hashCode()
         return result
     }
 
     override fun toString(): String {
         return "RequestInfo(identifier=$identifier, groupId=$groupId, headers=$headers, priority=$priority, " +
-                "networkType=$networkType, tag=$tag, enqueueAction=$enqueueAction, downloadOnEnqueue=$downloadOnEnqueue)"
+                "networkType=$networkType, tag=$tag, enqueueAction=$enqueueAction, downloadOnEnqueue=$downloadOnEnqueue, " +
+                "extras=$extras)"
     }
 
 }

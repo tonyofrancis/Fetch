@@ -25,7 +25,7 @@ public final class Data {
     }
 
     @NonNull
-    public static List<Request> getFetchRequests() {
+    private static List<Request> getFetchRequests() {
         final List<Request> requests = new ArrayList<>();
         for (String sampleUrl : sampleUrls) {
             final Request request = new Request(sampleUrl, getFilePath(sampleUrl));
@@ -44,7 +44,7 @@ public final class Data {
     }
 
     @NonNull
-    public static String getFilePath(@NonNull final String url) {
+    private static String getFilePath(@NonNull final String url) {
         final Uri uri = Uri.parse(url);
         final String fileName = uri.getLastPathSegment();
         final String dir = getSaveDir();
@@ -53,8 +53,7 @@ public final class Data {
 
     @NonNull
     static String getNameFromUrl(final String url) {
-        final String fileName = Uri.parse(url).getLastPathSegment();
-        return fileName;
+        return Uri.parse(url).getLastPathSegment();
     }
 
     @NonNull

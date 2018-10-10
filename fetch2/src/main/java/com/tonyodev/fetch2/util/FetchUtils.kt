@@ -3,9 +3,11 @@
 package com.tonyodev.fetch2.util
 
 import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.FetchConfiguration
+import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.*
+import com.tonyodev.fetch2core.server.FileRequest
+import java.io.File
 import kotlin.math.ceil
 
 fun canPauseDownload(download: Download): Boolean {
@@ -19,6 +21,7 @@ fun canPauseDownload(download: Download): Boolean {
 fun canResumeDownload(download: Download): Boolean {
     return when (download.status) {
         Status.ADDED,
+        Status.QUEUED,
         Status.PAUSED -> true
         else -> false
     }
@@ -61,26 +64,77 @@ fun getRequestForDownload(download: Download,
             file = download.file,
             tag = download.tag,
             identifier = download.identifier,
-            requestMethod = requestMethod)
+            requestMethod = requestMethod,
+            extras = download.extras)
 }
 
-fun deleteRequestTempFiles(fileTempDir: String,
-                           downloader: Downloader,
-                           download: Download) {
-    try {
-        val request = getRequestForDownload(download)
-        val tempDirPath = downloader.getDirectoryForFileDownloaderTypeParallel(request)
-                ?: fileTempDir
-        val tempDir = getFile(tempDirPath)
-        if (tempDir.exists()) {
-            val tempFiles = tempDir.listFiles()
-            for (tempFile in tempFiles) {
-                val match = tempFile.name.startsWith("${download.id}.")
-                if (match && tempFile.exists()) {
-                    try {
-                        tempFile.delete()
-                    } catch (e: Exception) {
+fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
+    return Downloader.ServerRequest(
+            id = request.id,
+            url = request.url,
+            headers = request.headers,
+            tag = request.tag,
+            identifier = request.identifier,
+            requestMethod = GET_REQUEST_METHOD,
+            file = request.file,
+            extras = request.extras)
+}
 
+fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerRequest {
+    val headers = request.headers.toMutableMap()
+    headers["Range"] = "bytes=0-"
+    headers[FileRequest.FIELD_PAGE] = "-1"
+    headers[FileRequest.FIELD_SIZE] = "-1"
+    headers[FileRequest.FIELD_TYPE] = FileRequest.TYPE_FILE.toString()
+    return Downloader.ServerRequest(
+            id = request.id,
+            url = request.url,
+            headers = headers,
+            tag = request.tag,
+            identifier = request.identifier,
+            requestMethod = GET_REQUEST_METHOD,
+            file = request.file,
+            extras = request.extras)
+}
+
+fun getPreviousSliceCount(id: Int, fileTempDir: String): Int {
+    var sliceCount = -1
+    try {
+        sliceCount = getLongDataFromFile(getMetaFilePath(id, fileTempDir))?.toInt() ?: -1
+    } catch (e: Exception) {
+
+    }
+    return sliceCount
+}
+
+fun getMetaFilePath(id: Int, fileTempDir: String): String {
+    return "$fileTempDir/$id.meta.data"
+}
+
+fun saveCurrentSliceCount(id: Int, SliceCount: Int, fileTempDir: String) {
+    try {
+        writeLongToFile(getMetaFilePath(id, fileTempDir), SliceCount.toLong())
+    } catch (e: Exception) {
+
+    }
+}
+
+fun getDownloadedInfoFilePath(id: Int, position: Int, fileTempDir: String): String {
+    return "$fileTempDir/$id.$position.data"
+}
+
+fun deleteAllInFolderForId(id: Int, fileTempDir: String) {
+    try {
+        val dir = File(fileTempDir)
+        if (dir.exists()) {
+            val files = dir.listFiles()
+            if (files != null) {
+                val filteredFilesList = files.filter { file ->
+                    file.nameWithoutExtension.startsWith("$id.")
+                }
+                filteredFilesList.forEach { file ->
+                    if (file.exists()) {
+                        file.delete()
                     }
                 }
             }
@@ -90,70 +144,14 @@ fun deleteRequestTempFiles(fileTempDir: String,
     }
 }
 
-fun getPreviousSliceCount(id: Int, fileTempDir: String): Int {
-    var sliceCount = -1
-    try {
-        sliceCount = getSingleLineTextFromFile(getMetaFilePath(id, fileTempDir))?.toInt() ?: -1
-    } catch (e: Exception) {
-
-    }
-    return sliceCount
-}
-
-fun getMetaFilePath(id: Int, fileTempDir: String): String {
-    return "$fileTempDir/$id.meta.txt"
-}
-
-fun saveCurrentSliceCount(id: Int, SliceCount: Int, fileTempDir: String) {
-    try {
-        writeTextToFile(getMetaFilePath(id, fileTempDir), SliceCount.toString())
-    } catch (e: Exception) {
-
-    }
-}
-
-fun getDownloadedInfoFilePath(id: Int, position: Int, fileTempDir: String): String {
-    return "$fileTempDir/$id.$position.txt"
-}
-
-fun deleteTempFile(id: Int, position: Int, fileTempDir: String) {
-    try {
-        val textFile = getFile(getDownloadedInfoFilePath(id, position, fileTempDir))
-        if (textFile.exists()) {
-            textFile.delete()
-        }
-    } catch (e: Exception) {
-
-    }
-}
-
-fun deleteMetaFile(id: Int, fileTempDir: String) {
-    try {
-        val textFile = getFile(getMetaFilePath(id, fileTempDir))
-        if (textFile.exists()) {
-            textFile.delete()
-        }
-    } catch (e: Exception) {
-
-    }
-}
-
 fun getSavedDownloadedInfo(id: Int, position: Int, fileTempDir: String): Long {
     var downloaded = 0L
     try {
-        downloaded = getSingleLineTextFromFile(getDownloadedInfoFilePath(id, position, fileTempDir))?.toLong() ?: 0L
+        downloaded = getLongDataFromFile(getDownloadedInfoFilePath(id, position, fileTempDir)) ?: 0L
     } catch (e: Exception) {
 
     }
     return downloaded
-}
-
-fun saveDownloadedInfo(id: Int, position: Int, downloaded: Long, fileTempDir: String) {
-    try {
-        writeTextToFile(getDownloadedInfoFilePath(id, position, fileTempDir), downloaded.toString())
-    } catch (e: Exception) {
-
-    }
 }
 
 fun getFileSliceInfo(fileSliceSize: Int, totalBytes: Long): FileSliceInfo {
@@ -177,20 +175,4 @@ fun getFileSliceInfo(fileSliceSize: Int, totalBytes: Long): FileSliceInfo {
         val bytesPerSlice = ceil((totalBytes.toFloat() / fileSliceSize.toFloat())).toLong()
         return FileSliceInfo(fileSliceSize, bytesPerSlice)
     }
-}
-
-fun createConfigWithNewNamespace(fetchConfiguration: FetchConfiguration,
-                                 namespace: String): FetchConfiguration {
-    return FetchConfiguration.Builder(fetchConfiguration.appContext)
-            .setNamespace(namespace)
-            .enableAutoStart(fetchConfiguration.autoStart)
-            .enableLogging(fetchConfiguration.loggingEnabled)
-            .enableRetryOnNetworkGain(fetchConfiguration.retryOnNetworkGain)
-            .setDownloadBufferSize(fetchConfiguration.downloadBufferSizeBytes)
-            .setHttpDownloader(fetchConfiguration.httpDownloader)
-            .setDownloadConcurrentLimit(fetchConfiguration.concurrentLimit)
-            .setProgressReportingInterval(fetchConfiguration.progressReportingIntervalMillis)
-            .setGlobalNetworkType(fetchConfiguration.globalNetworkType)
-            .setLogger(fetchConfiguration.logger)
-            .build()
 }

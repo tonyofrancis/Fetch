@@ -26,7 +26,7 @@ fun getErrorFromMessage(message: String?): Error {
         Error.REQUEST_WITH_FILE_PATH_ALREADY_EXIST
     } else if (message.contains(UNIQUE_ID_DATABASE)) {
         Error.REQUEST_WITH_ID_ALREADY_EXIST
-    } else if (message.equals(EMPTY_RESPONSE_BODY, true)) {
+    } else if (message.contains(EMPTY_RESPONSE_BODY, true)) {
         Error.EMPTY_RESPONSE_FROM_SERVER
     } else if (message.equals(FNC, ignoreCase = true) || message.equals(ENOENT, ignoreCase = true)) {
         Error.FILE_NOT_CREATED
@@ -56,6 +56,24 @@ fun getErrorFromMessage(message: String?): Error {
         Error.INVALID_CONTENT_MD5
     } else if (message.contains(DOWNLOAD_INCOMPLETE, true)) {
         Error.UNKNOWN_IO_ERROR
+    } else if (message.contains(FAILED_TO_UPDATE_REQUEST, true)) {
+        Error.FAILED_TO_UPDATE_REQUEST
+    } else if (message.contains(FAILED_TO_ADD_COMPLETED_DOWNLOAD, true)) {
+        Error.FAILED_TO_ADD_COMPLETED_DOWNLOAD
+    } else if (message.contains(FETCH_FILE_SERVER_INVALID_RESPONSE_TYPE, true)) {
+        Error.FETCH_FILE_SERVER_INVALID_RESPONSE
+    } else if (message.contains(REQUEST_DOES_NOT_EXIST, true)) {
+        Error.REQUEST_DOES_NOT_EXIST
+    } else if (message.contains(NO_NETWORK_CONNECTION, true)) {
+        Error.NO_NETWORK_CONNECTION
+    } else if (message.contains(FILE_NOT_FOUND, true)) {
+        Error.FILE_NOT_FOUND
+    } else if (message.contains(FETCH_FILE_SERVER_URL_INVALID, true)) {
+        Error.FETCH_FILE_SERVER_URL_INVALID
+    } else if (message.contains(ENQUEUED_REQUESTS_ARE_NOT_DISTINCT, true)) {
+        Error.ENQUEUED_REQUESTS_ARE_NOT_DISTINCT
+    } else if (message.contains(ENQUEUE_NOT_SUCCESSFUL, true)) {
+        Error.ENQUEUE_NOT_SUCCESSFUL
     } else {
         Error.UNKNOWN
     }

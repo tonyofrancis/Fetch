@@ -1,11 +1,13 @@
-package com.tonyodev.fetch2core.transporter
+package com.tonyodev.fetch2core.server
 
-import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_CONNECTION
-import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_CONTENT_LENGTH
-import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_DATE
-import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_MD5
-import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_STATUS
-import com.tonyodev.fetch2core.transporter.FileResponse.Companion.FIELD_TYPE
+import com.tonyodev.fetch2core.Extras
+import com.tonyodev.fetch2core.server.FileResponse.CREATOR.FIELD_CONNECTION
+import com.tonyodev.fetch2core.server.FileResponse.CREATOR.FIELD_CONTENT_LENGTH
+import com.tonyodev.fetch2core.server.FileResponse.CREATOR.FIELD_DATE
+import com.tonyodev.fetch2core.server.FileResponse.CREATOR.FIELD_MD5
+import com.tonyodev.fetch2core.server.FileResponse.CREATOR.FIELD_SESSION_ID
+import com.tonyodev.fetch2core.server.FileResponse.CREATOR.FIELD_STATUS
+import com.tonyodev.fetch2core.server.FileResponse.CREATOR.FIELD_TYPE
 import org.json.JSONObject
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -60,7 +62,16 @@ class FetchFileResourceTransporter(private val client: Socket = Socket()) : File
             var rangeEnd = json.getLong(FileRequest.FIELD_RANGE_END)
             val authorization = json.getString(FileRequest.FIELD_AUTHORIZATION)
             val client = json.getString(FileRequest.FIELD_CLIENT)
-            val customData = json.getString(FileRequest.FIELD_CUSTOM_DATA)
+            val extras = try {
+                val map = mutableMapOf<String, String>()
+                val jsonObject = JSONObject(json.getString(FileRequest.FIELD_EXTRAS))
+                jsonObject.keys().forEach {
+                    map[it] = jsonObject.getString(it)
+                }
+                Extras(map)
+            } catch (e: Exception) {
+                Extras.emptyExtras
+            }
             var page = json.getInt(FileRequest.FIELD_PAGE)
             var size = json.getInt(FileRequest.FIELD_SIZE)
             if ((rangeStart < 0L || rangeStart > rangeEnd) && rangeEnd > -1) {
@@ -83,7 +94,7 @@ class FetchFileResourceTransporter(private val client: Socket = Socket()) : File
                     rangeEnd = rangeEnd,
                     authorization = authorization,
                     client = client,
-                    customData = customData,
+                    extras = extras,
                     page = page,
                     size = size,
                     persistConnection = persistConnection)
@@ -110,13 +121,15 @@ class FetchFileResourceTransporter(private val client: Socket = Socket()) : File
             val date = json.getLong(FIELD_DATE)
             val contentLength = json.getLong(FIELD_CONTENT_LENGTH)
             val md5 = json.getString(FIELD_MD5)
+            val sessionId = json.getString(FIELD_SESSION_ID)
             FileResponse(
                     status = status,
                     type = requestType,
                     connection = connection,
                     date = date,
                     contentLength = contentLength,
-                    md5 = md5)
+                    md5 = md5,
+                    sessionId = sessionId)
         }
     }
 

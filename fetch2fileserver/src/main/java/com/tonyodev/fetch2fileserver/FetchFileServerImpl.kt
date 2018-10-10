@@ -4,11 +4,8 @@ import android.content.Context
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import com.tonyodev.fetch2core.*
 
-import com.tonyodev.fetch2core.FetchLogger
-import com.tonyodev.fetch2core.Func
-import com.tonyodev.fetch2core.InterruptMonitor
-import com.tonyodev.fetch2core.getFileMd5String
 import com.tonyodev.fetch2fileserver.database.FetchFileResourceInfoDatabase
 import com.tonyodev.fetch2fileserver.database.FileResourceInfo
 import com.tonyodev.fetch2fileserver.database.toFileResource
@@ -16,9 +13,9 @@ import com.tonyodev.fetch2fileserver.database.toFileResourceInfo
 import com.tonyodev.fetch2fileserver.provider.FileResourceProvider
 import com.tonyodev.fetch2fileserver.provider.FileResourceProviderDelegate
 import com.tonyodev.fetch2fileserver.provider.FetchFileResourceProvider
-import com.tonyodev.fetch2core.transporter.FileRequest
-import com.tonyodev.fetch2core.transporter.FileResourceTransporterWriter
-import java.io.InputStream
+import com.tonyodev.fetch2core.server.FileRequest
+import com.tonyodev.fetch2core.server.FileResourceTransporterWriter
+import org.json.JSONObject
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.*
@@ -31,7 +28,9 @@ class FetchFileServerImpl(context: Context,
                           databaseName: String,
                           private val fetchFileServerAuthenticator: FetchFileServerAuthenticator?,
                           private val fetchFileServerDelegate: FetchFileServerDelegate?,
-                          private val fetchTransferProgressListener: FetchTransferProgressListener?) : FetchFileServer {
+                          private val fetchTransferListener: FetchTransferListener?,
+                          private val progressReportingInMillis: Long,
+                          private val persistentTimeoutInMillis: Long) : FetchFileServer {
 
     private val lock = Any()
     private val uuid = UUID.randomUUID().toString()
@@ -39,7 +38,7 @@ class FetchFileServerImpl(context: Context,
         get() {
             return uuid
         }
-    private val fileResourceProviderMap = Collections.synchronizedMap(mutableMapOf<UUID, FileResourceProvider>())
+    private val fileResourceProviderMap = Collections.synchronizedMap(mutableMapOf<String, FileResourceProvider>())
     @Volatile
     private var isTerminated = false
     private var isForcedTerminated = false
@@ -80,32 +79,34 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             if (!isStarted && !isTerminated) {
                 isStarted = true
-                Thread({
+                Thread {
                     while (!isTerminated) {
                         try {
                             val client = serverSocket.accept()
                             if (!isTerminated) {
                                 processClient(client)
                             } else {
-                                try {
-                                    client.close()
-                                } catch (e: Exception) {
-                                    logger.e(TAG + "- ${e.message}")
-                                }
+                                client.close()
                             }
                         } catch (e: Exception) {
                             logger.e(TAG + "- ${e.message}")
                         }
                     }
                     cleanUpServer()
-                }).start()
+                }.start()
             }
         }
     }
 
     private fun processClient(clientSocket: Socket) {
         if (!isTerminated) {
-            val fileResourceProvider = FetchFileResourceProvider(clientSocket, fileResourceProviderDelegate, logger, ioHandler)
+            val fileResourceProvider = FetchFileResourceProvider(
+                    client = clientSocket,
+                    fileResourceProviderDelegate = fileResourceProviderDelegate,
+                    logger = logger,
+                    ioHandler = ioHandler,
+                    progressReportingInMillis = progressReportingInMillis,
+                    persistentTimeoutInMillis = persistentTimeoutInMillis)
             try {
                 fileResourceProviderMap[fileResourceProvider.id] = fileResourceProvider
                 fileResourceProvider.execute()
@@ -118,52 +119,66 @@ class FetchFileServerImpl(context: Context,
 
     private val fileResourceProviderDelegate = object : FileResourceProviderDelegate {
 
-        override fun onFinished(providerId: UUID) {
+        override fun onFinished(providerId: String) {
             try {
                 fileResourceProviderMap.remove(providerId)
             } catch (e: Exception) {
                 logger.e(TAG + "- ${e.message}")
             }
+            if (fileResourceProviderMap.isEmpty() && isTerminated) {
+                cleanUpServer()
+            }
         }
 
-        override fun getFileResource(fileResourceIdentifier: String): FileResourceInfo? {
+        override fun getFileResource(fileResourceIdentifier: String): FileResource? {
             return try {
                 val id: Long = fileResourceIdentifier.toLong()
                 if (id == FileRequest.CATALOG_ID) {
-                    val catalog = fileResourceServerDatabase.getRequestedCatalog(-1, -1)
-                    val catalogFileResourceInfo = FileResourceInfo()
-                    catalogFileResourceInfo.id = FileRequest.CATALOG_ID
-                    catalogFileResourceInfo.customData = catalog
-                    catalogFileResourceInfo.name = "Catalog.json"
-                    catalogFileResourceInfo.file = "/Catalog.json"
-                    catalogFileResourceInfo
+                    getCatalogResourceFile()
                 } else {
-                    fileResourceServerDatabase.get(id)
+                    fileResourceServerDatabase.get(id)?.toFileResource()
                 }
             } catch (e: Exception) {
-                fileResourceServerDatabase.get(fileResourceIdentifier)
+                if (fileResourceIdentifier == FileRequest.CATALOG_NAME) {
+                    getCatalogResourceFile()
+                } else {
+                    fileResourceServerDatabase.get(fileResourceIdentifier)?.toFileResource()
+                }
             }
         }
 
-        override fun acceptAuthorization(authorization: String, fileRequest: FileRequest): Boolean {
-            return fetchFileServerAuthenticator?.accept(authorization, fileRequest) ?: true
+        private fun getCatalogResourceFile(): FileResource {
+            val catalog = fileResourceServerDatabase.getRequestedCatalog()
+            val catalogFileResourceInfo = FileResourceInfo()
+            catalogFileResourceInfo.id = FileRequest.CATALOG_ID
+            val catalogMap = mutableMapOf<String, String>()
+            catalogMap["data"] = catalog
+            catalogFileResourceInfo.extras = JSONObject(catalogMap).toString()
+            catalogFileResourceInfo.name = FileRequest.CATALOG_NAME
+            catalogFileResourceInfo.file = FileRequest.CATALOG_FILE
+            return catalogFileResourceInfo.toFileResource()
         }
 
-        override fun onClientConnected(client: String, fileRequest: FileRequest) {
+        override fun acceptAuthorization(sessionId: String, authorization: String, fileRequest: FileRequest): Boolean {
+            return fetchFileServerAuthenticator?.accept(sessionId, authorization, fileRequest)
+                    ?: true
+        }
+
+        override fun onClientConnected(sessionId: String, fileRequest: FileRequest) {
             mainHandler.post {
-                fetchFileServerDelegate?.onClientConnected(client, fileRequest)
+                fetchFileServerDelegate?.onClientConnected(sessionId, fileRequest)
             }
         }
 
-        override fun onClientDidProvideCustomData(client: String, customData: String, fileRequest: FileRequest) {
+        override fun onClientDidProvideExtras(sessionId: String, extras: Extras, fileRequest: FileRequest) {
             mainHandler.post {
-                fetchFileServerDelegate?.onClientDidProvideCustomData(client, customData, fileRequest)
+                fetchFileServerDelegate?.onClientDidProvideExtras(sessionId, extras, fileRequest)
             }
         }
 
-        override fun onClientDisconnected(client: String) {
+        override fun onClientDisconnected(sessionId: String, fileRequest: FileRequest) {
             mainHandler.post {
-                fetchFileServerDelegate?.onClientDisconnected(client)
+                fetchFileServerDelegate?.onClientDisconnected(sessionId, fileRequest)
             }
         }
 
@@ -171,20 +186,38 @@ class FetchFileServerImpl(context: Context,
             return fileResourceServerDatabase.getRequestedCatalog(page, size)
         }
 
-        override fun getFileInputStream(fileResource: FileResource, fileOffset: Long): InputStream? {
-            return fetchFileServerDelegate?.getFileInputStream(fileResource, fileOffset)
+        override fun getFileInputResourceWrapper(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, fileOffset: Long): InputResourceWrapper? {
+            return fetchFileServerDelegate?.getFileInputResourceWrapper(sessionId, fileRequest, fileResource, fileOffset)
         }
 
-        override fun onProgress(client: String, fileResource: FileResource, progress: Int) {
+        override fun onStarted(sessionId: String, fileRequest: FileRequest, fileResource: FileResource) {
             mainHandler.post {
-                fetchTransferProgressListener?.onProgress(client, fileResource, progress)
+                fetchTransferListener?.onStarted(sessionId, fileRequest, fileResource)
             }
         }
 
-        override fun onCustomRequest(client: String, fileRequest: FileRequest,
+        override fun onProgress(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, progress: Int) {
+            mainHandler.post {
+                fetchTransferListener?.onProgress(sessionId, fileRequest, fileResource, progress)
+            }
+        }
+
+        override fun onComplete(sessionId: String, fileRequest: FileRequest, fileResource: FileResource) {
+            mainHandler.post {
+                fetchTransferListener?.onComplete(sessionId, fileRequest, fileResource)
+            }
+        }
+
+        override fun onError(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, throwable: Throwable) {
+            mainHandler.post {
+                fetchTransferListener?.onError(sessionId, fileRequest, fileResource, throwable)
+            }
+        }
+
+        override fun onCustomRequest(sessionId: String, fileRequest: FileRequest,
                                      fileResourceTransporterWriter: FileResourceTransporterWriter,
                                      interruptMonitor: InterruptMonitor) {
-            fetchFileServerDelegate?.onCustomRequest(client, fileRequest,
+            fetchFileServerDelegate?.onCustomRequest(sessionId, fileRequest,
                     fileResourceTransporterWriter, interruptMonitor)
         }
 
@@ -192,7 +225,9 @@ class FetchFileServerImpl(context: Context,
 
     private fun cleanUpServer() {
         try {
-            serverSocket.close()
+            if (!serverSocket.isClosed) {
+                serverSocket.close()
+            }
         } catch (e: Exception) {
             logger.e(TAG + "- ${e.message}")
         }
@@ -218,7 +253,11 @@ class FetchFileServerImpl(context: Context,
                     }
                 }
             } else {
-                fileResourceServerDatabase.close()
+                try {
+                    fileResourceServerDatabase.close()
+                } catch (e: Exception) {
+                    logger.e(TAG + "- ${e.message}")
+                }
                 try {
                     ioHandler.removeCallbacksAndMessages(null)
                     ioHandler.looper.quit()
@@ -267,6 +306,7 @@ class FetchFileServerImpl(context: Context,
         synchronized(lock) {
             throwIfTerminated()
             ioHandler.post {
+                throwIfAddingReservedCatalogInfo(fileResource)
                 if (fileResource.md5.isEmpty()) {
                     fileResource.md5 = getMd5CheckSumForFileResource(fileResource)
                 }
@@ -280,6 +320,7 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             ioHandler.post {
                 fileResources.forEach {
+                    throwIfAddingReservedCatalogInfo(it)
                     if (it.md5.isEmpty()) {
                         it.md5 = getMd5CheckSumForFileResource(it)
                     }
@@ -294,6 +335,14 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             ioHandler.post {
                 fileResourceServerDatabase.delete(fileResource.toFileResourceInfo())
+                val iterator = fileResourceProviderMap.iterator()
+                while (iterator.hasNext()) {
+                    val provider = iterator.next().value
+                    if (provider.isServingFileResource(fileResource)) {
+                        provider.interrupt()
+                        break
+                    }
+                }
             }
         }
     }
@@ -303,6 +352,7 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             ioHandler.post {
                 fileResourceServerDatabase.deleteAll()
+                interruptAllProviders()
             }
         }
     }
@@ -312,6 +362,16 @@ class FetchFileServerImpl(context: Context,
             throwIfTerminated()
             ioHandler.post {
                 fileResourceServerDatabase.delete(fileResources.map { it.toFileResourceInfo() })
+                fileResources.forEach {
+                    val iterator = fileResourceProviderMap.iterator()
+                    while (iterator.hasNext()) {
+                        val provider = iterator.next().value
+                        if (provider.isServingFileResource(it)) {
+                            provider.interrupt()
+                            break
+                        }
+                    }
+                }
             }
         }
     }
@@ -344,13 +404,13 @@ class FetchFileServerImpl(context: Context,
         }
     }
 
-    override fun getFileResource(fileResourceId: Long, func: Func<FileResource?>) {
+    override fun getFileResource(fileResourceId: Long, func2: Func2<FileResource?>) {
         synchronized(lock) {
             throwIfTerminated()
             ioHandler.post {
                 val fileResource = fileResourceServerDatabase.get(fileResourceId)
                 mainHandler.post {
-                    func.call(fileResource?.toFileResource())
+                    func2.call(fileResource?.toFileResource())
                 }
             }
         }
@@ -359,9 +419,11 @@ class FetchFileServerImpl(context: Context,
     override fun getCatalog(func: Func<String>) {
         synchronized(lock) {
             throwIfTerminated()
-            val catalog = fileResourceServerDatabase.getRequestedCatalog(-1, -1)
-            mainHandler.post {
-                func.call(catalog)
+            ioHandler.post {
+                val catalog = fileResourceServerDatabase.getRequestedCatalog()
+                mainHandler.post {
+                    func.call(catalog)
+                }
             }
         }
     }
@@ -373,6 +435,16 @@ class FetchFileServerImpl(context: Context,
     private fun throwIfTerminated() {
         if (isTerminated) {
             throw Exception("FetchFileServer was already Shutdown. It cannot be restarted. Get a new Instance.")
+        }
+    }
+
+    private fun throwIfAddingReservedCatalogInfo(fileResource: FileResource) {
+        if (fileResource.id == FileRequest.CATALOG_ID
+                || fileResource.name == FileRequest.CATALOG_NAME
+                || fileResource.file == FileRequest.CATALOG_FILE) {
+            throw IllegalArgumentException("File Resources 'id' cannot be: ${FileRequest.CATALOG_ID} " +
+                    "and 'name' cannot be: Catalog.json and " +
+                    "'file' cannot be: /Catalog.json")
         }
     }
 

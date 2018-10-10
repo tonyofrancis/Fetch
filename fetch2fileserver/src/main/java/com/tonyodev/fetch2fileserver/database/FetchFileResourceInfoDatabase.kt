@@ -13,7 +13,9 @@ class FetchFileResourceInfoDatabase(context: Context,
     private var closed = false
 
     val isClosed: Boolean
-        get() = closed
+        get() {
+            return closed
+        }
 
     private val fileResourceInfoDatabase = Room.databaseBuilder(context,
             FileResourceInfoDatabase::class.java, databaseName)
@@ -98,14 +100,15 @@ class FetchFileResourceInfoDatabase(context: Context,
         }
     }
 
-    fun getRequestedCatalog(page: Int, size: Int): String {
+    fun getRequestedCatalog(page: Int = -1, size: Int = -1): String {
         synchronized(lock) {
             throwExceptionIfClosed()
             val fileResources = getAll(page, size)
             val stringBuilder = StringBuilder("{\"catalog\":[")
             fileResources.forEachIndexed { index, fileResource ->
                 stringBuilder.append("{\"id\":${fileResource.id},\"name\":\"${fileResource.name}\"," +
-                        "\"length\":${fileResource.length},\"customData\":\"${fileResource.customData}\"}")
+                        "\"length\":${fileResource.length},\"extras\":${fileResource.extras}," +
+                        "\"md5\":\"${fileResource.md5}\"}")
                 if (index != fileResources.size - 1) {
                     stringBuilder.append(",")
                 }

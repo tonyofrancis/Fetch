@@ -9,6 +9,7 @@ import com.tonyodev.fetch2.database.DatabaseManagerImpl;
 import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
+import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2.provider.DownloadProvider;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
 import com.tonyodev.fetch2core.FetchLogger;
@@ -41,7 +42,8 @@ public class DownloadProviderInstrumentedTest {
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
+        final LiveSettings liveSettings = new LiveSettings(namespace);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
         downloadProvider = new DownloadProvider(databaseManager);
     }
 

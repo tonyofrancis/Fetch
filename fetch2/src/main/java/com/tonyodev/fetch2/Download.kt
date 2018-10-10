@@ -1,10 +1,13 @@
 package com.tonyodev.fetch2
 
+import android.os.Parcelable
+import com.tonyodev.fetch2core.Extras
+
 /**
  * An immutable object which contains a current snapshot of all the information
  * about a specific download managed by Fetch.
  * */
-interface Download {
+interface Download : Parcelable {
 
     /** Used to identify a download. This id also matches the id of the request that started
      * the download.*/
@@ -91,5 +94,10 @@ interface Download {
      * of Status.ADDED.
      * */
     val downloadOnEnqueue: Boolean
+
+    /** Stored custom data/ key value pairs with a request.
+     * Use fetch.replaceExtras(id, extras)
+     * */
+    val extras: Extras
 
 }

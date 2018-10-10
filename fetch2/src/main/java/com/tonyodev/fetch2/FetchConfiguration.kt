@@ -13,15 +13,15 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val namespace: String,
                                              val concurrentLimit: Int,
                                              val progressReportingIntervalMillis: Long,
-                                             val downloadBufferSizeBytes: Int,
                                              val loggingEnabled: Boolean,
                                              val httpDownloader: Downloader,
                                              val globalNetworkType: NetworkType,
                                              val logger: Logger,
                                              val autoStart: Boolean,
                                              val retryOnNetworkGain: Boolean,
-                                             val fileServerDownloader: FileServerDownloader?,
-                                             val md5CheckingEnabled: Boolean) {
+                                             val fileServerDownloader: FileServerDownloader,
+                                             val md5CheckingEnabled: Boolean,
+                                             val fileExistChecksEnabled: Boolean) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -38,15 +38,15 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var namespace = DEFAULT_INSTANCE_NAMESPACE
         private var concurrentLimit = DEFAULT_CONCURRENT_LIMIT
         private var progressReportingIntervalMillis = DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS
-        private var downloadBufferSizeBytes = DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES
         private var loggingEnabled = DEFAULT_LOGGING_ENABLED
         private var httpDownloader = defaultDownloader
         private var globalNetworkType = defaultGlobalNetworkType
-        private var logger: Logger = defaultLogger
+        private var logger: Logger = FetchLogger(DEFAULT_LOGGING_ENABLED, DEFAULT_TAG)
         private var autoStart = DEFAULT_AUTO_START
         private var retryOnNetworkGain = DEFAULT_RETRY_ON_NETWORK_GAIN
-        private var fileServerDownloader: FileServerDownloader? = null
+        private var fileServerDownloader: FileServerDownloader = defaultFileServerDownloader
         private var md5CheckEnabled = DEFAULT_MD5_CHECK_ENABLED
+        private var fileExistChecksEnabled = DEFAULT_FILE_EXIST_CHECKS
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -101,24 +101,24 @@ class FetchConfiguration private constructor(val appContext: Context,
          * */
         fun setProgressReportingInterval(progressReportingIntervalMillis: Long): Builder {
             if (progressReportingIntervalMillis < 0) {
-                throw FetchException("progressReportingIntervalMillis cannot be less than 0",
-                        FetchException.Code.ILLEGAL_ARGUMENT)
+                throw FetchException("progressReportingIntervalMillis cannot be less than 0")
             }
             this.progressReportingIntervalMillis = progressReportingIntervalMillis
             return this
         }
 
         /** Sets the number of parallel downloads Fetch should perform at any given time.
-         * Default value is 1. This method can only accept values greater than 0.
+         * Default value is 1. This method can only accept values greater than 0. Setting
+         * concurrent limit to zero prevents the instance of Fetch to pull and download request
+         * from the waiting queue but allows the instance of Fetch to act on and observe changes to
+         * requests/downloads.
          * @param downloadConcurrentLimit Number of parallel downloads.
-         * @throws FetchException if the passed in download concurrent limit is less than 1.
+         * @throws FetchException if the passed in download concurrent limit is less than 0.
          * @return Builder
          * */
         fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int): Builder {
-            if (downloadConcurrentLimit < 1) {
-                throw FetchException("Concurrent limit cannot be less " +
-                        "than 1",
-                        FetchException.Code.ILLEGAL_ARGUMENT)
+            if (downloadConcurrentLimit < 0) {
+                throw FetchException("Concurrent limit cannot be less than 0")
             }
             this.concurrentLimit = downloadConcurrentLimit
             return this
@@ -144,20 +144,6 @@ class FetchConfiguration private constructor(val appContext: Context,
          * */
         fun enableLogging(enabled: Boolean): Builder {
             this.loggingEnabled = enabled
-            return this
-        }
-
-        /** Sets the buffer size for downloads. Default is 8192 bytes.
-         * @param bytes buffer size. Has to be greater than 0.
-         * @throws FetchException if the passed in buffer size is less than 1.
-         * @return Builder
-         * */
-        fun setDownloadBufferSize(bytes: Int): Builder {
-            if (bytes < 1) {
-                throw FetchException("Buffer size cannot be less than 1.",
-                        FetchException.Code.ILLEGAL_ARGUMENT)
-            }
-            this.downloadBufferSizeBytes = bytes
             return this
         }
 
@@ -203,6 +189,17 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Allows Fetch to check if the file exist for a download. If the file does not exist,
+         * Fetch will update the database and queued, paused or downloading downloads will
+         * have to start at the beginning. Enabled by default. Set to false only if you are
+         * monitoring the file existence elsewhere.
+         * */
+        fun enableFileExistChecks(enabled: Boolean): Builder {
+            this.fileExistChecksEnabled = enabled
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -210,7 +207,9 @@ class FetchConfiguration private constructor(val appContext: Context,
             val prefsLogger = logger
             if (prefsLogger is FetchLogger) {
                 prefsLogger.enabled = loggingEnabled
-                prefsLogger.tag = namespace
+                if (prefsLogger.tag == DEFAULT_TAG) {
+                    prefsLogger.tag = namespace
+                }
             } else {
                 logger.enabled = loggingEnabled
             }
@@ -219,7 +218,6 @@ class FetchConfiguration private constructor(val appContext: Context,
                     namespace = namespace,
                     concurrentLimit = concurrentLimit,
                     progressReportingIntervalMillis = progressReportingIntervalMillis,
-                    downloadBufferSizeBytes = downloadBufferSizeBytes,
                     loggingEnabled = loggingEnabled,
                     httpDownloader = httpDownloader,
                     globalNetworkType = globalNetworkType,
@@ -227,7 +225,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     autoStart = autoStart,
                     retryOnNetworkGain = retryOnNetworkGain,
                     fileServerDownloader = fileServerDownloader,
-                    md5CheckingEnabled = md5CheckEnabled)
+                    md5CheckingEnabled = md5CheckEnabled,
+                    fileExistChecksEnabled = fileExistChecksEnabled)
         }
 
     }
@@ -240,7 +239,6 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (namespace != other.namespace) return false
         if (concurrentLimit != other.concurrentLimit) return false
         if (progressReportingIntervalMillis != other.progressReportingIntervalMillis) return false
-        if (downloadBufferSizeBytes != other.downloadBufferSizeBytes) return false
         if (loggingEnabled != other.loggingEnabled) return false
         if (httpDownloader != other.httpDownloader) return false
         if (globalNetworkType != other.globalNetworkType) return false
@@ -249,6 +247,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (retryOnNetworkGain != other.retryOnNetworkGain) return false
         if (fileServerDownloader != other.fileServerDownloader) return false
         if (md5CheckingEnabled != other.md5CheckingEnabled) return false
+        if (fileExistChecksEnabled != other.fileExistChecksEnabled) return false
         return true
     }
 
@@ -257,25 +256,25 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + namespace.hashCode()
         result = 31 * result + concurrentLimit
         result = 31 * result + progressReportingIntervalMillis.hashCode()
-        result = 31 * result + downloadBufferSizeBytes
         result = 31 * result + loggingEnabled.hashCode()
         result = 31 * result + httpDownloader.hashCode()
         result = 31 * result + globalNetworkType.hashCode()
         result = 31 * result + logger.hashCode()
         result = 31 * result + autoStart.hashCode()
         result = 31 * result + retryOnNetworkGain.hashCode()
-        result = 31 * result + (fileServerDownloader?.hashCode() ?: 0)
+        result = 31 * result + fileServerDownloader.hashCode()
         result = 31 * result + md5CheckingEnabled.hashCode()
+        result = 31 * result + fileExistChecksEnabled.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "FetchConfiguration(appContext=$appContext, namespace='$namespace', " +
-                "concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis," +
-                " downloadBufferSizeBytes=$downloadBufferSizeBytes, loggingEnabled=$loggingEnabled, " +
-                "httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType, logger=$logger, " +
-                "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
-                "fileServerDownloader=$fileServerDownloader, md5CheckingEnabled=$md5CheckingEnabled)"
+        return "FetchConfiguration(appContext=$appContext, namespace='$namespace'," +
+                " concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis," +
+                " loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType," +
+                " logger=$logger, autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
+                "fileServerDownloader=$fileServerDownloader, md5CheckingEnabled=$md5CheckingEnabled," +
+                " fileExistChecksEnabled=$fileExistChecksEnabled)"
     }
 
 }

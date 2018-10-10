@@ -5,7 +5,7 @@ import android.net.Uri
 /**
  * Builder used to create a Fetch File Server url.
  * */
-class FetchFileServerUrlBuilder {
+class FetchFileServerUriBuilder {
 
     private var host = "00:00:00:00"
     private var port = 0
@@ -15,7 +15,7 @@ class FetchFileServerUrlBuilder {
      * @param hostAddress ip address
      * @return builder
      * */
-    fun setHostAddress(hostAddress: String): FetchFileServerUrlBuilder {
+    fun setHostAddress(hostAddress: String): FetchFileServerUriBuilder {
         this.host = hostAddress
         return this
     }
@@ -24,7 +24,7 @@ class FetchFileServerUrlBuilder {
      * @param port port
      * @return builder
      * */
-    fun setHostPort(port: Int): FetchFileServerUrlBuilder {
+    fun setHostPort(port: Int): FetchFileServerUriBuilder {
         this.port = port
         return this
     }
@@ -34,7 +34,7 @@ class FetchFileServerUrlBuilder {
      * @param port port
      * @return builder
      * */
-    fun setHostInetAddress(hostAddress: String, port: Int): FetchFileServerUrlBuilder {
+    fun setHostInetAddress(hostAddress: String, port: Int): FetchFileServerUriBuilder {
         this.port = port
         this.host = hostAddress
         return this
@@ -44,7 +44,7 @@ class FetchFileServerUrlBuilder {
      * @param fileResourceName resource identifier
      * @return builder
      * */
-    fun setFileResourceIdentifier(fileResourceName: String): FetchFileServerUrlBuilder {
+    fun setFileResourceIdentifier(fileResourceName: String): FetchFileServerUriBuilder {
         this.identifier = fileResourceName
         return this
     }
@@ -53,26 +53,30 @@ class FetchFileServerUrlBuilder {
      * @param fileResourceId resource id identifier
      * @return builder
      * */
-    fun setFileResourceIdentifier(fileResourceId: Long): FetchFileServerUrlBuilder {
+    fun setFileResourceIdentifier(fileResourceId: Long): FetchFileServerUriBuilder {
         this.identifier = fileResourceId.toString()
         return this
     }
 
     /**
-     * Create Fetch file server url string.
+     * Create Fetch file server URI.
      * */
-    fun create(): String {
+    fun build(): Uri {
         return Uri.Builder()
-                .scheme(FETCH_URL_SCHEME)
+                .scheme(FETCH_URI_SCHEME)
                 .encodedAuthority("$host:$port")
                 .appendPath(identifier)
-                .toString()
+                .build()
+    }
+
+    override fun toString(): String {
+        return build().toString()
     }
 
     companion object {
 
         /** Fetch File Server Url Scheme*/
-        const val FETCH_URL_SCHEME = "fetchlocal"
+        const val FETCH_URI_SCHEME = "fetchlocal"
 
     }
 

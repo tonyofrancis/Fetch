@@ -12,18 +12,20 @@ import android.widget.Toast;
 
 import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Download;
+import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2core.Extras;
 import com.tonyodev.fetch2core.FetchCoreUtils;
-import com.tonyodev.fetch2downloaders.FetchFileResourceDownloadTask;
-import com.tonyodev.fetch2fileserver.FileResource;
+import com.tonyodev.fetch2core.FileResource;
+import com.tonyodev.fetch2core.MutableExtras;
 import com.tonyodev.fetch2fileserver.FetchFileServer;
-import com.tonyodev.fetch2downloaders.FetchFileServerDownloader;
-import com.tonyodev.fetch2core.FetchFileServerUrlBuilder;
+import com.tonyodev.fetch2.FetchFileServerDownloader;
+import com.tonyodev.fetch2core.FetchFileServerUriBuilder;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +63,7 @@ public class FileServerActivity extends AppCompatActivity {
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
 
         fetchFileServer = new FetchFileServer.Builder(this)
-                .setAuthenticator((authorization, fileRequest) -> authorization.equals("password"))
+                .setAuthenticator((sessionId, authorization, fileRequest) -> authorization.equals("password"))
                 .build();
         fetchFileServer.start();
         checkStoragePermission();
@@ -109,11 +111,19 @@ public class FileServerActivity extends AppCompatActivity {
         if (fileMd5 != null) {
             fileResource.setMd5(fileMd5);
         }
+        final MutableExtras extras = new MutableExtras();
+        extras.putLong("contentLength", fileLength);
+        extras.putString("contentName", file.getName());
+        extras.putString("contentSampleKey", "contentSampleText");
+        fileResource.setExtras(extras);
         fetchFileServer.addFileResource(fileResource);
 
-        //Can download with Fetch or a FetchFileResourceDownloadTask
         downloadFileResourceUsingFetch();
-        //downloadTask.execute();
+        fetch.getFetchFileServerCatalog(getCatalogRequest(),
+                result -> {
+                    Timber.d("Catalog:" + result.toString());
+                },
+                error -> Timber.d("Catalog Fetch error:" + error.toString()));
     }
 
     private void downloadFileResourceUsingFetch() {
@@ -125,10 +135,25 @@ public class FileServerActivity extends AppCompatActivity {
     }
 
     private Request getRequest() {
-        final String url = new FetchFileServerUrlBuilder()
+        final String url = new FetchFileServerUriBuilder()
                 .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
-                .setFileResourceIdentifier(CONTENT_PATH).create();
+                .setFileResourceIdentifier(CONTENT_PATH)
+                .toString();
         final Request request = new Request(url, getFile("(1)"));
+        request.addHeader("Authorization", "password");
+        request.setPriority(Priority.HIGH);
+        return request;
+    }
+
+    private Request getCatalogRequest() {
+        final String url = new FetchFileServerUriBuilder()
+                .setHostInetAddress(fetchFileServer.getAddress(), fetchFileServer.getPort())
+                .setFileResourceIdentifier("Catalog.json")
+                .toString();
+        final Request request = new Request(url, getFile("(1)"));
+        final MutableExtras extras = new MutableExtras();
+        extras.putString("sampleKey", "sampleTextDataInExtras");
+        request.setExtras(extras);
         request.addHeader("Authorization", "password");
         request.setPriority(Priority.HIGH);
         return request;
@@ -154,7 +179,6 @@ public class FileServerActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         fetch.close();
-        downloadTask.cancel();
         fetchFileServer.shutDown(false);
     }
 
@@ -175,12 +199,12 @@ public class FileServerActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onError(@NotNull Download download) {
-            final String error = "Download From FileServer Error " + download.getError().toString();
-            textView.setText(error);
-            Timber.d(error);
+        public void onError(@NotNull Download download, @NotNull Error error, @org.jetbrains.annotations.Nullable Throwable throwable) {
+            super.onError(download, error, throwable);
+            final String err = "Download From FileServer Error " + download.getError().toString();
+            textView.setText(err);
+            Timber.d(err);
         }
-
     };
 
     @Override
@@ -191,67 +215,5 @@ public class FileServerActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.permission_not_enabled, Toast.LENGTH_LONG).show();
         }
     }
-
-    private FetchFileResourceDownloadTask<File> downloadTask = new FetchFileResourceDownloadTask<File>() {
-
-        @NotNull
-        @Override
-        public FileResourceRequest getRequest() {
-            final FileResourceRequest fileResourceRequest = new FileResourceRequest();
-            fileResourceRequest.setHostAddress(fetchFileServer.getAddress());
-            fileResourceRequest.setPort(fetchFileServer.getPort());
-            fileResourceRequest.setResourceIdentifier(CONTENT_PATH);
-            fileResourceRequest.addHeader("Authorization", "password");
-            return fileResourceRequest;
-        }
-
-        @NotNull
-        @Override
-        public File doWork(@NotNull InputStream inputStream, long contentLength, @NotNull String md5CheckSum) {
-            Timber.d("Task doWork");
-            final File file = Utils.createFile(getFile("(2)"));
-            try {
-                final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
-                final OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
-                final byte[] buffer = new byte[1024];
-                int read;
-                int readBytes = 0;
-                while (((read = bufferedInputStream.read(buffer, 0, 1024)) != -1) && !isCancelled()) {
-                    readBytes += read;
-                    outputStream.write(buffer, 0, read);
-                    setProgress(Utils.getProgress(readBytes, contentLength));
-                }
-                setProgress(100);
-                bufferedInputStream.close();
-                outputStream.flush();
-                outputStream.close();
-            } catch (IOException exception) {
-                Timber.e(exception);
-            }
-            return file;
-        }
-
-        @Override
-        protected void onProgress(int progress) {
-            final String progressString = "Progress: " + progress + "%";
-            textView.setText(progressString);
-            Timber.d("Download From FileServer Progress: " + progress + "%");
-        }
-
-        @Override
-        public void onError(int httpStatusCode, @org.jetbrains.annotations.Nullable Throwable throwable) {
-            final String error = "Download From FileServer Error " + httpStatusCode;
-            textView.setText(error);
-            Timber.d(error);
-        }
-
-        @Override
-        public void onComplete(@org.jetbrains.annotations.NotNull File result) {
-            final String completed = "Completed Download";
-            textView.setText(completed);
-            Timber.d("Download From FileServer completed");
-        }
-
-    };
 
 }

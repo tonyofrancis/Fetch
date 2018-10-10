@@ -14,16 +14,9 @@ class HandlerWrapper(val namespace: String) {
         handlerThread.start()
         Handler(handlerThread.looper)
     }()
+    private var workerTaskHandler: Handler? = null
 
     fun post(runnable: () -> Unit) {
-        synchronized(lock) {
-            if (!closed) {
-                handler.post(runnable)
-            }
-        }
-    }
-
-    fun post(runnable: Runnable) {
         synchronized(lock) {
             if (!closed) {
                 handler.post(runnable)
@@ -82,6 +75,36 @@ class HandlerWrapper(val namespace: String) {
         }
     }
 
+    fun executeWorkerTask(runnable: () -> Unit) {
+        synchronized(lock) {
+            if (!closed) {
+                if (workerTaskHandler == null) {
+                    workerTaskHandler = getNewWorkerTaskHandler()
+                }
+                workerTaskHandler?.post(runnable)
+            }
+        }
+    }
+
+    fun getWorkTaskLooper(): Looper {
+        return synchronized(lock) {
+            val workerHandler = workerTaskHandler
+            if (workerHandler == null) {
+                val newHandler = getNewWorkerTaskHandler()
+                workerTaskHandler = newHandler
+                newHandler.looper
+            } else {
+                workerHandler.looper
+            }
+        }
+    }
+
+    private fun getNewWorkerTaskHandler(): Handler {
+        val handlerThread = HandlerThread("$namespace worker task")
+        handlerThread.start()
+        return Handler(handlerThread.looper)
+    }
+
     fun close() {
         synchronized(lock) {
             if (!closed) {
@@ -89,6 +112,14 @@ class HandlerWrapper(val namespace: String) {
                 try {
                     handler.removeCallbacksAndMessages(null)
                     handler.looper.quit()
+                } catch (e: Exception) {
+
+                }
+                try {
+                    val workerHandler = workerTaskHandler
+                    workerTaskHandler = null
+                    workerHandler?.removeCallbacksAndMessages(null)
+                    workerHandler?.looper?.quit()
                 } catch (e: Exception) {
 
                 }

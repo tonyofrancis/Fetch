@@ -18,9 +18,13 @@ import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.Status;
 import com.tonyodev.fetch2core.DownloadBlock;
+import com.tonyodev.fetch2core.Extras;
+import com.tonyodev.fetch2core.MutableExtras;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import timber.log.Timber;
 
@@ -99,9 +103,21 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         final String url = Data.sampleUrls[0];
         final String filePath = Data.getSaveDir() + "/movies/" + Data.getNameFromUrl(url);
         request = new Request(url, filePath);
+        request.setExtras(getExtrasForRequest(request));
         fetch.enqueue(request, updatedRequest -> {
             request = updatedRequest;
         }, error -> Timber.d("SingleDownloadActivity Error: %1$s", error.toString()));
+    }
+
+    private Extras getExtrasForRequest(Request request) {
+        final MutableExtras extras = new MutableExtras();
+        extras.putBoolean("testBoolean", true);
+        extras.putString("testString", "test");
+        extras.putFloat("testFloat", Float.MIN_VALUE);
+        extras.putDouble("testDouble",Double.MIN_VALUE);
+        extras.putInt("testInt", Integer.MAX_VALUE);
+        extras.putLong("testLong", Long.MAX_VALUE);
+        return extras;
     }
 
     private void setTitleView(@NonNull final String fileName) {
@@ -169,13 +185,18 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
     }
 
     @Override
-    public void onError(@NotNull Download download) {
+    public void onError(@NotNull Download download, @NotNull Error error, @Nullable Throwable throwable) {
         updateViews(download, 0, 0, download.getError());
     }
 
     @Override
     public void onDownloadBlockUpdated(@NotNull Download download, @NotNull DownloadBlock downloadBlock, int totalBlocks) {
 
+    }
+
+    @Override
+    public void onStarted(@NotNull Download download, @NotNull List<? extends DownloadBlock> downloadBlocks, int totalBlocks) {
+        updateViews(download, 0, 0, null);
     }
 
     @Override
@@ -214,4 +235,10 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchLi
         setProgressView(download.getStatus(), download.getProgress());
         updateViews(download, 0, 0, null);
     }
+
+    @Override
+    public void onWaitingNetwork(@NotNull Download download) {
+        //Called on background thread
+    }
+
 }

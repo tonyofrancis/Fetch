@@ -14,13 +14,15 @@ import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
-import com.tonyodev.fetch2.fetch.DownloadManagerCoordinator;
+import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator;
 import com.tonyodev.fetch2.fetch.FetchHandler;
 import com.tonyodev.fetch2.fetch.FetchHandlerImpl;
+import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.FetchCoreDefaults;
 import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FetchLogger;
+import com.tonyodev.fetch2core.FileServerDownloader;
 import com.tonyodev.fetch2core.HandlerWrapper;
 import com.tonyodev.fetch2.fetch.ListenerCoordinator;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
@@ -62,35 +64,36 @@ public class FetchHandlerInstrumentedTest {
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final Boolean autoStart = true;
         final Migration[] migrations = DownloadDatabase.getMigrations();
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
+        final LiveSettings liveSettings = new LiveSettings(namespace);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
+        final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace);
         final Downloader client = FetchDefaults.getDefaultDownloader();
+        final FileServerDownloader serverClient = FetchDefaults.getDefaultFileServerDownloader();
+        final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
-        final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
-        final int bufferSize = FetchDefaults.DEFAULT_DOWNLOAD_BUFFER_SIZE_BYTES;
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
-        final HandlerWrapper downloadBlockHandler = new HandlerWrapper("DownloadBlockHandler");
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
         final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
-                progessInterval, bufferSize, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                uiHandler, downloadInfoUpdater, tempDir, downloadManagerCoordinator,
-                listenerCoordinator, null, false, downloadBlockHandler);
+                progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
+                 downloadInfoUpdater, tempDir, downloadManagerCoordinator,
+                listenerCoordinator, serverDownloader, false, uiHandler);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handlerWrapper,
                 new DownloadProvider(databaseManager),
                 downloadManager,
                 new NetworkInfoProvider(appContext),
                 fetchLogger,
-                uiHandler,
-                listenerCoordinator);
+                listenerCoordinator,
+                concurrentLimit);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
                 priorityListProcessorImpl, fetchLogger, autoStart,
-                client, tempDir, listenerCoordinator, uiHandler);
+                client, serverClient, listenerCoordinator, uiHandler);
     }
 
     @Test
@@ -126,7 +129,7 @@ public class FetchHandlerInstrumentedTest {
         final Request request = getTestRequest();
         final Download download = fetchHandler.enqueue(request);
         assertNotNull(download);
-        final List<Download> downloads = fetchHandler.pause(new int[]{request.getId()});
+        final List<Download> downloads = fetchHandler.pause(getIdList(request.getId()));
         assertEquals(1, downloads.size());
         final Download pausedDownload = downloads.get(0);
         assertNotNull(pausedDownload);
@@ -175,7 +178,7 @@ public class FetchHandlerInstrumentedTest {
         final Request request = getTestRequest();
         final Download download = fetchHandler.enqueue(request);
         assertNotNull(download);
-        final List<Download> downloads = fetchHandler.resume(new int[]{request.getId()});
+        final List<Download> downloads = fetchHandler.resume(getIdList(request.getId()));
         assertEquals(1, downloads.size());
         final Download resumedDownload = downloads.get(0);
         assertNotNull(resumedDownload);
@@ -197,7 +200,7 @@ public class FetchHandlerInstrumentedTest {
 
         final List<Download> downloads = fetchHandler.resumeGroup(groupId);
         assertNotNull(downloads);
-        assertEquals(0, downloads.size());
+        assertEquals(2, downloads.size());
 
     }
 
@@ -217,7 +220,7 @@ public class FetchHandlerInstrumentedTest {
         final Request request = getTestRequest();
         final Download download = fetchHandler.enqueue(request);
         assertNotNull(download);
-        final List<Download> downloads = fetchHandler.remove(new int[]{request.getId()});
+        final List<Download> downloads = fetchHandler.remove(getIdList(request.getId()));
         assertEquals(1, downloads.size());
         final Download removedDownload = downloads.get(0);
         assertNotNull(removedDownload);
@@ -286,7 +289,7 @@ public class FetchHandlerInstrumentedTest {
         final Request request = getTestRequest();
         final Download download = fetchHandler.enqueue(request);
         assertNotNull(download);
-        final List<Download> downloads = fetchHandler.delete(new int[]{request.getId()});
+        final List<Download> downloads = fetchHandler.delete(getIdList(request.getId()));
         assertEquals(1, downloads.size());
         final Download deletedDownload = downloads.get(0);
         assertNotNull(deletedDownload);
@@ -355,7 +358,7 @@ public class FetchHandlerInstrumentedTest {
         final Request request = getTestRequest();
         final Download download = fetchHandler.enqueue(request);
         assertNotNull(download);
-        final List<Download> downloads = fetchHandler.cancel(new int[]{request.getId()});
+        final List<Download> downloads = fetchHandler.cancel(getIdList(request.getId()));
         assertEquals(1, downloads.size());
         final Download cancelledDownload = downloads.get(0);
         assertNotNull(cancelledDownload);
@@ -412,7 +415,7 @@ public class FetchHandlerInstrumentedTest {
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(download);
         downloadInfo.setStatus(Status.FAILED);
         databaseManager.update(downloadInfo);
-        final List<Download> queuedDownloads = fetchHandler.retry(new int[]{request.getId()});
+        final List<Download> queuedDownloads = fetchHandler.retry(getIdList(request.getId()));
         assertNotNull(queuedDownloads);
         assertEquals(1, queuedDownloads.size());
         final Download queuedDownload = queuedDownloads.get(0);
@@ -572,6 +575,12 @@ public class FetchHandlerInstrumentedTest {
             requests.add(request);
         }
         return requests;
+    }
+
+    public List<Integer> getIdList(int id) {
+        final List<Integer> idList = new ArrayList<>();
+        idList.add(id);
+        return idList;
     }
 
 

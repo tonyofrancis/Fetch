@@ -81,15 +81,35 @@ enum class Error constructor(
      * could have been deleted by an external source.*/
     FILE_NOT_FOUND(17),
 
-    /** Indicates that the Fetch File Server downloader was not set for the Fetch Client.*/
-    FETCH_FILE_SERVER_DOWNLOADER_NOT_SET(18),
+    /** Error 18 no longer needed by Fetch. removed*/
 
     /** Indicates that the request url is not a valid url to reach a Fetch File Server.*/
     FETCH_FILE_SERVER_URL_INVALID(19),
 
     /** Indicates that the downloaded file MD5 does not match the MD5 the server returned
      * for the content.*/
-    INVALID_CONTENT_MD5(20);
+    INVALID_CONTENT_MD5(20),
+
+    /** Indicates that Fetch was unable to update the existing request.*/
+    FAILED_TO_UPDATE_REQUEST(21),
+
+    /** Indicates that Fetch was unable to add a completed download.*/
+    FAILED_TO_ADD_COMPLETED_DOWNLOAD(22),
+
+    /** Indicates that the Fetch File Server returned the wrong response type. */
+    FETCH_FILE_SERVER_INVALID_RESPONSE(23),
+
+    /** Indicates that the Request Being Queried does not exist.*/
+    REQUEST_DOES_NOT_EXIST(24),
+
+    /** Indicates that the Request was not enqueued.*/
+    ENQUEUE_NOT_SUCCESSFUL(25),
+
+    /** Indicates that the Completed download was not added successfully.*/
+    COMPLETED_NOT_ADDED_SUCCESSFULLY(26),
+
+    /** Indicates that the requests in the list are not distinct by file name.*/
+    ENQUEUED_REQUESTS_ARE_NOT_DISTINCT(27);
 
     companion object {
 
@@ -113,9 +133,15 @@ enum class Error constructor(
                 15 -> REQUEST_NOT_SUCCESSFUL
                 16 -> UNKNOWN_IO_ERROR
                 17 -> FILE_NOT_FOUND
-                18 -> FETCH_FILE_SERVER_DOWNLOADER_NOT_SET
                 19 -> FETCH_FILE_SERVER_URL_INVALID
                 20 -> INVALID_CONTENT_MD5
+                21 -> FAILED_TO_UPDATE_REQUEST
+                22 -> FAILED_TO_ADD_COMPLETED_DOWNLOAD
+                23 -> FETCH_FILE_SERVER_INVALID_RESPONSE
+                24 -> REQUEST_DOES_NOT_EXIST
+                25 -> ENQUEUE_NOT_SUCCESSFUL
+                26 -> COMPLETED_NOT_ADDED_SUCCESSFULLY
+                27 -> ENQUEUED_REQUESTS_ARE_NOT_DISTINCT
                 else -> UNKNOWN
             }
         }

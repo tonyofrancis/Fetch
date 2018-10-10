@@ -1,34 +1,40 @@
 package com.tonyodev.fetch2fileserver.provider
 
-import com.tonyodev.fetch2fileserver.FileResource
-import com.tonyodev.fetch2core.transporter.FileRequest
+import com.tonyodev.fetch2core.Extras
+import com.tonyodev.fetch2core.FileResource
+import com.tonyodev.fetch2core.InputResourceWrapper
+import com.tonyodev.fetch2core.server.FileRequest
 import com.tonyodev.fetch2core.InterruptMonitor
 import com.tonyodev.fetch2fileserver.database.FileResourceInfo
-import com.tonyodev.fetch2core.transporter.FileResourceTransporterWriter
-import java.io.InputStream
+import com.tonyodev.fetch2core.server.FileResourceTransporterWriter
 import java.util.*
 
 interface FileResourceProviderDelegate {
 
-    fun getFileResource(fileResourceIdentifier: String): FileResourceInfo?
+    fun getFileResource(fileResourceIdentifier: String): FileResource?
 
-    fun onFinished(providerId: UUID)
+    fun onFinished(providerId: String)
 
-    fun acceptAuthorization(authorization: String, fileRequest: FileRequest): Boolean
+    fun acceptAuthorization(sessionId: String, authorization: String, fileRequest: FileRequest): Boolean
 
-    fun onClientDidProvideCustomData(client: String, customData: String, fileRequest: FileRequest)
+    fun onClientDidProvideExtras(sessionId: String, extras: Extras, fileRequest: FileRequest)
 
-    fun onClientConnected(client: String, fileRequest: FileRequest)
+    fun onClientConnected(sessionId: String, fileRequest: FileRequest)
 
-    fun onClientDisconnected(client: String)
+    fun onClientDisconnected(sessionId: String, fileRequest: FileRequest)
 
-    fun onProgress(client: String, fileResource: FileResource, progress: Int)
+    fun onStarted(sessionId: String, fileRequest: FileRequest, fileResource: FileResource)
+
+    fun onProgress(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, progress: Int)
+
+    fun onComplete(sessionId: String, fileRequest: FileRequest, fileResource: FileResource)
+
+    fun onError(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, throwable: Throwable)
 
     fun getCatalog(page: Int, size: Int): String
 
-    fun getFileInputStream(fileResource: FileResource, fileOffset: Long): InputStream?
+    fun getFileInputResourceWrapper(sessionId: String, fileRequest: FileRequest, fileResource: FileResource, fileOffset: Long): InputResourceWrapper?
 
-    fun onCustomRequest(client: String, fileRequest: FileRequest,
-                        fileResourceTransporterWriter: FileResourceTransporterWriter, interruptMonitor: InterruptMonitor)
+    fun onCustomRequest(sessionId: String, fileRequest: FileRequest, fileResourceTransporterWriter: FileResourceTransporterWriter, interruptMonitor: InterruptMonitor)
 
 }

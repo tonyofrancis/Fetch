@@ -1,3 +1,142 @@
+Version 2.2.0-RC14
+- Added new EnqueueAction (UPDATE_ACCORDINGLY) which is now the default EnqueueAction. (NEW)
+- Bug fixes to Fetch and RxFetch enqueue methods.(BEHAVIOR CHANGE)
+- Bug fixes to Fetch and RXFetch updateRequest methods. (BEHAVIOR CHANGE)
+- Added new boolean param called updatedListeners for Fetch and RxFetch updateRequest methods. (BREAKING CHANGE)
+- Improvements and bug fixes to download processing backoff strategy.
+
+Version 2.2.0-RC13
+- Added new backoff logic for the queue processor
+
+Version 2.2.0-RC12
+- Added new method enableFileExistChecks(enabled: Boolean) on FetchConfiguration class
+- Small fixes to ParallelDownloader
+
+Version 2.2.0-RC11
+- Fixed issue where downloads would get stuck in the queue and fetch would mark all downloads as failed.
+- Behavior change: Fetch no longer mark downloads with a Failed status if the file on the disk storage system is not found.
+                   If the file is not found and the download status is Queued or Paused, Fetch will simply start the download from the beginning.
+
+Version 2.2.0-RC10
+- Added new Fetch field named hasActiveDownloads. This field indicates if the fetch namespace has
+active(downloading or queued) downloads. Use this field to keep background services using fetch
+alive. This field is thread safe.
+
+Version 2.2.0-RC9
+- Fixed issue where different namespace Fetch instances shared the same logger object
+- Breaking Change. Added new boolean param for add completed downloads method. Now:
+fun addCompletedDownload(completedDownload, boolean, func, func2): Fetch
+and
+fun addCompletedDownloads(completedDownloadsList, boolean, func, func2): Fetch
+ - Added documentation for Extras and MutableExtras classes.
+
+Version 2.2.0-RC8
+- Fixed issue where downloads will not start processing after calling autoStart.
+- Fixed issue where the callbacks returned wrong download object.
+- Fixed issue where the download callbacks where not called.
+
+Version 2.2.0-RC7
+- Many fixes and performance improvements to the Parallel ParallelDownloader.
+  Breaking changes Parallel Downloader: For a much needed performance and memory improvement changes has to be made
+  to the way the Parallel downloader stores download information. Partially
+  downloaded request from old versions of Fetch when moved to the new Parallel downloader will have to download from the start
+  using the new format but will continue to work as expected after the first run.
+- The created field for the Download and CompletedDownload objects are now in milliseconds.
+  Breaking changes Created Field. Previously those field stored the created time in a mix of nanoseconds and milliseconds.
+  You may need to do the conventions as necessary on downloads created with previous versions of Fetch.
+- Files deleted outside of Fetch for a completed download no longer caused the download status to change to failed.
+- Enqueuing downloads improvements
+- Download Progress reporting fixes.
+- Enqueue list method now ensures that each request in the list is distinct by file. If not, an error is thrown
+  with the appropriate reason when the requests are being enqueued.
+- RxFetch improvements and bug fixes
+- Added new Fetch and RxFetch method fun addListener(listener: FetchListener, notify: Boolean, autoStart)
+  You can now autoStart download processing after attaching a fetchListener.
+- Added new Fetch method fun getFetchConfiguration(). This method returns the configuration object that created the Fetch instance.
+- Added new object Extras and MutableExtras that makes to easy to store and get custom key/value pairs with type support for a request/download.
+  Breaking Changes. The extras field on Request, CompletedDownload, FileResource has all been updated to use Extras object. Existing extras maps (Map<String, String) are migrated to
+  the new extras object automatically.
+- Added new Fetch and RxFetch method fun replaceExtras(id: Int, extras: Extras, func, func2) to replace the extras
+  on an existing request/download stored in the Fetch database.
+- Threads created by Fetch are now named. Improves debugging.
+- FetchFileServer Delegate.Listener method names have been updated to better reflect their use.
+- FetchFileServer uses Extras object instead of custom json string where possible.
+- Bug fixes and performance improvements
+- Logging improvements
+
+Version 2.2.0-RC6
+- Fixed multi enqueue issues.
+
+Version 2.2.0-RC5
+- EnqueueAction.REPLACE_EXISTING fixes
+- Fixed bug where deleted download returns the wrong status
+- fixed bug when fetching the catalog from a Fetch file server causes Json Exceptions
+
+
+Version 2.2.0-RC4
+- Fixed action methods throwing a collection empty exception.
+- Big fixes and improvements.
+
+Version 2.2.0-RC3
+- Fixed Fetch.Impl.getDefaultInstance()
+- Fixed RxFetch.Impl.getDefaultInstance()
+
+Version 2.2.0-RC2
+- Allow downloadConcurrentLimit to be set to 0. Effectively that instance of Fetch can perform all normal actions except downloading requests.
+- Can now set download concurrent limit on Fetch instance at runtime using method fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int): Fetch
+- Errors Fetch throws now have an attached throwable: eg `error.getThrowable()` that you can retrieve the exception that caused the Error. Note throwable may be null.
+- Added new Parameters to FetchListener onStart method now: fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int)
+- Added new Parameters to FetchListener onError method now: fun onError(download: Download, error: Error, throwable: Throwable?)
+- Added new FetchListener method fun onWaitingNetwork(download: Download). This method is always called on a background thread.
+- Download Manager bug and crash fixes
+- Fixed GlobalNetworkType bug causing it to not work correctly
+
+Version 2.2.0-RC1
+This version has so many fixes and improvements that I forgot half of them. Listing all I can remember and marked correctly in the commits.
+Big thanks to @duncanokeyo on Github for continuously pointing out issues and improvements.
+- Fixed issue where DownloadConcurrent issue was not working.
+- Fixed issue where Sequential Downloader reported download progress in the wrong order.
+- Added new onStarted(download) method on FetchListener
+- Request class has a new field call extras of type Map<String, String>. Use this field to store additional data with a request.
+- Download interface has new field called extras of type Map<String, String> that returns the extras of a request.
+- Control a download's speed by overriding downloader method getRequestBufferSize(request): Int
+- To update information on a request. Call Fetch method updateRequest(requestId, updatedRequest, func, func2)
+- FetchListener method onDownloadBlockUpdated(download, downloadBlock, totalBlocks) is now called in a timely fashion
+- Added new Fetch method getContentLengthForRequest(request, fromServer, func, func2)that returns the content-length
+ of a download. You can call this method before or after enqueuing a download. It works independently of other Fetch actions.
+- Added new Fetch method getFetchFileServerCatalog(request, func, func2). Use this method to get the full file resource catalog of a FetchFileServer.
+- Many Fetch action methods(pause, resume, retry, etc) now take two additional callback to are notified of the success and failure of an
+  action. Read the Javadocs for more information on what data is returned to the callback methods.
+- RxFetch no longer extends Fetch interface. The allowed several fixes and improvements.
+- Downloader method getHeadRequestMethodSupported(request) now default to false unless you override
+- Downloader interface has several new methods and improvements.
+- Downloader method getRequestFileDownloaderType now take an additional parameter of type Set<Downloader.FileDownloaderType>
+  that returns a set of supported FileDownloaderTypes for a request.
+- Sequential downloader has been improved
+- Parallel downloader has been improved.
+- Many fixes when more that one fetch instances share the same namespace.
+- Download status reporting fixes.
+- FetchFileServerDownloader class now moved into package com.tonyodev.fetch2
+- Fetch action methods(pause, resume, retry, etc) now return the proper error when the action fails. Use action methods with callback params.
+- HttpUrlConnectionDownloader, OkHttpDownloader, FetchFileServerDownloader improvements
+- General error reporting improvements.
+- FetchFileServer improvements
+- FileResource class updates
+- Removed FetchFileResourceDownloadTask class
+- General bug fixes and improvements
+
+
+Version 2.1.0-RC15
+- Downloader improvements
+- Added new method fun getHeadRequestMethodSupported(request: ServerRequest): Boolean for downloader. True by default.
+
+Version 2.1.0-RC14
+- Downloader improvements
+- Parcelable classes - Request, Download, CompletedDownload, DownloadBlock and FileRequest.
+- Fetch File Server improvements
+- Fetch File Server Task class improvements
+- bug fixes
+
 Version 2.1.0-RC13
 - Added new Fetch method getDownloadBlocks(downloadId: Int, func: Func<List<DownloadBlock>>): Fetch
 - Parallel downloader bug fixes

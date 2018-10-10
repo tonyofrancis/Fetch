@@ -4,35 +4,42 @@ import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.content.Context
 import android.database.sqlite.SQLiteException
-import com.tonyodev.fetch2core.Logger
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
-import com.tonyodev.fetch2.exception.FetchImplementationException
-import com.tonyodev.fetch2.util.sanitize
+import com.tonyodev.fetch2.fetch.LiveSettings
+import com.tonyodev.fetch2.util.defaultNoError
+import com.tonyodev.fetch2core.Extras
+import java.io.File
 
 
 class DatabaseManagerImpl constructor(context: Context,
                                       private val namespace: String,
-                                      override val logger: Logger,
-                                      migrations: Array<Migration>) : DatabaseManager {
+                                      migrations: Array<Migration>,
+                                      private val liveSettings: LiveSettings,
+                                      private val fileExistChecksEnabled: Boolean) : DatabaseManager {
 
     private val lock = Object()
-
     @Volatile
     private var closed = false
-
     override val isClosed: Boolean
-        get() = closed
+        get() {
+            return closed
+        }
+    override val didSanitizeOnFirstEntry: Boolean
+        get() {
+            return liveSettings.didSanitizeDatabaseOnFirstEntry
+        }
+    override var delegate: DatabaseManager.Delegate? = null
+    private val requestDatabase: DownloadDatabase
+    private val database: SupportSQLiteDatabase
 
-    private val requestDatabase = {
-        val builder = Room.databaseBuilder(context, DownloadDatabase::class.java,
-                "$namespace.db")
+    init {
+        val builder = Room.databaseBuilder(context, DownloadDatabase::class.java, "$namespace.db")
         builder.addMigrations(*migrations)
-        builder.build()
-    }()
-
-    val database: SupportSQLiteDatabase = requestDatabase.openHelper.writableDatabase
+        requestDatabase = builder.build()
+        database = requestDatabase.openHelper.writableDatabase
+    }
 
     override fun insert(downloadInfo: DownloadInfo): Pair<DownloadInfo, Boolean> {
         synchronized(lock) {
@@ -47,9 +54,7 @@ class DatabaseManagerImpl constructor(context: Context,
             throwExceptionIfClosed()
             val rowsList = requestDatabase.requestDao().insert(downloadInfoList)
             return rowsList.indices.map {
-                val pair = Pair(downloadInfoList[it],
-                        requestDatabase.wasRowInserted(rowsList[it]))
-                pair
+                Pair(downloadInfoList[it], requestDatabase.wasRowInserted(rowsList[it]))
             }
         }
     }
@@ -72,7 +77,6 @@ class DatabaseManagerImpl constructor(context: Context,
         synchronized(lock) {
             throwExceptionIfClosed()
             requestDatabase.requestDao().deleteAll()
-            logger.d("Cleared Database $namespace.db")
         }
     }
 
@@ -106,23 +110,42 @@ class DatabaseManagerImpl constructor(context: Context,
                         + "WHERE ${DownloadDatabase.COLUMN_ID} = ${downloadInfo.id}")
                 database.setTransactionSuccessful()
             } catch (e: SQLiteException) {
-                logger.e("DatabaseManager exception", e)
+
             }
             try {
                 database.endTransaction()
             } catch (e: SQLiteException) {
-                logger.e("DatabaseManager exception", e)
+
             }
+        }
+    }
+
+    override fun updateExtras(id: Int, extras: Extras): DownloadInfo? {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            database.beginTransaction()
+            database.execSQL("UPDATE ${DownloadDatabase.TABLE_NAME} SET "
+                    + "${DownloadDatabase.COLUMN_EXTRAS} = '${extras.toJSONString()}' "
+                    + "WHERE ${DownloadDatabase.COLUMN_ID} = $id")
+            database.setTransactionSuccessful()
+            database.endTransaction()
+            val download = requestDatabase.requestDao().get(id)
+            sanitize(download)
+            download
         }
     }
 
     override fun get(): List<DownloadInfo> {
         synchronized(lock) {
-            throwExceptionIfClosed()
-            val downloads = requestDatabase.requestDao().get()
-            sanitize(downloads)
-            return downloads
+            return getDownloadsNoLock()
         }
+    }
+
+    private fun getDownloadsNoLock(): List<DownloadInfo> {
+        throwExceptionIfClosed()
+        val downloads = requestDatabase.requestDao().get()
+        sanitize(downloads)
+        return downloads
     }
 
     override fun get(id: Int): DownloadInfo? {
@@ -203,6 +226,84 @@ class DatabaseManagerImpl constructor(context: Context,
         }
     }
 
+    override fun sanitizeOnFirstEntry() {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            liveSettings.execute {
+                if (!it.didSanitizeDatabaseOnFirstEntry) {
+                    sanitize(getDownloadsNoLock(), true)
+                    it.didSanitizeDatabaseOnFirstEntry = true
+                }
+            }
+        }
+    }
+
+    private val updatedDownloadsList = mutableListOf<DownloadInfo>()
+
+    private fun sanitize(downloads: List<DownloadInfo>, firstEntry: Boolean = false): Boolean {
+        updatedDownloadsList.clear()
+        var downloadInfo: DownloadInfo
+        var file: File
+        for (i in 0 until downloads.size) {
+            downloadInfo = downloads[i]
+            when (downloadInfo.status) {
+                Status.COMPLETED -> {
+                    if (downloadInfo.total < 1 && downloadInfo.downloaded > 0) {
+                        downloadInfo.total = downloadInfo.downloaded
+                        downloadInfo.error = defaultNoError
+                        updatedDownloadsList.add(downloadInfo)
+                    }
+                }
+                Status.DOWNLOADING -> {
+                    if (firstEntry) {
+                        downloadInfo.status = Status.QUEUED
+                        downloadInfo.error = defaultNoError
+                        updatedDownloadsList.add(downloadInfo)
+                    }
+                }
+                Status.QUEUED,
+                Status.PAUSED -> {
+                    if (downloadInfo.downloaded > 0) {
+                        if (fileExistChecksEnabled) {
+                            file = File(downloadInfo.file)
+                            if (!file.exists()) {
+                                downloadInfo.downloaded = 0
+                                downloadInfo.total = -1L
+                                downloadInfo.error = defaultNoError
+                                updatedDownloadsList.add(downloadInfo)
+                                delegate?.deleteTempFilesForDownload(downloadInfo)
+                            }
+                        }
+                    }
+                }
+                Status.CANCELLED,
+                Status.FAILED,
+                Status.ADDED,
+                Status.NONE,
+                Status.DELETED,
+                Status.REMOVED -> {
+                }
+            }
+        }
+        val updatedCount = updatedDownloadsList.size
+        if (updatedCount > 0) {
+            try {
+                updateNoLock(updatedDownloadsList)
+            } catch (e: Exception) {
+            }
+        }
+        updatedDownloadsList.clear()
+        return updatedCount > 0
+    }
+
+    private fun sanitize(downloadInfo: DownloadInfo?, initializing: Boolean = false): Boolean {
+        return if (downloadInfo == null) {
+            false
+        } else {
+            sanitize(listOf(downloadInfo), initializing)
+        }
+    }
+
     override fun close() {
         synchronized(lock) {
             if (closed) {
@@ -210,14 +311,12 @@ class DatabaseManagerImpl constructor(context: Context,
             }
             closed = true
             requestDatabase.close()
-            logger.d("Database closed")
         }
     }
 
     private fun throwExceptionIfClosed() {
         if (closed) {
-            throw FetchImplementationException("$namespace database is closed",
-                    FetchException.Code.CLOSED)
+            throw FetchException("$namespace database is closed")
         }
     }
 

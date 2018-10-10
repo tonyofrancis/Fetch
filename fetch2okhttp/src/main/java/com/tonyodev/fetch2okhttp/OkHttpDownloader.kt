@@ -1,13 +1,10 @@
 package com.tonyodev.fetch2okhttp
 
-import com.tonyodev.fetch2core.Downloader
-import com.tonyodev.fetch2core.InterruptMonitor
-import com.tonyodev.fetch2core.getFileMd5String
+import com.tonyodev.fetch2core.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.InputStream
-import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.util.Collections
 import java.util.concurrent.TimeUnit
@@ -41,7 +38,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
             .retryOnConnectionFailure(false)
             .build()
 
-    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
         val okHttpRequestBuilder = Request.Builder()
                 .url(request.url)
                 .method(request.requestMethod, null)
@@ -98,7 +95,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
 
     override fun disconnect(response: Downloader.Response) {
         if (connections.contains(response)) {
-            val okHttpResponse = connections[response] as Response
+            val okHttpResponse = connections[response]
             connections.remove(response)
             closeResponse(okHttpResponse)
         }
@@ -119,7 +116,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestOutputStream(request: Downloader.ServerRequest, filePointerOffset: Long): OutputStream? {
+    override fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper? {
         return null
     }
 
@@ -131,11 +128,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun seekOutputStreamToPosition(request: Downloader.ServerRequest, outputStream: OutputStream, filePointerOffset: Long) {
-
-    }
-
-    override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
+    override fun getRequestFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
         return fileDownloaderType
     }
 
@@ -150,4 +143,25 @@ open class OkHttpDownloader @JvmOverloads constructor(
     override fun onServerResponse(request: Downloader.ServerRequest, response: Downloader.Response) {
 
     }
+
+    override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
+        return false
+    }
+
+    override fun getRequestBufferSize(request: Downloader.ServerRequest): Int {
+        return DEFAULT_BUFFER_SIZE
+    }
+
+    override fun getRequestContentLength(request: Downloader.ServerRequest): Long {
+        return getRequestContentLength(request, this)
+    }
+
+    override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        return try {
+            getRequestSupportedFileDownloaderTypes(request, this)
+        } catch (e: Exception) {
+            mutableSetOf(fileDownloaderType)
+        }
+    }
+
 }

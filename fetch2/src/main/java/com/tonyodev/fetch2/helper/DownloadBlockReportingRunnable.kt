@@ -7,13 +7,10 @@ import com.tonyodev.fetch2core.DownloadBlockInfo
 
 abstract class DownloadBlockReportingRunnable : Runnable {
 
-    @Volatile
     var download: Download = DownloadInfo()
 
-    @Volatile
     var downloadBlock: DownloadBlock = DownloadBlockInfo()
 
-    @Volatile
     var totalBlocks: Int = -1
 
 }

@@ -7,6 +7,7 @@ import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2okhttp.OkHttpDownloader;
+import com.tonyodev.fetch2rx.RxFetch;
 
 import okhttp3.OkHttpClient;
 import timber.log.Timber;
@@ -27,6 +28,7 @@ public class App extends Application {
                 //.setHttpDownloader(getOkHttpDownloader())
                 .build();
         Fetch.Impl.setDefaultInstanceConfiguration(fetchConfiguration);
+        RxFetch.Impl.setDefaultRxInstanceConfiguration(fetchConfiguration);
     }
 
     private OkHttpDownloader getOkHttpDownloader() {

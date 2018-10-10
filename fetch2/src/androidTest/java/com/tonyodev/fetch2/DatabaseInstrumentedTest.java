@@ -9,8 +9,9 @@ import com.tonyodev.fetch2.database.DatabaseManagerImpl;
 import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
-import com.tonyodev.fetch2.util.FetchDatabaseExtensions;
+import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
+import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FetchLogger;
 
 import org.junit.After;
@@ -18,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,8 +44,9 @@ public class DatabaseInstrumentedTest {
         assertEquals("com.tonyodev.fetch2.test", appContext.getPackageName());
         final String namespace = "fetch2DatabaseTest";
         final Migration[] migrations = DownloadDatabase.getMigrations();
+        final LiveSettings liveSettings = new LiveSettings(namespace);
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, fetchLogger, migrations);
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
     }
 
     @After
@@ -147,6 +150,7 @@ public class DatabaseInstrumentedTest {
     public void update() throws Exception {
         databaseManager.deleteAll();
         final Request request = getTestRequest();
+        final File file = FetchCoreUtils.getFile(request.getFile());
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
         databaseManager.insert(downloadInfo);
         final int groupId = 2;
@@ -339,11 +343,12 @@ public class DatabaseInstrumentedTest {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfo.setStatus(Status.DOWNLOADING);
             downloadInfoList.add(downloadInfo);
+            final File file = FetchCoreUtils.getFile(request.getFile());
         }
         databaseManager.insert(downloadInfoList);
         int size = databaseManager.get().size();
         assertEquals(20, size);
-        FetchDatabaseExtensions.sanitize(databaseManager, true);
+        databaseManager.sanitizeOnFirstEntry();
         final List<DownloadInfo> downloads = databaseManager.get();
         for (DownloadInfo download : downloads) {
             assertNotNull(download);

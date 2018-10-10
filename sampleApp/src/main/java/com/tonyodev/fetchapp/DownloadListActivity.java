@@ -14,6 +14,7 @@ import android.view.View;
 
 import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Download;
+import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchListener;
@@ -23,6 +24,7 @@ import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2okhttp.OkHttpDownloader;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 import java.util.ArrayList;
@@ -110,7 +112,8 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         }
 
         @Override
-        public void onError(@NotNull Download download) {
+        public void onError(@NotNull Download download, @NotNull Error error, @Nullable Throwable throwable) {
+            super.onError(download, error, throwable);
             fileAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
         }
 

@@ -1,7 +1,9 @@
 package com.tonyodev.fetch2core
 
+import android.os.Parcelable
+
 /** Class used to hold partial downloaded information for a download.*/
-interface DownloadBlock {
+interface DownloadBlock: Parcelable {
 
     /* Download ID.*/
     val downloadId: Int
@@ -14,6 +16,7 @@ interface DownloadBlock {
 
     /* Block end position.*/
     val endByte: Long
+
     /* Downloaded bytes in block.*/
     val downloadedBytes: Long
 

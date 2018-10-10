@@ -1,10 +1,7 @@
 package com.tonyodev.fetch2
 
-import com.tonyodev.fetch2core.Downloader
-import com.tonyodev.fetch2core.InterruptMonitor
-import com.tonyodev.fetch2core.getFileMd5String
+import com.tonyodev.fetch2core.*
 import java.io.InputStream
-import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Collections
@@ -33,7 +30,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
     protected val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
 
-    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor?): Downloader.Response? {
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
         val httpUrl = URL(request.url)
         val client = httpUrl.openConnection() as HttpURLConnection
         client.requestMethod = request.requestMethod
@@ -54,7 +51,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         var md5 = ""
         if (isResponseOk(code)) {
             success = true
-            contentLength = client.getHeaderField("Content-Length")?.toLong() ?: -1
+            contentLength = client.getHeaderField("Content-Length")?.toLong() ?: -1L
             byteStream = client.inputStream
             md5 = client.getHeaderField("Content-MD5") ?: ""
         }
@@ -93,7 +90,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     override fun disconnect(response: Downloader.Response) {
         if (connections.contains(response)) {
-            val client = connections[response] as HttpURLConnection
+            val client = connections[response]
             connections.remove(response)
             disconnectClient(client)
         }
@@ -114,7 +111,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestOutputStream(request: Downloader.ServerRequest, filePointerOffset: Long): OutputStream? {
+    override fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper? {
         return null
     }
 
@@ -126,12 +123,8 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun getFileDownloaderType(request: Downloader.ServerRequest): Downloader.FileDownloaderType {
+    override fun getRequestFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
         return fileDownloaderType
-    }
-
-    override fun seekOutputStreamToPosition(request: Downloader.ServerRequest, outputStream: OutputStream, filePointerOffset: Long) {
-
     }
 
     override fun verifyContentMD5(request: Downloader.ServerRequest, md5: String): Boolean {
@@ -144,6 +137,26 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     override fun onServerResponse(request: Downloader.ServerRequest, response: Downloader.Response) {
 
+    }
+
+    override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
+        return false
+    }
+
+    override fun getRequestBufferSize(request: Downloader.ServerRequest): Int {
+        return DEFAULT_BUFFER_SIZE
+    }
+
+    override fun getRequestContentLength(request: Downloader.ServerRequest): Long {
+        return getRequestContentLength(request, this)
+    }
+
+    override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        return try {
+            getRequestSupportedFileDownloaderTypes(request, this)
+        } catch (e: Exception) {
+            mutableSetOf(fileDownloaderType)
+        }
     }
 
     /**
