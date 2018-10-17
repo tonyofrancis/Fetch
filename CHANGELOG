@@ -1,3 +1,11 @@
+Version 2.2.0-RC15
+Breaking Changes
+ - Improvements for verifying the hash of a completed download.
+ - FetchConfiguration method enableMD5Check(enabled: Boolean) has been renamed to enableHashCheck(enabled: Boolean)
+ - Downloader interface verifyMD5Hash method has been renamed to verifyContentHash. See Java docs.
+ - New method added on Downloader interface  called getContentHash. See Java docs.
+ - Error value INVALID_MD5_HASH has been renamed to INVALID_CONTENT_HASH
+
 Version 2.2.0-RC14
 - Added new EnqueueAction (UPDATE_ACCORDINGLY) which is now the default EnqueueAction. (NEW)
 - Bug fixes to Fetch and RxFetch enqueue methods.(BEHAVIOR CHANGE)
