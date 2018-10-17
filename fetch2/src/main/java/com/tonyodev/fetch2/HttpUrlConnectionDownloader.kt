@@ -49,7 +49,6 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         var contentLength = -1L
         var byteStream: InputStream? = null
         val responseHeaders = client.headerFields
-
         var hash = ""
         if (isResponseOk(code)) {
             success = true

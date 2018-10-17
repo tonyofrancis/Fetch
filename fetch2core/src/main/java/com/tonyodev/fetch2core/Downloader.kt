@@ -85,6 +85,8 @@ interface Downloader : Closeable {
      * This method should be used to verify that the download file Hash matches the
      * passed in Hash returned by the server for the content.
      * This method is called on a background thread.
+     * By default this method tires verify using the MD5 hash. If overriding this method,
+     * also override getContentHash(responseHeaders: MutableMap<String, List<String>>) method.
      * @param request the request information for the download.
      * @param hash Hash returned by the server for the content
      * @return return true if the hash values match otherwise false. If false is returned,
@@ -93,10 +95,13 @@ interface Downloader : Closeable {
     fun verifyContentHash(request: ServerRequest, hash: String): Boolean
 
     /**
-     * Get the content hash from Server
+     * Get the content hash from Server.
+     * By default this method returns the MD5 hash returned by the server response or an empty string
+     * if the MD5 is not present. If overriding this method, also override the
+     * verifyContentHash(request: ServerRequest, hash: String): Boolean method.
      * @param responseHeaders List of headers from response
-     * @return return hash value returned by the server for the content. if hash information not found,
-     * return empty string
+     * @return return hash value returned by the server for the content. If hash information not found,
+     * return empty string.
      * */
     fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String
 

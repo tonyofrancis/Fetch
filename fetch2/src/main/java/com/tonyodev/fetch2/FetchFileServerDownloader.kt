@@ -80,7 +80,10 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 } catch (e: Exception) {
 
                 }
-
+                if (!responseHeaders.containsKey("Content-MD5")) {
+                    responseHeaders["Content-MD5"] = listOf(serverResponse.md5)
+                }
+                val hash = getContentHash(responseHeaders)
                 val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
                         responseHeaders["Accept-Ranges"]?.firstOrNull() == "bytes"
 
@@ -90,7 +93,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         contentLength = contentLength,
                         byteStream = null,
                         request = request,
-                        hash = serverResponse.md5,
+                        hash = hash,
                         responseHeaders = responseHeaders,
                         acceptsRanges = acceptsRanges))
 
@@ -100,7 +103,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         contentLength = contentLength,
                         byteStream = inputStream,
                         request = request,
-                        hash = serverResponse.md5,
+                        hash = hash,
                         responseHeaders = responseHeaders,
                         acceptsRanges = acceptsRanges)
 
@@ -159,9 +162,8 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
     }
 
     override fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String {
-        return ""
+        return responseHeaders["Content-MD5"]?.firstOrNull() ?: ""
     }
-
 
     override fun onServerResponse(request: Downloader.ServerRequest, response: Downloader.Response) {
 
