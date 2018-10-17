@@ -16,7 +16,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                                    private val logger: Logger,
                                    private val networkInfoProvider: NetworkInfoProvider,
                                    private val retryOnNetworkGain: Boolean,
-                                   private val md5CheckingEnabled: Boolean) : FileDownloader {
+                                   private val hashCheckingEnabled: Boolean) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -269,8 +269,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             downloadBlock.downloadedBytes = downloaded
             downloadBlock.endByte = total
             if (!terminated && !interrupted) {
-                if (md5CheckingEnabled) {
-                    if (downloader.verifyContentMD5(response.request, response.md5)) {
+                if (hashCheckingEnabled) {
+                    if (downloader.verifyContentHash(response.request, response.hash)) {
                         if (!terminated && !interrupted) {
                             delegate?.saveDownloadProgress(downloadInfo)
                             delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
@@ -282,7 +282,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                                     download = downloadInfo)
                         }
                     } else {
-                        throw FetchException(INVALID_CONTENT_MD5)
+                        throw FetchException(INVALID_CONTENT_HASH)
                     }
                 } else {
                     delegate?.saveDownloadProgress(downloadInfo)
