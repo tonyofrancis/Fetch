@@ -3,7 +3,7 @@ ext {
     okhttp_version = '3.11.0'
     android_support_version = '28.0.0'
     constraint_layout_version = "1.1.3"
-    room_version = '1.1.1'
+    room_version = '2.0.0'
     junit_version = '4.12'
     espresso_version = '3.0.1'
     test_runner_version = '1.0.1'
@@ -16,6 +16,6 @@ ext {
     rxAndroid2_version = "2.1.0"
     timber_version = "4.7.1"
     novoda_bintray_version = "0.8.1"
-    library_version = "2.2.0-RC14"
-    library_version_code = 52
+    library_version = "2.2.0-RC15"
+    library_version_code = 53
 }
