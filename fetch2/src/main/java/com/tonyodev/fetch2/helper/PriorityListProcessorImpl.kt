@@ -1,8 +1,5 @@
 package com.tonyodev.fetch2.helper
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2core.HandlerWrapper
@@ -39,18 +36,16 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
         get() = stopped
     @Volatile
     private var backOffTime = DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
-    private val networkBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (context != null && !stopped && !paused && networkInfoProvider.isNetworkAvailable
-                    && backOffTime > DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS) {
-                resetBackOffTime()
-            }
-        }
-    }
 
     init {
-        networkInfoProvider.registerNetworkBroadcastReceiver(networkBroadcastReceiver)
+        networkInfoProvider.registerNetworkChangeListener(object : NetworkInfoProvider.NetworkChangeListener {
+            override fun onNetworkChanged() {
+                if (!stopped && !paused && networkInfoProvider.isNetworkAvailable
+                        && backOffTime > DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS) {
+                    resetBackOffTime()
+                }
+            }
+        })
     }
 
     private val priorityIteratorRunnable = Runnable {

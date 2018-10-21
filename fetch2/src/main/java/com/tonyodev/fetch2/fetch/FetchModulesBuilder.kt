@@ -65,7 +65,7 @@ object FetchModulesBuilder {
                     holder.listenerCoordinator.clearAll()
                     holder.databaseManager.close()
                     holder.downloadManagerCoordinator.clearAll()
-                    holder.networkInfoProvider.unregisterAllNetworkBroadcastReceivers()
+                    holder.networkInfoProvider.unregisterAllNetworkChangeListeners()
                     holderMap.remove(namespace)
                 }
             }
