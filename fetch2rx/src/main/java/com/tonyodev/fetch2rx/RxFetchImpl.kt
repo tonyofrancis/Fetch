@@ -643,6 +643,13 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun getListenerSet(): Set<FetchListener> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            fetchHandler.getListenerSet()
+        }
+    }
+
     override fun updateRequest(requestId: Int, updatedRequest: Request, notifyListeners: Boolean): Convertible<Download> {
         return synchronized(lock) {
             throwExceptionIfClosed()

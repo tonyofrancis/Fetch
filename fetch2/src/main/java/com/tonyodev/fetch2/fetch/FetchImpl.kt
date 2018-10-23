@@ -836,6 +836,13 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun getListenerSet(): Set<FetchListener> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            fetchHandler.getListenerSet()
+        }
+    }
+
     override fun getDownloadBlocks(downloadId: Int, func: Func<List<DownloadBlock>>): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()

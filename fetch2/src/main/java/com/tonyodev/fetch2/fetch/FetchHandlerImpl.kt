@@ -549,6 +549,12 @@ class FetchHandlerImpl(private val namespace: String,
         listenerCoordinator.removeListener(listenerId, listener)
     }
 
+    override fun getListenerSet(): Set<FetchListener> {
+        return synchronized(listenerSet) {
+            listenerSet.toSet()
+        }
+    }
+
     override fun hasActiveDownloads(): Boolean {
         return downloadManager.getActiveDownloadCount() > 0
     }

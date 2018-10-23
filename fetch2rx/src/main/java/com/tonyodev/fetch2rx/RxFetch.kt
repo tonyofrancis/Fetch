@@ -471,6 +471,11 @@ interface RxFetch {
      * */
     fun close()
 
+    /** Gets the set of FetchListeners attached to this instance.
+     * @return set of attached FetchListeners.
+     * */
+    fun getListenerSet(): Set<FetchListener>
+
     /**
      * Gets the content Length for a request. If the request or contentLength cannot be found in
      * the Fetch database(meaning Fetch never processed the request and started downloading it) -1 is returned.
