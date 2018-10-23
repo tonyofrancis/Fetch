@@ -65,7 +65,7 @@ object FetchModulesBuilder {
                     holder.listenerCoordinator.clearAll()
                     holder.databaseManager.close()
                     holder.downloadManagerCoordinator.clearAll()
-                    holder.networkInfoProvider.unregisterAllNetworkBroadcastReceivers()
+                    holder.networkInfoProvider.unregisterAllNetworkChangeListeners()
                     holderMap.remove(namespace)
                 }
             }
@@ -105,7 +105,7 @@ object FetchModulesBuilder {
                     downloadManagerCoordinator = downloadManagerCoordinator,
                     listenerCoordinator = listenerCoordinator,
                     fileServerDownloader = fetchConfiguration.fileServerDownloader,
-                    md5CheckingEnabled = fetchConfiguration.md5CheckingEnabled,
+                    hashCheckingEnabled = fetchConfiguration.hashCheckingEnabled,
                     uiHandler = uiHandler)
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,

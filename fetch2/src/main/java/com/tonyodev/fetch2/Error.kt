@@ -86,9 +86,9 @@ enum class Error constructor(
     /** Indicates that the request url is not a valid url to reach a Fetch File Server.*/
     FETCH_FILE_SERVER_URL_INVALID(19),
 
-    /** Indicates that the downloaded file MD5 does not match the MD5 the server returned
+    /** Indicates that the downloaded file hash does not match the hash the server returned
      * for the content.*/
-    INVALID_CONTENT_MD5(20),
+    INVALID_CONTENT_HASH(20),
 
     /** Indicates that Fetch was unable to update the existing request.*/
     FAILED_TO_UPDATE_REQUEST(21),
@@ -134,7 +134,7 @@ enum class Error constructor(
                 16 -> UNKNOWN_IO_ERROR
                 17 -> FILE_NOT_FOUND
                 19 -> FETCH_FILE_SERVER_URL_INVALID
-                20 -> INVALID_CONTENT_MD5
+                20 -> INVALID_CONTENT_HASH
                 21 -> FAILED_TO_UPDATE_REQUEST
                 22 -> FAILED_TO_ADD_COMPLETED_DOWNLOAD
                 23 -> FETCH_FILE_SERVER_INVALID_RESPONSE

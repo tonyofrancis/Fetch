@@ -1,8 +1,5 @@
 package com.tonyodev.fetch2.helper
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2core.HandlerWrapper
@@ -26,7 +23,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     : PriorityListProcessor<Download> {
 
     private val lock = Any()
-    override var delegate: PriorityListProcessor.Delegate? = null
     @Volatile
     override var globalNetworkType = NetworkType.GLOBAL_OFF
     @Volatile
@@ -39,18 +35,16 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
         get() = stopped
     @Volatile
     private var backOffTime = DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
-    private val networkBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (context != null && !stopped && !paused && networkInfoProvider.isNetworkAvailable
-                    && backOffTime > DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS) {
-                resetBackOffTime()
-            }
-        }
-    }
 
     init {
-        networkInfoProvider.registerNetworkBroadcastReceiver(networkBroadcastReceiver)
+        networkInfoProvider.registerNetworkChangeListener(object : NetworkInfoProvider.NetworkChangeListener {
+            override fun onNetworkChanged() {
+                if (!stopped && !paused && networkInfoProvider.isNetworkAvailable
+                        && backOffTime > DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS) {
+                    resetBackOffTime()
+                }
+            }
+        })
     }
 
     private val priorityIteratorRunnable = Runnable {
@@ -60,7 +54,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                 if (priorityList.isEmpty() || !networkInfoProvider.isNetworkAvailable) {
                     increaseBackOffTime()
                 }
-                delegate?.onHasActiveDownloads(priorityList.isNotEmpty())
                 var shouldBackOff = true
                 for (index in 0..priorityList.lastIndex) {
                     if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
@@ -102,7 +95,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
             resetBackOffTime()
             stopped = false
             paused = false
-            delegate?.onHasActiveDownloads(true)
             registerPriorityIterator()
             logger.d("PriorityIterator started")
         }
@@ -111,7 +103,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     override fun stop() {
         synchronized(lock) {
             unregisterPriorityIterator()
-            delegate?.onHasActiveDownloads(false)
             paused = false
             stopped = true
             downloadManager.cancelAll()

@@ -16,7 +16,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                                    private val logger: Logger,
                                    private val networkInfoProvider: NetworkInfoProvider,
                                    private val retryOnNetworkGain: Boolean,
-                                   private val md5CheckingEnabled: Boolean) : FileDownloader {
+                                   private val hashCheckingEnabled: Boolean) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -30,8 +30,12 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             (delegate as? FileDownloaderDelegate)?.interrupted = value
             field = value
         }
-    @Volatile
-    override var completedDownload = false
+
+    override val completedDownload: Boolean
+        get() {
+            return isDownloadComplete()
+        }
+
     override var delegate: FileDownloader.Delegate? = null
     @Volatile
     private var total: Long = -1L
@@ -63,6 +67,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
         try {
             val file = getFile()
             downloaded = initialDownload.downloaded
+            total = initialDownload.total
             if (!interrupted && !terminated) {
                 val request = getRequest()
                 response = downloader.execute(request, interruptMonitor)
@@ -130,15 +135,15 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         }
                         writeToOutput(input, outputResourceWrapper, response, bufferSize)
                     }
-                } else if (response == null && !interrupted && !terminated) {
+                } else if (response == null && !interrupted && !terminated && !isDownloadComplete()) {
                     throw FetchException(EMPTY_RESPONSE_BODY)
-                } else if (!isResponseSuccessful && !interrupted && !terminated) {
+                } else if (!isResponseSuccessful && !interrupted && !isDownloadComplete()) {
                     throw FetchException(RESPONSE_NOT_SUCCESSFUL)
-                } else if (!interrupted && !terminated) {
+                } else if (!interrupted && !terminated && downloaded < total && !isDownloadComplete()) {
                     throw FetchException(UNKNOWN_ERROR)
                 }
             }
-            if (!completedDownload && !terminated && !interrupted) {
+            if (!isDownloadComplete() && !terminated && !interrupted) {
                 downloadInfo.downloaded = downloaded
                 downloadInfo.total = total
                 downloadBlock.downloadedBytes = downloaded
@@ -149,6 +154,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         download = downloadInfo,
                         etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
                         downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+            } else if (isDownloadComplete() && response != null) {
+                verifyDownloadCompletion(response)
             }
         } catch (e: Exception) {
             if (!interrupted && !terminated) {
@@ -200,6 +207,10 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             }
             terminated = true
         }
+    }
+
+    private fun isDownloadComplete(): Boolean {
+        return downloaded > 0 && total > 0 && downloaded >= total
     }
 
     private fun writeToOutput(input: BufferedInputStream,
@@ -261,39 +272,39 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             }
         }
         outputResourceWrapper?.flush()
-        if (read == -1 && !interrupted && !terminated) {
+    }
+
+    private fun verifyDownloadCompletion(response: Downloader.Response) {
+        if (!interrupted && !terminated && isDownloadComplete()) {
             total = downloaded
-            completedDownload = true
             downloadInfo.downloaded = downloaded
             downloadInfo.total = total
             downloadBlock.downloadedBytes = downloaded
             downloadBlock.endByte = total
-            if (!terminated && !interrupted) {
-                if (md5CheckingEnabled) {
-                    if (downloader.verifyContentMD5(response.request, response.md5)) {
-                        if (!terminated && !interrupted) {
-                            delegate?.saveDownloadProgress(downloadInfo)
-                            delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
-                            delegate?.onProgress(
-                                    download = downloadInfo,
-                                    etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                            delegate?.onComplete(
-                                    download = downloadInfo)
-                        }
-                    } else {
-                        throw FetchException(INVALID_CONTENT_MD5)
+            if (hashCheckingEnabled) {
+                if (downloader.verifyContentHash(response.request, response.hash)) {
+                    if (!terminated && !interrupted) {
+                        delegate?.saveDownloadProgress(downloadInfo)
+                        delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                        delegate?.onProgress(
+                                download = downloadInfo,
+                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                        delegate?.onComplete(
+                                download = downloadInfo)
                     }
                 } else {
-                    delegate?.saveDownloadProgress(downloadInfo)
-                    delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
-                    delegate?.onProgress(
-                            download = downloadInfo,
-                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                    delegate?.onComplete(
-                            download = downloadInfo)
+                    throw FetchException(INVALID_CONTENT_HASH)
                 }
+            } else {
+                delegate?.saveDownloadProgress(downloadInfo)
+                delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                delegate?.onProgress(
+                        download = downloadInfo,
+                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                delegate?.onComplete(
+                        download = downloadInfo)
             }
         }
     }
