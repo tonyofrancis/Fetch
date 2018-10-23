@@ -4,6 +4,7 @@ package com.tonyodev.fetch2core
 
 const val DOWNLOAD_NOT_FOUND = "fetch download not found"
 const val FAILED_TO_ENQUEUE_REQUEST = "UNIQUE constraint failed: requests._id (code 1555)"
+const val FAILED_TO_ENQUEUE_REQUEST_FILE_FOUND = "UNIQUE constraint failed: requests._file (code 2067)"
 const val EMPTY_RESPONSE_BODY = "empty_response_body"
 const val RESPONSE_NOT_SUCCESSFUL = "request_not_successful"
 const val UNKNOWN_ERROR = "unknown"
