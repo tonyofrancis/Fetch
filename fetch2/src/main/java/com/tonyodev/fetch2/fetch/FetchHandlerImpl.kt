@@ -443,10 +443,12 @@ class FetchHandlerImpl(private val namespace: String,
             return
         }
         isTerminating = true
-        listenerSet.iterator().forEach {
-            listenerCoordinator.removeListener(listenerId, it)
+        synchronized(listenerSet) {
+            listenerSet.iterator().forEach {
+                listenerCoordinator.removeListener(listenerId, it)
+            }
+            listenerSet.clear()
         }
-        listenerSet.clear()
         priorityListProcessor.stop()
         downloadManager.close()
         FetchModulesBuilder.removeNamespaceInstanceReference(namespace)
@@ -491,7 +493,9 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun addListener(listener: FetchListener, notify: Boolean, autoStart: Boolean) {
-        listenerSet.add(listener)
+        synchronized(listenerSet) {
+            listenerSet.add(listener)
+        }
         listenerCoordinator.addListener(listenerId, listener)
         if (notify) {
             val downloads = databaseManager.get()
@@ -537,16 +541,18 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun removeListener(listener: FetchListener) {
-        val iterator = listenerSet.iterator()
-        while (iterator.hasNext()) {
-            val fetchListener = iterator.next()
-            if (fetchListener == listener) {
-                iterator.remove()
-                logger.d("Removed listener $listener")
-                break
+        synchronized(listenerSet) {
+            val iterator = listenerSet.iterator()
+            while (iterator.hasNext()) {
+                val fetchListener = iterator.next()
+                if (fetchListener == listener) {
+                    iterator.remove()
+                    logger.d("Removed listener $listener")
+                    break
+                }
             }
+            listenerCoordinator.removeListener(listenerId, listener)
         }
-        listenerCoordinator.removeListener(listenerId, listener)
     }
 
     override fun getListenerSet(): Set<FetchListener> {
