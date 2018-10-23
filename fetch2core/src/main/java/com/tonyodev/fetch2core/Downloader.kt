@@ -82,15 +82,28 @@ interface Downloader : Closeable {
     fun getDirectoryForFileDownloaderTypeParallel(request: ServerRequest): String?
 
     /**
-     * This method should be used to verify that the download file MD5 matches the
-     * passed in MD5 returned by the server for the content.
+     * This method should be used to verify that the download file Hash matches the
+     * passed in Hash returned by the server for the content.
      * This method is called on a background thread.
+     * By default this method tires verify using the MD5 hash. If overriding this method,
+     * also override getContentHash(responseHeaders: MutableMap<String, List<String>>) method.
      * @param request the request information for the download.
-     * @param md5 MD5 returned by the server for the content
-     * @return return true if the md5 values match otherwise false. If false is returned,
+     * @param hash Hash returned by the server for the content
+     * @return return true if the hash values match otherwise false. If false is returned,
      * this indicates that the download files is not correct so the download fails.
      * */
-    fun verifyContentMD5(request: ServerRequest, md5: String): Boolean
+    fun verifyContentHash(request: ServerRequest, hash: String): Boolean
+
+    /**
+     * Get the content hash from Server.
+     * By default this method returns the MD5 hash returned by the server response or an empty string
+     * if the MD5 is not present. If overriding this method, also override the
+     * verifyContentHash(request: ServerRequest, hash: String): Boolean method.
+     * @param responseHeaders List of headers from response
+     * @return return hash value returned by the server for the content. If hash information not found,
+     * return empty string.
+     * */
+    fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String
 
     /**
      * Notifies the downloader of the server response for a request. This method is called on a background thread.
@@ -184,8 +197,8 @@ interface Downloader : Closeable {
             /** The request that initiated this response.*/
             val request: ServerRequest,
 
-            /** The file md5 value to verify against.*/
-            val md5: String,
+            /** The file hash value to verify against.*/
+            val hash: String,
 
             /** Server Response Headers */
             val responseHeaders: Map<String, List<String>>,

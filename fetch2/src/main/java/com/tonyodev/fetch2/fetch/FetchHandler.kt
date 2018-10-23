@@ -53,5 +53,7 @@ interface FetchHandler : Closeable {
     fun getFetchFileServerCatalog(request: Request): List<FileResource>
     fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int)
     fun replaceExtras(id: Int, extras: Extras): Download
+    fun hasActiveDownloads(): Boolean
+    fun getListenerSet(): Set<FetchListener>
 
 }

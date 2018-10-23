@@ -22,7 +22,8 @@ fun getErrorFromThrowable(throwable: Throwable): Error {
 fun getErrorFromMessage(message: String?): Error {
     return if (message == null || message.isEmpty()) {
         Error.UNKNOWN
-    } else if (message.equals(REQUEST_WITH_FILE_PATH_ALREADY_EXIST, true)) {
+    } else if (message.equals(REQUEST_WITH_FILE_PATH_ALREADY_EXIST, true)
+            || message.contains(FAILED_TO_ENQUEUE_REQUEST_FILE_FOUND, true)) {
         Error.REQUEST_WITH_FILE_PATH_ALREADY_EXIST
     } else if (message.contains(UNIQUE_ID_DATABASE)) {
         Error.REQUEST_WITH_ID_ALREADY_EXIST
@@ -52,8 +53,8 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FETCH_DATABASE_ERROR
     } else if (message.contains(RESPONSE_NOT_SUCCESSFUL, true) || message.contains(FAILED_TO_CONNECT, true)) {
         Error.REQUEST_NOT_SUCCESSFUL
-    } else if (message.contains(INVALID_CONTENT_MD5, true)) {
-        Error.INVALID_CONTENT_MD5
+    } else if (message.contains(INVALID_CONTENT_HASH, true)) {
+        Error.INVALID_CONTENT_HASH
     } else if (message.contains(DOWNLOAD_INCOMPLETE, true)) {
         Error.UNKNOWN_IO_ERROR
     } else if (message.contains(FAILED_TO_UPDATE_REQUEST, true)) {

@@ -22,7 +22,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                  private val networkInfoProvider: NetworkInfoProvider,
                                  private val retryOnNetworkGain: Boolean,
                                  private val fileTempDir: String,
-                                 private val md5CheckingEnabled: Boolean) : FileDownloader {
+                                 private val hashCheckingEnabled: Boolean) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -139,8 +139,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             }
                             throwExceptionIfFound()
                             completedDownload = true
-                            if (md5CheckingEnabled) {
-                                if (downloader.verifyContentMD5(openingResponse.request, openingResponse.md5)) {
+                            if (hashCheckingEnabled) {
+                                if (downloader.verifyContentHash(openingResponse.request, openingResponse.hash)) {
                                     deleteAllInFolderForId(downloadInfo.id, fileTempDir)
                                     if (!interrupted && !terminated) {
                                         delegate?.onProgress(
@@ -152,7 +152,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                     }
                                 } else {
                                     deleteAllInFolderForId(downloadInfo.id, fileTempDir)
-                                    throw FetchException(INVALID_CONTENT_MD5)
+                                    throw FetchException(INVALID_CONTENT_HASH)
                                 }
                             } else {
                                 deleteAllInFolderForId(downloadInfo.id, fileTempDir)

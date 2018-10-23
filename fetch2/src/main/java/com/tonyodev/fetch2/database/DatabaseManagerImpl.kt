@@ -256,7 +256,13 @@ class DatabaseManagerImpl constructor(context: Context,
                 }
                 Status.DOWNLOADING -> {
                     if (firstEntry) {
-                        downloadInfo.status = Status.QUEUED
+                        val status = if (downloadInfo.downloaded > 0 && downloadInfo.total >
+                                0 && downloadInfo.downloaded >= downloadInfo.total) {
+                            Status.COMPLETED
+                        } else {
+                            Status.QUEUED
+                        }
+                        downloadInfo.status = status
                         downloadInfo.error = defaultNoError
                         updatedDownloadsList.add(downloadInfo)
                     }

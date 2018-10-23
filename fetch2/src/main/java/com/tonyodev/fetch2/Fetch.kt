@@ -790,6 +790,11 @@ interface Fetch {
      * */
     fun close()
 
+    /** Gets the set of FetchListeners attached to this instance.
+     * @return set of attached FetchListeners.
+     * */
+    fun getListenerSet(): Set<FetchListener>
+
     /**
      * Fetch implementation class. Use this Singleton to get instances of Fetch.
      * */

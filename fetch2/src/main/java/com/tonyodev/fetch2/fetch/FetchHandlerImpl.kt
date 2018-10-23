@@ -48,30 +48,30 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     private fun enqueueRequests(requests: List<Request>): List<Pair<Download, Boolean>> {
-        val results = requests.asSequence().distinctBy { it.file }
-                .map {
-                    val downloadInfo = it.toDownloadInfo()
-                    downloadInfo.namespace = namespace
-                    val existing = prepareDownloadInfoForEnqueue(downloadInfo)
-                    if (downloadInfo.status != Status.COMPLETED) {
-                        downloadInfo.status = if (it.downloadOnEnqueue) {
-                            Status.QUEUED
-                        } else {
-                            Status.ADDED
-                        }
-                        if (!existing) {
-                            val downloadPair = databaseManager.insert(downloadInfo)
-                            logger.d("Enqueued download ${downloadPair.first}")
-                            Pair(downloadPair.first, existing)
-                        } else {
-                            databaseManager.update(downloadInfo)
-                            logger.d("Updated download $downloadInfo")
-                            Pair(downloadInfo, existing)
-                        }
-                    } else {
-                        Pair(downloadInfo, existing)
-                    }
-                }.toList()
+        val results = mutableListOf<Pair<Download, Boolean>>()
+        requests.forEach {
+            val downloadInfo = it.toDownloadInfo()
+            downloadInfo.namespace = namespace
+            val existing = prepareDownloadInfoForEnqueue(downloadInfo)
+            if (downloadInfo.status != Status.COMPLETED) {
+                downloadInfo.status = if (it.downloadOnEnqueue) {
+                    Status.QUEUED
+                } else {
+                    Status.ADDED
+                }
+                if (!existing) {
+                    val downloadPair = databaseManager.insert(downloadInfo)
+                    logger.d("Enqueued download ${downloadPair.first}")
+                    results.add(Pair(downloadPair.first, existing))
+                } else {
+                    databaseManager.update(downloadInfo)
+                    logger.d("Updated download $downloadInfo")
+                    results.add(Pair(downloadInfo, existing))
+                }
+            } else {
+                results.add(Pair(downloadInfo, existing))
+            }
+        }
         startPriorityQueueIfNotStarted()
         return results
     }
@@ -89,33 +89,33 @@ class FetchHandlerImpl(private val namespace: String,
 
             }
         }
-        return if (existingDownload != null) {
-            when (downloadInfo.enqueueAction) {
-                EnqueueAction.UPDATE_ACCORDINGLY -> {
+        return when (downloadInfo.enqueueAction) {
+            EnqueueAction.UPDATE_ACCORDINGLY -> {
+                if (existingDownload != null) {
                     if (existingDownload.status != Status.COMPLETED) {
                         existingDownload.status = Status.QUEUED
                         existingDownload.error = defaultNoError
                     }
                     downloadInfo.copyFrom(existingDownload)
                     true
-                }
-                EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING -> {
-                    throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
-                }
-                EnqueueAction.REPLACE_EXISTING -> {
-                    deleteDownloads(listOf(downloadInfo.id))
-                    return false
-                }
-                EnqueueAction.INCREMENT_FILE_NAME -> {
-                    val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
-                    downloadInfo.file = file.absolutePath
-                    downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
-                    createFileIfPossible(file)
+                } else {
                     false
                 }
             }
-        } else {
-            false
+            EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING -> {
+                throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+            }
+            EnqueueAction.REPLACE_EXISTING -> {
+                deleteDownloads(listOf(downloadInfo.id))
+                return false
+            }
+            EnqueueAction.INCREMENT_FILE_NAME -> {
+                val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
+                downloadInfo.file = file.absolutePath
+                downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
+                createFileIfPossible(file)
+                false
+            }
         }
     }
 
@@ -443,10 +443,12 @@ class FetchHandlerImpl(private val namespace: String,
             return
         }
         isTerminating = true
-        listenerSet.iterator().forEach {
-            listenerCoordinator.removeListener(listenerId, it)
+        synchronized(listenerSet) {
+            listenerSet.iterator().forEach {
+                listenerCoordinator.removeListener(listenerId, it)
+            }
+            listenerSet.clear()
         }
-        listenerSet.clear()
         priorityListProcessor.stop()
         downloadManager.close()
         FetchModulesBuilder.removeNamespaceInstanceReference(namespace)
@@ -491,7 +493,9 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun addListener(listener: FetchListener, notify: Boolean, autoStart: Boolean) {
-        listenerSet.add(listener)
+        synchronized(listenerSet) {
+            listenerSet.add(listener)
+        }
         listenerCoordinator.addListener(listenerId, listener)
         if (notify) {
             val downloads = databaseManager.get()
@@ -537,16 +541,28 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun removeListener(listener: FetchListener) {
-        val iterator = listenerSet.iterator()
-        while (iterator.hasNext()) {
-            val fetchListener = iterator.next()
-            if (fetchListener == listener) {
-                iterator.remove()
-                logger.d("Removed listener $listener")
-                break
+        synchronized(listenerSet) {
+            val iterator = listenerSet.iterator()
+            while (iterator.hasNext()) {
+                val fetchListener = iterator.next()
+                if (fetchListener == listener) {
+                    iterator.remove()
+                    logger.d("Removed listener $listener")
+                    break
+                }
             }
+            listenerCoordinator.removeListener(listenerId, listener)
         }
-        listenerCoordinator.removeListener(listenerId, listener)
+    }
+
+    override fun getListenerSet(): Set<FetchListener> {
+        return synchronized(listenerSet) {
+            listenerSet.toSet()
+        }
+    }
+
+    override fun hasActiveDownloads(): Boolean {
+        return downloadManager.getActiveDownloadCount() > 0
     }
 
     private fun cancelDownloadsIfDownloading(ids: List<Int>) {

@@ -80,7 +80,10 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 } catch (e: Exception) {
 
                 }
-
+                if (!responseHeaders.containsKey("Content-MD5")) {
+                    responseHeaders["Content-MD5"] = listOf(serverResponse.md5)
+                }
+                val hash = getContentHash(responseHeaders)
                 val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
                         responseHeaders["Accept-Ranges"]?.firstOrNull() == "bytes"
 
@@ -90,7 +93,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         contentLength = contentLength,
                         byteStream = null,
                         request = request,
-                        md5 = serverResponse.md5,
+                        hash = hash,
                         responseHeaders = responseHeaders,
                         acceptsRanges = acceptsRanges))
 
@@ -100,7 +103,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         contentLength = contentLength,
                         byteStream = inputStream,
                         request = request,
-                        md5 = serverResponse.md5,
+                        hash = hash,
                         responseHeaders = responseHeaders,
                         acceptsRanges = acceptsRanges)
 
@@ -150,12 +153,16 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun verifyContentMD5(request: Downloader.ServerRequest, md5: String): Boolean {
-        if (md5.isEmpty()) {
+    override fun verifyContentHash(request: Downloader.ServerRequest, hash: String): Boolean {
+        if (hash.isEmpty()) {
             return true
         }
         val fileMd5 = getFileMd5String(request.file)
-        return fileMd5?.contentEquals(md5) ?: true
+        return fileMd5?.contentEquals(hash) ?: true
+    }
+
+    override fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String {
+        return responseHeaders["Content-MD5"]?.firstOrNull() ?: ""
     }
 
     override fun onServerResponse(request: Downloader.ServerRequest, response: Downloader.Response) {
