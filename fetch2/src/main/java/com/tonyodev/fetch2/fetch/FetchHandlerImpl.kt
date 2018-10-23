@@ -48,30 +48,30 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     private fun enqueueRequests(requests: List<Request>): List<Pair<Download, Boolean>> {
-        val results = requests.asSequence().distinctBy { it.file }
-                .map {
-                    val downloadInfo = it.toDownloadInfo()
-                    downloadInfo.namespace = namespace
-                    val existing = prepareDownloadInfoForEnqueue(downloadInfo)
-                    if (downloadInfo.status != Status.COMPLETED) {
-                        downloadInfo.status = if (it.downloadOnEnqueue) {
-                            Status.QUEUED
-                        } else {
-                            Status.ADDED
-                        }
-                        if (!existing) {
-                            val downloadPair = databaseManager.insert(downloadInfo)
-                            logger.d("Enqueued download ${downloadPair.first}")
-                            Pair(downloadPair.first, existing)
-                        } else {
-                            databaseManager.update(downloadInfo)
-                            logger.d("Updated download $downloadInfo")
-                            Pair(downloadInfo, existing)
-                        }
-                    } else {
-                        Pair(downloadInfo, existing)
-                    }
-                }.toList()
+        val results = mutableListOf<Pair<Download, Boolean>>()
+        requests.forEach {
+            val downloadInfo = it.toDownloadInfo()
+            downloadInfo.namespace = namespace
+            val existing = prepareDownloadInfoForEnqueue(downloadInfo)
+            if (downloadInfo.status != Status.COMPLETED) {
+                downloadInfo.status = if (it.downloadOnEnqueue) {
+                    Status.QUEUED
+                } else {
+                    Status.ADDED
+                }
+                if (!existing) {
+                    val downloadPair = databaseManager.insert(downloadInfo)
+                    logger.d("Enqueued download ${downloadPair.first}")
+                    results.add(Pair(downloadPair.first, existing))
+                } else {
+                    databaseManager.update(downloadInfo)
+                    logger.d("Updated download $downloadInfo")
+                    results.add(Pair(downloadInfo, existing))
+                }
+            } else {
+                results.add(Pair(downloadInfo, existing))
+            }
+        }
         startPriorityQueueIfNotStarted()
         return results
     }
@@ -91,7 +91,7 @@ class FetchHandlerImpl(private val namespace: String,
         }
         return when (downloadInfo.enqueueAction) {
             EnqueueAction.UPDATE_ACCORDINGLY -> {
-                if(existingDownload != null) {
+                if (existingDownload != null) {
                     if (existingDownload.status != Status.COMPLETED) {
                         existingDownload.status = Status.QUEUED
                         existingDownload.error = defaultNoError
