@@ -89,33 +89,33 @@ class FetchHandlerImpl(private val namespace: String,
 
             }
         }
-        return if (existingDownload != null) {
-            when (downloadInfo.enqueueAction) {
-                EnqueueAction.UPDATE_ACCORDINGLY -> {
+        return when (downloadInfo.enqueueAction) {
+            EnqueueAction.UPDATE_ACCORDINGLY -> {
+                if(existingDownload != null) {
                     if (existingDownload.status != Status.COMPLETED) {
                         existingDownload.status = Status.QUEUED
                         existingDownload.error = defaultNoError
                     }
                     downloadInfo.copyFrom(existingDownload)
                     true
-                }
-                EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING -> {
-                    throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
-                }
-                EnqueueAction.REPLACE_EXISTING -> {
-                    deleteDownloads(listOf(downloadInfo.id))
-                    return false
-                }
-                EnqueueAction.INCREMENT_FILE_NAME -> {
-                    val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
-                    downloadInfo.file = file.absolutePath
-                    downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
-                    createFileIfPossible(file)
+                } else {
                     false
                 }
             }
-        } else {
-            false
+            EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING -> {
+                throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+            }
+            EnqueueAction.REPLACE_EXISTING -> {
+                deleteDownloads(listOf(downloadInfo.id))
+                return false
+            }
+            EnqueueAction.INCREMENT_FILE_NAME -> {
+                val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
+                downloadInfo.file = file.absolutePath
+                downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
+                createFileIfPossible(file)
+                false
+            }
         }
     }
 
