@@ -549,6 +549,10 @@ class FetchHandlerImpl(private val namespace: String,
         listenerCoordinator.removeListener(listenerId, listener)
     }
 
+    override fun hasActiveDownloads(): Boolean {
+        return downloadManager.getActiveDownloadCount() > 0
+    }
+
     private fun cancelDownloadsIfDownloading(ids: List<Int>) {
         ids.forEach { id ->
             if (downloadManager.contains(id)) {

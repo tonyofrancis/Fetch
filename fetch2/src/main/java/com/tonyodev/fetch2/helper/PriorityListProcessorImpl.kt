@@ -23,7 +23,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     : PriorityListProcessor<Download> {
 
     private val lock = Any()
-    override var delegate: PriorityListProcessor.Delegate? = null
     @Volatile
     override var globalNetworkType = NetworkType.GLOBAL_OFF
     @Volatile
@@ -55,7 +54,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                 if (priorityList.isEmpty() || !networkInfoProvider.isNetworkAvailable) {
                     increaseBackOffTime()
                 }
-                delegate?.onHasActiveDownloads(priorityList.isNotEmpty())
                 var shouldBackOff = true
                 for (index in 0..priorityList.lastIndex) {
                     if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
@@ -97,7 +95,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
             resetBackOffTime()
             stopped = false
             paused = false
-            delegate?.onHasActiveDownloads(true)
             registerPriorityIterator()
             logger.d("PriorityIterator started")
         }
@@ -106,7 +103,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     override fun stop() {
         synchronized(lock) {
             unregisterPriorityIterator()
-            delegate?.onHasActiveDownloads(false)
             paused = false
             stopped = true
             downloadManager.cancelAll()
