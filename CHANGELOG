@@ -1,4 +1,10 @@
 Version 2.2.0-RC15
+- Network state check improvements.
+- Fetch.getHasActiveDownloads() should now report accurately.
+- Added new getListenerSet() method on Fetch. This returns the set of listeners attached to the Fetch instance.
+- Fixed database error not parsing error correctly to Error enum for consumption.
+- Fixed enqueue request bug.
+- Improvements to Sequential downloader.
 Breaking Changes
  - Improvements for verifying the hash of a completed download.
  - FetchConfiguration method enableMD5Check(enabled: Boolean) has been renamed to enableHashCheck(enabled: Boolean)
