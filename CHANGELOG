@@ -1,3 +1,6 @@
+Version 2.2.0-RC16
+- Enqueue Action bug fixes
+
 Version 2.2.0-RC15
 - Network state check improvements.
 - Fetch.getHasActiveDownloads() should now report accurately.
