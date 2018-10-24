@@ -78,15 +78,19 @@ class FetchHandlerImpl(private val namespace: String,
 
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo): Boolean {
         cancelDownloadsIfDownloading(listOf(downloadInfo.id))
-        val existingDownload = databaseManager.getByFile(downloadInfo.file)
+        var existingDownload = databaseManager.getByFile(downloadInfo.file)
         if (existingDownload == null) {
             createFileIfPossible(File(downloadInfo.file))
-        } else if (existingDownload.status == Status.DOWNLOADING) {
-            existingDownload.status = Status.QUEUED
-            try {
-                databaseManager.update(existingDownload)
-            } catch (e: Exception) {
+        } else {
+            cancelDownloadsIfDownloading(listOf(existingDownload.id))
+            existingDownload = databaseManager.getByFile(downloadInfo.file)
+            if (existingDownload != null && existingDownload.status == Status.DOWNLOADING) {
+                existingDownload.status = Status.QUEUED
+                try {
+                    databaseManager.update(existingDownload)
+                } catch (e: Exception) {
 
+                }
             }
         }
         return when (downloadInfo.enqueueAction) {
@@ -106,6 +110,9 @@ class FetchHandlerImpl(private val namespace: String,
                 throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
             }
             EnqueueAction.REPLACE_EXISTING -> {
+                if (existingDownload != null) {
+                    deleteDownloads(listOf(existingDownload.id))
+                }
                 deleteDownloads(listOf(downloadInfo.id))
                 return false
             }
