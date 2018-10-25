@@ -38,8 +38,10 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             field = value
         }
 
-    @Volatile
-    override var completedDownload = false
+    override val completedDownload: Boolean
+        get() {
+            return isDownloadComplete()
+        }
 
     override var delegate: FileDownloader.Delegate? = null
 
@@ -57,6 +59,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     @Volatile
     private var total = -1L
+
+    @Volatile
+    private var totalUnknown = false
 
     private var averageDownloadedBytesPerSecond = 0.0
 
@@ -85,15 +90,25 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     override fun run() {
         var openingResponse: Downloader.Response? = null
         try {
+            downloaded = initialDownload.downloaded
+            total = initialDownload.total
+            downloadInfo.downloaded = downloaded
+            downloadInfo.total = total
             val openingRequest = if (downloader.getHeadRequestMethodSupported(getRequestForDownload(initialDownload))) {
                 getRequestForDownload(initialDownload, HEAD_REQUEST_METHOD)
             } else {
                 getRequestForDownload(initialDownload)
             }
             openingResponse = downloader.execute(openingRequest, interruptMonitor)
+            if (openingResponse != null) {
+                setIsTotalUnknown(openingResponse)
+            }
             if (!interrupted && !terminated && openingResponse?.isSuccessful == true) {
                 total = openingResponse.contentLength
-                if (total > 0) {
+                if (totalUnknown || total > 0) {
+                    downloaded = 0
+                    downloadInfo.downloaded = downloaded
+                    downloadInfo.total = total
                     fileSlices = getFileSliceList(openingResponse.acceptsRanges, openingRequest)
                     totalDownloadBlocks = fileSlices.size
                     try {
@@ -114,12 +129,14 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             downloadBlock.endByte = it.endBytes
                             downloadBlock
                         }
-                        delegate?.onStarted(
-                                download = downloadInfo,
-                                downloadBlocks = downloadBlocks,
-                                totalBlocks = totalDownloadBlocks)
-                        downloadBlocks.forEach { downloadBlock ->
-                            delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                        if (!interrupted && !terminated) {
+                            delegate?.onStarted(
+                                    download = downloadInfo,
+                                    downloadBlocks = downloadBlocks,
+                                    totalBlocks = totalDownloadBlocks)
+                            downloadBlocks.forEach { downloadBlock ->
+                                delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                            }
                         }
                         if (sliceFileDownloadsList.isNotEmpty()) {
                             executorService = Executors.newFixedThreadPool(sliceFileDownloadsList.size)
@@ -128,63 +145,70 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         waitAndPerformProgressReporting()
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
-                        if (!interrupted && !terminated) {
-                            throwExceptionIfFound()
-                            var fileSlicesTotal = 0L
-                            fileSlices.forEach {
-                                fileSlicesTotal += it.downloaded
-                            }
-                            if (fileSlicesTotal != total) {
-                                throwable = FetchException(DOWNLOAD_INCOMPLETE)
-                            }
-                            throwExceptionIfFound()
-                            completedDownload = true
-                            if (hashCheckingEnabled) {
-                                if (downloader.verifyContentHash(openingResponse.request, openingResponse.hash)) {
-                                    deleteAllInFolderForId(downloadInfo.id, fileTempDir)
-                                    if (!interrupted && !terminated) {
-                                        delegate?.onProgress(
-                                                download = downloadInfo,
-                                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                                        delegate?.onComplete(
-                                                download = downloadInfo)
-                                    }
-                                } else {
-                                    deleteAllInFolderForId(downloadInfo.id, fileTempDir)
-                                    throw FetchException(INVALID_CONTENT_HASH)
-                                }
-                            } else {
-                                deleteAllInFolderForId(downloadInfo.id, fileTempDir)
-                                if (!interrupted && !terminated) {
-                                    delegate?.onProgress(
-                                            download = downloadInfo,
-                                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                                    delegate?.onComplete(
-                                            download = downloadInfo)
-                                }
-                            }
-                        }
-                        if (!completedDownload && !terminated && !interrupted) {
-                            downloadInfo.downloaded = downloaded
-                            downloadInfo.total = total
-                            delegate?.saveDownloadProgress(downloadInfo)
-                            delegate?.onProgress(
-                                    download = downloadInfo,
-                                    etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
-                        }
                     }
                 } else {
                     throw FetchException(EMPTY_RESPONSE_BODY)
                 }
-            } else if (openingResponse == null && !interrupted && !terminated) {
+            } else if (openingResponse == null && !interrupted && !terminated && !isDownloadComplete()) {
                 throw FetchException(EMPTY_RESPONSE_BODY)
-            } else if (openingResponse?.isSuccessful == false && !interrupted && !terminated) {
+            } else if (openingResponse?.isSuccessful == false && !interrupted && !terminated && !isDownloadComplete()) {
                 throw FetchException(RESPONSE_NOT_SUCCESSFUL)
-            } else if (!interrupted && !terminated) {
+            } else if (!interrupted && !terminated && !isDownloadComplete()) {
                 throw FetchException(UNKNOWN_ERROR)
+            }
+            downloadInfo.downloaded = downloaded
+            downloadInfo.total = total
+            throwExceptionIfFound()
+            if (!isDownloadComplete() && !terminated && !interrupted) {
+                delegate?.saveDownloadProgress(downloadInfo)
+                delegate?.onProgress(
+                        download = downloadInfo,
+                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+            } else if (!interrupted && !terminated && isDownloadComplete()) {
+                if (!totalUnknown) {
+                    var fileSlicesTotal = 0L
+                    fileSlices.forEach {
+                        fileSlicesTotal += it.downloaded
+                    }
+                    if (fileSlicesTotal != total) {
+                        throwable = FetchException(DOWNLOAD_INCOMPLETE)
+                        throwExceptionIfFound()
+                    }
+                } else {
+                    total = downloaded
+                    downloadInfo.downloaded = downloaded
+                    downloadInfo.total = total
+                }
+                if (!terminated && !interrupted) {
+                    delegate?.saveDownloadProgress(downloadInfo)
+                }
+                if (hashCheckingEnabled) {
+                    if (openingResponse != null && downloader.verifyContentHash(openingResponse.request, openingResponse.hash)) {
+                        deleteAllInFolderForId(downloadInfo.id, fileTempDir)
+                        if (!interrupted && !terminated) {
+                            delegate?.onProgress(
+                                    download = downloadInfo,
+                                    etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                            delegate?.onComplete(
+                                    download = downloadInfo)
+                        }
+                    } else {
+                        deleteAllInFolderForId(downloadInfo.id, fileTempDir)
+                        throw FetchException(INVALID_CONTENT_HASH)
+                    }
+                } else {
+                    deleteAllInFolderForId(downloadInfo.id, fileTempDir)
+                    if (!interrupted && !terminated) {
+                        delegate?.onProgress(
+                                download = downloadInfo,
+                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
+                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                        delegate?.onComplete(
+                                download = downloadInfo)
+                    }
+                }
             }
         } catch (e: Exception) {
             if (!interrupted && !terminated) {
@@ -212,7 +236,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 downloadInfo.downloaded = downloaded
                 downloadInfo.total = total
                 downloadInfo.error = error
-                delegate?.onError(download = downloadInfo, error = error, throwable = e)
+                if (!terminated && !interrupted) {
+                    delegate?.onError(download = downloadInfo, error = error, throwable = e)
+                }
             }
         } finally {
             try {
@@ -242,7 +268,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             deleteAllInFolderForId(downloadInfo.id, fileTempDir)
         }
         val previousSliceSize = getPreviousSliceCount(downloadInfo.id, fileTempDir)
-        return if (acceptsRanges) {
+        return if (acceptsRanges && !totalUnknown) {
             val fileSliceInfo = getChuckInfo(request)
             if (previousSliceSize != fileSliceInfo.slicingCount) {
                 deleteAllInFolderForId(downloadInfo.id, fileTempDir)
@@ -407,12 +433,13 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             val buffer = ByteArray(bufferSize)
                             var read: Int = downloadResponse.byteStream?.read(buffer, 0, bufferSize)
                                     ?: -1
-                            var remainderBytes: Long = fileSlice.endBytes - (fileSlice.startBytes + fileSlice.downloaded)
+                            val naturalEnd = if (fileSlice.endBytes < 1) 0 else fileSlice.endBytes
+                            var remainderBytes: Long = naturalEnd - (fileSlice.startBytes + fileSlice.downloaded)
                             var reportingStartTime = System.nanoTime()
                             var streamBytes: Int
                             var seekPosition: Long
-                            while (remainderBytes > 0L && read != -1 && !interrupted && !terminated) {
-                                streamBytes = if (read <= remainderBytes) {
+                            while ((totalUnknown || remainderBytes > 0L) && read != -1 && !interrupted && !terminated) {
+                                streamBytes = if (totalUnknown || read <= remainderBytes) {
                                     read
                                 } else {
                                     read = -1
@@ -444,7 +471,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                 }
                                 if (!interrupted && !terminated && read != -1) {
                                     read = downloadResponse.byteStream?.read(buffer, 0, bufferSize) ?: -1
-                                    remainderBytes = fileSlice.endBytes - (fileSlice.startBytes + fileSlice.downloaded)
+                                    if (!totalUnknown) {
+                                        remainderBytes = naturalEnd - (fileSlice.startBytes + fileSlice.downloaded)
+                                    }
                                 }
                             }
                         } else if (downloadResponse == null && !interrupted && !terminated) {
@@ -482,6 +511,16 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     private fun incrementActionCompletedCount() {
         synchronized(lock) {
             actionsCounter += 1
+        }
+    }
+
+    private fun isDownloadComplete(): Boolean {
+        return ((downloaded > 0 && total > 0) || totalUnknown) && (downloaded >= total)
+    }
+
+    private fun setIsTotalUnknown(response: Downloader.Response) {
+        if (response.isSuccessful && response.contentLength == -1L) {
+            totalUnknown = true
         }
     }
 
