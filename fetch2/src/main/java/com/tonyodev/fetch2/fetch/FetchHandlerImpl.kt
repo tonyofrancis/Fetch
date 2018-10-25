@@ -107,7 +107,11 @@ class FetchHandlerImpl(private val namespace: String,
                 }
             }
             EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING -> {
-                throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+                if (existingDownload != null) {
+                    throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+                } else {
+                    false
+                }
             }
             EnqueueAction.REPLACE_EXISTING -> {
                 if (existingDownload != null) {
