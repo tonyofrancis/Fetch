@@ -40,6 +40,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
     @Volatile
     private var total: Long = -1L
     @Volatile
+    private var totalUnknown = false
+    @Volatile
     private var downloaded: Long = 0
     private var estimatedTimeRemainingInMilliseconds: Long = -1
     private val downloadInfo = initialDownload.toDownloadInfo()
@@ -71,6 +73,9 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             if (!interrupted && !terminated) {
                 val request = getRequest()
                 response = downloader.execute(request, interruptMonitor)
+                if (response != null) {
+                    setIsTotalUnknown(response)
+                }
                 val isResponseSuccessful = response?.isSuccessful ?: false
                 if (!interrupted && !terminated && response != null && isResponseSuccessful) {
                     downloaded = if (response.code == HttpURLConnection.HTTP_PARTIAL || response.acceptsRanges) {
@@ -210,7 +215,13 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
     }
 
     private fun isDownloadComplete(): Boolean {
-        return downloaded > 0 && total > 0 && downloaded >= total
+        return ((downloaded > 0 && total > 0) || totalUnknown) && (downloaded >= total)
+    }
+
+    private fun setIsTotalUnknown(response: Downloader.Response) {
+        if (response.isSuccessful && response.contentLength == -1L) {
+            totalUnknown = true
+        }
     }
 
     private fun writeToOutput(input: BufferedInputStream,
