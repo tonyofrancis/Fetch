@@ -20,6 +20,7 @@ import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
+import com.tonyodev.fetch2core.DefaultStorageResolver;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.FetchCoreDefaults;
 import com.tonyodev.fetch2core.FetchCoreUtils;
@@ -66,10 +67,11 @@ public class DownloadManagerInstrumentedTest {
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
         final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
+        final DefaultStorageResolver storageResolver = new DefaultStorageResolver(appContext, tempDir);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                downloadInfoUpdater, tempDir, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, uiHandler);
+                downloadInfoUpdater, downloadManagerCoordinator,
+                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver);
     }
 
     @After

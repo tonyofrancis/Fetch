@@ -19,7 +19,6 @@ import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.deleteAllInFolderForId
 import com.tonyodev.fetch2.util.getRequestForDownload
 import com.tonyodev.fetch2core.HandlerWrapper
-import com.tonyodev.fetch2core.getFileTempDir
 import com.tonyodev.fetch2core.isFetchFileServerUrl
 
 object FetchModulesBuilder {
@@ -101,12 +100,12 @@ object FetchModulesBuilder {
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = fetchConfiguration.retryOnNetworkGain,
                     downloadInfoUpdater = downloadInfoUpdater,
-                    fileTempDir = getFileTempDir(fetchConfiguration.appContext),
                     downloadManagerCoordinator = downloadManagerCoordinator,
                     listenerCoordinator = listenerCoordinator,
                     fileServerDownloader = fetchConfiguration.fileServerDownloader,
                     hashCheckingEnabled = fetchConfiguration.hashCheckingEnabled,
-                    uiHandler = uiHandler)
+                    uiHandler = uiHandler,
+                    storageResolver = fetchConfiguration.storageResolver)
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,
                     downloadProvider = downloadProvider,
@@ -126,17 +125,16 @@ object FetchModulesBuilder {
                     httpDownloader = fetchConfiguration.httpDownloader,
                     fileServerDownloader = fetchConfiguration.fileServerDownloader,
                     listenerCoordinator = listenerCoordinator,
-                    uiHandler = uiHandler)
+                    uiHandler = uiHandler,
+                    storageResolver = fetchConfiguration.storageResolver)
             databaseManager.delegate = object : DatabaseManager.Delegate {
                 override fun deleteTempFilesForDownload(downloadInfo: DownloadInfo) {
                     val tempDir = if (isFetchFileServerUrl(downloadInfo.url)) {
-                        fetchConfiguration.fileServerDownloader
+                        fetchConfiguration.storageResolver
                                 .getDirectoryForFileDownloaderTypeParallel(getRequestForDownload(downloadInfo))
-                                ?: getFileTempDir(fetchConfiguration.appContext)
                     } else {
-                        fetchConfiguration.httpDownloader
+                        fetchConfiguration.storageResolver
                                 .getDirectoryForFileDownloaderTypeParallel(getRequestForDownload(downloadInfo))
-                                ?: getFileTempDir(fetchConfiguration.appContext)
                     }
                     deleteAllInFolderForId(downloadInfo.id, tempDir)
                 }

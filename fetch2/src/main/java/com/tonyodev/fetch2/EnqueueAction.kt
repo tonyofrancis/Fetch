@@ -11,7 +11,10 @@ enum class EnqueueAction(val value: Int) {
     REPLACE_EXISTING(0),
 
     /** Appends a numeric value to the file name and increments it accordingly
-     * Example: text.txt, text(1).txt, text(2).txt.*/
+     * Example: text.txt, text(1).txt, text(2).txt.
+     * Does not work with requests that provides a file uri that points to a content provider,
+     * storage access framework, or anything other that an absolute file path.
+     * */
     INCREMENT_FILE_NAME(1),
 
     /** Fetch will not enqueue the new request if a request already managed by Fetch has the same file path. */

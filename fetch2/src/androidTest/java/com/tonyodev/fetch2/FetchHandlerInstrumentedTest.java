@@ -18,6 +18,7 @@ import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator;
 import com.tonyodev.fetch2.fetch.FetchHandler;
 import com.tonyodev.fetch2.fetch.FetchHandlerImpl;
 import com.tonyodev.fetch2.fetch.LiveSettings;
+import com.tonyodev.fetch2core.DefaultStorageResolver;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.FetchCoreDefaults;
 import com.tonyodev.fetch2core.FetchCoreUtils;
@@ -40,6 +41,8 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import kotlin.Pair;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -79,10 +82,11 @@ public class FetchHandlerInstrumentedTest {
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
         final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
+        final DefaultStorageResolver storageResolver = new DefaultStorageResolver(appContext, tempDir);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
-                 downloadInfoUpdater, tempDir, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, uiHandler);
+                downloadInfoUpdater, downloadManagerCoordinator,
+                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handlerWrapper,
                 new DownloadProvider(databaseManager),
@@ -93,7 +97,7 @@ public class FetchHandlerInstrumentedTest {
                 concurrentLimit);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
                 priorityListProcessorImpl, fetchLogger, autoStart,
-                client, serverClient, listenerCoordinator, uiHandler);
+                client, serverClient, listenerCoordinator, uiHandler, storageResolver);
     }
 
     @Test
@@ -116,11 +120,8 @@ public class FetchHandlerInstrumentedTest {
             final Request request = new Request(url, file);
             requestList.add(request);
         }
-        final List<Download> downloads = fetchHandler.enqueue(requestList);
+        final List<Pair<Download, Boolean>> downloads = fetchHandler.enqueue(requestList);
         assertNotNull(downloads);
-        for (Download download : downloads) {
-            assertNotNull(download);
-        }
     }
 
     @Test
@@ -165,7 +166,7 @@ public class FetchHandlerInstrumentedTest {
         fetchHandler.deleteAll();
         final int size = 4;
         List<Request> requestList = getTestRequestList(size);
-        final List<Download> downloads = fetchHandler.enqueue(requestList);
+        final List<Pair<Download, Boolean>> downloads = fetchHandler.enqueue(requestList);
         assertNotNull(downloads);
         assertEquals(size, downloads.size());
         fetchHandler.freeze();
@@ -466,7 +467,7 @@ public class FetchHandlerInstrumentedTest {
             final Request request = new Request(url, file);
             requestList.add(request);
         }
-        final List<Download> downloadInfoList = fetchHandler.enqueue(requestList);
+        final List<Pair<Download, Boolean>> downloadInfoList = fetchHandler.enqueue(requestList);
         final List<Download> queryList = fetchHandler.getDownloads();
         assertNotNull(downloadInfoList);
         assertNotNull(queryList);
@@ -496,7 +497,7 @@ public class FetchHandlerInstrumentedTest {
             final Request request = new Request(url, file);
             requestList.add(request);
         }
-        final List<Download> downloadInfoList = fetchHandler.enqueue(requestList);
+        final List<Pair<Download, Boolean>> downloadInfoList = fetchHandler.enqueue(requestList);
         final List<Integer> ids = new ArrayList<>();
         for (Request request : requestList) {
             ids.add(request.getId());
@@ -522,7 +523,7 @@ public class FetchHandlerInstrumentedTest {
             final Request request = new Request(url, file);
             requestList.add(request);
         }
-        final List<Download> downloadInfoList = fetchHandler.enqueue(requestList);
+        final List<Pair<Download, Boolean>> downloadInfoList = fetchHandler.enqueue(requestList);
         final List<Download> queryList = fetchHandler.getDownloadsWithStatus(status);
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
@@ -546,7 +547,7 @@ public class FetchHandlerInstrumentedTest {
             request.setGroupId(group);
             requestList.add(request);
         }
-        final List<Download> downloadInfoList = fetchHandler.enqueue(requestList);
+        final List<Pair<Download, Boolean>> downloadInfoList = fetchHandler.enqueue(requestList);
         final List<Download> queryList = fetchHandler.getDownloadsInGroup(group);
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());

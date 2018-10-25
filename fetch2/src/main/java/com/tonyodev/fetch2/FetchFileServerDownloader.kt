@@ -137,20 +137,12 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper? {
-        return null
-    }
-
     override fun getFileSlicingCount(request: Downloader.ServerRequest, contentLength: Long): Int? {
         return null
     }
 
     override fun getRequestFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
         return fileDownloaderType
-    }
-
-    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.ServerRequest): String? {
-        return null
     }
 
     override fun verifyContentHash(request: Downloader.ServerRequest, hash: String): Boolean {

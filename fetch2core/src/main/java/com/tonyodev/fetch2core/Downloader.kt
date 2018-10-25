@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2core
 
+import android.net.Uri
 import java.io.Closeable
 import java.io.InputStream
 
@@ -39,17 +40,6 @@ interface Downloader : Closeable {
     fun disconnect(response: Response)
 
     /**
-     * This method is called by Fetch to request the OutputResourceWrapper that will be used to save
-     * the download information too. If null is returned, Fetch will provide the OutputResourceWrapper.
-     * This method is called on a background thread.
-     * @param request The request information for the download.
-     * @return OutputResourceWrapper object. Fetch will call the close method automatically
-     *         after the disconnect(response) method is called. Can return null. If null,
-     *         Fetch will provide the OutputResourceWrapper.
-     * */
-    fun getRequestOutputResourceWrapper(request: ServerRequest): OutputResourceWrapper?
-
-    /**
      * This method is called by Fetch if the FileDownloaderType.Parallel type was set
      * for the download request. Returns the desired slices that the file will be divided in for parallel downloading.
      * If null is returned, Fetch will automatically select an appropriate slicing size based on the content length.
@@ -68,18 +58,6 @@ interface Downloader : Closeable {
      * @return the FileDownloaderType.
      * */
     fun getRequestFileDownloaderType(request: ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): FileDownloaderType
-
-    /**
-     * This method is called by Fetch for download requests that are downloading using the
-     * FileDownloaderType.PARALLEL type. Fetch uses this directory to store the
-     * temp files for the request. If the return directory is null, Fetch
-     * will select the default directory. Temp files in this directory are automatically
-     * deleted by Fetch once a download completes or a request is removed.
-     * This method is called on a background thread.
-     * @param request the request information for the download.
-     * @return the directory where the temp files will be stored. Can be null.
-     * */
-    fun getDirectoryForFileDownloaderTypeParallel(request: ServerRequest): String?
 
     /**
      * This method should be used to verify that the download file Hash matches the
@@ -164,6 +142,9 @@ interface Downloader : Closeable {
 
             /** The file where the download will be stored.*/
             val file: String,
+
+            /** The file uri*/
+            val fileUri: Uri,
 
             /** The tag associated with this request.*/
             val tag: String?,

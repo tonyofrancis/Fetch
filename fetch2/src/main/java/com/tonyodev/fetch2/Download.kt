@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2
 
+import android.net.Uri
 import android.os.Parcelable
 import com.tonyodev.fetch2core.Extras
 
@@ -99,5 +100,8 @@ interface Download : Parcelable {
      * Use fetch.replaceExtras(id, extras)
      * */
     val extras: Extras
+
+    /* Returns the fileUri.*/
+    val fileUri: Uri
 
 }

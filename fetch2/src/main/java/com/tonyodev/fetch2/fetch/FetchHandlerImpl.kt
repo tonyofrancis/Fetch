@@ -9,7 +9,6 @@ import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
-import java.io.File
 import java.util.*
 
 /**
@@ -24,7 +23,8 @@ class FetchHandlerImpl(private val namespace: String,
                        private val httpDownloader: Downloader,
                        private val fileServerDownloader: FileServerDownloader,
                        private val listenerCoordinator: ListenerCoordinator,
-                       private val uiHandler: Handler) : FetchHandler {
+                       private val uiHandler: Handler,
+                       private val storageResolver: StorageResolver) : FetchHandler {
 
     private val listenerId = UUID.randomUUID().hashCode()
     private val listenerSet = mutableSetOf<FetchListener>()
@@ -80,7 +80,7 @@ class FetchHandlerImpl(private val namespace: String,
         cancelDownloadsIfDownloading(listOf(downloadInfo.id))
         var existingDownload = databaseManager.getByFile(downloadInfo.file)
         if (existingDownload == null) {
-            createFileIfPossible(File(downloadInfo.file))
+            storageResolver.createFile(downloadInfo.file)
         } else {
             cancelDownloadsIfDownloading(listOf(existingDownload.id))
             existingDownload = databaseManager.getByFile(downloadInfo.file)
@@ -121,10 +121,9 @@ class FetchHandlerImpl(private val namespace: String,
                 return false
             }
             EnqueueAction.INCREMENT_FILE_NAME -> {
-                val file = getIncrementedFileIfOriginalExists(downloadInfo.file)
-                downloadInfo.file = file.absolutePath
+                val file = storageResolver.createFile(downloadInfo.file, true)
+                downloadInfo.file = file
                 downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
-                createFileIfPossible(file)
                 false
             }
         }
@@ -263,14 +262,7 @@ class FetchHandlerImpl(private val namespace: String,
         databaseManager.delete(downloads)
         downloads.forEach {
             it.status = Status.DELETED
-            try {
-                val file = File(it.file)
-                if (file.exists()) {
-                    file.delete()
-                }
-            } catch (e: Exception) {
-                logger.d("Failed to delete file ${it.file}", e)
-            }
+            storageResolver.deleteFile(it.file)
             databaseManager.delegate?.deleteTempFilesForDownload(it)
         }
         return downloads

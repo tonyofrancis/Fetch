@@ -65,18 +65,17 @@ fun getIncrementedFileIfOriginalExists(originalPath: String): File {
     return file
 }
 
-fun createFileIfPossible(file: File) {
-    try {
-        if (!file.exists()) {
-            if (file.parentFile != null && !file.parentFile.exists()) {
-                if (file.parentFile.mkdirs()) {
-                    file.createNewFile()
-                }
+fun createFile(file: File) {
+    if (!file.exists()) {
+        if (file.parentFile != null && !file.parentFile.exists()) {
+            if (file.parentFile.mkdirs()) {
+                if (!file.createNewFile()) throw FileNotFoundException("$file not found")
             } else {
-                file.createNewFile()
+                throw FileNotFoundException("$file not found")
             }
+        } else {
+            if (!file.createNewFile()) throw FileNotFoundException("$file not found")
         }
-    } catch (e: IOException) {
     }
 }
 
@@ -259,5 +258,19 @@ fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downl
         contentLength
     } catch (e: Exception) {
         -1L
+    }
+}
+
+fun isUriPath(path: String): Boolean {
+    return when {
+        path.startsWith("content://") || path.startsWith("file://") -> true
+        else -> false
+    }
+}
+
+fun getFileUri(path: String): Uri {
+    return when {
+        isUriPath(path) -> Uri.parse(path)
+        else -> Uri.fromFile(File(path))
     }
 }

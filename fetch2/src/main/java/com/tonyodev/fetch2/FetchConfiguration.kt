@@ -21,7 +21,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val retryOnNetworkGain: Boolean,
                                              val fileServerDownloader: FileServerDownloader,
                                              val hashCheckingEnabled: Boolean,
-                                             val fileExistChecksEnabled: Boolean) {
+                                             val fileExistChecksEnabled: Boolean,
+                                             val storageResolver: StorageResolver) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -47,6 +48,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var fileServerDownloader: FileServerDownloader = defaultFileServerDownloader
         private var hashCheckEnabled = DEFAULT_HASH_CHECK_ENABLED
         private var fileExistChecksEnabled = DEFAULT_FILE_EXIST_CHECKS
+        private var storageResolver: StorageResolver = DefaultStorageResolver(appContext, getFileTempDir(appContext))
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -200,6 +202,15 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Set the storage Resolver used by Fetch. See Java docs for StorageResolver interface
+         * to see its use. If not set, The default storage resolver is used.
+         * */
+        fun setStorageResolver(storageResolver: StorageResolver): Builder {
+            this.storageResolver = storageResolver
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -226,7 +237,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     retryOnNetworkGain = retryOnNetworkGain,
                     fileServerDownloader = fileServerDownloader,
                     hashCheckingEnabled = hashCheckEnabled,
-                    fileExistChecksEnabled = fileExistChecksEnabled)
+                    fileExistChecksEnabled = fileExistChecksEnabled,
+                    storageResolver = storageResolver)
         }
 
     }
@@ -248,6 +260,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (fileServerDownloader != other.fileServerDownloader) return false
         if (hashCheckingEnabled != other.hashCheckingEnabled) return false
         if (fileExistChecksEnabled != other.fileExistChecksEnabled) return false
+        if (storageResolver != other.storageResolver) return false
         return true
     }
 
@@ -265,16 +278,18 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + fileServerDownloader.hashCode()
         result = 31 * result + hashCheckingEnabled.hashCode()
         result = 31 * result + fileExistChecksEnabled.hashCode()
+        result = 31 * result + storageResolver.hashCode()
         return result
     }
 
     override fun toString(): String {
         return "FetchConfiguration(appContext=$appContext, namespace='$namespace'," +
-                " concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis," +
-                " loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType," +
-                " logger=$logger, autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
-                "fileServerDownloader=$fileServerDownloader, hashCheckingEnabled=$hashCheckingEnabled," +
-                " fileExistChecksEnabled=$fileExistChecksEnabled)"
+                " concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis, " +
+                "loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader, " +
+                "globalNetworkType=$globalNetworkType, logger=$logger, " +
+                "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
+                "fileServerDownloader=$fileServerDownloader, hashCheckingEnabled=$hashCheckingEnabled, " +
+                "fileExistChecksEnabled=$fileExistChecksEnabled, storageResolver=$storageResolver)"
     }
 
 }

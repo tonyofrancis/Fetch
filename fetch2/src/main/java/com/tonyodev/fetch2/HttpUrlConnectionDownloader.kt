@@ -115,15 +115,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper? {
-        return null
-    }
-
     override fun getFileSlicingCount(request: Downloader.ServerRequest, contentLength: Long): Int? {
-        return null
-    }
-
-    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.ServerRequest): String? {
         return null
     }
 

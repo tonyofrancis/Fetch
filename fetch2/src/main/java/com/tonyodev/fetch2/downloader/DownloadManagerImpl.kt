@@ -19,12 +19,12 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val networkInfoProvider: NetworkInfoProvider,
                           private val retryOnNetworkGain: Boolean,
                           private val downloadInfoUpdater: DownloadInfoUpdater,
-                          private val fileTempDir: String,
                           private val downloadManagerCoordinator: DownloadManagerCoordinator,
                           private val listenerCoordinator: ListenerCoordinator,
                           private val fileServerDownloader: FileServerDownloader,
                           private val hashCheckingEnabled: Boolean,
-                          private val uiHandler: Handler) : DownloadManager {
+                          private val uiHandler: Handler,
+                          private val storageResolver: StorageResolver) : DownloadManager {
 
     private val lock = Any()
     private var executor: ExecutorService? = getNewDownloadExecutorService(concurrentLimit)
@@ -253,10 +253,9 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                     logger = logger,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = retryOnNetworkGain,
-                    hashCheckingEnabled = hashCheckingEnabled)
+                    hashCheckingEnabled = hashCheckingEnabled,
+                    storageResolver = storageResolver)
         } else {
-            val tempDir = downloader.getDirectoryForFileDownloaderTypeParallel(request)
-                    ?: fileTempDir
             ParallelFileDownloaderImpl(
                     initialDownload = download,
                     downloader = downloader,
@@ -264,8 +263,9 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                     logger = logger,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = retryOnNetworkGain,
-                    fileTempDir = tempDir,
-                    hashCheckingEnabled = hashCheckingEnabled)
+                    fileTempDir = storageResolver.getDirectoryForFileDownloaderTypeParallel(request),
+                    hashCheckingEnabled = hashCheckingEnabled,
+                    storageResolver = storageResolver)
         }
     }
 
@@ -280,11 +280,9 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
     override fun getDownloadFileTempDir(download: Download): String {
         val request = getRequestForDownload(download)
         return if (isFetchFileServerUrl(request.url)) {
-            fileServerDownloader.getDirectoryForFileDownloaderTypeParallel(request)
-                    ?: fileTempDir
+            storageResolver.getDirectoryForFileDownloaderTypeParallel(request)
         } else {
-            httpDownloader.getDirectoryForFileDownloaderTypeParallel(request)
-                    ?: fileTempDir
+            storageResolver.getDirectoryForFileDownloaderTypeParallel(request)
         }
     }
 

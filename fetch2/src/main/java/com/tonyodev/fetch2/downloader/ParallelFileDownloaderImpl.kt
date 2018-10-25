@@ -22,7 +22,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                  private val networkInfoProvider: NetworkInfoProvider,
                                  private val retryOnNetworkGain: Boolean,
                                  private val fileTempDir: String,
-                                 private val hashCheckingEnabled: Boolean) : FileDownloader {
+                                 private val hashCheckingEnabled: Boolean,
+                                 private val storageResolver: StorageResolver) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -378,33 +379,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     private fun downloadSliceFiles(request: Downloader.ServerRequest, fileSlicesDownloadsList: List<FileSlice>) {
         actionsCounter = 0
         actionsTotal = fileSlicesDownloadsList.size
-        outputResourceWrapper = downloader.getRequestOutputResourceWrapper(request)
-        if (outputResourceWrapper == null) {
-            outputResourceWrapper = object : OutputResourceWrapper() {
-
-                private val randomAccessFile = RandomAccessFile(downloadInfo.file, "rw")
-
-                init {
-                    randomAccessFile.seek(0)
-                }
-
-                override fun write(byteArray: ByteArray, offSet: Int, length: Int) {
-                    randomAccessFile.write(byteArray, offSet, length)
-                }
-
-                override fun setWriteOffset(offset: Long) {
-                    randomAccessFile.seek(offset)
-                }
-
-                override fun flush() {
-
-                }
-
-                override fun close() {
-                    randomAccessFile.close()
-                }
-            }
-        }
+        outputResourceWrapper = storageResolver.getRequestOutputResourceWrapper(request)
         outputResourceWrapper?.setWriteOffset(0)
         for (fileSlice in fileSlicesDownloadsList) {
             if (!interrupted && !terminated) {

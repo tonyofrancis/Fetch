@@ -4,6 +4,7 @@ import android.arch.persistence.room.ColumnInfo
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.Index
 import android.arch.persistence.room.PrimaryKey
+import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
 import com.tonyodev.fetch2.*
@@ -13,6 +14,7 @@ import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.calculateProgress
+import com.tonyodev.fetch2core.getFileUri
 import java.util.*
 
 
@@ -79,6 +81,11 @@ class DownloadInfo : Download {
     override val progress: Int
         get() {
             return calculateProgress(downloaded, total)
+        }
+
+    override val fileUri: Uri
+        get() {
+            return getFileUri(file)
         }
 
     override val request: Request
@@ -205,9 +212,9 @@ class DownloadInfo : Download {
         @Suppress("UNCHECKED_CAST")
         override fun createFromParcel(source: Parcel): DownloadInfo {
             val id = source.readInt()
-            val namespace = source.readString()
-            val url = source.readString()
-            val file = source.readString()
+            val namespace = source.readString() ?: ""
+            val url = source.readString() ?: ""
+            val file = source.readString() ?: ""
             val group = source.readInt()
             val priority = Priority.valueOf(source.readInt())
             val headers = source.readSerializable() as Map<String, String>

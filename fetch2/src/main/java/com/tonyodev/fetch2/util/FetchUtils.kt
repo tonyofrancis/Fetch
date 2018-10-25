@@ -62,6 +62,7 @@ fun getRequestForDownload(download: Download,
             url = download.url,
             headers = headers,
             file = download.file,
+            fileUri = getFileUri(download.file),
             tag = download.tag,
             identifier = download.identifier,
             requestMethod = requestMethod,
@@ -77,6 +78,7 @@ fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
             identifier = request.identifier,
             requestMethod = GET_REQUEST_METHOD,
             file = request.file,
+            fileUri = getFileUri(request.file),
             extras = request.extras)
 }
 
@@ -94,6 +96,7 @@ fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerReque
             identifier = request.identifier,
             requestMethod = GET_REQUEST_METHOD,
             file = request.file,
+            fileUri = getFileUri(request.file),
             extras = request.extras)
 }
 

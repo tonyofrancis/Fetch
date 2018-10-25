@@ -16,7 +16,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                                    private val logger: Logger,
                                    private val networkInfoProvider: NetworkInfoProvider,
                                    private val retryOnNetworkGain: Boolean,
-                                   private val hashCheckingEnabled: Boolean) : FileDownloader {
+                                   private val hashCheckingEnabled: Boolean,
+                                   private val storageResolver: StorageResolver) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -99,33 +100,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                     }
                     downloadInfo.downloaded = downloaded
                     downloadInfo.total = total
-                    outputResourceWrapper = downloader.getRequestOutputResourceWrapper(request)
-                    if (outputResourceWrapper == null) {
-                        outputResourceWrapper = object : OutputResourceWrapper() {
-
-                            private val randomAccessFile = RandomAccessFile(file, "rw")
-
-                            init {
-                                randomAccessFile.seek(seekPosition)
-                            }
-
-                            override fun write(byteArray: ByteArray, offSet: Int, length: Int) {
-                                randomAccessFile.write(byteArray, offSet, length)
-                            }
-
-                            override fun setWriteOffset(offset: Long) {
-                                randomAccessFile.seek(offset)
-                            }
-
-                            override fun flush() {
-
-                            }
-
-                            override fun close() {
-                                randomAccessFile.close()
-                            }
-                        }
-                    }
+                    outputResourceWrapper = storageResolver.getRequestOutputResourceWrapper(request)
                     outputResourceWrapper.setWriteOffset(seekPosition)
                     if (!interrupted && !terminated) {
                         val bufferSize = downloader.getRequestBufferSize(request)
@@ -352,6 +327,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 url = initialDownload.url,
                 headers = headers,
                 file = initialDownload.file,
+                fileUri = getFileUri(initialDownload.file),
                 tag = initialDownload.tag,
                 identifier = initialDownload.identifier,
                 requestMethod = GET_REQUEST_METHOD,
