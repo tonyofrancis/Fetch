@@ -42,7 +42,7 @@ object FetchModulesBuilder {
                         liveSettings = liveSettings,
                         fileExistChecksEnabled = fetchConfiguration.fileExistChecksEnabled)
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
-                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace)
+                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace, fetchConfiguration.notificationManager)
                 val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager,
                         downloadManagerCoordinator, listenerCoordinator)
                 holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager,

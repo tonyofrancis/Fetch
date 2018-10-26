@@ -22,7 +22,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val fileServerDownloader: FileServerDownloader,
                                              val hashCheckingEnabled: Boolean,
                                              val fileExistChecksEnabled: Boolean,
-                                             val storageResolver: StorageResolver) {
+                                             val storageResolver: StorageResolver,
+                                             val notificationManager: NotificationManager?) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -49,6 +50,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var hashCheckEnabled = DEFAULT_HASH_CHECK_ENABLED
         private var fileExistChecksEnabled = DEFAULT_FILE_EXIST_CHECKS
         private var storageResolver: StorageResolver = DefaultStorageResolver(appContext, getFileTempDir(appContext))
+        private var notificationManager: NotificationManager? = null
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -195,6 +197,8 @@ class FetchConfiguration private constructor(val appContext: Context,
          * Fetch will update the database and queued, paused or downloading downloads will
          * have to start at the beginning. Enabled by default. Set to false only if you are
          * monitoring the file existence elsewhere.
+         * @param enable set if file checking is enabled
+         * @return Builder
          * */
         fun enableFileExistChecks(enabled: Boolean): Builder {
             this.fileExistChecksEnabled = enabled
@@ -204,9 +208,24 @@ class FetchConfiguration private constructor(val appContext: Context,
         /**
          * Set the storage Resolver used by Fetch. See Java docs for StorageResolver interface
          * to see its use. If not set, The default storage resolver is used.
+         * @param storageResolver the storage resolver
+         * @return Builder
          * */
         fun setStorageResolver(storageResolver: StorageResolver): Builder {
             this.storageResolver = storageResolver
+            return this
+        }
+
+        /** Set the notification manager used by Fetch.
+         * Notifications are not enabled by default.
+         * See Java docs for NotificationManager interface or DefaultNotificationManager class
+         * to see its use.
+         * @param notificationManager the notification manager. If null, notifications
+         * are not enabled.
+         * @return Builder
+         * */
+        fun setNotificationManager(notificationManager: NotificationManager?): Builder {
+            this.notificationManager = notificationManager
             return this
         }
 
@@ -238,7 +257,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     fileServerDownloader = fileServerDownloader,
                     hashCheckingEnabled = hashCheckEnabled,
                     fileExistChecksEnabled = fileExistChecksEnabled,
-                    storageResolver = storageResolver)
+                    storageResolver = storageResolver,
+                    notificationManager = notificationManager)
         }
 
     }
@@ -261,6 +281,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (hashCheckingEnabled != other.hashCheckingEnabled) return false
         if (fileExistChecksEnabled != other.fileExistChecksEnabled) return false
         if (storageResolver != other.storageResolver) return false
+        if (notificationManager != other.notificationManager) return false
         return true
     }
 
@@ -279,6 +300,9 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + hashCheckingEnabled.hashCode()
         result = 31 * result + fileExistChecksEnabled.hashCode()
         result = 31 * result + storageResolver.hashCode()
+        if (notificationManager != null) {
+            result = 31 * result + notificationManager.hashCode()
+        }
         return result
     }
 
@@ -289,7 +313,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                 "globalNetworkType=$globalNetworkType, logger=$logger, " +
                 "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
                 "fileServerDownloader=$fileServerDownloader, hashCheckingEnabled=$hashCheckingEnabled, " +
-                "fileExistChecksEnabled=$fileExistChecksEnabled, storageResolver=$storageResolver)"
+                "fileExistChecksEnabled=$fileExistChecksEnabled, storageResolver=$storageResolver, " +
+                "notificationManager=$notificationManager)"
     }
 
 }
