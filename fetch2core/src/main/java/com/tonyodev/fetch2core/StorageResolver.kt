@@ -9,30 +9,32 @@ package com.tonyodev.fetch2core
 interface StorageResolver {
 
     /** This method is called by Fetch to create the File object or create an entry in the storage database
-     * whatever that is. This method can throw IOExceptions.
-     * @param file the file
+     * whatever that is. This method can throw IOExceptions if the file cannot be created.
+     * This method is called on a background thread.
+     * @param file the file path. Can be a uri or any path that makes sense to your application.
      * @param increment specify if the file already exist to create a new incremented file.
      * Example: text.txt, text(1).txt, text(2).txt.
-     * @return returns the file (filePath, uri) if the file was created successfully. If null the file was not created.
+     * @return returns the file path if the file was created successfully.
      * */
     fun createFile(file: String, increment: Boolean = false): String
 
     /** This method is called by Fetch to delete the File object or remove an entry in the storage database
-     * whatever that is. This method can throw IOExceptions.
-     * @param file the file
+     * whatever that is. This method can throw IOExceptions if the file cannot be deleted.
+     * This method is called on a background thread.
+     * @param file the file path. Can be custom to your app.
      * @return returns true if the file was delete. Otherwise false.
      * */
     fun deleteFile(file: String): Boolean
 
     /**
-     * This method is called by Fetch to request the OutputResourceWrapper that will be used to save
-     * the download information too. If null is returned, Fetch will provide the OutputResourceWrapper.
+     * This method is called by Fetch to request the OutputResourceWrapper output stream that will be used to save
+     * the downloaded information/bytes.
      * This method is called on a background thread.
      * Note: If your request.file is a uri that points to a content provider you must override this method
      * and provide the proper OutputResourceWrapper object.
      * @param request The request information for the download.
      * @return OutputResourceWrapper object. Fetch will call the close method automatically
-     *         after the disconnect(response) method is called. Fetch will provide a default
+     *         after the Downloader.disconnect(response) method is called. Fetch will provide a default
      *         OutputResourceWrapper. Override this method to provide your own OutputResourceWrapper.
      * */
     fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper

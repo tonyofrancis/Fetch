@@ -69,12 +69,12 @@ fun createFile(file: File) {
     if (!file.exists()) {
         if (file.parentFile != null && !file.parentFile.exists()) {
             if (file.parentFile.mkdirs()) {
-                if (!file.createNewFile()) throw FileNotFoundException("$file not found")
+                if (!file.createNewFile()) throw FileNotFoundException("$file $FILE_NOT_FOUND")
             } else {
-                throw FileNotFoundException("$file not found")
+                throw FileNotFoundException("$file $FILE_NOT_FOUND")
             }
         } else {
-            if (!file.createNewFile()) throw FileNotFoundException("$file not found")
+            if (!file.createNewFile()) throw FileNotFoundException("$file $FILE_NOT_FOUND")
         }
     }
 }
@@ -273,4 +273,8 @@ fun getFileUri(path: String): Uri {
         isUriPath(path) -> Uri.parse(path)
         else -> Uri.fromFile(File(path))
     }
+}
+
+fun deleteFile(file: File): Boolean {
+    return if (file.exists() && file.canWrite()) file.delete() else false
 }
