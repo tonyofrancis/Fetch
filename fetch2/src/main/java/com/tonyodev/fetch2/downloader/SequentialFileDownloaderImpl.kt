@@ -68,7 +68,6 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
         var input: BufferedInputStream? = null
         var response: Downloader.Response? = null
         try {
-            val file = getFile()
             downloaded = initialDownload.downloaded
             total = initialDownload.total
             downloadInfo.downloaded = downloaded
@@ -302,23 +301,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             }
         }
     }
-
-    private fun getFile(): File {
-        val file = File(initialDownload.file)
-        if (!file.exists()) {
-            if (file.parentFile != null && !file.parentFile.exists()) {
-                if (file.parentFile.mkdirs()) {
-                    file.createNewFile()
-                    logger.d("FileDownloader download file ${file.absolutePath} created")
-                }
-            } else {
-                file.createNewFile()
-                logger.d("FileDownloader download file ${file.absolutePath} created")
-            }
-        }
-        return file
-    }
-
+    
     private fun getRequest(): Downloader.ServerRequest {
         val headers = initialDownload.headers.toMutableMap()
         headers["Range"] = "bytes=$downloaded-"
