@@ -216,12 +216,12 @@ class FetchConfiguration private constructor(val appContext: Context,
             return this
         }
 
-        /** Set the notification manager used by Fetch.
+        /** Set the notification manager used by instances of Fetch created by this configuration.
          * Notifications are not enabled by default.
          * See Java docs for NotificationManager interface or DefaultNotificationManager class
          * to see its use.
          * @param notificationManager the notification manager. If null, notifications
-         * are not enabled.
+         * are not enabled on the Fetch instances created by this configuration.
          * @return Builder
          * */
         fun setNotificationManager(notificationManager: NotificationManager?): Builder {
