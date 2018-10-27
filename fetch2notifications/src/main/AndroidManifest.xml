@@ -1,2 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.tonyodev.fetch2notifications" />
+    package="com.tonyodev.fetch2notifications">
+    <application>
+        <receiver
+            android:name=".FetchNotificationActionBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.tonyodev.fetch2.action.FETCH_NOTIFICATION_ACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

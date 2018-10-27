@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2
 
 import android.app.Notification
+import android.app.PendingIntent
 
 interface NotificationManager : FetchListener {
 
@@ -14,6 +15,9 @@ interface NotificationManager : FetchListener {
      * @return The notification associated with a download
      * */
     fun buildNotification(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Notification
+
+
+    fun getActionPendingIntent(download: Download, actionType: Int): PendingIntent
 
     /** Gets an existing notification. If one does not exist
      * this method calls createNotification and returns the newly created notification.

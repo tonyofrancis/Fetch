@@ -453,6 +453,7 @@ class FetchHandlerImpl(private val namespace: String,
             listenerSet.clear()
         }
         priorityListProcessor.stop()
+        priorityListProcessor.close()
         downloadManager.close()
         FetchModulesBuilder.removeNamespaceInstanceReference(namespace)
     }
@@ -577,7 +578,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     private fun startPriorityQueueIfNotStarted() {
-        priorityListProcessor.resetBackOffTime()
+        priorityListProcessor.sendBackOffResetSignal()
         if (priorityListProcessor.isStopped && !isTerminating) {
             priorityListProcessor.start()
         }

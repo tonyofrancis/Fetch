@@ -1,17 +1,16 @@
 package com.tonyodev.fetch2notifications
 
 import android.app.Notification
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Handler
 import android.os.HandlerThread
 import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
-import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Error
-import com.tonyodev.fetch2.NotificationManager
-import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2core.DownloadBlock
 
 open class DefaultNotificationManager(protected val context: Context,
@@ -28,26 +27,33 @@ open class DefaultNotificationManager(protected val context: Context,
     override fun buildNotification(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Notification {
         val progress = if (download.progress < 0) 0 else download.progress
         val progressIndeterminate = download.total == -1L
-        val largeIcon = BitmapFactory.decodeResource(context.resources, R.drawable.fetch_notification_icon_large)
         val title = getContentTitle(download)
         val contentText = getContentText(context, download, etaInMilliSeconds)
+        val smallIcon = if (download.status == Status.DOWNLOADING) android.R.drawable.stat_sys_download else android.R.drawable.stat_sys_download_done
         val notificationBuilder = NotificationCompat.Builder(context, defaultNotificationChannel)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setSmallIcon(R.drawable.fetch_notification_icon_small)
-                .setLargeIcon(largeIcon)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setSmallIcon(smallIcon)
                 .setContentTitle(title)
                 .setContentText(contentText)
                 .setProgress(100, progress, progressIndeterminate)
         when (download.status) {
             Status.DOWNLOADING -> {
                 notificationBuilder.setOngoing(true)
-                        .addAction(R.drawable.fetch_notification_pause, context.getString(R.string.fetch_notification_download_pause), null)
-                        .addAction(R.drawable.fetch_notification_cancel, context.getString(R.string.fetch_notification_download_cancel), null)
+                        .addAction(R.drawable.fetch_notification_pause,
+                                context.getString(R.string.fetch_notification_download_pause),
+                                getActionPendingIntent(download, ACTION_TYPE_PAUSE))
+                        .addAction(R.drawable.fetch_notification_cancel,
+                                context.getString(R.string.fetch_notification_download_cancel),
+                                getActionPendingIntent(download, ACTION_TYPE_CANCEL))
             }
             Status.PAUSED -> {
                 notificationBuilder.setOngoing(true)
-                        .addAction(R.drawable.fetch_notification_resume, context.getString(R.string.fetch_notification_download_resume), null)
-                        .addAction(R.drawable.fetch_notification_cancel, context.getString(R.string.fetch_notification_download_cancel), null)
+                        .addAction(R.drawable.fetch_notification_resume,
+                                context.getString(R.string.fetch_notification_download_resume),
+                                getActionPendingIntent(download, ACTION_TYPE_RESUME))
+                        .addAction(R.drawable.fetch_notification_cancel,
+                                context.getString(R.string.fetch_notification_download_cancel),
+                                getActionPendingIntent(download, ACTION_TYPE_CANCEL))
             }
             Status.COMPLETED -> {
                 notificationBuilder.setOngoing(false)
@@ -63,6 +69,15 @@ open class DefaultNotificationManager(protected val context: Context,
         return notificationBuilder.build()
     }
 
+    override fun getActionPendingIntent(download: Download, actionType: Int): PendingIntent {
+        val intent = Intent(ACTION_NOTIFICATION_ACTION)
+        intent.putExtra(EXTRA_ACTION_TYPE, actionType)
+        intent.putExtra(EXTRA_FETCH_NAMESPACE, download.namespace)
+        intent.putExtra(EXTRA_DOWNLOAD_ID, download.id)
+        return PendingIntent.getBroadcast(context, actionType, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+    }
+
     private fun getContentTitle(download: Download): String {
         return download.fileUri.lastPathSegment ?: Uri.parse(download.url).lastPathSegment
         ?: download.url
@@ -72,7 +87,9 @@ open class DefaultNotificationManager(protected val context: Context,
         return when {
             download.status == Status.COMPLETED -> context.getString(R.string.fetch_notification_download_complete)
             download.status == Status.FAILED -> context.getString(R.string.fetch_notification_download_failed)
-            etaInMilliSeconds < 0 -> ""
+            download.status == Status.PAUSED -> context.getString(R.string.fetch_notification_download_paused)
+            download.status == Status.QUEUED -> context.getString(R.string.fetch_notification_download_starting)
+            etaInMilliSeconds < 0 -> context.getString(R.string.fetch_notification_download_downloading)
             else -> {
                 var seconds = (etaInMilliSeconds / 1000)
                 val hours = (seconds / 3600)

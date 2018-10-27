@@ -1,9 +1,10 @@
 package com.tonyodev.fetch2.helper
 
 import com.tonyodev.fetch2.NetworkType
+import java.io.Closeable
 
 
-interface PriorityListProcessor<out T> {
+interface PriorityListProcessor<out T>: Closeable {
 
     var downloadConcurrentLimit: Int
     var globalNetworkType: NetworkType
@@ -16,5 +17,6 @@ interface PriorityListProcessor<out T> {
     fun resume()
     fun getPriorityList(): List<T>
     fun resetBackOffTime()
+    fun sendBackOffResetSignal()
 
 }
