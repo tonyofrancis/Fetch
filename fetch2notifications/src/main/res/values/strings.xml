@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Fetch2Notifications</string>
+    <string name="fetch_notification_download_eta_sec">%1$ds left</string>
+    <string name="fetch_notification_download_eta_min">%1$dm %2$ds left</string>
+    <string name="fetch_notification_download_eta_hrs">%1$dh %2$dm %3$ds left</string>
+    <string name="fetch_notification_download_complete">Complete</string>
+    <string name="fetch_notification_download_failed">Failed</string>
+    <string name="fetch_notification_download_pause">Pause</string>
+    <string name="fetch_notification_download_resume">Resume</string>
+    <string name="fetch_notification_download_cancel">Cancel</string>
+</resources>
