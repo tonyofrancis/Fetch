@@ -129,7 +129,7 @@ object FetchModulesBuilder {
                     listenerCoordinator = listenerCoordinator,
                     uiHandler = uiHandler,
                     storageResolver = fetchConfiguration.storageResolver,
-                    notificationManager = fetchConfiguration.notificationManager)
+                    fetchNotificationManager = fetchConfiguration.fetchNotificationManager)
             databaseManager.delegate = object : DatabaseManager.Delegate {
                 override fun deleteTempFilesForDownload(downloadInfo: DownloadInfo) {
                     val tempDir = if (isFetchFileServerUrl(downloadInfo.url)) {
@@ -142,6 +142,7 @@ object FetchModulesBuilder {
                     deleteAllInFolderForId(downloadInfo.id, tempDir)
                 }
             }
+            fetchConfiguration.fetchNotificationManager?.progressReportingIntervalInMillis = fetchConfiguration.progressReportingIntervalMillis
         }
 
     }

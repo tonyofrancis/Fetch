@@ -1,99 +1,120 @@
 package com.tonyodev.fetch2notifications
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.PendingIntent
+import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.SystemClock
+import android.support.annotation.StringRes
 import android.support.v4.app.NotificationCompat
 import com.tonyodev.fetch2.*
-import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS
 
 /**
  * The default notification manager class for Fetch. Extend this class to provide your own
- * custom implementation. The updateNotificationBuilder method is probably the only method you
- * need to override.
+ * custom implementation. The updateNotificationBuilder,  createONotificationChannels and getChannelId
+ * methods are probably the only methods you will need to override.
  * */
-open class DefaultNotificationManager(
+open class DefaultFetchNotificationManager(
         /**Context*/
         protected val context: Context,
         /** The default notification channel id used for new notifications.*/
-        protected val channelId: String,
-        /** Channel name*/
-        protected val channelName: String,
-        /** Channel name*/
-        protected val channelImportance: Int) : NotificationManager {
+        @StringRes protected val defaultChannelId: Int,
+        /** Default Channel name*/
+        @StringRes protected val defaultChannelName: Int,
+        /** Default Channel importance.*/
+        protected val defaultChannelImportance: Int) : FetchNotificationManager {
 
+    /** Pre Android O constructor.*/
+    @JvmOverloads
     constructor(
             /**Context*/
             context: Context,
             /** The default notification channel id used for new notifications.*/
-            channelId: String) : this(context, channelId, "Downloads", 3)
+            @StringRes defaultChannelId: Int = R.string.fetch_notification_default_channel_id)
+            : this(context, defaultChannelId, R.string.fetch_notification_default_channel_name, 3)
 
-    protected val notificationManager: android.app.NotificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+    protected val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    protected val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    protected val activeNotificationsBuilderMap = mutableMapOf<Int, NotificationCompat.Builder>()
+    override var progressReportingIntervalInMillis: Long = DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS
 
     init {
+        initialize()
+    }
+
+    private fun initialize() {
+        createONotificationChannels()
+    }
+
+    override fun createONotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            var channel: NotificationChannel? = notificationManager.getNotificationChannel(channelId)
+            val defaultChannelIdString = context.getString(defaultChannelId)
+            var channel: NotificationChannel? = notificationManager.getNotificationChannel(defaultChannelIdString)
             if (channel == null) {
-                channel = NotificationChannel(channelId, channelName, channelImportance)
+                val defaultChannelNameString = context.getString(defaultChannelName)
+                channel = NotificationChannel(defaultChannelIdString, defaultChannelNameString, defaultChannelImportance)
                 notificationManager.createNotificationChannel(channel)
             }
         }
     }
 
-    /**Map that holds notification builder for an active download.*/
-    protected val activeNotificationsBuilderMap = mutableMapOf<Int, NotificationCompat.Builder>()
+    override fun getChannelId(download: Download): String {
+        return context.getString(defaultChannelId)
+    }
 
     override fun updateNotificationBuilder(notificationBuilder: NotificationCompat.Builder,
                                            download: Download,
                                            etaInMilliSeconds: Long,
                                            downloadedBytesPerSecond: Long) {
         val progress = if (download.progress < 0) 0 else download.progress
+        val maxProgress = if (download.total == -1L) 0 else 100
         val progressIndeterminate = download.total == -1L
         val title = getContentTitle(download)
         val contentText = getContentText(context, download, etaInMilliSeconds)
         val smallIcon = if (download.status == Status.DOWNLOADING) {
+            notificationBuilder.setOngoing(true)
             android.R.drawable.stat_sys_download
         } else {
+            notificationBuilder.setOngoing(false)
             android.R.drawable.stat_sys_download_done
         }
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(smallIcon)
                 .setContentTitle(title)
                 .setContentText(contentText)
-                .setProgress(100, progress, progressIndeterminate)
+                .setProgress(maxProgress, progress, progressIndeterminate)
         when (download.status) {
             Status.DOWNLOADING -> {
-                notificationBuilder.setOngoing(true)
-                        .addAction(R.drawable.fetch_notification_pause,
-                                context.getString(R.string.fetch_notification_download_pause),
-                                getActionPendingIntent(download, ACTION_TYPE_PAUSE))
+                notificationBuilder.addAction(R.drawable.fetch_notification_pause,
+                        context.getString(R.string.fetch_notification_download_pause),
+                        getActionPendingIntent(download, ACTION_TYPE_PAUSE))
                         .addAction(R.drawable.fetch_notification_cancel,
                                 context.getString(R.string.fetch_notification_download_cancel),
                                 getActionPendingIntent(download, ACTION_TYPE_CANCEL))
             }
             Status.PAUSED -> {
-                notificationBuilder.setOngoing(false)
-                        .addAction(R.drawable.fetch_notification_resume,
-                                context.getString(R.string.fetch_notification_download_resume),
-                                getActionPendingIntent(download, ACTION_TYPE_RESUME))
+                notificationBuilder.addAction(R.drawable.fetch_notification_resume,
+                        context.getString(R.string.fetch_notification_download_resume),
+                        getActionPendingIntent(download, ACTION_TYPE_RESUME))
                         .addAction(R.drawable.fetch_notification_cancel,
                                 context.getString(R.string.fetch_notification_download_cancel),
                                 getActionPendingIntent(download, ACTION_TYPE_CANCEL))
             }
             else -> {
-                notificationBuilder.setOngoing(false)
+
             }
         }
     }
 
+    override fun pauseOnUnexpectedClose(download: Download): Boolean {
+        return false
+    }
+
     override fun getNotification(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Notification? {
         val notificationBuilder = activeNotificationsBuilderMap[download.id]
-                ?: NotificationCompat.Builder(context, channelId)
+                ?: NotificationCompat.Builder(context, getChannelId(download))
         activeNotificationsBuilderMap[download.id] = notificationBuilder
         notificationBuilder.mActions.clear()
         updateNotificationBuilder(notificationBuilder, download, etaInMilliSeconds, downloadedBytesPerSecond)
@@ -104,6 +125,29 @@ open class DefaultNotificationManager(
         return synchronized(activeNotificationsBuilderMap) {
             val notification = getNotification(download, etaInMilliSeconds, downloadedBytesPerSecond)
             if (notification != null) {
+                val alarmIntent = Intent(ACTION_NOTIFICATION_CHECK)
+                alarmIntent.putExtra(EXTRA_FETCH_NAMESPACE, download.namespace)
+                alarmIntent.putExtra(EXTRA_DOWNLOAD_ID, download.id)
+                alarmIntent.putExtra(EXTRA_DOWNLOAD_STATUS, download.status.value)
+                if (pauseOnUnexpectedClose(download)) {
+                    alarmIntent.putExtra(EXTRA_ACTION_TYPE, ACTION_TYPE_PAUSE)
+                }
+                val pendingIntent = PendingIntent.getBroadcast(context, download.id, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT)
+                alarmManager.cancel(pendingIntent)
+                when (download.status) {
+                    Status.DOWNLOADING,
+                    Status.QUEUED -> {
+                        val alarmTimeMillis = SystemClock.elapsedRealtime() + progressReportingIntervalInMillis + 3000
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                            alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, alarmTimeMillis, pendingIntent)
+                        } else {
+                            alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, alarmTimeMillis, pendingIntent)
+                        }
+                    }
+                    else -> {
+
+                    }
+                }
                 notificationManager.notify(download.id, notification)
                 true
             } else {
@@ -130,51 +174,6 @@ open class DefaultNotificationManager(
         intent.putExtra(EXTRA_FETCH_NAMESPACE, download.namespace)
         intent.putExtra(EXTRA_DOWNLOAD_ID, download.id)
         return PendingIntent.getBroadcast(context, System.currentTimeMillis().toInt(), intent, PendingIntent.FLAG_UPDATE_CURRENT)
-    }
-
-    override fun onCompleted(download: Download): Boolean {
-        return postNotificationUpdate(download)
-    }
-
-    override fun onError(download: Download): Boolean {
-        return postNotificationUpdate(download)
-    }
-
-    override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int): Boolean {
-        return postNotificationUpdate(download)
-    }
-
-    override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Boolean {
-        return postNotificationUpdate(download, etaInMilliSeconds, downloadedBytesPerSecond)
-    }
-
-    override fun onPaused(download: Download): Boolean {
-        return postNotificationUpdate(download)
-    }
-
-    override fun onResumed(download: Download): Boolean {
-        return postNotificationUpdate(download)
-    }
-
-    override fun onCancelled(download: Download): Boolean {
-        return cancelNotification(download)
-    }
-
-    override fun onRemoved(download: Download): Boolean {
-        return cancelNotification(download)
-    }
-
-    override fun onDeleted(download: Download): Boolean {
-        return cancelNotification(download)
-    }
-
-    override fun close() {
-        synchronized(activeNotificationsBuilderMap) {
-            activeNotificationsBuilderMap.keys.forEach { key ->
-                notificationManager.cancel(key)
-            }
-            activeNotificationsBuilderMap.clear()
-        }
     }
 
     private fun getContentTitle(download: Download): String {

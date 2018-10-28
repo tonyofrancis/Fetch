@@ -5,7 +5,8 @@ import android.os.HandlerThread
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.FetchListener
-import com.tonyodev.fetch2.NotificationManager
+import com.tonyodev.fetch2.FetchNotificationManager
+import com.tonyodev.fetch2core.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS
 import com.tonyodev.fetch2core.DownloadBlock
 import java.lang.ref.WeakReference
 
@@ -13,8 +14,8 @@ class ListenerCoordinator(val namespace: String) {
 
     private val lock = Any()
     private val fetchListenerMap = mutableMapOf<Int, MutableSet<WeakReference<FetchListener>>>()
-    private val notificationManagerList = mutableListOf<NotificationManager>()
-    private val notificationHandler = {
+    private val fetchNotificationManagerList = mutableListOf<FetchNotificationManager>()
+    private val fetchNotificationHandler = {
         val handlerThread = HandlerThread("FetchNotificationsIO")
         handlerThread.start()
         Handler(handlerThread.looper)
@@ -43,17 +44,17 @@ class ListenerCoordinator(val namespace: String) {
         }
     }
 
-    fun addNotificationManager(notificationManager: NotificationManager) {
+    fun addNotificationManager(fetchNotificationManager: FetchNotificationManager) {
         synchronized(lock) {
-            if (!notificationManagerList.contains(notificationManager)) {
-                notificationManagerList.add(notificationManager)
+            if (!fetchNotificationManagerList.contains(fetchNotificationManager)) {
+                fetchNotificationManagerList.add(fetchNotificationManager)
             }
         }
     }
 
-    fun removeNotificationManager(notificationManager: NotificationManager) {
+    fun removeNotificationManager(fetchNotificationManager: FetchNotificationManager) {
         synchronized(lock) {
-            notificationManagerList.remove(notificationManager)
+            fetchNotificationManagerList.remove(fetchNotificationManager)
         }
     }
 
@@ -109,10 +110,10 @@ class ListenerCoordinator(val namespace: String) {
 
         override fun onCompleted(download: Download) {
             synchronized(lock) {
-                notificationHandler.post {
+                fetchNotificationHandler.post {
                     synchronized(lock) {
-                        for (notificationManager in notificationManagerList) {
-                            if (notificationManager.onCompleted(download)) break
+                        for (fetchNotificationManager in fetchNotificationManagerList) {
+                            if (fetchNotificationManager.postNotificationUpdate(download)) break
                         }
                     }
                 }
@@ -132,10 +133,10 @@ class ListenerCoordinator(val namespace: String) {
 
         override fun onError(download: Download, error: Error, throwable: Throwable?) {
             synchronized(lock) {
-                notificationHandler.post {
+                fetchNotificationHandler.post {
                     synchronized(lock) {
-                        for (notificationManager in notificationManagerList) {
-                            if (notificationManager.onError(download)) break
+                        for (fetchNotificationManager in fetchNotificationManagerList) {
+                            if (fetchNotificationManager.postNotificationUpdate(download)) break
                         }
                     }
                 }
@@ -171,10 +172,10 @@ class ListenerCoordinator(val namespace: String) {
 
         override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int) {
             synchronized(lock) {
-                notificationHandler.post {
+                fetchNotificationHandler.post {
                     synchronized(lock) {
-                        for (notificationManager in notificationManagerList) {
-                            if (notificationManager.onStarted(download, downloadBlocks, totalBlocks)) break
+                        for (fetchNotificationManager in fetchNotificationManagerList) {
+                            if (fetchNotificationManager.postNotificationUpdate(download)) break
                         }
                     }
                 }
@@ -194,10 +195,10 @@ class ListenerCoordinator(val namespace: String) {
 
         override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
             synchronized(lock) {
-                notificationHandler.post {
+                fetchNotificationHandler.post {
                     synchronized(lock) {
-                        for (notificationManager in notificationManagerList) {
-                            if (notificationManager.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)) break
+                        for (fetchNotificationManager in fetchNotificationManagerList) {
+                            if (fetchNotificationManager.postNotificationUpdate(download, etaInMilliSeconds, downloadedBytesPerSecond)) break
                         }
                     }
                 }
@@ -217,10 +218,10 @@ class ListenerCoordinator(val namespace: String) {
 
         override fun onPaused(download: Download) {
             synchronized(lock) {
-                notificationHandler.post {
+                fetchNotificationHandler.post {
                     synchronized(lock) {
-                        for (notificationManager in notificationManagerList) {
-                            if (notificationManager.onPaused(download)) break
+                        for (fetchNotificationManager in fetchNotificationManagerList) {
+                            if (fetchNotificationManager.postNotificationUpdate(download)) break
                         }
                     }
                 }
@@ -240,10 +241,10 @@ class ListenerCoordinator(val namespace: String) {
 
         override fun onResumed(download: Download) {
             synchronized(lock) {
-                notificationHandler.post {
+                fetchNotificationHandler.post {
                     synchronized(lock) {
-                        for (notificationManager in notificationManagerList) {
-                            if (notificationManager.onResumed(download)) break
+                        for (fetchNotificationManager in fetchNotificationManagerList) {
+                            if (fetchNotificationManager.postNotificationUpdate(download)) break
                         }
                     }
                 }
@@ -263,10 +264,10 @@ class ListenerCoordinator(val namespace: String) {
 
         override fun onCancelled(download: Download) {
             synchronized(lock) {
-                notificationHandler.post {
+                fetchNotificationHandler.post {
                     synchronized(lock) {
-                        for (notificationManager in notificationManagerList) {
-                            if (notificationManager.onCancelled(download)) break
+                        for (fetchNotificationManager in fetchNotificationManagerList) {
+                            if (fetchNotificationManager.postNotificationUpdate(download)) break
                         }
                     }
                 }
@@ -286,10 +287,10 @@ class ListenerCoordinator(val namespace: String) {
 
         override fun onRemoved(download: Download) {
             synchronized(lock) {
-                notificationHandler.post {
+                fetchNotificationHandler.post {
                     synchronized(lock) {
-                        for (notificationManager in notificationManagerList) {
-                            if (notificationManager.onRemoved(download)) break
+                        for (fetchNotificationManager in fetchNotificationManagerList) {
+                            if (fetchNotificationManager.postNotificationUpdate(download)) break
                         }
                     }
                 }
@@ -309,10 +310,10 @@ class ListenerCoordinator(val namespace: String) {
 
         override fun onDeleted(download: Download) {
             synchronized(lock) {
-                notificationHandler.post {
+                fetchNotificationHandler.post {
                     synchronized(lock) {
-                        for (notificationManager in notificationManagerList) {
-                            if (notificationManager.onDeleted(download)) break
+                        for (fetchNotificationManager in fetchNotificationManagerList) {
+                            if (fetchNotificationManager.postNotificationUpdate(download)) break
                         }
                     }
                 }
@@ -334,7 +335,7 @@ class ListenerCoordinator(val namespace: String) {
     fun clearAll() {
         synchronized(lock) {
             fetchListenerMap.clear()
-            notificationManagerList.clear()
+            fetchNotificationManagerList.clear()
         }
     }
 

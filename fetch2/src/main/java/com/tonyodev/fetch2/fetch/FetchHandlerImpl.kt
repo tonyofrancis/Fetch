@@ -25,7 +25,7 @@ class FetchHandlerImpl(private val namespace: String,
                        private val listenerCoordinator: ListenerCoordinator,
                        private val uiHandler: Handler,
                        private val storageResolver: StorageResolver,
-                       private val notificationManager: NotificationManager?) : FetchHandler {
+                       private val fetchNotificationManager: FetchNotificationManager?) : FetchHandler {
 
     private val listenerId = UUID.randomUUID().hashCode()
     private val listenerSet = mutableSetOf<FetchListener>()
@@ -38,8 +38,8 @@ class FetchHandlerImpl(private val namespace: String,
         if (autoStart) {
             priorityListProcessor.start()
         }
-        if (notificationManager != null) {
-            listenerCoordinator.addNotificationManager(notificationManager)
+        if (fetchNotificationManager != null) {
+            listenerCoordinator.addNotificationManager(fetchNotificationManager)
         }
     }
 
@@ -456,9 +456,8 @@ class FetchHandlerImpl(private val namespace: String,
             }
             listenerSet.clear()
         }
-        if (notificationManager != null) {
-            listenerCoordinator.removeNotificationManager(notificationManager)
-            notificationManager.close()
+        if (fetchNotificationManager != null) {
+            listenerCoordinator.removeNotificationManager(fetchNotificationManager)
         }
         priorityListProcessor.stop()
         priorityListProcessor.close()
