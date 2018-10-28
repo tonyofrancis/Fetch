@@ -42,7 +42,7 @@ object FetchModulesBuilder {
                         liveSettings = liveSettings,
                         fileExistChecksEnabled = fetchConfiguration.fileExistChecksEnabled)
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
-                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace, fetchConfiguration.notificationManager)
+                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace)
                 val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager,
                         downloadManagerCoordinator, listenerCoordinator)
                 holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager,
@@ -128,7 +128,8 @@ object FetchModulesBuilder {
                     fileServerDownloader = fetchConfiguration.fileServerDownloader,
                     listenerCoordinator = listenerCoordinator,
                     uiHandler = uiHandler,
-                    storageResolver = fetchConfiguration.storageResolver)
+                    storageResolver = fetchConfiguration.storageResolver,
+                    notificationManager = fetchConfiguration.notificationManager)
             databaseManager.delegate = object : DatabaseManager.Delegate {
                 override fun deleteTempFilesForDownload(downloadInfo: DownloadInfo) {
                     val tempDir = if (isFetchFileServerUrl(downloadInfo.url)) {

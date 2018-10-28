@@ -9,28 +9,28 @@ import com.tonyodev.fetch2.NotificationManager
 import com.tonyodev.fetch2core.DownloadBlock
 import java.lang.ref.WeakReference
 
-class ListenerCoordinator(val namespace: String,
-                          val notificationManager: NotificationManager?) {
+class ListenerCoordinator(val namespace: String) {
 
     private val lock = Any()
-    private val listenerMap = mutableMapOf<Int, MutableSet<WeakReference<FetchListener>>>()
+    private val fetchListenerMap = mutableMapOf<Int, MutableSet<WeakReference<FetchListener>>>()
+    private val notificationManagerList = mutableListOf<NotificationManager>()
     private val notificationHandler = {
-        val handlerThread = HandlerThread("NotificationIO")
+        val handlerThread = HandlerThread("FetchNotificationsIO")
         handlerThread.start()
         Handler(handlerThread.looper)
     }()
 
     fun addListener(id: Int, fetchListener: FetchListener) {
         synchronized(lock) {
-            val set = listenerMap[id] ?: mutableSetOf()
+            val set = fetchListenerMap[id] ?: mutableSetOf()
             set.add(WeakReference(fetchListener))
-            listenerMap[id] = set
+            fetchListenerMap[id] = set
         }
     }
 
     fun removeListener(id: Int, fetchListener: FetchListener) {
         synchronized(lock) {
-            val iterator = listenerMap[id]?.iterator()
+            val iterator = fetchListenerMap[id]?.iterator()
             if (iterator != null) {
                 while (iterator.hasNext()) {
                     val reference = iterator.next()
@@ -43,14 +43,25 @@ class ListenerCoordinator(val namespace: String,
         }
     }
 
+    fun addNotificationManager(notificationManager: NotificationManager) {
+        synchronized(lock) {
+            if (!notificationManagerList.contains(notificationManager)) {
+                notificationManagerList.add(notificationManager)
+            }
+        }
+    }
+
+    fun removeNotificationManager(notificationManager: NotificationManager) {
+        synchronized(lock) {
+            notificationManagerList.remove(notificationManager)
+        }
+    }
+
     val mainListener: FetchListener = object : FetchListener {
 
         override fun onAdded(download: Download) {
             synchronized(lock) {
-                notificationHandler.post {
-                    notificationManager?.onAdded(download)
-                }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -66,10 +77,7 @@ class ListenerCoordinator(val namespace: String,
 
         override fun onQueued(download: Download, waitingOnNetwork: Boolean) {
             synchronized(lock) {
-                notificationHandler.post {
-                    notificationManager?.onQueued(download, waitingOnNetwork)
-                }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -85,10 +93,7 @@ class ListenerCoordinator(val namespace: String,
 
         override fun onWaitingNetwork(download: Download) {
             synchronized(lock) {
-                notificationHandler.post {
-                    notificationManager?.onWaitingNetwork(download)
-                }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -105,9 +110,13 @@ class ListenerCoordinator(val namespace: String,
         override fun onCompleted(download: Download) {
             synchronized(lock) {
                 notificationHandler.post {
-                    notificationManager?.onCompleted(download)
+                    synchronized(lock) {
+                        for (notificationManager in notificationManagerList) {
+                            if (notificationManager.onCompleted(download)) break
+                        }
+                    }
                 }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -124,9 +133,13 @@ class ListenerCoordinator(val namespace: String,
         override fun onError(download: Download, error: Error, throwable: Throwable?) {
             synchronized(lock) {
                 notificationHandler.post {
-                    notificationManager?.onError(download, error, throwable)
+                    synchronized(lock) {
+                        for (notificationManager in notificationManagerList) {
+                            if (notificationManager.onError(download)) break
+                        }
+                    }
                 }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -142,10 +155,7 @@ class ListenerCoordinator(val namespace: String,
 
         override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int) {
             synchronized(lock) {
-                notificationHandler.post {
-                    notificationManager?.onDownloadBlockUpdated(download, downloadBlock, totalBlocks)
-                }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -162,9 +172,13 @@ class ListenerCoordinator(val namespace: String,
         override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int) {
             synchronized(lock) {
                 notificationHandler.post {
-                    notificationManager?.onStarted(download, downloadBlocks, totalBlocks)
+                    synchronized(lock) {
+                        for (notificationManager in notificationManagerList) {
+                            if (notificationManager.onStarted(download, downloadBlocks, totalBlocks)) break
+                        }
+                    }
                 }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -181,9 +195,13 @@ class ListenerCoordinator(val namespace: String,
         override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
             synchronized(lock) {
                 notificationHandler.post {
-                    notificationManager?.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
+                    synchronized(lock) {
+                        for (notificationManager in notificationManagerList) {
+                            if (notificationManager.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)) break
+                        }
+                    }
                 }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -200,9 +218,13 @@ class ListenerCoordinator(val namespace: String,
         override fun onPaused(download: Download) {
             synchronized(lock) {
                 notificationHandler.post {
-                    notificationManager?.onPaused(download)
+                    synchronized(lock) {
+                        for (notificationManager in notificationManagerList) {
+                            if (notificationManager.onPaused(download)) break
+                        }
+                    }
                 }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -219,9 +241,13 @@ class ListenerCoordinator(val namespace: String,
         override fun onResumed(download: Download) {
             synchronized(lock) {
                 notificationHandler.post {
-                    notificationManager?.onResumed(download)
+                    synchronized(lock) {
+                        for (notificationManager in notificationManagerList) {
+                            if (notificationManager.onResumed(download)) break
+                        }
+                    }
                 }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -238,9 +264,13 @@ class ListenerCoordinator(val namespace: String,
         override fun onCancelled(download: Download) {
             synchronized(lock) {
                 notificationHandler.post {
-                    notificationManager?.onCancelled(download)
+                    synchronized(lock) {
+                        for (notificationManager in notificationManagerList) {
+                            if (notificationManager.onCancelled(download)) break
+                        }
+                    }
                 }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -257,9 +287,13 @@ class ListenerCoordinator(val namespace: String,
         override fun onRemoved(download: Download) {
             synchronized(lock) {
                 notificationHandler.post {
-                    notificationManager?.onRemoved(download)
+                    synchronized(lock) {
+                        for (notificationManager in notificationManagerList) {
+                            if (notificationManager.onRemoved(download)) break
+                        }
+                    }
                 }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -276,9 +310,13 @@ class ListenerCoordinator(val namespace: String,
         override fun onDeleted(download: Download) {
             synchronized(lock) {
                 notificationHandler.post {
-                    notificationManager?.onDeleted(download)
+                    synchronized(lock) {
+                        for (notificationManager in notificationManagerList) {
+                            if (notificationManager.onDeleted(download)) break
+                        }
+                    }
                 }
-                listenerMap.values.forEach {
+                fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
@@ -295,7 +333,8 @@ class ListenerCoordinator(val namespace: String,
 
     fun clearAll() {
         synchronized(lock) {
-            listenerMap.clear()
+            fetchListenerMap.clear()
+            notificationManagerList.clear()
         }
     }
 

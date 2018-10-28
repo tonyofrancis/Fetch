@@ -11,8 +11,8 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2core.DownloadBlock
 
 /**
- * The default notification manager class. Extend this class to provide your own
- * custom implementations. The build buildNotification method is probably the only method you
+ * The default notification manager class for Fetch. Extend this class to provide your own
+ * custom implementation. The updateNotificationBuilder method is probably the only method you
  * need to override.
  * */
 open class DefaultNotificationManager(
@@ -55,7 +55,7 @@ open class DefaultNotificationManager(
                                 getActionPendingIntent(download, ACTION_TYPE_CANCEL))
             }
             Status.PAUSED -> {
-                notificationBuilder.setOngoing(true)
+                notificationBuilder.setOngoing(false)
                         .addAction(R.drawable.fetch_notification_resume,
                                 context.getString(R.string.fetch_notification_download_resume),
                                 getActionPendingIntent(download, ACTION_TYPE_RESUME))
@@ -69,7 +69,7 @@ open class DefaultNotificationManager(
         }
     }
 
-    override fun getNotification(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Notification {
+    override fun getNotification(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Notification? {
         val notificationBuilder = activeNotificationsBuilderMap[download.id]
                 ?: NotificationCompat.Builder(context, notificationChannelId)
         activeNotificationsBuilderMap[download.id] = notificationBuilder
@@ -78,18 +78,31 @@ open class DefaultNotificationManager(
         return notificationBuilder.build()
     }
 
-    override fun postNotificationUpdate(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
-        notificationManager.notify(download.id, getNotification(download, etaInMilliSeconds, downloadedBytesPerSecond))
-    }
-
-    override fun cancelNotification(download: Download) {
-        if (activeNotificationsBuilderMap.contains(download.id)) {
-            notificationManager.cancel(download.id)
+    override fun postNotificationUpdate(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Boolean {
+        return synchronized(activeNotificationsBuilderMap) {
+            val notification = getNotification(download, etaInMilliSeconds, downloadedBytesPerSecond)
+            if (notification != null) {
+                notificationManager.notify(download.id, notification)
+                true
+            } else {
+                false
+            }
         }
-        activeNotificationsBuilderMap.remove(download.id)
     }
 
-    override fun getActionPendingIntent(download: Download, actionType: Int): PendingIntent {
+    override fun cancelNotification(download: Download): Boolean {
+        return synchronized(activeNotificationsBuilderMap) {
+            if (activeNotificationsBuilderMap.contains(download.id)) {
+                notificationManager.cancel(download.id)
+                activeNotificationsBuilderMap.remove(download.id)
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    override fun getActionPendingIntent(download: Download, actionType: Int): PendingIntent? {
         val intent = Intent(ACTION_NOTIFICATION_ACTION)
         intent.putExtra(EXTRA_ACTION_TYPE, actionType)
         intent.putExtra(EXTRA_FETCH_NAMESPACE, download.namespace)
@@ -97,56 +110,49 @@ open class DefaultNotificationManager(
         return PendingIntent.getBroadcast(context, System.currentTimeMillis().toInt(), intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
-    override fun onCompleted(download: Download) {
-        postNotificationUpdate(download)
+    override fun onCompleted(download: Download): Boolean {
+        return postNotificationUpdate(download)
     }
 
-    override fun onError(download: Download, error: Error, throwable: Throwable?) {
-        postNotificationUpdate(download)
+    override fun onError(download: Download): Boolean {
+        return postNotificationUpdate(download)
     }
 
-    override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int) {
-        postNotificationUpdate(download)
+    override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int): Boolean {
+        return postNotificationUpdate(download)
     }
 
-    override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
-        postNotificationUpdate(download, etaInMilliSeconds, downloadedBytesPerSecond)
+    override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Boolean {
+        return postNotificationUpdate(download, etaInMilliSeconds, downloadedBytesPerSecond)
     }
 
-    override fun onPaused(download: Download) {
-        postNotificationUpdate(download)
+    override fun onPaused(download: Download): Boolean {
+        return postNotificationUpdate(download)
     }
 
-    override fun onResumed(download: Download) {
-        postNotificationUpdate(download)
+    override fun onResumed(download: Download): Boolean {
+        return postNotificationUpdate(download)
     }
 
-    override fun onCancelled(download: Download) {
-        cancelNotification(download)
+    override fun onCancelled(download: Download): Boolean {
+        return cancelNotification(download)
     }
 
-    override fun onRemoved(download: Download) {
-        cancelNotification(download)
+    override fun onRemoved(download: Download): Boolean {
+        return cancelNotification(download)
     }
 
-    override fun onDeleted(download: Download) {
-        cancelNotification(download)
+    override fun onDeleted(download: Download): Boolean {
+        return cancelNotification(download)
     }
 
-    override fun onAdded(download: Download) {
-        //Not implemented
-    }
-
-    override fun onQueued(download: Download, waitingOnNetwork: Boolean) {
-        //Not implemented
-    }
-
-    override fun onWaitingNetwork(download: Download) {
-        //Not implemented
-    }
-
-    override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int) {
-        //Not implemented
+    override fun close() {
+        synchronized(activeNotificationsBuilderMap) {
+            activeNotificationsBuilderMap.keys.forEach { key ->
+                notificationManager.cancel(key)
+            }
+            activeNotificationsBuilderMap.clear()
+        }
     }
 
     private fun getContentTitle(download: Download): String {
