@@ -1,12 +1,13 @@
 package com.tonyodev.fetch2notifications
 
 import android.app.Notification
+import android.app.NotificationChannel
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.support.v4.app.NotificationCompat
-import android.support.v4.app.NotificationManagerCompat
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2core.DownloadBlock
 
@@ -19,9 +20,30 @@ open class DefaultNotificationManager(
         /**Context*/
         protected val context: Context,
         /** The default notification channel id used for new notifications.*/
-        protected val notificationChannelId: String) : NotificationManager {
+        protected val channelId: String,
+        /** Channel name*/
+        protected val channelName: String,
+        /** Channel name*/
+        protected val channelImportance: Int) : NotificationManager {
 
-    protected val notificationManager: NotificationManagerCompat = NotificationManagerCompat.from(context)
+    constructor(
+            /**Context*/
+            context: Context,
+            /** The default notification channel id used for new notifications.*/
+            channelId: String) : this(context, channelId, "Downloads", 3)
+
+    protected val notificationManager: android.app.NotificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+
+    init {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            var channel: NotificationChannel? = notificationManager.getNotificationChannel(channelId)
+            if (channel == null) {
+                channel = NotificationChannel(channelId, channelName, channelImportance)
+                notificationManager.createNotificationChannel(channel)
+            }
+        }
+    }
 
     /**Map that holds notification builder for an active download.*/
     protected val activeNotificationsBuilderMap = mutableMapOf<Int, NotificationCompat.Builder>()
@@ -71,7 +93,7 @@ open class DefaultNotificationManager(
 
     override fun getNotification(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Notification? {
         val notificationBuilder = activeNotificationsBuilderMap[download.id]
-                ?: NotificationCompat.Builder(context, notificationChannelId)
+                ?: NotificationCompat.Builder(context, channelId)
         activeNotificationsBuilderMap[download.id] = notificationBuilder
         notificationBuilder.mActions.clear()
         updateNotificationBuilder(notificationBuilder, download, etaInMilliSeconds, downloadedBytesPerSecond)
