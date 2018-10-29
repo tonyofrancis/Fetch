@@ -67,8 +67,8 @@ data class FileResponse(val status: Int = HttpURLConnection.HTTP_UNSUPPORTED_TYP
                     connection = source.readInt(),
                     date = source.readLong(),
                     contentLength = source.readLong(),
-                    md5 = source.readString(),
-                    sessionId = source.readString())
+                    md5 = source.readString() ?: "",
+                    sessionId = source.readString() ?: "")
         }
 
         override fun newArray(size: Int): Array<FileResponse?> {

@@ -23,6 +23,7 @@ interface Downloader : Closeable {
      * is called on a background thread.
      * @param request The request information for the download.
      * @param interruptMonitor Notifies the downloader that there may be an interruption for the request.
+     * If an interruption occurs, the execute method should return quickly.
      * @return Response containing the server response code, headers, connection success, content-length,
      * and input stream if a connection was successful.
      * For an example:
