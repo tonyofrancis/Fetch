@@ -1,3 +1,44 @@
+Version 2.3.0-RC1
+This version has lots of changes, improvements and bug fixes.
+
+New
+1. Fetch now supports notifications via the FetchNotificationManager interface.
+   See FetchNotificationManager class and sample code on usage.
+2. Fetch now supports saving downloads to URI paths via StorageResolver.
+   See sample code and DefaultStorageResolver class for usage.
+
+- New constructor added for Request object. Request(url, Uri)
+- New get method added on Request object. request.getFileUri()
+- New get method added on Download interface. download.getFileUri()
+- New set method added on FetchConfiguration.Builder class. builder.setStorageResolver(storageResolver)
+- New set method added on FetchConfiguration.Builder class. builder.setNotificationManager(fetchNotificationManager)
+- New interface added FetchNotificationManager. See java Docs.
+- New class added DefaultFetchNotificationManager. See java Docs.
+- New interface added StorageResolver. See javaDocs.
+- New class added DefaultStorageResolver. See java Docs.
+
+Bug Fixes
+- Improvements and bug fixes to Parallel and Sequential file downloader.
+- Fixed an issue where the onCompleted method would not be called for downloads with unknown content length.
+- Fixed bug where EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING would throw an exception when it should not.
+- Improvements to EnqueueAction.Update_ Accordingly
+- Tons of bug fixes and performance improvements.
+
+Breaking Changes
+- The Fetch and RxFetch List enqueue method now has a new signature.
+fun enqueue(requests: List<Request>, func: Func<List<Pair<Request, Error>>>? = null): Fetch
+See Java Docs for more information. The new signature allows for the case where a request may fail
+to enqueue but other request are still enqueued instead of the whole operation being terminated.
+If the Error is Error.NONE this means that the download was successfully enqueued. Otherwise
+this means that the enqueue for the request failed.
+- In order to make Fetch more modular and accommodating to different application environments,
+ the following methods were removed from the Download interface and are now on the StorageResolver interface.
+ If you are overriding these methods, you must extend the StorageResolver interface or DefaultStorageResolver class
+ and set an instance on the Fetch Configuration builder you are using to create your Fetch instance.
+ Methods Moved:
+ fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper
+ fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.ServerRequest): String
+
 Version 2.2.0-RC16
 - Enqueue Action bug fixes
 
