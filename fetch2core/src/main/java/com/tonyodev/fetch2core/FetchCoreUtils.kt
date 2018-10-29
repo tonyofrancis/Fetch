@@ -58,7 +58,7 @@ fun getIncrementedFileIfOriginalExists(originalPath: String): File {
         val fileName: String = file.nameWithoutExtension
         while (file.exists()) {
             ++counter
-            val newFileName = "$fileName ($counter) "
+            val newFileName = "$fileName ($counter)"
             file = File("$parentPath$newFileName.$extension")
         }
     }
@@ -163,7 +163,7 @@ fun getFetchFileServerHostAddress(url: String): String {
 }
 
 fun getFileResourceIdFromUrl(url: String): String {
-    return Uri.parse(url).lastPathSegment
+    return Uri.parse(url).lastPathSegment ?: "-1"
 }
 
 //eg: bytes=10-
