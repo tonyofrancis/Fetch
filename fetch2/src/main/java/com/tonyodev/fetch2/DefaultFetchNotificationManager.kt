@@ -1,4 +1,4 @@
-package com.tonyodev.fetch2notifications
+package com.tonyodev.fetch2
 
 import android.app.*
 import android.content.Context
@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.SystemClock
 import android.support.annotation.StringRes
 import android.support.v4.app.NotificationCompat
-import com.tonyodev.fetch2.*
 
 /**
  * The default notification manager class for Fetch. Extend this class to provide your own

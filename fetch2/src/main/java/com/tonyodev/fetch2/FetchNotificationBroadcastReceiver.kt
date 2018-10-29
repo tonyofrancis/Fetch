@@ -1,10 +1,9 @@
-package com.tonyodev.fetch2notifications
+package com.tonyodev.fetch2
 
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.tonyodev.fetch2.*
 
 class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
 

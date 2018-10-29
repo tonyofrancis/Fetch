@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">Fetch2</string>
+    <string name="fetch_notification_download_eta_sec">%1$ds left</string>
+    <string name="fetch_notification_download_eta_min">%1$dm %2$ds left</string>
+    <string name="fetch_notification_download_eta_hrs">%1$dh %2$dm %3$ds left</string>
+    <string name="fetch_notification_download_complete">Complete</string>
+    <string name="fetch_notification_download_failed">Failed</string>
+    <string name="fetch_notification_download_pause">Pause</string>
+    <string name="fetch_notification_download_resume">Resume</string>
+    <string name="fetch_notification_download_cancel">Cancel</string>
+    <string name="fetch_notification_download_paused">Paused</string>
+    <string name="fetch_notification_download_starting">Starting</string>
+    <string name="fetch_notification_download_downloading">Downloading</string>
+    <string name="fetch_notification_default_channel_id">fetch_default_channel_id</string>
+    <string name="fetch_notification_default_channel_name">Default</string>
 </resources>

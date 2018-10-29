@@ -63,7 +63,6 @@ dependencies {
     implementation project(':fetch2')
     implementation project(':fetchmigrator')
     implementation project(':fetch2fileserver')
-    implementation project(':fetch2notifications')
 
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "com.android.support.test:runner:$test_runner_version"
