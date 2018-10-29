@@ -92,8 +92,8 @@ open class CompletedDownload : Parcelable {
 
         @Suppress("UNCHECKED_CAST")
         override fun createFromParcel(source: Parcel): CompletedDownload {
-            val url = source.readString()
-            val file = source.readString()
+            val url = source.readString() ?: ""
+            val file = source.readString() ?: ""
             val groupId = source.readInt()
             val fileByteSize = source.readLong()
             val headers = source.readSerializable() as Map<String, String>
