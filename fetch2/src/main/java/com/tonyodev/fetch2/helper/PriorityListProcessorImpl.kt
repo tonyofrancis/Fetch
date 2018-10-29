@@ -51,7 +51,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     }
     private val priorityBackoffResetReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (context != null && intent != null && namespace == intent.getStringExtra(EXTRA_FETCH_NAMESPACE)) {
+            if (context != null && intent != null && namespace == intent.getStringExtra(EXTRA_NAMESPACE)) {
                 when (intent.action) {
                     ACTION_QUEUE_BACKOFF_RESET -> resetBackOffTime()
                 }
@@ -186,7 +186,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     override fun sendBackOffResetSignal() {
         synchronized(lock) {
             val intent = Intent(ACTION_QUEUE_BACKOFF_RESET)
-            intent.putExtra(EXTRA_FETCH_NAMESPACE, namespace)
+            intent.putExtra(EXTRA_NAMESPACE, namespace)
             context.sendBroadcast(intent)
         }
     }

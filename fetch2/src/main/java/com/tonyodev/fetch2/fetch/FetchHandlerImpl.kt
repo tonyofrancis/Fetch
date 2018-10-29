@@ -458,6 +458,7 @@ class FetchHandlerImpl(private val namespace: String,
         }
         if (fetchNotificationManager != null) {
             listenerCoordinator.removeNotificationManager(fetchNotificationManager)
+            fetchNotificationManager.cancelOngoingNotifications()
         }
         priorityListProcessor.stop()
         priorityListProcessor.close()

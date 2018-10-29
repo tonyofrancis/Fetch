@@ -152,16 +152,18 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
     }
 
     private fun cancelAllDownloads() {
-        downloadManagerCoordinator.getFileDownloaderList()
-                .iterator()
-                .forEach {
-                    val fileDownloader = it
-                    if (fileDownloader != null) {
-                        fileDownloader.interrupted = true
-                        downloadManagerCoordinator.removeFileDownloader(fileDownloader.download.id)
-                        logger.d("DownloadManager cancelled download ${fileDownloader.download}")
+        if (concurrentLimit > 0) {
+            downloadManagerCoordinator.getFileDownloaderList()
+                    .iterator()
+                    .forEach {
+                        val fileDownloader = it
+                        if (fileDownloader != null) {
+                            fileDownloader.interrupted = true
+                            downloadManagerCoordinator.removeFileDownloader(fileDownloader.download.id)
+                            logger.d("DownloadManager cancelled download ${fileDownloader.download}")
+                        }
                     }
-                }
+        }
         currentDownloadsMap.clear()
         downloadCounter = 0
     }
@@ -186,7 +188,9 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                 return
             }
             closed = true
-            terminateAllDownloads()
+            if (concurrentLimit > 0) {
+                terminateAllDownloads()
+            }
             logger.d("DownloadManager closing download manager")
             try {
                 executor?.shutdown()

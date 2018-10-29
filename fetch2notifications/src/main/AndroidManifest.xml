@@ -6,8 +6,8 @@
             android:enabled="true"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.tonyodev.fetch2.action.FETCH_NOTIFICATION_ACTION" />
-                <action android:name="com.tonyodev.fetch2.action.FETCH_NOTIFICATION_CHECK" />
+                <action android:name="com.tonyodev.fetch2.action.NOTIFICATION_ACTION" />
+                <action android:name="com.tonyodev.fetch2.action.NOTIFICATION_CHECK" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>

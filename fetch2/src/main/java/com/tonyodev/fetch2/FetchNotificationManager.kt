@@ -11,15 +11,15 @@ import android.support.v4.app.NotificationCompat
 interface FetchNotificationManager {
 
     /**
-     * The progress reporting interval time used to report the downloads status changes.
+     * The progress reporting interval time used to report the downloads status changes by Fetch.
      * The Fetch instance associated with this FetchNotificationManager sets this value automatically.
      * */
     var progressReportingIntervalInMillis: Long
 
     /**
-     * Creates and sets the notification channels for Android O devices.
+     * Creates and sets the notification channels for Android O + devices.
      * */
-    fun createONotificationChannels()
+    fun createNotificationChannels()
 
     /**
      * Returns the channel id for a download notification.
@@ -29,23 +29,19 @@ interface FetchNotificationManager {
     fun getChannelId(download: Download): String
 
     /**
-     * If a download has a status of Queue or Downloading and the application
-     * was closed or the Fetch instance managing the download was released unexpectedly,
-     * the notification manager can send a signal to pause the download. The default is false.
-     * @param download the download
-     * @return true to pause the download otherwise false. The default is false.
-     * */
-    fun pauseOnUnexpectedClose(download: Download): Boolean
-
-    /**
      * Created a new notification for the download. Called on a background notification thread.
+     * This is probably the only method you would have to override if extending the Default Notification Manager.
+     * @param notificationBuilder the notification builder used to create/update the notification for a download.
      * @param download the download
      * @param etaInMilliSeconds Estimated time remaining in milliseconds for the download to complete.
      *         -1 if the eta is unknown.
      * @param downloadedBytesPerSecond Average downloaded bytes per second.
      *         -1 if the downloadedBytesPerSecond is unknown or not provided.
      * */
-    fun updateNotificationBuilder(notificationBuilder: NotificationCompat.Builder, download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long)
+    fun updateNotificationBuilder(notificationBuilder: NotificationCompat.Builder,
+                                  download: Download,
+                                  etaInMilliSeconds: Long,
+                                  downloadedBytesPerSecond: Long)
 
     /**
      * Get a new PendingIntent associated with a notification action type.
@@ -58,8 +54,8 @@ interface FetchNotificationManager {
      * */
     fun getActionPendingIntent(download: Download, actionType: Int): PendingIntent?
 
-    /** Gets an existing notification. If one does not exist.
-     * This method calls createNotification and returns the newly created notification.
+    /** Gets an existing notification.
+     * This method calls updateNotification and returns the newly created notification.
      * Called on a background notification thread.
      * @param download the download
      * @param etaInMilliSeconds Estimated time remaining in milliseconds for the download to complete.
@@ -79,8 +75,16 @@ interface FetchNotificationManager {
     fun cancelNotification(download: Download): Boolean
 
     /**
+     * Called by the associated Fetch instance to cancel all ongoing notifications(Status.Queued or Status.Downloading)
+     * when the Fetch instance is being closed and no longer being used.
+     * Called on a background thread.
+     * */
+    fun cancelOngoingNotifications()
+
+    /**
      * Updates the existing notification, or removed it when the notification is no longer needed.
-     * Called on a background notification thread.
+     * Called on a background notification thread. This method is called by the associated fetch instance
+     * to create/update notifications for a download.
      * @param download the download
      * @param etaInMilliSeconds Estimated time remaining in milliseconds for the download to complete.
      *         -1 if the eta is unknown.
