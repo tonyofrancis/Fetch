@@ -283,11 +283,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
 
     override fun getDownloadFileTempDir(download: Download): String {
         val request = getRequestForDownload(download)
-        return if (isFetchFileServerUrl(request.url)) {
-            storageResolver.getDirectoryForFileDownloaderTypeParallel(request)
-        } else {
-            storageResolver.getDirectoryForFileDownloaderTypeParallel(request)
-        }
+        return storageResolver.getDirectoryForFileDownloaderTypeParallel(request)
     }
 
     private fun getNewDownloadExecutorService(concurrentLimit: Int): ExecutorService? {

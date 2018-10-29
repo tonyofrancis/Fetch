@@ -19,7 +19,6 @@ import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.deleteAllInFolderForId
 import com.tonyodev.fetch2.util.getRequestForDownload
 import com.tonyodev.fetch2core.HandlerWrapper
-import com.tonyodev.fetch2core.isFetchFileServerUrl
 
 object FetchModulesBuilder {
 
@@ -132,13 +131,8 @@ object FetchModulesBuilder {
                     fetchNotificationManager = fetchConfiguration.fetchNotificationManager)
             databaseManager.delegate = object : DatabaseManager.Delegate {
                 override fun deleteTempFilesForDownload(downloadInfo: DownloadInfo) {
-                    val tempDir = if (isFetchFileServerUrl(downloadInfo.url)) {
-                        fetchConfiguration.storageResolver
-                                .getDirectoryForFileDownloaderTypeParallel(getRequestForDownload(downloadInfo))
-                    } else {
-                        fetchConfiguration.storageResolver
-                                .getDirectoryForFileDownloaderTypeParallel(getRequestForDownload(downloadInfo))
-                    }
+                    val tempDir = fetchConfiguration.storageResolver
+                            .getDirectoryForFileDownloaderTypeParallel(getRequestForDownload(downloadInfo))
                     deleteAllInFolderForId(downloadInfo.id, tempDir)
                 }
             }
