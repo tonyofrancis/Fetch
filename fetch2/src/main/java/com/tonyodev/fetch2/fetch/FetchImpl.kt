@@ -47,20 +47,31 @@ open class FetchImpl constructor(override val namespace: String,
     override fun enqueue(request: Request, func: Func<Request>?, func2: Func<Error>?): Fetch {
         enqueueRequest(listOf(request), Func { result ->
             if (result.isNotEmpty()) {
-                func?.call(result.first())
+                val enqueuedPair = result.first()
+                if (enqueuedPair.second != Error.NONE) {
+                    uiHandler.post {
+                        func2?.call(enqueuedPair.second)
+                    }
+                } else {
+                    uiHandler.post {
+                        func?.call(enqueuedPair.first)
+                    }
+                }
             } else {
-                func2?.call(Error.ENQUEUE_NOT_SUCCESSFUL)
+                uiHandler.post {
+                    func2?.call(Error.ENQUEUE_NOT_SUCCESSFUL)
+                }
             }
         }, func2)
         return this
     }
 
-    override fun enqueue(requests: List<Request>, func: Func<List<Request>>?, func2: Func<Error>?): Fetch {
-        enqueueRequest(requests, func, func2)
+    override fun enqueue(requests: List<Request>, func: Func<List<Pair<Request, Error>>>?): Fetch {
+        enqueueRequest(requests, func, null)
         return this
     }
 
-    private fun enqueueRequest(requests: List<Request>, func: Func<List<Request>>?, func2: Func<Error>?) {
+    private fun enqueueRequest(requests: List<Request>, func: Func<List<Pair<Request, Error>>>?, func2: Func<Error>?) {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
@@ -79,12 +90,10 @@ open class FetchImpl constructor(override val namespace: String,
                                     logger.d("Added $download")
                                 }
                                 Status.QUEUED -> {
-                                    if (!downloadPair.second) {
-                                        val downloadCopy = download.copy().toDownloadInfo()
-                                        downloadCopy.status = Status.ADDED
-                                        listenerCoordinator.mainListener.onAdded(downloadCopy)
-                                        logger.d("Added $download")
-                                    }
+                                    val downloadCopy = download.toDownloadInfo()
+                                    downloadCopy.status = Status.ADDED
+                                    listenerCoordinator.mainListener.onAdded(downloadCopy)
+                                    logger.d("Added $download")
                                     listenerCoordinator.mainListener.onQueued(download, false)
                                     logger.d("Queued $download for download")
                                 }
@@ -97,7 +106,7 @@ open class FetchImpl constructor(override val namespace: String,
                                 }
                             }
                         }
-                        func?.call(downloadPairs.map { it.first.request })
+                        func?.call(downloadPairs.map { Pair(it.first.request, it.second) })
                     }
                 } catch (e: Exception) {
                     logger.e("Failed to enqueue list $requests")

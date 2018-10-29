@@ -65,14 +65,18 @@ interface Fetch {
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
      * @param requests Request List
-     * @param func Callback that the enqueued request will be returned on.
+     * @param func Callback that the enqueued or failed requests will be returned on.
+     *             This callback returns a list with a pair<Request,Error> for each enqueued request.
+     *             If the pair's second parameter is Error.NONE. this indicates that the request
+     *             was enqueued successfully. If the Error is not ERROR.NONE. This indicates
+     *             that the request was not enqueued for the specified reason.
      *             Fetch may update a request depending on the initial request's Enqueue Action.
      *             Update old request references with this request.
-     * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
+     *
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun enqueue(requests: List<Request>, func: Func<List<Request>>? = null, func2: Func<Error>? = null): Fetch
+    fun enqueue(requests: List<Request>, func: Func<List<Pair<Request, Error>>>? = null): Fetch
 
     /** Pause a queued or downloading download.
      * @param ids ids of downloads to be paused.

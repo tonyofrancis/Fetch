@@ -176,7 +176,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         final List<Request> requests = Data.getFetchRequestWithGroupId(GROUP_ID);
         fetch.enqueue(requests, updatedRequests -> {
 
-        }, error -> Timber.d("DownloadListActivity Error: %1$s", error.toString()));
+        });
 
     }
 

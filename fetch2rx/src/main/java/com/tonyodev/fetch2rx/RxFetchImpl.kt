@@ -56,7 +56,17 @@ open class RxFetchImpl(override val namespace: String,
                 .subscribeOn(scheduler)
                 .flatMap {
                     if (it.isNotEmpty()) {
-                        Flowable.just(it.first())
+                        val enqueuedPair = it.first()
+                        if (enqueuedPair.second != Error.NONE) {
+                            val throwable = enqueuedPair.second.throwable
+                            if (throwable != null) {
+                                throw throwable
+                            } else {
+                                throw FetchException(ENQUEUE_NOT_SUCCESSFUL)
+                            }
+                        } else {
+                            Flowable.just(enqueuedPair.first)
+                        }
                     } else {
                         throw FetchException(ENQUEUE_NOT_SUCCESSFUL)
                     }
@@ -65,7 +75,7 @@ open class RxFetchImpl(override val namespace: String,
                 .toConvertible()
     }
 
-    override fun enqueue(requests: List<Request>): Convertible<List<Request>> {
+    override fun enqueue(requests: List<Request>): Convertible<List<Pair<Request, Error>>> {
         return synchronized(lock) {
             throwExceptionIfClosed()
             Flowable.just(requests)
@@ -86,12 +96,10 @@ open class RxFetchImpl(override val namespace: String,
                                         logger.d("Added $download")
                                     }
                                     Status.QUEUED -> {
-                                        if (!downloadPair.second) {
-                                            val downloadCopy = download.copy().toDownloadInfo()
-                                            downloadCopy.status = Status.ADDED
-                                            listenerCoordinator.mainListener.onAdded(downloadCopy)
-                                            logger.d("Added $download")
-                                        }
+                                        val downloadCopy = download.toDownloadInfo()
+                                        downloadCopy.status = Status.ADDED
+                                        listenerCoordinator.mainListener.onAdded(downloadCopy)
+                                        logger.d("Added $download")
                                         listenerCoordinator.mainListener.onQueued(download, false)
                                         logger.d("Queued $download for download")
                                     }
@@ -105,7 +113,7 @@ open class RxFetchImpl(override val namespace: String,
                                 }
                             }
                         }
-                        Flowable.just(downloadPairs.map { it.first.request })
+                        Flowable.just(downloadPairs.map { Pair(it.first.request, it.second) })
                     }
                     .observeOn(uiScheduler)
                     .toConvertible()

@@ -11,12 +11,14 @@ fun getErrorFromThrowable(throwable: Throwable): Error {
     if (throwable is SocketTimeoutException && message.isEmpty()) {
         message = CONNECTION_TIMEOUT
     }
-    val error = getErrorFromMessage(message)
-    return when {
+    var error = getErrorFromMessage(message)
+    error = when {
         error == Error.UNKNOWN && throwable is SocketTimeoutException -> Error.CONNECTION_TIMED_OUT
         error == Error.UNKNOWN && throwable is IOException -> Error.UNKNOWN_IO_ERROR
         else -> error
     }
+    error.throwable = throwable
+    return error
 }
 
 fun getErrorFromMessage(message: String?): Error {

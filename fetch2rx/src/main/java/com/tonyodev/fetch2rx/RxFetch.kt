@@ -68,11 +68,14 @@ interface RxFetch {
      * and file name is already managed.
      * @param requests Request List
      * @throws FetchException if this instance of Fetch has been closed.
-     * @return Convertible with requests list.
+     * @return Convertible with requests list. Returns a list with a pair<Request,Error> for each enqueued request.
+     *         If the pair's second parameter is Error.NONE. this indicates that the request
+     *         was enqueued successfully. If the Error is not ERROR.NONE. This indicates
+     *         that the request was not enqueued for the specified reason.
      * Fetch may update a request depending on the initial request's Enqueue Action.
      * Update old request references with this request.
      * */
-    fun enqueue(requests: List<Request>): Convertible<List<Request>>
+    fun enqueue(requests: List<Request>): Convertible<List<Pair<Request, Error>>>
 
     /** Pause a queued or downloading download.
      * @param ids ids of downloads to be paused.

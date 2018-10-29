@@ -182,27 +182,6 @@ class DownloadInfo : Download {
         dest.writeSerializable(HashMap(extras.map))
     }
 
-    fun copyFrom(downloadInfo: DownloadInfo) {
-        id = downloadInfo.id
-        namespace = downloadInfo.namespace
-        url = downloadInfo.url
-        file = downloadInfo.file
-        group = downloadInfo.group
-        priority = downloadInfo.priority
-        headers = downloadInfo.headers
-        downloaded = downloadInfo.downloaded
-        total = downloadInfo.total
-        status = downloadInfo.status
-        error = downloadInfo.error
-        networkType = downloadInfo.networkType
-        created = downloadInfo.created
-        tag = downloadInfo.tag
-        enqueueAction = downloadInfo.enqueueAction
-        identifier = downloadInfo.identifier
-        downloadOnEnqueue = downloadInfo.downloadOnEnqueue
-        extras = downloadInfo.extras
-    }
-
     override fun describeContents(): Int {
         return 0
     }

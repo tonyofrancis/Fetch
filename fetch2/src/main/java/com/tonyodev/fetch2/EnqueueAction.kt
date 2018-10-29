@@ -24,8 +24,8 @@ enum class EnqueueAction(val value: Int) {
      * 1: If existing download is completed, Fetch will call onComplete method on attached Fetch Listeners.
      * 2: If existing download is not completed, resume download normally.
      * 3: If not downloaded, download will proceed normally.
-     * Note: If download is existing, Fetch will not update the existing download with the settings from
-     * the new passed in request. Use the updateRequest method instead.
+     * Note: If download is existing, Fetch will update the old request/download with the new settings on
+     * from the request object.
      * */
     UPDATE_ACCORDINGLY(3);
 

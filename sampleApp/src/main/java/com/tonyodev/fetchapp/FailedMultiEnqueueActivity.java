@@ -38,7 +38,7 @@ public class FailedMultiEnqueueActivity extends AppCompatActivity {
             final Request request = new Request(url, file);
             requests.add(request);
         }
-        fetch.enqueue(requests, null, null);
+        fetch.enqueue(requests, null);
         Snackbar.make(mainView, "Enqueued " + size + " requests. Check Logcat for " +
                 "failed status", Snackbar.LENGTH_INDEFINITE)
                 .show();
