@@ -28,6 +28,8 @@ Features
 * Download remaining time reporting (ETA).
 * Download speed reporting.
 * Save and Retrieve download information anytime.
+* Notification Support.
+* Storage Access Framework, Content Provider and URI support.
 * And more...
 
 Prerequisites
