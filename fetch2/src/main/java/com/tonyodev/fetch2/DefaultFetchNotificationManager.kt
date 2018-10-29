@@ -16,7 +16,7 @@ import android.support.v4.app.NotificationCompat
  * */
 open class DefaultFetchNotificationManager(
         /**Context*/
-        protected val context: Context,
+        context: Context,
         /** The default notification channel id used for new notifications.*/
         @StringRes protected val defaultChannelId: Int,
         /** Default Channel name*/
@@ -33,8 +33,10 @@ open class DefaultFetchNotificationManager(
             @StringRes defaultChannelId: Int = R.string.fetch_notification_default_channel_id)
             : this(context, defaultChannelId, R.string.fetch_notification_default_channel_name, 3)
 
-    protected val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    protected val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    /**Context*/
+    protected val appContext: Context = context.applicationContext
+    protected val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    protected val alarmManager = appContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     protected val activeNotificationsBuilderMap = mutableMapOf<Int, NotificationCompat.Builder>()
     protected val ongoingNotificationsSet = mutableSetOf<Int>()
     override var progressReportingIntervalInMillis: Long = 0L
@@ -49,10 +51,10 @@ open class DefaultFetchNotificationManager(
 
     override fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val defaultChannelIdString = context.getString(defaultChannelId)
+            val defaultChannelIdString = appContext.getString(defaultChannelId)
             var channel: NotificationChannel? = notificationManager.getNotificationChannel(defaultChannelIdString)
             if (channel == null) {
-                val defaultChannelNameString = context.getString(defaultChannelName)
+                val defaultChannelNameString = appContext.getString(defaultChannelName)
                 channel = NotificationChannel(defaultChannelIdString, defaultChannelNameString, defaultChannelImportance)
                 notificationManager.createNotificationChannel(channel)
             }
@@ -60,7 +62,7 @@ open class DefaultFetchNotificationManager(
     }
 
     override fun getChannelId(download: Download): String {
-        return context.getString(defaultChannelId)
+        return appContext.getString(defaultChannelId)
     }
 
     override fun updateNotificationBuilder(notificationBuilder: NotificationCompat.Builder,
@@ -77,7 +79,7 @@ open class DefaultFetchNotificationManager(
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(smallIcon)
                 .setContentTitle(getContentTitle(download))
-                .setContentText(getContentText(context, download, etaInMilliSeconds))
+                .setContentText(getContentText(appContext, download, etaInMilliSeconds))
         if (download.status == Status.FAILED) {
             notificationBuilder.setProgress(0, 0, false)
         } else {
@@ -88,18 +90,18 @@ open class DefaultFetchNotificationManager(
         when (download.status) {
             Status.DOWNLOADING -> {
                 notificationBuilder.addAction(R.drawable.fetch_notification_pause,
-                        context.getString(R.string.fetch_notification_download_pause),
+                        appContext.getString(R.string.fetch_notification_download_pause),
                         getActionPendingIntent(download, ACTION_TYPE_PAUSE))
                         .addAction(R.drawable.fetch_notification_cancel,
-                                context.getString(R.string.fetch_notification_download_cancel),
+                                appContext.getString(R.string.fetch_notification_download_cancel),
                                 getActionPendingIntent(download, ACTION_TYPE_CANCEL))
             }
             Status.PAUSED -> {
                 notificationBuilder.addAction(R.drawable.fetch_notification_resume,
-                        context.getString(R.string.fetch_notification_download_resume),
+                        appContext.getString(R.string.fetch_notification_download_resume),
                         getActionPendingIntent(download, ACTION_TYPE_RESUME))
                         .addAction(R.drawable.fetch_notification_cancel,
-                                context.getString(R.string.fetch_notification_download_cancel),
+                                appContext.getString(R.string.fetch_notification_download_cancel),
                                 getActionPendingIntent(download, ACTION_TYPE_CANCEL))
             }
             else -> {
@@ -110,7 +112,7 @@ open class DefaultFetchNotificationManager(
 
     override fun getNotification(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Notification? {
         val notificationBuilder = activeNotificationsBuilderMap[download.id]
-                ?: NotificationCompat.Builder(context, getChannelId(download))
+                ?: NotificationCompat.Builder(appContext, getChannelId(download))
         activeNotificationsBuilderMap[download.id] = notificationBuilder
         notificationBuilder.mActions.clear()
         updateNotificationBuilder(notificationBuilder, download, etaInMilliSeconds, downloadedBytesPerSecond)
@@ -193,7 +195,7 @@ open class DefaultFetchNotificationManager(
         intent.putExtra(EXTRA_ACTION_TYPE, actionType)
         intent.putExtra(EXTRA_NAMESPACE, download.namespace)
         intent.putExtra(EXTRA_DOWNLOAD_ID, download.id)
-        return PendingIntent.getBroadcast(context, System.currentTimeMillis().toInt(), intent, PendingIntent.FLAG_CANCEL_CURRENT)
+        return PendingIntent.getBroadcast(appContext, System.currentTimeMillis().toInt(), intent, PendingIntent.FLAG_CANCEL_CURRENT)
     }
 
     private fun getAlarmPendingIntent(download: Download): PendingIntent {
@@ -201,7 +203,7 @@ open class DefaultFetchNotificationManager(
         alarmIntent.putExtra(EXTRA_NAMESPACE, download.namespace)
         alarmIntent.putExtra(EXTRA_DOWNLOAD_ID, download.id)
         alarmIntent.putExtra(EXTRA_DOWNLOAD_STATUS, download.status.value)
-        return PendingIntent.getBroadcast(context, download.id, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT)
+        return PendingIntent.getBroadcast(appContext, download.id, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT)
     }
 
     private fun getContentTitle(download: Download): String {
