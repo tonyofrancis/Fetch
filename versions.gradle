@@ -12,7 +12,7 @@ ext {
     library_target_version = 28
     library_build_tools_version = "28.0.3"
     gradle_tools_version = "3.1.4"
-    rxJava2_version = "2.2.2"
+    rxJava2_version = "2.2.3"
     rxAndroid2_version = "2.1.0"
     timber_version = "4.7.1"
     novoda_bintray_version = "0.8.1"
