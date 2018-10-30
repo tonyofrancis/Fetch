@@ -16,5 +16,6 @@ const val DOWNLOAD_ID_INVALID = -1
 
 const val EXTRA_NAMESPACE = "com.tonyodev.fetch2.extra.NAMESPACE"
 const val EXTRA_DOWNLOAD_ID = "com.tonyodev.fetch2.extra.DOWNLOAD_ID"
+const val EXTRA_NOTIFICATION_ID = "com.tonyodev.fetch2.extra.NOTIFICATION_ID"
 const val EXTRA_ACTION_TYPE = "com.tonyodev.fetch2.extra.ACTION_TYPE"
 const val EXTRA_DOWNLOAD_STATUS = "com.tonyodev.fetch2.extra.DOWNLOAD_STATUS"
