@@ -75,7 +75,10 @@ class DownloadNotification(var download: Download) {
         get() {
             return when (download.status) {
                 Status.COMPLETED,
-                Status.FAILED -> true
+                Status.FAILED,
+                Status.CANCELLED,
+                Status.REMOVED,
+                Status.DELETED -> true
                 else -> false
             }
         }

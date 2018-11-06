@@ -15,7 +15,11 @@ import com.tonyodev.fetch2.DownloadNotification.ActionType.*
  * download notifications and grouped download notifications. Extend this class to provide your own
  * custom implementation.
  * */
-open class DefaultFetchNotificationManager(context: Context) : FetchNotificationManager {
+open class DefaultFetchNotificationManager @JvmOverloads constructor(
+        /** context*/
+        context: Context,
+        /** Group download notifications by the download.groupId field.*/
+        private val grouped: Boolean = false) : FetchNotificationManager {
 
     private val context: Context = context.applicationContext
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -48,19 +52,27 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                                                 notificationBuilder: NotificationCompat.Builder,
                                                 downloadNotifications: List<DownloadNotification>,
                                                 context: Context) {
-
         val smallIcon = if (downloadNotifications.any { it.isDownloading }) {
             android.R.drawable.stat_sys_download
         } else {
             android.R.drawable.stat_sys_download_done
         }
+        val style = NotificationCompat.InboxStyle()
+        for (downloadNotification in downloadNotifications) {
+            val title = getContentTitle(downloadNotification)
+            val contentTitle = getContentText(context, downloadNotification)
+            style.addLine("$title - $contentTitle")
+        }
+        val titleResId = if (downloadNotifications.any { it.isActive }) {
+            R.string.fetch_notification_download_downloading
+        } else {
+            R.string.fetch_notification_default_channel_name
+        }
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(smallIcon)
-                .setContentTitle("group title")
-                .setContentText("group summary")
-                .setStyle(NotificationCompat.InboxStyle()
-                        .addLine("tonyo first line")
-                        .addLine("tonyo second line"))
+                .setContentTitle(context.getString(titleResId))
+                .setContentText("")
+                .setStyle(style)
                 .setGroup(notificationId.toString())
                 .setGroupSummary(true)
     }
@@ -77,7 +89,6 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                 .setSmallIcon(smallIcon)
                 .setContentTitle(getContentTitle(downloadNotification))
                 .setContentText(getContentText(context, downloadNotification))
-
         if (downloadNotification.isFailed) {
             notificationBuilder.setProgress(0, 0, false)
         } else {
@@ -107,7 +118,6 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
         }
     }
 
-
     override fun getActionPendingIntent(downloadNotification: DownloadNotification,
                                         actionType: DownloadNotification.ActionType): PendingIntent {
         val intent = Intent(ACTION_NOTIFICATION_ACTION)
@@ -126,22 +136,29 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
 
     override fun cancelOngoingNotifications() {
         synchronized(downloadNotificationsMap) {
-            val notificationIds = downloadNotificationsBuilderMap.keys
-            for (notificationId in notificationIds) {
-                notificationManager.cancel(notificationId)
+            val downloadNotifications = downloadNotificationsMap.values
+            for (downloadNotification in downloadNotifications) {
+                if (downloadNotification.isActive) {
+                    notificationManager.cancel(downloadNotification.notificationId)
+                    downloadNotificationsBuilderMap.remove(downloadNotification.download.id)
+                }
             }
-            downloadNotificationsBuilderMap.clear()
-            downloadNotificationsMap.clear()
         }
     }
 
     override fun cancelNotification(notificationId: Int) {
-        notificationManager.cancel(notificationId)
-        downloadNotificationsBuilderMap.remove(notificationId)
+        synchronized(downloadNotificationsMap) {
+            notificationManager.cancel(notificationId)
+            downloadNotificationsBuilderMap.remove(notificationId)
+        }
     }
 
     override fun getNotificationId(download: Download, context: Context): Int {
-        return download.group
+        return if (grouped) {
+            download.group
+        } else {
+            download.id
+        }
     }
 
     override fun getChannelId(notificationId: Int, context: Context): String {
@@ -188,7 +205,8 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
     private fun getNotification(downloadNotification: DownloadNotification): Notification? {
         return if (downloadNotification.isCancelledNotification) {
             downloadNotificationsMap.remove(downloadNotification.download.id)
-            if (isGroupNotification(downloadNotification.notificationId)) {
+            val groupCount = downloadNotificationsMap.values.count { it.notificationId == downloadNotification.notificationId }
+            if (groupCount > 0) {
                 buildNotification(downloadNotification.notificationId)
             } else {
                 cancelNotification(downloadNotification.notificationId)
@@ -202,12 +220,10 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
     private fun buildNotification(notificationId: Int): Notification {
         val notificationBuilder = getNotificationBuilder(notificationId)
         val downloadNotifications = downloadNotificationsMap.values.filter { it.notificationId == notificationId }
-        if (downloadNotifications.isNotEmpty()) {
-            if (downloadNotifications.size > 1) {
-                updateGroupNotificationBuilder(notificationId, notificationBuilder, downloadNotifications, context)
-            } else {
-                updateNotificationBuilder(notificationBuilder, downloadNotifications.first(), context)
-            }
+        if (downloadNotifications.size > 1) {
+            updateGroupNotificationBuilder(notificationId, notificationBuilder, downloadNotifications, context)
+        } else {
+            updateNotificationBuilder(notificationBuilder, downloadNotifications.first(), context)
         }
         return notificationBuilder.build()
     }
@@ -217,24 +233,10 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                 ?: NotificationCompat.Builder(context, getChannelId(notificationId, context))
         downloadNotificationsBuilderMap[notificationId] = notificationBuilder
         val notificationGroupDownloads = downloadNotificationsMap.values.filter { it.notificationId == notificationId }
+        val grouped = notificationGroupDownloads.size > 1
         val isOnGoingNotification = notificationGroupDownloads.any { it.isOnGoingNotification }
         notificationBuilder.setOngoing(isOnGoingNotification)
-        var finished = false
-        for (downloadNotification in notificationGroupDownloads) {
-            if (downloadNotification.isRemovableNotification) {
-                finished = true
-            } else {
-                finished = false
-                break
-            }
-        }
-        if (finished) {
-            for (downloadNotification in notificationGroupDownloads) {
-                downloadNotificationsMap.remove(downloadNotification.download.id)
-            }
-            downloadNotificationsBuilderMap.remove(notificationId)
-        }
-        if (notificationGroupDownloads.size > 1) {
+        if (grouped) {
             notificationBuilder.setGroupSummary(true)
         } else {
             notificationBuilder.setGroupSummary(false)
@@ -243,12 +245,11 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                 .setGroup(notificationId.toString())
                 .setStyle(null)
                 .setProgress(0, 0, false)
+                .setContentTitle(null)
+                .setContentText(null)
+                .setSmallIcon(android.R.drawable.stat_sys_download_done)
                 .mActions.clear()
         return notificationBuilder
-    }
-
-    private fun isGroupNotification(notificationId: Int): Boolean {
-        return downloadNotificationsMap.values.count { it.notificationId == notificationId } > 1
     }
 
     private fun getContentTitle(downloadNotification: DownloadNotification): String {
