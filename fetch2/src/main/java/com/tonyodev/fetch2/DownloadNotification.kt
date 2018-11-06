@@ -1,10 +1,17 @@
 package com.tonyodev.fetch2
 
-class DownloadNotification(var download: Download) {
+import android.app.PendingIntent
+import android.os.Parcelable
+import com.tonyodev.fetch2.util.DEFAULT_GROUP_ID
 
-    var notificationId = -1
+
+class DownloadNotification(var download: Download) : Parcelable {
+
+    var notificationId = download.id
+    var groupId = DEFAULT_GROUP_ID
     var etaInMilliSeconds = -1L
     var downloadedBytesPerSecond = -1L
+    var contentPendingIntent: PendingIntent? = null
 
 
     val isActive: Boolean

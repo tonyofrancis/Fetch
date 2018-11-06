@@ -12,7 +12,9 @@ class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
             val namespace = intent.getStringExtra(EXTRA_NAMESPACE)
             val downloadId = intent.getIntExtra(EXTRA_DOWNLOAD_ID, DOWNLOAD_ID_INVALID)
             val actionType = intent.getIntExtra(EXTRA_ACTION_TYPE, ACTION_TYPE_INVALID)
-            val downloadStatus = intent.getIntExtra(EXTRA_DOWNLOAD_STATUS, Status.NONE.value)
+            val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, NOTIFICATION_ID_INVALID)
+            val downloadNotifications = intent.getParcelableArrayExtra(EXTRA_DOWNLOAD_NOTIFICATIONS)?.map { it as DownloadNotification }
+                    ?: emptyList()
             when (intent.action) {
                 ACTION_NOTIFICATION_ACTION -> {
                     if (!namespace.isNullOrEmpty() && downloadId != DOWNLOAD_ID_INVALID && actionType != ACTION_TYPE_INVALID) {
@@ -20,15 +22,10 @@ class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
                     }
                 }
                 ACTION_NOTIFICATION_CHECK -> {
-                    when (downloadStatus) {
-                        Status.QUEUED.value,
-                        Status.DOWNLOADING.value -> {
-                            if (downloadId != DOWNLOAD_ID_INVALID) {
-                                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                                notificationManager.cancel(downloadId)
-                            }
-                        }
-                        else -> {
+                    if (notificationId != NOTIFICATION_ID_INVALID) {
+                        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        notificationManager.cancel(notificationId)
+                        if (isGroupNotification && downloadNotifications.any { it.isOnGoingNotification }) {
 
                         }
                     }
@@ -38,12 +35,7 @@ class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun processNotificationAction(context: Context, downloadId: Int, namespace: String, actionType: Int) {
-        val fetchConfiguration = FetchConfiguration.Builder(context)
-                .setDownloadConcurrentLimit(0)
-                .enableAutoStart(false)
-                .setNamespace(namespace)
-                .build()
-        val fetch = Fetch.getInstance(fetchConfiguration)
+        val fetch = getFetchInstance(context, namespace)
         when (actionType) {
             ACTION_TYPE_CANCEL -> fetch.cancel(downloadId)
             ACTION_TYPE_DELETE -> fetch.delete(downloadId)
@@ -54,6 +46,15 @@ class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
             }
         }
         fetch.close()
+    }
+
+    private fun getFetchInstance(context: Context, namespace: String): Fetch {
+        val fetchConfiguration = FetchConfiguration.Builder(context)
+                .setDownloadConcurrentLimit(0)
+                .enableAutoStart(false)
+                .setNamespace(namespace)
+                .build()
+        return Fetch.getInstance(fetchConfiguration)
     }
 
 }

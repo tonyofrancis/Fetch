@@ -18,34 +18,21 @@ interface FetchNotificationManager {
     var progressReportingIntervalInMillis: Long
 
     /**
-     * Created a new notification for a group of downloads. Called on a background notification thread.
-     * @param notificationId the notification id
-     * @param notificationBuilder the notification builder used to create/update the notification for a download.
-     * @param downloadNotifications list of download notifications. If grouped this list will have more
-     *        than on download notification object. Otherwise it will only contain one download notification object.
+     * Created notifications for a group of downloads. Called on a background notification thread.
+     * @param groupId the group unique id.
+     * @param groupSummaryNotificationBuilder the group summary notification builder.
+     * @param downloadNotifications list of download notifications.
      * @param context context
      */
-    fun updateGroupNotificationBuilder(notificationId: Int,
-                                       notificationBuilder: NotificationCompat.Builder,
-                                       downloadNotifications: List<DownloadNotification>,
-                                       context: Context)
-
-
-    /**
-     * Created a new notification for a download. Called on a background notification thread.
-     * @param notificationBuilder the notification builder used to create/update the notification for a download.
-     * @param downloadNotification download notification object.
-     * @param context context
-     */
-    fun updateNotificationBuilder(notificationBuilder: NotificationCompat.Builder,
-                                  downloadNotification: DownloadNotification,
-                                  context: Context)
-
+    fun updateNotifications(groupId: Int,
+                            groupSummaryNotificationBuilder: NotificationCompat.Builder,
+                            downloadNotifications: List<DownloadNotification>,
+                            context: Context)
 
     /**
      * Get an action pending intent for a download notification for the specified actionType.
      * @param downloadNotification the download notification.
-     * @param actionType the actionType.
+     * @param actionType the actionType. See DownloadNotification.ActionType enum.
      * @return the pending intent.
      * */
     fun getActionPendingIntent(downloadNotification: DownloadNotification, actionType: DownloadNotification.ActionType): PendingIntent
@@ -64,23 +51,15 @@ interface FetchNotificationManager {
     fun cancelNotification(notificationId: Int)
 
     /**
-     * Creates and sets the notification channels for Android O + devices.
+     * Creates and sets the notification channels for Android O + devices. Override this method
+     * to create your own notifications channels.y
      * @param context context
      * @param notificationManager notification manager
      * */
     fun createNotificationChannels(context: Context, notificationManager: NotificationManager)
 
-    /** Get the notificationId associated with a download.
-     * @param download the download
-     * @param context context
-     * @return Return a unique id for a single download notification, or a unique id for a group
-     *         download notification. The unique id should always be the same for the download
-     *         each time this method is called.
-     * */
-    fun getNotificationId(download: Download, context: Context): Int
-
     /** Get the channel associated with a notification Id
-     * @param notificationId the notification id
+     * @param notificationId the notification id. This can be a single download notification id or the group notificationId
      * @param context context
      * @return channel id
      * */

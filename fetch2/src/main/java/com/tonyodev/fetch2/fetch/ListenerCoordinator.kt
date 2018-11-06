@@ -58,6 +58,16 @@ class ListenerCoordinator(val namespace: String) {
         }
     }
 
+    fun cancelOnGoingNotifications(fetchNotificationManager: FetchNotificationManager) {
+        synchronized(lock) {
+            fetchNotificationHandler.post {
+                synchronized(lock) {
+                    fetchNotificationManager.cancelOngoingNotifications()
+                }
+            }
+        }
+    }
+
     val mainListener: FetchListener = object : FetchListener {
 
         override fun onAdded(download: Download) {
