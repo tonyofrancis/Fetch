@@ -44,47 +44,32 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
         }
     }
 
-    override fun updateNotifications(groupId: Int,
-                                     groupSummaryNotificationBuilder: NotificationCompat.Builder,
-                                     downloadNotifications: List<DownloadNotification>,
-                                     context: Context) {
-        val smallIcon = if (downloadNotifications.any { it.isDownloading }) {
-            android.R.drawable.stat_sys_download
-        } else {
-            android.R.drawable.stat_sys_download_done
-        }
+    override fun getChannelId(notificationId: Int, context: Context): String {
+        return context.getString(R.string.fetch_notification_default_channel_id)
+    }
+
+    override fun updateGroupSummaryNotification(groupId: Int,
+                                                notificationBuilder: NotificationCompat.Builder,
+                                                downloadNotifications: List<DownloadNotification>,
+                                                context: Context) {
         val style = NotificationCompat.InboxStyle()
         for (downloadNotification in downloadNotifications) {
             val title = getContentTitle(downloadNotification)
             val contentTitle = getContentText(context, downloadNotification)
             style.addLine("$title $contentTitle")
         }
-        groupSummaryNotificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setSmallIcon(smallIcon)
+        notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setSmallIcon(android.R.drawable.stat_sys_download_done)
                 .setContentTitle(context.getString(R.string.fetch_notification_default_channel_name))
                 .setContentText("")
                 .setStyle(style)
-                .setOngoing(downloadNotifications.any { it.isOnGoingNotification })
                 .setGroup(groupId.toString())
                 .setGroupSummary(true)
-        for (downloadNotification in downloadNotifications) {
-            val notificationId = downloadNotification.notificationId
-            val notificationBuilder = getNotificationBuilder(notificationId, groupId)
-            updateDownloadNotification(notificationBuilder, downloadNotification, context)
-            handleNotificationAlarm(notificationId, downloadNotification.isOnGoingNotification)
-            notificationManager.notify(notificationId, notificationBuilder.build())
-        }
     }
 
-    /**
-     * Updates a single download notification that includes download actions.
-     * @param notificationBuilder the download notification builder.
-     * @param downloadNotification the download notification.
-     * @param context context
-     * */
-    open fun updateDownloadNotification(notificationBuilder: NotificationCompat.Builder,
-                                        downloadNotification: DownloadNotification,
-                                        context: Context) {
+    override fun updateNotification(notificationBuilder: NotificationCompat.Builder,
+                                    downloadNotification: DownloadNotification,
+                                    context: Context) {
         val smallIcon = if (downloadNotification.isDownloading) {
             android.R.drawable.stat_sys_download
         } else {
@@ -132,7 +117,6 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                                 getActionPendingIntent(downloadNotification, CANCEL))
             }
         }
-        notificationBuilder.setContentIntent(downloadNotification.contentPendingIntent)
     }
 
     override fun getActionPendingIntent(downloadNotification: DownloadNotification,
@@ -142,30 +126,39 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
             intent.putExtra(EXTRA_NAMESPACE, downloadNotification.download.namespace)
             intent.putExtra(EXTRA_DOWNLOAD_ID, downloadNotification.download.id)
             intent.putExtra(EXTRA_NOTIFICATION_ID, downloadNotification.notificationId)
+            intent.putExtra(EXTRA_GROUP_ACTION, false)
+            intent.putExtra(EXTRA_NOTIFICATION_GROUP_ID, downloadNotification.groupId)
             val action = when (actionType) {
                 CANCEL -> ACTION_TYPE_CANCEL
                 DELETE -> ACTION_TYPE_DELETE
                 RESUME -> ACTION_TYPE_RESUME
                 PAUSE -> ACTION_TYPE_PAUSE
                 RETRY -> ACTION_TYPE_RETRY
+                else -> ACTION_TYPE_INVALID
             }
             intent.putExtra(EXTRA_ACTION_TYPE, action)
             return PendingIntent.getBroadcast(context, System.currentTimeMillis().toInt(), intent, PendingIntent.FLAG_CANCEL_CURRENT)
         }
     }
 
-    override fun cancelOngoingNotifications() {
+    override fun getGroupActionPendingIntent(groupId: Int,
+                                             downloadNotifications: List<DownloadNotification>,
+                                             actionType: DownloadNotification.ActionType): PendingIntent {
         synchronized(downloadNotificationsMap) {
-            val iterator = downloadNotificationsMap.values.iterator()
-            while (iterator.hasNext()) {
-                val downloadNotification = iterator.next()
-                if (downloadNotification.isActive) {
-                    notificationManager.cancel(downloadNotification.notificationId)
-                    downloadNotificationsBuilderMap.remove(downloadNotification.notificationId)
-                    iterator.remove()
-                    notify(downloadNotification.groupId)
-                }
+            val intent = Intent(ACTION_NOTIFICATION_ACTION)
+            intent.putExtra(EXTRA_NOTIFICATION_GROUP_ID, groupId)
+            intent.putExtra(EXTRA_DOWNLOAD_NOTIFICATIONS, ArrayList(downloadNotifications))
+            intent.putExtra(EXTRA_GROUP_ACTION, true)
+            val action = when (actionType) {
+                CANCEL_ALL -> ACTION_TYPE_CANCEL_ALL
+                DELETE_ALL -> ACTION_TYPE_DELETE_ALL
+                RESUME_ALL -> ACTION_TYPE_RESUME_ALL
+                PAUSE_ALL -> ACTION_TYPE_PAUSE_ALL
+                RETRY_ALL -> ACTION_TYPE_RETRY_ALL
+                else -> ACTION_TYPE_INVALID
             }
+            intent.putExtra(EXTRA_ACTION_TYPE, action)
+            return PendingIntent.getBroadcast(context, System.currentTimeMillis().toInt(), intent, PendingIntent.FLAG_CANCEL_CURRENT)
         }
     }
 
@@ -181,8 +174,47 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
         }
     }
 
-    override fun getChannelId(notificationId: Int, context: Context): String {
-        return context.getString(R.string.fetch_notification_default_channel_id)
+    override fun cancelOngoingNotifications() {
+        synchronized(downloadNotificationsMap) {
+            val iterator = downloadNotificationsMap.values.iterator()
+            var downloadNotification: DownloadNotification
+            while (iterator.hasNext()) {
+                downloadNotification = iterator.next()
+                if (downloadNotification.isActive) {
+                    notificationManager.cancel(downloadNotification.notificationId)
+                    downloadNotificationsBuilderMap.remove(downloadNotification.notificationId)
+                    iterator.remove()
+                    notify(downloadNotification.groupId)
+                }
+            }
+        }
+    }
+
+    override fun notify(groupId: Int) {
+        synchronized(downloadNotificationsMap) {
+            val groupedDownloadNotifications = downloadNotificationsMap.values.filter { it.groupId == groupId }
+            val ongoingNotification = groupedDownloadNotifications.any { it.isOnGoingNotification }
+            val groupSummaryNotificationBuilder = getNotificationBuilder(groupId, groupId)
+            updateGroupSummaryNotification(groupId, groupSummaryNotificationBuilder, groupedDownloadNotifications, context)
+            var notificationId: Int
+            var notificationBuilder: NotificationCompat.Builder
+            val notificationIdList = mutableListOf<Int>()
+            val notificationOngoingList = mutableListOf<Boolean>()
+            for (downloadNotification in groupedDownloadNotifications) {
+                notificationId = downloadNotification.notificationId
+                notificationBuilder = getNotificationBuilder(notificationId, groupId)
+                updateNotification(notificationBuilder, downloadNotification, context)
+                notificationIdList.add(notificationId)
+                notificationOngoingList.add(downloadNotification.isOnGoingNotification)
+                notificationManager.notify(notificationId, notificationBuilder.build())
+            }
+            notificationIdList.add(groupId)
+            notificationOngoingList.add(ongoingNotification)
+            notificationManager.notify(groupId, groupSummaryNotificationBuilder.build())
+            for (index in 0 until notificationIdList.size) {
+                handleNotificationOngoingDismissal(notificationIdList[index], groupId, notificationOngoingList[index])
+            }
+        }
     }
 
     override fun postNotificationUpdate(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Boolean {
@@ -204,55 +236,7 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
         }
     }
 
-    /** Calls the updateNotifications method for the specified group. Call this method
-     * anytime a download notification is added or removed from a group.
-     * @param groupId the group id
-     * */
-    open fun notify(groupId: Int) {
-        synchronized(downloadNotificationsMap) {
-            val groupedDownloadNotifications = downloadNotificationsMap.values.filter { it.groupId == groupId }
-            val ongoingNotification = groupedDownloadNotifications.any { it.isOnGoingNotification }
-            val groupSummaryNotificationBuilder = getNotificationBuilder(groupId, groupId)
-            updateNotifications(groupId, groupSummaryNotificationBuilder, groupedDownloadNotifications, context)
-            handleNotificationAlarm(groupId, ongoingNotification)
-            notificationManager.notify(groupId, groupSummaryNotificationBuilder.build())
-        }
-    }
-
-    /**
-     * Handles canceling ongoing download notifications when fetch closes or the app closes.
-     * @param notificationId the download notification id.
-     * @param ongoingNotification true if the download notification is ongoing.
-     * @param delayInMilliseconds the additional delay in milliseconds
-     * in conjunction with the progressReportingIntervalInMillis field  when this notification is cancelled.
-     * */
-    @JvmOverloads
-    open fun handleNotificationAlarm(notificationId: Int, ongoingNotification: Boolean, delayInMilliseconds: Long = 3000) {
-        synchronized(downloadNotificationsMap) {
-            if (progressReportingIntervalInMillis > 0) {
-                val alarmIntent = Intent(ACTION_NOTIFICATION_CHECK)
-                alarmIntent.putExtra(EXTRA_NOTIFICATION_ID, notificationId)
-                val pendingIntent = PendingIntent.getBroadcast(context, notificationId, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT)
-                alarmManager.cancel(pendingIntent)
-                if (ongoingNotification) {
-                    val alarmTimeMillis = SystemClock.elapsedRealtime() + progressReportingIntervalInMillis + delayInMilliseconds
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, alarmTimeMillis, pendingIntent)
-                    } else {
-                        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, alarmTimeMillis, pendingIntent)
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Gets the cached notification builder for a download notification.
-     * @param notificationId the download notification id.
-     * @param groupId the download group id.
-     * @return the cached notification builder.
-     * */
-    open fun getNotificationBuilder(notificationId: Int, groupId: Int): NotificationCompat.Builder {
+    override fun getNotificationBuilder(notificationId: Int, groupId: Int): NotificationCompat.Builder {
         synchronized(downloadNotificationsMap) {
             val notificationBuilder = downloadNotificationsBuilderMap[notificationId]
                     ?: NotificationCompat.Builder(context, getChannelId(notificationId, context))
@@ -271,6 +255,29 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                     .mActions.clear()
             return notificationBuilder
         }
+    }
+
+    override fun handleNotificationOngoingDismissal(notificationId: Int, groupId: Int, ongoingNotification: Boolean) {
+        synchronized(downloadNotificationsMap) {
+            if (progressReportingIntervalInMillis > 0) {
+                val alarmIntent = Intent(ACTION_NOTIFICATION_CHECK)
+                alarmIntent.putExtra(EXTRA_NOTIFICATION_ID, notificationId)
+                val pendingIntent = PendingIntent.getBroadcast(context, notificationId, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT)
+                alarmManager.cancel(pendingIntent)
+                if (ongoingNotification) {
+                    val alarmTimeMillis = SystemClock.elapsedRealtime() + progressReportingIntervalInMillis + getOngoingDismissalDelay(notificationId, groupId)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, alarmTimeMillis, pendingIntent)
+                    } else {
+                        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, alarmTimeMillis, pendingIntent)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun getOngoingDismissalDelay(notificationId: Int, groupId: Int): Long {
+        return 3000
     }
 
     private fun getContentTitle(downloadNotification: DownloadNotification): String {

@@ -1,6 +1,5 @@
 package com.tonyodev.fetch2
 
-import android.app.PendingIntent
 import android.os.Parcel
 import android.os.Parcelable
 import com.tonyodev.fetch2.database.DownloadInfo
@@ -29,10 +28,6 @@ class DownloadNotification(download: Download) : Parcelable {
     /** The download bytes per second for this download. If -1 the download
      * is not downloading.*/
     var downloadedBytesPerSecond = -1L
-
-    /** The pending intent that will launch a component when the notification
-     * associated with the download is tapped by the user.*/
-    var contentPendingIntent: PendingIntent? = null
 
     /** Returns true if the download queued or is downloading.*/
     val isActive: Boolean
@@ -145,7 +140,17 @@ class DownloadNotification(download: Download) : Parcelable {
         /* Delete a download.**/
         DELETE,
         /** Retry failed downloads.*/
-        RETRY;
+        RETRY,
+        /** Pause ongoing downloads.*/
+        PAUSE_ALL,
+        /** Resume paused downloads.*/
+        RESUME_ALL,
+        /** Cancel downloads.*/
+        CANCEL_ALL,
+        /** Delete downloads.*/
+        DELETE_ALL,
+        /** Retry downloads.*/
+        RETRY_ALL;
     }
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
@@ -154,7 +159,6 @@ class DownloadNotification(download: Download) : Parcelable {
         dest?.writeInt(groupId)
         dest?.writeLong(etaInMilliSeconds)
         dest?.writeLong(downloadedBytesPerSecond)
-        dest?.writeParcelable(contentPendingIntent, flags)
     }
 
     override fun describeContents(): Int {
@@ -170,7 +174,6 @@ class DownloadNotification(download: Download) : Parcelable {
         if (groupId != other.groupId) return false
         if (etaInMilliSeconds != other.etaInMilliSeconds) return false
         if (downloadedBytesPerSecond != other.downloadedBytesPerSecond) return false
-        if (contentPendingIntent != other.contentPendingIntent) return false
         return true
     }
 
@@ -180,14 +183,13 @@ class DownloadNotification(download: Download) : Parcelable {
         result = 31 * result + groupId
         result = 31 * result + etaInMilliSeconds.hashCode()
         result = 31 * result + downloadedBytesPerSecond.hashCode()
-        result = 31 * result + (contentPendingIntent?.hashCode() ?: 0)
         return result
     }
 
     override fun toString(): String {
         return "DownloadNotification(download=$download, notificationId=$notificationId, " +
                 "groupId=$groupId, etaInMilliSeconds=$etaInMilliSeconds, " +
-                "downloadedBytesPerSecond=$downloadedBytesPerSecond, contentPendingIntent=$contentPendingIntent)"
+                "downloadedBytesPerSecond=$downloadedBytesPerSecond)"
     }
 
     companion object CREATOR : Parcelable.Creator<DownloadNotification> {
@@ -198,13 +200,11 @@ class DownloadNotification(download: Download) : Parcelable {
             val groupId = source.readInt()
             val etaInMilliSeconds = source.readLong()
             val downloadedBytesPerSeconds = source.readLong()
-            val contentPendingIntent = source.readParcelable<PendingIntent?>(PendingIntent::class.java.classLoader)
             val downloadNotification = DownloadNotification(download)
             downloadNotification.notificationId = notificationId
             downloadNotification.groupId = groupId
             downloadNotification.etaInMilliSeconds = etaInMilliSeconds
             downloadNotification.downloadedBytesPerSecond = downloadedBytesPerSeconds
-            downloadNotification.contentPendingIntent = contentPendingIntent
             return downloadNotification
         }
 

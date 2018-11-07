@@ -18,16 +18,44 @@ interface FetchNotificationManager {
     var progressReportingIntervalInMillis: Long
 
     /**
-     * Created notifications for a group of downloads. Called on a background notification thread.
+     * Create the notification for a group of downloads. Called on a background notification thread.
      * @param groupId the group unique id.
-     * @param groupSummaryNotificationBuilder the group summary notification builder.
-     * @param downloadNotifications list of download notifications.
+     * @param notificationBuilder the group summary notification builder.
+     * @param downloadNotifications list of download notifications in the group.
      * @param context context
      */
-    fun updateNotifications(groupId: Int,
-                            groupSummaryNotificationBuilder: NotificationCompat.Builder,
-                            downloadNotifications: List<DownloadNotification>,
-                            context: Context)
+    fun updateGroupSummaryNotification(groupId: Int,
+                                       notificationBuilder: NotificationCompat.Builder,
+                                       downloadNotifications: List<DownloadNotification>,
+                                       context: Context)
+
+    /**
+     * Create notification for a download. Called on a background notification thread.
+     * @param notificationBuilder the notification builder
+     * @param downloadNotification the download notification
+     * @param context the context
+     * */
+    fun updateNotification(notificationBuilder: NotificationCompat.Builder,
+                           downloadNotification: DownloadNotification,
+                           context: Context)
+
+    /**
+     * Notify the notification manager that a group of download notifications have
+     * been updated and should be recreated. Called on a background notification thread.
+     * @param groupId the group id
+     * */
+    fun notify(groupId: Int)
+
+    /**
+     * Get a group action pending intent for a download notification for the specified actionType.
+     * @param groupId the group id
+     * @param downloadNotifications list of download notifications in the group.
+     * @param actionType the group actionType. See DownloadNotification.ActionType.*_ALL enum.
+     * @return the pending intent.
+     * */
+    fun getGroupActionPendingIntent(groupId: Int,
+                                    downloadNotifications: List<DownloadNotification>,
+                                    actionType: DownloadNotification.ActionType): PendingIntent
 
     /**
      * Get an action pending intent for a download notification for the specified actionType.
@@ -40,7 +68,7 @@ interface FetchNotificationManager {
     /**
      * Called by the associated Fetch instance to cancel all ongoing notifications(Status.Queued or Status.Downloading)
      * when the Fetch instance is being closed and no longer being used.
-     * Called on a background thread.
+     * Called on a notification background thread.
      * */
     fun cancelOngoingNotifications()
 
@@ -52,7 +80,7 @@ interface FetchNotificationManager {
 
     /**
      * Creates and sets the notification channels for Android O + devices. Override this method
-     * to create your own notifications channels.y
+     * to create your own notifications channels.
      * @param context context
      * @param notificationManager notification manager
      * */
@@ -66,7 +94,7 @@ interface FetchNotificationManager {
     fun getChannelId(notificationId: Int, context: Context): String
 
     /**
-     * Updates the existing notification, or removed it when the notification is no longer needed.
+     * Add/Updates the existing download notification, or removed it when the notification is no longer needed.
      * Called on a background notification thread. This method is called by the associated fetch instance
      * to create/update notifications for a download.
      * @param download the download
@@ -77,5 +105,29 @@ interface FetchNotificationManager {
      * @return returns true if the post update was handled by this notification manager otherwise false.
      * */
     fun postNotificationUpdate(download: Download, etaInMilliSeconds: Long = -1, downloadedBytesPerSecond: Long = -1): Boolean
+
+    /**
+     * Handles canceling ongoing download notifications when fetch closes or the app closes.
+     * @param notificationId the download notification id.
+     * @param groupId the group id
+     * @param ongoingNotification true if the download notification is ongoing.
+     * */
+    fun handleNotificationOngoingDismissal(notificationId: Int, groupId: Int, ongoingNotification: Boolean)
+
+    /**
+     * Get the delay in milliseconds before an ongoing download notification (Status.Queued or Status.Downloading)
+     * is cancelled because of inactivity.
+     * @param notificationId the notificationId
+     * @param groupId the group id
+     * */
+    fun getOngoingDismissalDelay(notificationId: Int, groupId: Int): Long
+
+    /**
+     * Gets the notification builder for a download notification.
+     * @param notificationId the download notification id.
+     * @param groupId the download group id.
+     * @return the notification builder.
+     * */
+    fun getNotificationBuilder(notificationId: Int, groupId: Int): NotificationCompat.Builder
 
 }
