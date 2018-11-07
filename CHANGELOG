@@ -1,5 +1,5 @@
 Version 2.3.0-RC1
-This version has lots of changes, improvements and bug fixes.
+This version has lots of changes, improvements and bug fixes. Please read carefully.
 
 New
 1. Fetch now supports notifications via the FetchNotificationManager interface.
