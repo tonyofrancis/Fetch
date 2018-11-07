@@ -23,11 +23,12 @@ interface FetchNotificationManager {
      * @param notificationBuilder the group summary notification builder.
      * @param downloadNotifications list of download notifications in the group.
      * @param context context
+     * @return return true if download notifications should be grouped otherwise false.
      */
     fun updateGroupSummaryNotification(groupId: Int,
                                        notificationBuilder: NotificationCompat.Builder,
                                        downloadNotifications: List<DownloadNotification>,
-                                       context: Context)
+                                       context: Context): Boolean
 
     /**
      * Create notification for a download. Called on a background notification thread.

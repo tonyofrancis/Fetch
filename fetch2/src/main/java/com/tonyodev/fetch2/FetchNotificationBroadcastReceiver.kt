@@ -9,6 +9,7 @@ class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context != null && intent != null) {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val namespace = intent.getStringExtra(EXTRA_NAMESPACE)
             val downloadId = intent.getIntExtra(EXTRA_DOWNLOAD_ID, DOWNLOAD_ID_INVALID)
             val actionType = intent.getIntExtra(EXTRA_ACTION_TYPE, ACTION_TYPE_INVALID)
@@ -28,7 +29,9 @@ class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
                         if (notificationGroupId != NOTIFICATION_GROUP_ID_INVALID && downloadNotifications.isNotEmpty()) {
                             downloadNotifications.groupBy { it.download.namespace }.forEach { entry ->
                                 val fetchNamespace = entry.key
-                                val downloadIds = entry.value.map { it.download.id }
+                                val downloadIds = entry.value.map { downloadNotification ->
+                                    downloadNotification.download.id
+                                }
                                 val fetch = getFetchInstance(context, fetchNamespace)
                                 when (actionType) {
                                     ACTION_TYPE_CANCEL_ALL -> fetch.cancel(downloadIds)
@@ -47,7 +50,6 @@ class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
                 }
                 ACTION_NOTIFICATION_CHECK -> {
                     if (notificationId != NOTIFICATION_ID_INVALID) {
-                        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                         notificationManager.cancel(notificationId)
                     }
                 }

@@ -51,7 +51,7 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
     override fun updateGroupSummaryNotification(groupId: Int,
                                                 notificationBuilder: NotificationCompat.Builder,
                                                 downloadNotifications: List<DownloadNotification>,
-                                                context: Context) {
+                                                context: Context): Boolean {
         val style = NotificationCompat.InboxStyle()
         for (downloadNotification in downloadNotifications) {
             val title = getContentTitle(downloadNotification)
@@ -65,6 +65,7 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                 .setStyle(style)
                 .setGroup(groupId.toString())
                 .setGroupSummary(true)
+        return false
     }
 
     override fun updateNotification(notificationBuilder: NotificationCompat.Builder,
@@ -104,14 +105,6 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                 notificationBuilder.addAction(R.drawable.fetch_notification_resume,
                         context.getString(R.string.fetch_notification_download_resume),
                         getActionPendingIntent(downloadNotification, RESUME))
-                        .addAction(R.drawable.fetch_notification_cancel,
-                                context.getString(R.string.fetch_notification_download_cancel),
-                                getActionPendingIntent(downloadNotification, CANCEL))
-            }
-            downloadNotification.isFailed -> {
-                notificationBuilder.addAction(R.drawable.fetch_notification_retry,
-                        context.getString(R.string.fetch_notification_download_retry),
-                        getActionPendingIntent(downloadNotification, RETRY))
                         .addAction(R.drawable.fetch_notification_cancel,
                                 context.getString(R.string.fetch_notification_download_cancel),
                                 getActionPendingIntent(downloadNotification, CANCEL))
@@ -195,7 +188,7 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
             val groupedDownloadNotifications = downloadNotificationsMap.values.filter { it.groupId == groupId }
             val ongoingNotification = groupedDownloadNotifications.any { it.isOnGoingNotification }
             val groupSummaryNotificationBuilder = getNotificationBuilder(groupId, groupId)
-            updateGroupSummaryNotification(groupId, groupSummaryNotificationBuilder, groupedDownloadNotifications, context)
+            val useGroupNotification = updateGroupSummaryNotification(groupId, groupSummaryNotificationBuilder, groupedDownloadNotifications, context)
             var notificationId: Int
             var notificationBuilder: NotificationCompat.Builder
             val notificationIdList = mutableListOf<Int>()
@@ -208,9 +201,11 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                 notificationOngoingList.add(downloadNotification.isOnGoingNotification)
                 notificationManager.notify(notificationId, notificationBuilder.build())
             }
-            notificationIdList.add(groupId)
-            notificationOngoingList.add(ongoingNotification)
-            notificationManager.notify(groupId, groupSummaryNotificationBuilder.build())
+            if (useGroupNotification) {
+                notificationIdList.add(groupId)
+                notificationOngoingList.add(ongoingNotification)
+                notificationManager.notify(groupId, groupSummaryNotificationBuilder.build())
+            }
             for (index in 0 until notificationIdList.size) {
                 handleNotificationOngoingDismissal(notificationIdList[index], groupId, notificationOngoingList[index])
             }
