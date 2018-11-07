@@ -3,7 +3,7 @@ This version has lots of changes, improvements and bug fixes. Please read carefu
 
 New
 1. Fetch now supports notifications via the FetchNotificationManager interface.
-   See FetchNotificationManager class and sample code on usage.
+   See DefaultFetchNotificationManager class and sample code on usage.
 2. Fetch now supports saving downloads to URI paths via StorageResolver.
    See sample code and DefaultStorageResolver class for usage.
 
@@ -32,7 +32,7 @@ to enqueue but other request are still enqueued instead of the whole operation b
 If the Error is Error.NONE this means that the download was successfully enqueued. Otherwise
 this means that the enqueue for the request failed.
 - In order to make Fetch more modular and accommodating to different application environments,
- the following methods were removed from the Download interface and are now on the StorageResolver interface.
+ the following methods were removed from the Downloader interface and are now on the StorageResolver interface.
  If you are overriding these methods, you must extend the StorageResolver interface or DefaultStorageResolver class
  and set an instance on the Fetch Configuration builder you are using to create your Fetch instance.
  Methods Moved:
