@@ -134,7 +134,6 @@ class DownloadNotification(download: Download) : Parcelable {
             return download.total == -1L
         }
 
-
     /** Download Action Types used by the FetchNotificationBroadcastReceiver.*/
     enum class ActionType {
         /* Paused an ongoing download.*/
@@ -144,7 +143,9 @@ class DownloadNotification(download: Download) : Parcelable {
         /* Cancels a download.*/
         CANCEL,
         /* Delete a download.**/
-        DELETE
+        DELETE,
+        /** Retry failed downloads.*/
+        RETRY;
     }
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
@@ -158,6 +159,35 @@ class DownloadNotification(download: Download) : Parcelable {
 
     override fun describeContents(): Int {
         return 0
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as DownloadNotification
+        if (download != other.download) return false
+        if (notificationId != other.notificationId) return false
+        if (groupId != other.groupId) return false
+        if (etaInMilliSeconds != other.etaInMilliSeconds) return false
+        if (downloadedBytesPerSecond != other.downloadedBytesPerSecond) return false
+        if (contentPendingIntent != other.contentPendingIntent) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = download.hashCode()
+        result = 31 * result + notificationId
+        result = 31 * result + groupId
+        result = 31 * result + etaInMilliSeconds.hashCode()
+        result = 31 * result + downloadedBytesPerSecond.hashCode()
+        result = 31 * result + (contentPendingIntent?.hashCode() ?: 0)
+        return result
+    }
+
+    override fun toString(): String {
+        return "DownloadNotification(download=$download, notificationId=$notificationId, " +
+                "groupId=$groupId, etaInMilliSeconds=$etaInMilliSeconds, " +
+                "downloadedBytesPerSecond=$downloadedBytesPerSecond, contentPendingIntent=$contentPendingIntent)"
     }
 
     companion object CREATOR : Parcelable.Creator<DownloadNotification> {

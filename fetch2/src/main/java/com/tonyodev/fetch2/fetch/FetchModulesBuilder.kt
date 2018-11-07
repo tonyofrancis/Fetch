@@ -137,7 +137,7 @@ object FetchModulesBuilder {
                 }
             }
             fetchConfiguration.fetchNotificationManager?.progressReportingIntervalInMillis =
-                    fetchConfiguration.progressReportingIntervalMillis + 3000
+                    fetchConfiguration.progressReportingIntervalMillis
         }
 
     }
