@@ -7,6 +7,7 @@
     <string name="fetch_notification_download_failed">Failed</string>
     <string name="fetch_notification_download_pause">Pause</string>
     <string name="fetch_notification_download_resume">Resume</string>
+    <string name="fetch_notification_download_retry">Retry</string>
     <string name="fetch_notification_download_cancel">Cancel</string>
     <string name="fetch_notification_download_paused">Paused</string>
     <string name="fetch_notification_download_starting">Starting</string>

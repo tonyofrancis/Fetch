@@ -13,8 +13,6 @@ class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
             val downloadId = intent.getIntExtra(EXTRA_DOWNLOAD_ID, DOWNLOAD_ID_INVALID)
             val actionType = intent.getIntExtra(EXTRA_ACTION_TYPE, ACTION_TYPE_INVALID)
             val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, NOTIFICATION_ID_INVALID)
-            val downloadNotifications = intent.getParcelableArrayExtra(EXTRA_DOWNLOAD_NOTIFICATIONS)?.map { it as DownloadNotification }
-                    ?: emptyList()
             when (intent.action) {
                 ACTION_NOTIFICATION_ACTION -> {
                     if (!namespace.isNullOrEmpty() && downloadId != DOWNLOAD_ID_INVALID && actionType != ACTION_TYPE_INVALID) {
@@ -25,9 +23,6 @@ class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
                     if (notificationId != NOTIFICATION_ID_INVALID) {
                         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                         notificationManager.cancel(notificationId)
-                        if (isGroupNotification && downloadNotifications.any { it.isOnGoingNotification }) {
-
-                        }
                     }
                 }
             }
@@ -41,6 +36,7 @@ class FetchNotificationBroadcastReceiver : BroadcastReceiver() {
             ACTION_TYPE_DELETE -> fetch.delete(downloadId)
             ACTION_TYPE_PAUSE -> fetch.pause(downloadId)
             ACTION_TYPE_RESUME -> fetch.resume(downloadId)
+            ACTION_TYPE_RETRY -> fetch.retry(downloadId)
             else -> {
                 //do nothing
             }

@@ -11,6 +11,7 @@ const val ACTION_TYPE_PAUSE = 0
 const val ACTION_TYPE_RESUME = 1
 const val ACTION_TYPE_DELETE = 2
 const val ACTION_TYPE_CANCEL = 4
+const val ACTION_TYPE_RETRY = 5
 
 const val DOWNLOAD_ID_INVALID = -1
 const val NOTIFICATION_ID_INVALID = -1
@@ -18,5 +19,4 @@ const val NOTIFICATION_ID_INVALID = -1
 const val EXTRA_NAMESPACE = "com.tonyodev.fetch2.extra.NAMESPACE"
 const val EXTRA_DOWNLOAD_ID = "com.tonyodev.fetch2.extra.DOWNLOAD_ID"
 const val EXTRA_NOTIFICATION_ID = "com.tonyodev.fetch2.extra.NOTIFICATION_ID"
-const val EXTRA_DOWNLOAD_NOTIFICATIONS = "com.tonyodev.fetch2.extra.DOWNLOAD_NOTIFICATIONS"
 const val EXTRA_ACTION_TYPE = "com.tonyodev.fetch2.extra.ACTION_TYPE"

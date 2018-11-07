@@ -69,9 +69,9 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                 .setGroupSummary(true)
         for (downloadNotification in downloadNotifications) {
             val notificationId = downloadNotification.notificationId
-            val notificationBuilder = getNotificationBuilder(notificationId)
+            val notificationBuilder = getNotificationBuilder(notificationId, groupId)
             updateDownloadNotification(notificationBuilder, downloadNotification, context)
-            handleNotificationAlarm(notificationId, downloadNotification.isOnGoingNotification, arrayOf())
+            handleNotificationAlarm(notificationId, downloadNotification.isOnGoingNotification)
             notificationManager.notify(notificationId, notificationBuilder.build())
         }
     }
@@ -123,11 +123,16 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                                 context.getString(R.string.fetch_notification_download_cancel),
                                 getActionPendingIntent(downloadNotification, CANCEL))
             }
+            downloadNotification.isFailed -> {
+                notificationBuilder.addAction(R.drawable.fetch_notification_retry,
+                        context.getString(R.string.fetch_notification_download_retry),
+                        getActionPendingIntent(downloadNotification, RETRY))
+                        .addAction(R.drawable.fetch_notification_cancel,
+                                context.getString(R.string.fetch_notification_download_cancel),
+                                getActionPendingIntent(downloadNotification, CANCEL))
+            }
         }
-        val contentPendingIntent = downloadNotification.contentPendingIntent
-        if (contentPendingIntent != null) {
-            notificationBuilder.setContentIntent(contentPendingIntent)
-        }
+        notificationBuilder.setContentIntent(downloadNotification.contentPendingIntent)
     }
 
     override fun getActionPendingIntent(downloadNotification: DownloadNotification,
@@ -142,6 +147,7 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                 DELETE -> ACTION_TYPE_DELETE
                 RESUME -> ACTION_TYPE_RESUME
                 PAUSE -> ACTION_TYPE_PAUSE
+                RETRY -> ACTION_TYPE_RETRY
             }
             intent.putExtra(EXTRA_ACTION_TYPE, action)
             return PendingIntent.getBroadcast(context, System.currentTimeMillis().toInt(), intent, PendingIntent.FLAG_CANCEL_CURRENT)
@@ -156,8 +162,8 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                 if (downloadNotification.isActive) {
                     notificationManager.cancel(downloadNotification.notificationId)
                     downloadNotificationsBuilderMap.remove(downloadNotification.notificationId)
-                    notify(downloadNotification.groupId)
                     iterator.remove()
+                    notify(downloadNotification.groupId)
                 }
             }
         }
@@ -206,9 +212,9 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
         synchronized(downloadNotificationsMap) {
             val groupedDownloadNotifications = downloadNotificationsMap.values.filter { it.groupId == groupId }
             val ongoingNotification = groupedDownloadNotifications.any { it.isOnGoingNotification }
-            val groupSummaryNotificationBuilder = getNotificationBuilder(groupId)
+            val groupSummaryNotificationBuilder = getNotificationBuilder(groupId, groupId)
             updateNotifications(groupId, groupSummaryNotificationBuilder, groupedDownloadNotifications, context)
-            handleNotificationAlarm(groupId, ongoingNotification, groupedDownloadNotifications.toTypedArray())
+            handleNotificationAlarm(groupId, ongoingNotification)
             notificationManager.notify(groupId, groupSummaryNotificationBuilder.build())
         }
     }
@@ -217,20 +223,19 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
      * Handles canceling ongoing download notifications when fetch closes or the app closes.
      * @param notificationId the download notification id.
      * @param ongoingNotification true if the download notification is ongoing.
-     * @param downloadNotifications array of download notifications in the group.
+     * @param delayInMilliseconds the additional delay in milliseconds
+     * in conjunction with the progressReportingIntervalInMillis field  when this notification is cancelled.
      * */
-    open fun handleNotificationAlarm(notificationId: Int,
-                                     ongoingNotification: Boolean,
-                                     downloadNotifications: Array<DownloadNotification>) {
+    @JvmOverloads
+    open fun handleNotificationAlarm(notificationId: Int, ongoingNotification: Boolean, delayInMilliseconds: Long = 3000) {
         synchronized(downloadNotificationsMap) {
             if (progressReportingIntervalInMillis > 0) {
                 val alarmIntent = Intent(ACTION_NOTIFICATION_CHECK)
                 alarmIntent.putExtra(EXTRA_NOTIFICATION_ID, notificationId)
-                alarmIntent.putExtra(EXTRA_DOWNLOAD_NOTIFICATIONS, downloadNotifications)
                 val pendingIntent = PendingIntent.getBroadcast(context, notificationId, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT)
                 alarmManager.cancel(pendingIntent)
                 if (ongoingNotification) {
-                    val alarmTimeMillis = SystemClock.elapsedRealtime() + progressReportingIntervalInMillis
+                    val alarmTimeMillis = SystemClock.elapsedRealtime() + progressReportingIntervalInMillis + delayInMilliseconds
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, alarmTimeMillis, pendingIntent)
                     } else {
@@ -244,9 +249,10 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
     /**
      * Gets the cached notification builder for a download notification.
      * @param notificationId the download notification id.
+     * @param groupId the download group id.
      * @return the cached notification builder.
      * */
-    open fun getNotificationBuilder(notificationId: Int): NotificationCompat.Builder {
+    open fun getNotificationBuilder(notificationId: Int, groupId: Int): NotificationCompat.Builder {
         synchronized(downloadNotificationsMap) {
             val notificationBuilder = downloadNotificationsBuilderMap[notificationId]
                     ?: NotificationCompat.Builder(context, getChannelId(notificationId, context))
@@ -260,6 +266,7 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                     .setContentIntent(null)
                     .setGroupSummary(false)
                     .setOngoing(false)
+                    .setGroup(groupId.toString())
                     .setSmallIcon(android.R.drawable.stat_sys_download_done)
                     .mActions.clear()
             return notificationBuilder
