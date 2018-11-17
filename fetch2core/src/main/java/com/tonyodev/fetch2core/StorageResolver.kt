@@ -52,4 +52,10 @@ interface StorageResolver {
      * */
     fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.ServerRequest): String
 
+    /** This method is used to check if the file exists at the specified location on disk.
+     * @param file the file path. Can be a uri or any path that makes sense to your application.
+     * @return returns true if the file exists otherwise false
+     * */
+    fun fileExists(file: String): Boolean
+
 }

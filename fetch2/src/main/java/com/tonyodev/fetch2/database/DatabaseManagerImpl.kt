@@ -9,15 +9,16 @@ import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.LiveSettings
 import com.tonyodev.fetch2.util.defaultNoError
+import com.tonyodev.fetch2core.DefaultStorageResolver
 import com.tonyodev.fetch2core.Extras
-import java.io.File
 
 
 class DatabaseManagerImpl constructor(context: Context,
                                       private val namespace: String,
                                       migrations: Array<Migration>,
                                       private val liveSettings: LiveSettings,
-                                      private val fileExistChecksEnabled: Boolean) : DatabaseManager {
+                                      private val fileExistChecksEnabled: Boolean,
+                                      private val defaultStorageResolver: DefaultStorageResolver) : DatabaseManager {
 
     private val lock = Object()
     @Volatile
@@ -243,7 +244,6 @@ class DatabaseManagerImpl constructor(context: Context,
     private fun sanitize(downloads: List<DownloadInfo>, firstEntry: Boolean = false): Boolean {
         updatedDownloadsList.clear()
         var downloadInfo: DownloadInfo
-        var file: File
         for (i in 0 until downloads.size) {
             downloadInfo = downloads[i]
             when (downloadInfo.status) {
@@ -271,8 +271,7 @@ class DatabaseManagerImpl constructor(context: Context,
                 Status.PAUSED -> {
                     if (downloadInfo.downloaded > 0) {
                         if (fileExistChecksEnabled) {
-                            file = File(downloadInfo.file)
-                            if (!file.exists()) {
+                            if (!defaultStorageResolver.fileExists(downloadInfo.file)) {
                                 downloadInfo.downloaded = 0
                                 downloadInfo.total = -1L
                                 downloadInfo.error = defaultNoError

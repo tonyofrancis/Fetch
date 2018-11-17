@@ -18,7 +18,9 @@ import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.deleteAllInFolderForId
 import com.tonyodev.fetch2.util.getRequestForDownload
+import com.tonyodev.fetch2core.DefaultStorageResolver
 import com.tonyodev.fetch2core.HandlerWrapper
+import com.tonyodev.fetch2core.getFileTempDir
 
 object FetchModulesBuilder {
 
@@ -39,7 +41,9 @@ object FetchModulesBuilder {
                         namespace = fetchConfiguration.namespace,
                         migrations = DownloadDatabase.getMigrations(),
                         liveSettings = liveSettings,
-                        fileExistChecksEnabled = fetchConfiguration.fileExistChecksEnabled)
+                        fileExistChecksEnabled = fetchConfiguration.fileExistChecksEnabled,
+                        defaultStorageResolver = DefaultStorageResolver(fetchConfiguration.appContext,
+                                getFileTempDir(fetchConfiguration.appContext)))
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
                 val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace)
                 val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager,

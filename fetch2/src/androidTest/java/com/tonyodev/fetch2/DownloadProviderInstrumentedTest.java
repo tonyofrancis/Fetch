@@ -12,6 +12,8 @@ import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2.provider.DownloadProvider;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
+import com.tonyodev.fetch2core.DefaultStorageResolver;
+import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FetchLogger;
 
 import org.junit.After;
@@ -43,7 +45,9 @@ public class DownloadProviderInstrumentedTest {
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final LiveSettings liveSettings = new LiveSettings(namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
+        DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings,
+                false, defaultStorageResolver);
         downloadProvider = new DownloadProvider(databaseManager);
     }
 

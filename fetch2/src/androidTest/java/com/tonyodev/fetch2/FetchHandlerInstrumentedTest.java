@@ -68,7 +68,8 @@ public class FetchHandlerInstrumentedTest {
         final Boolean autoStart = true;
         final Migration[] migrations = DownloadDatabase.getMigrations();
         final LiveSettings liveSettings = new LiveSettings(namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
+        DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false, defaultStorageResolver);
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace);
         final Downloader client = FetchDefaults.getDefaultDownloader();
@@ -86,7 +87,7 @@ public class FetchHandlerInstrumentedTest {
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 downloadInfoUpdater, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver);
+                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver, appContext, namespace);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handlerWrapper,
                 new DownloadProvider(databaseManager),

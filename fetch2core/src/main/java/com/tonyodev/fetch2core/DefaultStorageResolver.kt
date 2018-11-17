@@ -26,4 +26,15 @@ open class DefaultStorageResolver(
         return defaultTempDir
     }
 
+    override fun fileExists(file: String): Boolean {
+        if (file.isEmpty()) {
+            return false
+        }
+        return try {
+            getOutputResourceWrapper(file, context.contentResolver)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

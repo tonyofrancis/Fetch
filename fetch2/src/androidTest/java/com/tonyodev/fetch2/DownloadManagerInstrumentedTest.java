@@ -55,7 +55,8 @@ public class DownloadManagerInstrumentedTest {
         final Migration[] migrations = DownloadDatabase.getMigrations();
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final LiveSettings liveSettings = new LiveSettings(namespace);
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
+        DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
+        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false, defaultStorageResolver);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
@@ -71,7 +72,8 @@ public class DownloadManagerInstrumentedTest {
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 downloadInfoUpdater, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver);
+                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver,
+                appContext, namespace);
     }
 
     @After

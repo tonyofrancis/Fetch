@@ -52,7 +52,9 @@ public class DownloadPriorityIteratorProcessorTest {
         final FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final Migration[] migrations = DownloadDatabase.getMigrations();
         final LiveSettings liveSettings = new LiveSettings(namespace);
-        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false);
+        DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
+        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings,
+                false, defaultStorageResolver);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
@@ -68,7 +70,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                  downloadInfoUpdater, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver);
+                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver, appContext, namespace);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 new HandlerWrapper(namespace),
                 new DownloadProvider(databaseManager),
