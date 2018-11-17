@@ -104,7 +104,9 @@ object FetchModulesBuilder {
                     fileServerDownloader = fetchConfiguration.fileServerDownloader,
                     hashCheckingEnabled = fetchConfiguration.hashCheckingEnabled,
                     uiHandler = uiHandler,
-                    storageResolver = fetchConfiguration.storageResolver)
+                    storageResolver = fetchConfiguration.storageResolver,
+                    context = fetchConfiguration.appContext,
+                    namespace = fetchConfiguration.namespace)
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,
                     downloadProvider = downloadProvider,

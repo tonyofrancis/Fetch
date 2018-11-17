@@ -54,7 +54,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
             if (context != null && intent != null) {
                 when (intent.action) {
                     ACTION_QUEUE_BACKOFF_RESET -> {
-                        if (namespace == intent.getStringExtra(EXTRA_NAMESPACE)) {
+                        if (!stopped && !paused && namespace == intent.getStringExtra(EXTRA_NAMESPACE)) {
                             resetBackOffTime()
                         }
                     }
@@ -72,35 +72,38 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
         if (canContinueToProcess()) {
             if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
                 val priorityList = getPriorityList()
+                var shouldBackOff = false
                 if (priorityList.isEmpty() || !networkInfoProvider.isNetworkAvailable) {
-                    increaseBackOffTime()
+                    shouldBackOff = true
                 }
-                var shouldBackOff = true
-                for (index in 0..priorityList.lastIndex) {
-                    if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
-                        val download = priorityList[index]
-                        val isFetchServerRequest = isFetchFileServerUrl(download.url)
-                        if ((isFetchServerRequest || networkInfoProvider.isNetworkAvailable) && canContinueToProcess()) {
-                            val networkType = when {
-                                globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
-                                download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
-                                else -> download.networkType
-                            }
-                            val properNetworkConditions = networkInfoProvider.isOnAllowedNetwork(networkType)
-                            if (!properNetworkConditions) {
-                                listenerCoordinator.mainListener.onWaitingNetwork(download)
-                            }
-                            if ((isFetchServerRequest || properNetworkConditions)) {
-                                shouldBackOff = false
-                                if (!downloadManager.contains(download.id) && canContinueToProcess()) {
-                                    downloadManager.start(download)
+                if (!shouldBackOff) {
+                    shouldBackOff = true
+                    for (index in 0..priorityList.lastIndex) {
+                        if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
+                            val download = priorityList[index]
+                            val isFetchServerRequest = isFetchFileServerUrl(download.url)
+                            if ((isFetchServerRequest || networkInfoProvider.isNetworkAvailable) && canContinueToProcess()) {
+                                val networkType = when {
+                                    globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
+                                    download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
+                                    else -> download.networkType
                                 }
+                                val properNetworkConditions = networkInfoProvider.isOnAllowedNetwork(networkType)
+                                if (!properNetworkConditions) {
+                                    listenerCoordinator.mainListener.onWaitingNetwork(download)
+                                }
+                                if ((isFetchServerRequest || properNetworkConditions)) {
+                                    shouldBackOff = false
+                                    if (!downloadManager.contains(download.id) && canContinueToProcess()) {
+                                        downloadManager.start(download)
+                                    }
+                                }
+                            } else {
+                                break
                             }
                         } else {
                             break
                         }
-                    } else {
-                        break
                     }
                 }
                 if (shouldBackOff) {

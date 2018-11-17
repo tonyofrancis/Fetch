@@ -1,5 +1,7 @@
 package com.tonyodev.fetch2.downloader
 
+import android.content.Context
+import android.content.Intent
 import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
@@ -24,7 +26,9 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                           private val fileServerDownloader: FileServerDownloader,
                           private val hashCheckingEnabled: Boolean,
                           private val uiHandler: Handler,
-                          private val storageResolver: StorageResolver) : DownloadManager {
+                          private val storageResolver: StorageResolver,
+                          private val context: Context,
+                          private val namespace: String) : DownloadManager {
 
     private val lock = Any()
     private var executor: ExecutorService? = getNewDownloadExecutorService(concurrentLimit)
@@ -101,6 +105,9 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
 
                     } finally {
                         removeDownloadMappings(download)
+                        val intent = Intent(ACTION_QUEUE_BACKOFF_RESET)
+                        intent.putExtra(EXTRA_NAMESPACE, namespace)
+                        context.sendBroadcast(intent)
                     }
                 }
                 return true
