@@ -83,7 +83,7 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
                 .setOngoing(downloadNotification.isOnGoingNotification)
                 .setGroup(downloadNotification.groupId.toString())
                 .setGroupSummary(false)
-        if (downloadNotification.isFailed) {
+        if (downloadNotification.isFailed || downloadNotification.isCompleted) {
             notificationBuilder.setProgress(0, 0, false)
         } else {
             val progressIndeterminate = downloadNotification.progressIndeterminate
