@@ -1,3 +1,14 @@
+Version 2.3.1
+This is the first stable version of Fetch 2. Enjoy.
+- Fixed an issue where the priority queue backoff would not work correctly.
+- Fixed an issue where request with a file uri would not resume correctly.
+- Fixed an issue where the Fetch database would crash on large group calls.
+- Added new method fun fileExists(file: String): Boolean on StorageResolver.
+- Added new method getServerResponse for Fetch and RxFetch.
+- Migrated project to use androidx libraries
+- Fixed an issue where completed download notifications using the DefaultNotificationManager would
+  show the progress bar when a download completed.
+
 Version 2.3.0-RC1
 This version has lots of changes, improvements and bug fixes. Please read carefully.
 
