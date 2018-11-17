@@ -902,6 +902,21 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun getServerResponse(url: String, headers: Map<String, String>?): Convertible<Downloader.Response> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(Pair(url, headers))
+                    .subscribeOn(AndroidSchedulers.from(handlerWrapper.getWorkTaskLooper()))
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val contentLength = fetchHandler.getServerResponse(url, headers)
+                        Flowable.just(contentLength)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
     override fun getFetchFileServerCatalog(request: Request): Convertible<List<FileResource>> {
         return synchronized(lock) {
             throwExceptionIfClosed()

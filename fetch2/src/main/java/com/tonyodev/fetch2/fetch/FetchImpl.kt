@@ -889,6 +889,33 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun getServerResponse(url: String,
+                                   headers: Map<String, String>?,
+                                   func: Func<Downloader.Response>,
+                                   func2: Func<Error>?): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.executeWorkerTask {
+                try {
+                    val response = fetchHandler.getServerResponse(url, headers)
+                    uiHandler.post {
+                        func.call(response)
+                    }
+                } catch (e: Exception) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    error.throwable = e
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
+                }
+            }
+            return this
+        }
+    }
+
     override fun getFetchFileServerCatalog(request: Request, func: Func<List<FileResource>>, func2: Func<Error>?): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()

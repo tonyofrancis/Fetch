@@ -7,10 +7,7 @@ import com.tonyodev.fetch2.fetch.FetchModulesBuilder
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_REQUEST_UPDATED
-import com.tonyodev.fetch2core.DownloadBlock
-import com.tonyodev.fetch2core.Extras
-import com.tonyodev.fetch2core.FileResource
-import com.tonyodev.fetch2core.GLOBAL_FETCH_CONFIGURATION_NOT_SET
+import com.tonyodev.fetch2core.*
 
 /**
  * A light weight file download manager for Android with Rx features.
@@ -494,6 +491,16 @@ interface RxFetch {
      * not able to get the content length.
      * */
     fun getContentLengthForRequest(request: Request, fromServer: Boolean): Convertible<Long>
+
+    /**
+     * Gets the Server Response for the url and associated headers.
+     * @param url the url. Cannot be null.
+     * @param headers the request headers for the url. Can be null.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @throws IOException if the the server request was not successful.
+     * @return Convertible with the server response.
+     * */
+    fun getServerResponse(url: String, headers: Map<String, String>?): Convertible<Downloader.Response>
 
     /**
      * Gets the full Catalog of a Fetch File Server.

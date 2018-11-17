@@ -9,6 +9,7 @@ import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
+import java.io.IOException
 import java.util.*
 
 /**
@@ -451,6 +452,34 @@ class FetchHandlerImpl(private val namespace: String,
         } else {
             -1L
         }
+    }
+
+    override fun getServerResponse(url: String, header: Map<String, String>?): Downloader.Response {
+        val request = Request(url, "")
+        header?.forEach {
+            request.addHeader(it.key, it.value)
+        }
+        val serverRequest = getServerRequestFromRequest(request)
+        val interruptMonitor = object : InterruptMonitor {
+            override val isInterrupted: Boolean
+                get() = false
+        }
+        if (isFetchFileServerUrl(request.url)) {
+            val response = fileServerDownloader.execute(serverRequest, interruptMonitor)
+            if (response != null) {
+                val copy = copyDownloadResponseNoStream(response)
+                fileServerDownloader.disconnect(response)
+                return copy
+            }
+        } else {
+            val response = httpDownloader.execute(serverRequest, interruptMonitor)
+            if (response != null) {
+                val copy = copyDownloadResponseNoStream(response)
+                httpDownloader.disconnect(response)
+                return copy
+            }
+        }
+        throw IOException(RESPONSE_NOT_SUCCESSFUL)
     }
 
     override fun getFetchFileServerCatalog(request: Request): List<FileResource> {

@@ -278,3 +278,8 @@ fun getFileUri(path: String): Uri {
 fun deleteFile(file: File): Boolean {
     return if (file.exists() && file.canWrite()) file.delete() else false
 }
+
+fun copyDownloadResponseNoStream(response: Downloader.Response): Downloader.Response {
+    return Downloader.Response(response.code, response.isSuccessful, response.contentLength, null,
+            response.request, response.hash, response.responseHeaders, response.acceptsRanges)
+}

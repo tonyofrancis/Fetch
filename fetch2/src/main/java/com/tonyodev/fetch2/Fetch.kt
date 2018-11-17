@@ -745,6 +745,17 @@ interface Fetch {
     fun getContentLengthForRequest(request: Request, fromServer: Boolean, func: Func<Long>, func2: Func<Error>?): Fetch
 
     /**
+     * Gets the Server Response for the url and associated headers.
+     * @param url the url. Cannot be null.
+     * @param headers the request headers for the url. Can be null.
+     * @param func the callback the server response is returned on. Cannot be null.
+     * @param func2 the callback that is executed with an error occurs. Can be null.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun getServerResponse(url: String, headers: Map<String, String>?, func: Func<Downloader.Response>, func2: Func<Error>? = null): Fetch
+
+    /**
      * Gets the full File Resource Catalog of a Fetch File Server.
      * @param request Request. Can be a managed or un-managed request. The request is not stored in
      * the fetch database.

@@ -2,6 +2,7 @@ package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.Downloader
 import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.FileResource
 import java.io.Closeable
@@ -50,6 +51,7 @@ interface FetchHandler : Closeable {
     fun removeListener(listener: FetchListener)
     fun getDownloadBlocks(id: Int): List<DownloadBlock>
     fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long
+    fun getServerResponse(url: String, header: Map<String, String>? = null): Downloader.Response
     fun getFetchFileServerCatalog(request: Request): List<FileResource>
     fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int)
     fun replaceExtras(id: Int, extras: Extras): Download
