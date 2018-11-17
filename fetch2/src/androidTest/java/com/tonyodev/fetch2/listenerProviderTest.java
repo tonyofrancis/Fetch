@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2;
 
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.tonyodev.fetch2.fetch.ListenerCoordinator;
 

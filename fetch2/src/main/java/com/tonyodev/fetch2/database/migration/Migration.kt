@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2.database.migration
 
-import android.arch.persistence.room.migration.Migration
+import androidx.room.migration.Migration
 
 
 abstract class Migration constructor(startVersion: Int, endVersion: Int)
