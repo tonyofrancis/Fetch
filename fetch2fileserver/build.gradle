@@ -28,7 +28,7 @@ android {
         versionCode library_version_code
         versionName library_version
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
 
@@ -56,16 +56,16 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "androidx.appcompat:appcompat:$android_support_version"
+    implementation "com.android.support:appcompat-v7:$android_support_version"
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    kapt "androidx.room:room-compiler:$room_version"
-    api "androidx.room:room-runtime:$room_version"
+    kapt "android.arch.persistence.room:compiler:$room_version"
+    api "android.arch.persistence.room:runtime:$room_version"
 
     api project(':fetch2core')
 
     testImplementation "junit:junit:$junit_version"
-    androidTestImplementation "androidx.test:runner:$test_runner_version"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
+    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
 }
 
 //publish {

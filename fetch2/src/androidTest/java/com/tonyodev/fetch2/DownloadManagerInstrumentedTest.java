@@ -3,8 +3,8 @@ package com.tonyodev.fetch2;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
 import com.tonyodev.fetch2.database.DatabaseManager;
 import com.tonyodev.fetch2.database.DatabaseManagerImpl;
@@ -26,6 +26,7 @@ import com.tonyodev.fetch2core.FetchCoreDefaults;
 import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FetchLogger;
 import com.tonyodev.fetch2core.FileServerDownloader;
+import com.tonyodev.fetch2core.HandlerWrapper;
 
 import org.junit.After;
 import org.junit.Before;

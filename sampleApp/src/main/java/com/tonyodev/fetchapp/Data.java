@@ -2,7 +2,7 @@ package com.tonyodev.fetchapp;
 
 import android.net.Uri;
 import android.os.Environment;
-import androidx.annotation.NonNull;
+import android.support.annotation.NonNull;
 
 import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;

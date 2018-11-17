@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2.database.migration
 
-import androidx.sqlite.db.SupportSQLiteDatabase
+import android.arch.persistence.db.SupportSQLiteDatabase
 import com.tonyodev.fetch2.database.DownloadDatabase
 
 

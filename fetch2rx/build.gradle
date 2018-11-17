@@ -26,7 +26,7 @@ android {
         versionCode library_version_code
         versionName library_version
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
 
@@ -61,8 +61,8 @@ dependencies {
     api project(':fetch2')
 
     testImplementation "junit:junit:$junit_version"
-    androidTestImplementation "androidx.test:runner:$test_runner_version"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
+    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
 }
 
 //publish {
