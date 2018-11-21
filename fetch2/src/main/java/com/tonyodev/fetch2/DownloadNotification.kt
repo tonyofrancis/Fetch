@@ -5,7 +5,7 @@ import android.os.Parcelable
 import com.tonyodev.fetch2.database.DownloadInfo
 
 /** An object that represents a Fetch download notification.*/
-class DownloadNotification(download: Download) : Parcelable {
+open class DownloadNotification(download: Download) : Parcelable {
 
     /*The download the download notification object represents.*/
     var download: Download = download
