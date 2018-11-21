@@ -35,12 +35,12 @@ class FetchHandlerImpl(private val namespace: String,
     private var isTerminating = false
 
     override fun init() {
+        if (fetchNotificationManager != null) {
+            listenerCoordinator.addNotificationManager(fetchNotificationManager)
+        }
         databaseManager.sanitizeOnFirstEntry()
         if (autoStart) {
             priorityListProcessor.start()
-        }
-        if (fetchNotificationManager != null) {
-            listenerCoordinator.addNotificationManager(fetchNotificationManager)
         }
     }
 

@@ -34,7 +34,7 @@ interface Fetch {
     val fetchConfiguration: FetchConfiguration
 
     /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
-     * keep a background service using fetch ongoing until this field returns false.
+     * keep a background service ongoing until this field returns false.
      * This field can be accessed from any thread.
      * */
     val hasActiveDownloads: Boolean
@@ -46,6 +46,7 @@ interface Fetch {
      * 1. No storage space on the device.
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
+     * 3. Fetch is already managing a request that is downloading to the request file.
      * @param request Download Request
      * @param func Callback that the enqueued request will be returned on.
      *             Fetch may update a request depending on the initial request's Enqueue Action.
@@ -64,6 +65,7 @@ interface Fetch {
      * 1. No storage space on the device.
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
+     * 3. Fetch is already managing a request that is downloading to the request file.
      * @param requests Request List
      * @param func Callback that the enqueued or failed requests will be returned on.
      *             This callback returns a list with a pair<Request,Error> for each enqueued request.
@@ -673,7 +675,6 @@ interface Fetch {
      * @return Instance
      * */
     fun addListener(listener: FetchListener, notify: Boolean = DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED): Fetch
-
 
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener
