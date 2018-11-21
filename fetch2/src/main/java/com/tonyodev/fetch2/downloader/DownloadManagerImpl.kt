@@ -46,7 +46,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
                     executor?.shutdown()
                 } catch (e: Exception) {
                 }
-                executor = getNewDownloadExecutorService(concurrentLimit)
+                executor = getNewDownloadExecutorService(value)
                 field = value
                 logger.d("DownloadManager concurrentLimit changed from $field to $value")
             }
