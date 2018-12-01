@@ -30,5 +30,5 @@ val defaultPriority = Priority.NORMAL
 val defaultNoError = Error.NONE
 val defaultStatus = Status.NONE
 val defaultEnqueueAction = EnqueueAction.UPDATE_ACCORDINGLY
-val defaultDownloader: Downloader = HttpUrlConnectionDownloader()
+val defaultDownloader: Downloader<*, *> = HttpUrlConnectionDownloader()
 val defaultFileServerDownloader: FileServerDownloader = FetchFileServerDownloader()

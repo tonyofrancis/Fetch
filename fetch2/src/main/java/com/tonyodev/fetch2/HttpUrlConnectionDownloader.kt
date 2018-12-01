@@ -23,16 +23,14 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
          * The SEQUENTIAL type downloads bytes in sequence.
          * The PARALLEL type downloads bytes in parallel.
          * */
-        private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL) : Downloader {
+        private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL) : Downloader<HttpURLConnection, Unit> {
 
     constructor(fileDownloaderType: Downloader.FileDownloaderType) : this(null, fileDownloaderType)
 
     protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
     protected val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
 
-    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
-        val httpUrl = URL(request.url)
-        val client = httpUrl.openConnection() as HttpURLConnection
+    override fun onPreClientExecute(client: HttpURLConnection, request: Downloader.ServerRequest) {
         client.requestMethod = request.requestMethod
         client.readTimeout = connectionPrefs.readTimeout
         client.connectTimeout = connectionPrefs.connectTimeout
@@ -43,6 +41,12 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         request.headers.entries.forEach {
             client.addRequestProperty(it.key, it.value)
         }
+    }
+
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
+        val httpUrl = URL(request.url)
+        val client = httpUrl.openConnection() as HttpURLConnection
+        onPreClientExecute(client, request)
         client.connect()
         val code = client.responseCode
         var success = false

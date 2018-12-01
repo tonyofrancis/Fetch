@@ -14,7 +14,16 @@ import java.io.InputStream
  * For an example see
  * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader
  * */
-interface Downloader : Closeable {
+interface Downloader<T, R> : Closeable {
+
+    /**
+     * This method is called by Fetch before executing a request against the client.
+     * Override this method to setup and configure the client for the request.
+     * @param client the client
+     * @param request the request
+     * @return returns any object that makes sense for the specified downloader. can be null.
+     * */
+    fun onPreClientExecute(client: T, request: Downloader.ServerRequest): R?
 
     /**
      * This method is called by Fetch to execute a request against the client.

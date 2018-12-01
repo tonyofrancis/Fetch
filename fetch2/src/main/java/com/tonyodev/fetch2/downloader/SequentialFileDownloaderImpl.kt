@@ -11,7 +11,7 @@ import java.net.HttpURLConnection
 import kotlin.math.ceil
 
 class SequentialFileDownloaderImpl(private val initialDownload: Download,
-                                   private val downloader: Downloader,
+                                   private val downloader: Downloader<*, *>,
                                    private val progressReportingIntervalMillis: Long,
                                    private val logger: Logger,
                                    private val networkInfoProvider: NetworkInfoProvider,
@@ -301,7 +301,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             }
         }
     }
-    
+
     private fun getRequest(): Downloader.ServerRequest {
         val headers = initialDownload.headers.toMutableMap()
         headers["Range"] = "bytes=$downloaded-"

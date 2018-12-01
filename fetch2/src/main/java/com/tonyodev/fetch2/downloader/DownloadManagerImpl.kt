@@ -14,7 +14,7 @@ import com.tonyodev.fetch2core.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class DownloadManagerImpl(private val httpDownloader: Downloader,
+class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                           concurrentLimit: Int,
                           private val progressReportingIntervalMillis: Long,
                           private val logger: Logger,
@@ -253,7 +253,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader,
         }
     }
 
-    private fun getFileDownloader(download: Download, downloader: Downloader): FileDownloader {
+    private fun getFileDownloader(download: Download, downloader: Downloader<*, *>): FileDownloader {
         val request = getRequestForDownload(download)
         val supportedDownloadTypes = downloader.getRequestSupportedFileDownloaderTypes(request)
         return if (downloader.getRequestFileDownloaderType(request, supportedDownloadTypes) == Downloader.FileDownloaderType.SEQUENTIAL) {

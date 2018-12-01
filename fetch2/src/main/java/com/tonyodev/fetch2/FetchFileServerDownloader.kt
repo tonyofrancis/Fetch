@@ -32,7 +32,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
 
     protected val connections: MutableMap<Downloader.Response, FetchFileResourceTransporter> = Collections.synchronizedMap(HashMap<Downloader.Response, FetchFileResourceTransporter>())
 
-    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
+    override fun onPreClientExecute(client: FetchFileResourceTransporter, request: Downloader.ServerRequest): FileServerDownloader.TransporterRequest {
         val headers = request.headers
         val range = getRangeForFetchFileServerRequest(headers["Range"] ?: "bytes=0-")
         val authorization = headers[FileRequest.FIELD_AUTHORIZATION] ?: ""
@@ -42,12 +42,9 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         request.headers.forEach {
             extras.putString(it.key, it.value)
         }
-        val inetSocketAddress = InetSocketAddress(address, port)
-        val transporter = FetchFileResourceTransporter()
-        var timeoutStop: Long
-        val timeoutStart = System.nanoTime()
-        transporter.connect(inetSocketAddress)
-        val fileRequest = FileRequest(
+        val transporterRequest = FileServerDownloader.TransporterRequest()
+        transporterRequest.inetSocketAddress = InetSocketAddress(address, port)
+        transporterRequest.fileRequest = FileRequest(
                 type = TYPE_FILE,
                 fileResourceId = getFileResourceIdFromUrl(request.url),
                 rangeStart = range.first,
@@ -61,7 +58,16 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 size = headers[FileRequest.FIELD_SIZE]?.toIntOrNull()
                         ?: 0,
                 persistConnection = false)
-        transporter.sendFileRequest(fileRequest)
+        return transporterRequest
+    }
+
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
+        val transporter = FetchFileResourceTransporter()
+        var timeoutStop: Long
+        val timeoutStart = System.nanoTime()
+        val transporterRequest = onPreClientExecute(transporter, request)
+        transporter.connect(transporterRequest.inetSocketAddress)
+        transporter.sendFileRequest(transporterRequest.fileRequest)
         while (!interruptMonitor.isInterrupted) {
             val serverResponse = transporter.receiveFileResponse()
             if (serverResponse != null) {
