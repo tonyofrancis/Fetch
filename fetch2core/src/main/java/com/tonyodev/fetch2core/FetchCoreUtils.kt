@@ -226,7 +226,7 @@ fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): 
     return transferEncoding != "chunked" && contentLength > -1L
 }
 
-fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, downloader: Downloader): Set<Downloader.FileDownloaderType> {
+fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Set<Downloader.FileDownloaderType> {
     val fileDownloaderTypeSet = mutableSetOf(Downloader.FileDownloaderType.SEQUENTIAL)
     return try {
         val response = downloader.execute(request, object : InterruptMonitor {
@@ -245,7 +245,7 @@ fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, do
     }
 }
 
-fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downloader): Long {
+fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Long {
     return try {
         val response = downloader.execute(request, object : InterruptMonitor {
             override val isInterrupted: Boolean

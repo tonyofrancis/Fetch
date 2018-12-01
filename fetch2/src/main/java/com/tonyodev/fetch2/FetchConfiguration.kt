@@ -14,7 +14,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val concurrentLimit: Int,
                                              val progressReportingIntervalMillis: Long,
                                              val loggingEnabled: Boolean,
-                                             val httpDownloader: Downloader,
+                                             val httpDownloader: Downloader<*, *>,
                                              val globalNetworkType: NetworkType,
                                              val logger: Logger,
                                              val autoStart: Boolean,
@@ -77,7 +77,7 @@ class FetchConfiguration private constructor(val appContext: Context,
          * @param downloader Downloader Client
          * @return Builder
          * */
-        fun setHttpDownloader(downloader: Downloader): Builder {
+        fun setHttpDownloader(downloader: Downloader<*, *>): Builder {
             this.httpDownloader = downloader
             return this
         }

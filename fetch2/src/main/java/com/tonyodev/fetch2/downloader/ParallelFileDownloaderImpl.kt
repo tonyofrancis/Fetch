@@ -16,7 +16,7 @@ import java.util.concurrent.Executors
 import kotlin.math.ceil
 
 class ParallelFileDownloaderImpl(private val initialDownload: Download,
-                                 private val downloader: Downloader,
+                                 private val downloader: Downloader<*, *>,
                                  private val progressReportingIntervalMillis: Long,
                                  private val logger: Logger,
                                  private val networkInfoProvider: NetworkInfoProvider,

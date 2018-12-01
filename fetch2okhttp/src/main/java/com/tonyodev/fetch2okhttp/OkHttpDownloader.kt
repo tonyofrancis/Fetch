@@ -22,7 +22,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
          * The PARALLEL type downloads bytes in parallel.
          * */
         private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL)
-    : Downloader {
+    : Downloader<OkHttpClient, Request> {
 
     constructor(fileDownloaderType: Downloader.FileDownloaderType) : this(null, fileDownloaderType)
 
@@ -38,16 +38,18 @@ open class OkHttpDownloader @JvmOverloads constructor(
             .retryOnConnectionFailure(false)
             .build()
 
-    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
+    override fun onPreClientExecute(client: OkHttpClient, request: Downloader.ServerRequest): Request {
         val okHttpRequestBuilder = Request.Builder()
                 .url(request.url)
                 .method(request.requestMethod, null)
-
         request.headers.entries.forEach {
             okHttpRequestBuilder.addHeader(it.key, it.value)
         }
+        return okHttpRequestBuilder.build()
+    }
 
-        val okHttpRequest = okHttpRequestBuilder.build()
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
+        val okHttpRequest = onPreClientExecute(client, request)
         val okHttpResponse = client.newCall(okHttpRequest).execute()
         val code = okHttpResponse.code()
         val success = okHttpResponse.isSuccessful
