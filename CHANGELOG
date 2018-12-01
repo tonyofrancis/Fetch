@@ -1,3 +1,8 @@
+Version 2.3.2
+- Downloader interfaces and classes that extend Downloader now have a new method called onPreClientExecute(client: T, request: Downloader.ServerRequest): R?
+  This method allows you to specify settings on the client before executing the request.
+- Fixed resume bug with Parallel downloader
+
 Version 2.3.1
 This is the first stable version of Fetch 2. Enjoy.
 - Fixed an issue where the priority queue backoff would not work correctly.
