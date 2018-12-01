@@ -264,8 +264,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     }
 
     private fun getFileSliceList(acceptsRanges: Boolean, request: Downloader.ServerRequest): List<FileSlice> {
-        val file = getFile(downloadInfo.file)
-        if (!file.exists()) {
+        if (!storageResolver.fileExists(downloadInfo.file)) {
             deleteAllInFolderForId(downloadInfo.id, fileTempDir)
         }
         val previousSliceSize = getPreviousSliceCount(downloadInfo.id, fileTempDir)
