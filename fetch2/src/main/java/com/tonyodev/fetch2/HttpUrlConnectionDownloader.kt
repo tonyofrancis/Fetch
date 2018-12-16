@@ -2,6 +2,7 @@ package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2core.*
 import java.io.InputStream
+import java.net.CookieHandler
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Collections
@@ -29,6 +30,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
     protected val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
+    protected val cookieManager = getDefaultCookieManager()
 
     override fun onPreClientExecute(client: HttpURLConnection, request: Downloader.ServerRequest): Void? {
         client.requestMethod = request.requestMethod
@@ -45,6 +47,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     }
 
     override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
+        CookieHandler.setDefault(cookieManager)
         val httpUrl = URL(request.url)
         val client = httpUrl.openConnection() as HttpURLConnection
         onPreClientExecute(client, request)
