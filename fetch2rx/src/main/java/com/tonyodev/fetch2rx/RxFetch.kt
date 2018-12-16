@@ -35,8 +35,9 @@ interface RxFetch {
     val fetchConfiguration: FetchConfiguration
 
     /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
-     * keep a background service using fetch ongoing until this field returns false.
-     * This field can be accessed from any thread.
+     * keep a background service ongoing until this field returns false.
+     * This field can be accessed on non UI threads.
+     * @throws FetchException if accessed on ui thread
      * */
     val hasActiveDownloads: Boolean
 

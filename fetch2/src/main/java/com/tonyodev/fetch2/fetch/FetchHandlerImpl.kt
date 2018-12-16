@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2.fetch
 
 import android.os.Handler
+import android.os.Looper
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
@@ -627,7 +628,10 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun hasActiveDownloads(): Boolean {
-        return downloadManager.getActiveDownloadCount() > 0
+        if (Thread.currentThread() == Looper.getMainLooper().thread) {
+            throw FetchException(BLOCKING_CALL_ON_UI_THREAD)
+        }
+        return databaseManager.getPendingCount() > 0
     }
 
     override fun getPendingCount(): Long {
