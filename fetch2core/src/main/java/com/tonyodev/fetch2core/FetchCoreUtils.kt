@@ -292,3 +292,7 @@ fun getDefaultCookieManager(): CookieManager {
     cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
     return cookieManager
 }
+
+fun isRedirect(responseCode: Int): Boolean {
+    return responseCode in 300..399
+}
