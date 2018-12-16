@@ -91,7 +91,9 @@ class FetchHandlerImpl(private val namespace: String,
         cancelDownloadsIfDownloading(listOf(downloadInfo))
         var existingDownload = databaseManager.getByFile(downloadInfo.file)
         if (existingDownload == null) {
-            storageResolver.createFile(downloadInfo.file)
+            if (downloadInfo.enqueueAction != EnqueueAction.INCREMENT_FILE_NAME) {
+                storageResolver.createFile(downloadInfo.file)
+            }
         } else {
             cancelDownloadsIfDownloading(listOf(existingDownload))
             existingDownload = databaseManager.getByFile(downloadInfo.file)

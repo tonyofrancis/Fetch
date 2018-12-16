@@ -65,6 +65,7 @@ fun getIncrementedFileIfOriginalExists(originalPath: String): File {
             file = File("$parentPath$newFileName.$extension")
         }
     }
+    createFile(file)
     return file
 }
 
