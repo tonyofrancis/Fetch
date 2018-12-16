@@ -630,6 +630,10 @@ class FetchHandlerImpl(private val namespace: String,
         return downloadManager.getActiveDownloadCount() > 0
     }
 
+    override fun getPendingCount(): Long {
+        return databaseManager.getPendingCount()
+    }
+
     private fun cancelDownloadsIfDownloading(downloads: List<DownloadInfo>) {
         for (download in downloads) {
             if (downloadManager.contains(download.id)) {

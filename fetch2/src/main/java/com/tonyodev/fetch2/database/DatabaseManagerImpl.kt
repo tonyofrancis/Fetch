@@ -3,6 +3,7 @@ package com.tonyodev.fetch2.database
 import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteException
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
@@ -224,6 +225,23 @@ class DatabaseManagerImpl constructor(context: Context,
                 downloads = downloads.filter { it.status == Status.QUEUED }
             }
             return downloads
+        }
+    }
+
+    private val pendingCountQuery = "SELECT ${DownloadDatabase.COLUMN_ID} FROM ${DownloadDatabase.TABLE_NAME}" +
+            " WHERE ${DownloadDatabase.COLUMN_STATUS} = '${Status.QUEUED.value}'" +
+            " OR ${DownloadDatabase.COLUMN_STATUS} = '${Status.DOWNLOADING}'"
+
+    override fun getPendingCount(): Long {
+        synchronized(lock) {
+            return try {
+                val cursor: Cursor? = database.query(pendingCountQuery)
+                val count = cursor?.count?.toLong() ?: -1L
+                cursor?.close()
+                count
+            } catch (e: Exception) {
+                -1
+            }
         }
     }
 

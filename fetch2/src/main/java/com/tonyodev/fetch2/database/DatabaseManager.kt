@@ -31,6 +31,7 @@ interface DatabaseManager : Closeable {
     fun getPendingDownloadsSorted(): List<DownloadInfo>
     fun sanitizeOnFirstEntry()
     fun updateExtras(id: Int, extras: Extras): DownloadInfo?
+    fun getPendingCount(): Long
 
     interface Delegate {
         fun deleteTempFilesForDownload(downloadInfo: DownloadInfo)

@@ -512,6 +512,26 @@ interface RxFetch {
     fun getFetchFileServerCatalog(request: Request): Convertible<List<FileResource>>
 
     /**
+     * Blocks the current thread(Not Ui Thread) to waiting on one of the two conditions.
+     * Condition One: Waits until Fetch has downloaded all downloading and pending downloads.
+     * Condition Two: Waits until the allow time expires
+     * if Fetch has not completed or attempted to download queued downloads.
+     * This method returns when one of the conditions if violated.
+     * Note: Calling this method on the UIThread is strongly discouraged and an exception is thrown.
+     * @throws FetchException if calling on the main thread
+     * */
+    fun awaitFinishOrTimeout(allowTimeInMilliseconds: Long)
+
+    /**
+     * Blocks the current thread(Not Ui Thread) to waiting on the current conditions.
+     * Condition One: Waits until Fetch has downloaded all downloading and pending downloads.
+     * This method returns when one of the conditions if violated.
+     * Note: Calling this method on the UIThread is strongly discouraged and an exception is thrown.
+     * @throws FetchException if calling on the main thread
+     * */
+    fun awaitFinish()
+
+    /**
      * RX Fetch implementation class. Use this Singleton to get instances of RxFetch or Fetch.
      * */
     companion object Impl {

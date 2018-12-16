@@ -989,6 +989,14 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun awaitFinishOrTimeout(allowTimeInMilliseconds: Long) {
+        com.tonyodev.fetch2.util.awaitFinishOrTimeout(allowTimeInMilliseconds, fetchHandler)
+    }
+
+    override fun awaitFinish() {
+        awaitFinishOrTimeout(-1)
+    }
+
     companion object {
 
         @JvmStatic

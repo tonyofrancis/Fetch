@@ -294,6 +294,6 @@ fun getDefaultCookieManager(): CookieManager {
     return cookieManager
 }
 
-fun isRedirect(responseCode: Int): Boolean {
-    return responseCode in 300..399
+fun hasAllowedTimeExpired(timeStartedMillis: Long, timeStopMillis: Long, allowedTimeMillis: Long): Boolean {
+    return timeStopMillis - timeStartedMillis >= allowedTimeMillis
 }

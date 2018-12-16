@@ -2,9 +2,12 @@
 
 package com.tonyodev.fetch2.util
 
+import android.os.Looper
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.exception.FetchException
+import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2core.*
 import com.tonyodev.fetch2core.server.FileRequest
 import java.io.File
@@ -177,5 +180,28 @@ fun getFileSliceInfo(fileSliceSize: Int, totalBytes: Long): FileSliceInfo {
     } else {
         val bytesPerSlice = ceil((totalBytes.toFloat() / fileSliceSize.toFloat())).toLong()
         return FileSliceInfo(fileSliceSize, bytesPerSlice)
+    }
+}
+
+fun awaitFinishOrTimeout(allowTimeInMilliseconds: Long, fetchHandler: FetchHandler) {
+    if (Thread.currentThread() == Looper.getMainLooper().thread) {
+        throw FetchException(AWAIT_CALL_ON_UI_THREAD)
+    }
+    var hasAllowedTimeExpired = false
+    val sleepTime = if (allowTimeInMilliseconds < 1000) allowTimeInMilliseconds else 1000
+    val timeStarted = System.currentTimeMillis()
+    var pendingCount = fetchHandler.getPendingCount()
+    while (pendingCount > 0 && !hasAllowedTimeExpired) {
+        try {
+            Thread.sleep(sleepTime)
+        } catch (e: Exception) {
+
+        }
+        hasAllowedTimeExpired = if (allowTimeInMilliseconds == -1L) {
+            false
+        } else {
+            hasAllowedTimeExpired(timeStarted, System.currentTimeMillis(), allowTimeInMilliseconds)
+        }
+        pendingCount = fetchHandler.getPendingCount()
     }
 }
