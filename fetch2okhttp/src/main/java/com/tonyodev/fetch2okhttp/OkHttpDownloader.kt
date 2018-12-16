@@ -36,6 +36,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
             .followRedirects(true)
             .followSslRedirects(true)
             .retryOnConnectionFailure(false)
+            .cookieJar(getDefaultCookieJar())
             .build()
 
     override fun onPreClientExecute(client: OkHttpClient, request: Downloader.ServerRequest): Request {

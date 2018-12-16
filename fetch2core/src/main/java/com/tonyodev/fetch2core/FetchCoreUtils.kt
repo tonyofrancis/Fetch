@@ -11,6 +11,9 @@ import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.ceil
+import java.net.CookieManager
+import java.net.CookiePolicy
+
 
 const val GET_REQUEST_METHOD = "GET"
 
@@ -282,4 +285,10 @@ fun deleteFile(file: File): Boolean {
 fun copyDownloadResponseNoStream(response: Downloader.Response): Downloader.Response {
     return Downloader.Response(response.code, response.isSuccessful, response.contentLength, null,
             response.request, response.hash, response.responseHeaders, response.acceptsRanges)
+}
+
+fun getDefaultCookieManager(): CookieManager {
+    val cookieManager = CookieManager()
+    cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
+    return cookieManager
 }

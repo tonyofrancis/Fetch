@@ -63,6 +63,7 @@ dependencies {
 
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api "com.squareup.okhttp3:okhttp:$okhttp_version"
+    api "com.squareup.okhttp3:okhttp-urlconnection:$okhttp_url_version"
     api project(':fetch2core')
 
     testImplementation "junit:junit:$junit_version"
