@@ -819,6 +819,7 @@ interface Fetch {
      * if Fetch has not completed or attempted to download queued downloads.
      * This method returns when one of the conditions if violated.
      * Note: Calling this method on the UIThread is strongly discouraged and an exception is thrown.
+     * @param allowTimeInMilliseconds the allowed time in milliseconds. If zero the wait is indefinite.
      * @throws FetchException if calling on the main thread
      * */
     fun awaitFinishOrTimeout(allowTimeInMilliseconds: Long)

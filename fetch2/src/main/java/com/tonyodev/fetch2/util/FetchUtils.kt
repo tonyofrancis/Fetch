@@ -188,10 +188,15 @@ fun awaitFinishOrTimeout(allowTimeInMilliseconds: Long, fetchHandler: FetchHandl
         throw FetchException(AWAIT_CALL_ON_UI_THREAD)
     }
     var hasAllowedTimeExpired = false
-    val sleepTime = if (allowTimeInMilliseconds < 1000) allowTimeInMilliseconds else 1000
+    val indefinite = allowTimeInMilliseconds == 0L
+    val sleepTime = when {
+        indefinite -> 5000
+        allowTimeInMilliseconds < 1000 -> allowTimeInMilliseconds
+        else -> 1000
+    }
     val timeStarted = System.currentTimeMillis()
     var pendingCount = fetchHandler.getPendingCount()
-    while (pendingCount > 0 && !hasAllowedTimeExpired) {
+    while (indefinite || (pendingCount > 0 && !hasAllowedTimeExpired)) {
         try {
             Thread.sleep(sleepTime)
         } catch (e: Exception) {
