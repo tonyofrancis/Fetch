@@ -3,6 +3,7 @@ package com.tonyodev.fetch2core
 import android.os.Parcel
 import android.os.Parcelable
 import org.json.JSONObject
+import java.io.Serializable
 
 /**
  *  Class that holds custom key/value pair data for a request and download.
@@ -16,7 +17,7 @@ import org.json.JSONObject
  * */
 open class Extras(
         /** Map that holds the custom data.*/
-        protected val data: Map<String, String>) : Parcelable {
+        protected val data: Map<String, String>) : Parcelable, Serializable {
 
     /**
      * Retrieve a string value for passed in matching key.

@@ -1,9 +1,10 @@
 package com.tonyodev.fetch2core
 
 import android.os.Parcelable
+import java.io.Serializable
 
 /** Class used to hold partial downloaded information for a download.*/
-interface DownloadBlock: Parcelable {
+interface DownloadBlock: Parcelable, Serializable {
 
     /* Download ID.*/
     val downloadId: Int

@@ -3,6 +3,7 @@ package com.tonyodev.fetch2core.server
 import android.os.Parcel
 import android.os.Parcelable
 import com.tonyodev.fetch2core.Extras
+import java.io.Serializable
 import java.lang.StringBuilder
 
 /**
@@ -17,7 +18,7 @@ data class FileRequest(val type: Int = TYPE_INVALID,
                        val extras: Extras = Extras.emptyExtras,
                        val page: Int = 0,
                        val size: Int = 0,
-                       val persistConnection: Boolean = true) : Parcelable {
+                       val persistConnection: Boolean = true) : Parcelable, Serializable {
 
     val toJsonString: String
         get() {

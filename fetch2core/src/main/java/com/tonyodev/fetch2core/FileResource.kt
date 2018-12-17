@@ -2,10 +2,11 @@ package com.tonyodev.fetch2core
 
 import android.os.Parcel
 import android.os.Parcelable
+import java.io.Serializable
 
 /** File Resource used by Fetch File Server to server content data.
  * */
-class FileResource : Parcelable {
+class FileResource : Parcelable, Serializable {
 
     /** Unique File Resource Identifier.
      * Clients can request data from the server using the file resource id
