@@ -2,6 +2,7 @@ package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.Extras
+import java.io.Serializable
 
 /**
  * A RequestInfo allows you to update an existing download managed by Fetch.
@@ -9,7 +10,7 @@ import com.tonyodev.fetch2core.Extras
  * existing download. Be sure to update all the fields in this class with
  * the proper values.
  * */
-open class RequestInfo {
+open class RequestInfo : Serializable {
 
     /** Can be used to set your own unique identifier for the request.*/
     var identifier: Long = DEFAULT_UNIQUE_IDENTIFIER

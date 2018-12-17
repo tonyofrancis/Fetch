@@ -6,6 +6,7 @@ import android.os.Parcelable
 import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.getFileUri
 import com.tonyodev.fetch2core.getUniqueId
+import java.io.Serializable
 
 /**
  * Use this class to create a request that is used by Fetch to enqueue a download and
@@ -17,7 +18,7 @@ open class Request constructor(
 
         /** The file eg(/files/download.txt) where the file will be
          * downloaded to and saved on disk.*/
-        val file: String) : RequestInfo(), Parcelable {
+        val file: String) : RequestInfo(), Parcelable, Serializable {
 
     constructor(
             /** The url where the file will be downloaded from.*/

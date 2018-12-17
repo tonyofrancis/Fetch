@@ -3,12 +3,13 @@ package com.tonyodev.fetch2
 import android.net.Uri
 import android.os.Parcelable
 import com.tonyodev.fetch2core.Extras
+import java.io.Serializable
 
 /**
  * An immutable object which contains a current snapshot of all the information
  * about a specific download managed by Fetch.
  * */
-interface Download : Parcelable {
+interface Download : Parcelable, Serializable {
 
     /** Used to identify a download. This id also matches the id of the request that started
      * the download.*/
