@@ -297,3 +297,12 @@ fun getDefaultCookieManager(): CookieManager {
 fun hasAllowedTimeExpired(timeStartedMillis: Long, timeStopMillis: Long, allowedTimeMillis: Long): Boolean {
     return timeStopMillis - timeStartedMillis >= allowedTimeMillis
 }
+
+fun getRefererFromUrl(url: String): String {
+    return try {
+        val uri = Uri.parse(url)
+        "${uri.scheme}://${uri.authority}"
+    } catch (e: Exception) {
+        "https://google.com"
+    }
+}

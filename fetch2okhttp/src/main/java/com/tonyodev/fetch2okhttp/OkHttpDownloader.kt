@@ -50,7 +50,13 @@ open class OkHttpDownloader @JvmOverloads constructor(
     }
 
     override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
-        val okHttpRequest = onPreClientExecute(client, request)
+        var okHttpRequest = onPreClientExecute(client, request)
+        if (okHttpRequest.header("Referer") == null) {
+            val referer = getRefererFromUrl(request.url)
+            okHttpRequest = okHttpRequest.newBuilder()
+                    .addHeader("Referer", referer)
+                    .build()
+        }
         val okHttpResponse = client.newCall(okHttpRequest).execute()
         val code = okHttpResponse.code()
         val success = okHttpResponse.isSuccessful

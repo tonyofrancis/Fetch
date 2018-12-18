@@ -51,6 +51,10 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         val httpUrl = URL(request.url)
         val client = httpUrl.openConnection() as HttpURLConnection
         onPreClientExecute(client, request)
+        if (client.getRequestProperty("Referer") == null) {
+            val referer = getRefererFromUrl(request.url)
+            client.addRequestProperty("Referer", referer)
+        }
         client.connect()
         val code = client.responseCode
         var success = false
