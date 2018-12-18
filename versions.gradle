@@ -1,5 +1,5 @@
 ext {
-    kotlin_version = '1.3.10'
+    kotlin_version = '1.3.11'
     okhttp_version = '3.12.0'
     okhttp_url_version = '3.11.0'
     android_support_version = '28.0.0'
@@ -17,6 +17,6 @@ ext {
     rxAndroid2_version = "2.1.0"
     timber_version = "4.7.1"
     novoda_bintray_version = "0.9"
-    library_version = "2.3.3"
-    library_version_code = 58
+    library_version = "2.3.4"
+    library_version_code = 59
 }

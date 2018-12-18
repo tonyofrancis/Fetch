@@ -1,3 +1,20 @@
+Version 2.3.4
+- Added default cookie manager for the okhttp and httpurlconnection client Downloaders.
+- Fixed an EnqueueAction.INCREMENT_FILE_NAME bug where files were not properly created.
+- Download, Request, DownloadBlock and other data classes now extend Serializable.
+- Okhttp and HttpUrlConnection clients now add a default Referer header to each request if
+  one is not provided. Default Referer is the host of the url passed in the request.
+- Behavior change and Updates for ActiveDownloads method on Fetch. The ActiveDownload method
+  can now only be called on threads other than the Main(UI) Thread. The ActiveDownload method
+  now correctly return true if there are active downloads. Downloads with a queued or Downloading status.
+  Note: Calling this method on a UI thread will throw a FetchException.
+- Added new awaitFinish methods on Fetch. The awaitFinish method blocks the current non UI thread
+  until Fetch has completed all enqueued downloads. The awaitFinishTimeout method takes in a time in milliseconds
+  to release the hold if Fetch has not completed all downloads in the allocated timeframe.
+  Passing 0 to the awaitFinishTimeout method will hold the thread indefinitely(Never releasing).
+  Recommend to use the awaitFinishTimeout method inside Android Workers and release the task when a certain amount of time has passed. See Java docs for details.
+  Note: Calling this method on a UI thread will throw a FetchException.
+
 Version 2.3.3
 - Fixed return type of Downloader interface method onPreClientExecute. Now returns Void correctly.
 

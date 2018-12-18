@@ -2,6 +2,7 @@ package com.tonyodev.fetch2core
 
 import android.os.Parcel
 import android.os.Parcelable
+import java.io.Serializable
 
 /**
  *  Mutable extras class that sets and holds custom key/value pair data for a request and download.
@@ -9,7 +10,8 @@ import android.os.Parcelable
  *  Save this extra on a fetch instance with the matching namespace for the request/download.
  *  @see com.tonyodev.fetch2.Fetch.replaceExtras(id, extras, func, func) method.
  * */
-open class MutableExtras(protected val mutableData: MutableMap<String, String> = mutableMapOf()) : Extras(mutableData) {
+open class MutableExtras(protected val mutableData: MutableMap<String, String> = mutableMapOf())
+    : Extras(mutableData), Serializable {
 
     /**
      * Stores a int value with its key inside this extras object.
