@@ -184,11 +184,11 @@ interface RxFetch {
     /**
      * Remove all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files for removed downloads are not deleted.
-     * @param status status
+     * @param statuses statuses
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with list of downloads that were removed.
      * */
-    fun removeAllInGroupWithStatus(id: Int, status: Status): Convertible<List<Download>>
+    fun removeAllInGroupWithStatus(id: Int, statuses: List<Status>): Convertible<List<Download>>
 
     /**
      * Delete a list of downloads managed by this instance of Fetch.
@@ -237,11 +237,11 @@ interface RxFetch {
     /**
      * Deletes all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files are also deleted.
-     * @param status status
+     * @param statuses statuses
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with list of downloads that were deleted.
      * */
-    fun deleteAllInGroupWithStatus(id: Int, status: Status): Convertible<List<Download>>
+    fun deleteAllInGroupWithStatus(id: Int, statuses: List<Status>): Convertible<List<Download>>
 
     /**
      * Cancel a list of non completed downloads managed by this instance of Fetch.
@@ -357,11 +357,11 @@ interface RxFetch {
      * Gets all downloads in a specific group with a specific status.
      * @see com.tonyodev.fetch2.Status
      * @param groupId group id to query.
-     * @param status Status to query.
+     * @param statuses Statuses to query.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with results.
      * */
-    fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): Convertible<List<Download>>
+    fun getDownloadsInGroupWithStatus(groupId: Int, status: List<Status>): Convertible<List<Download>>
 
     /**
      * Gets all downloads containing the identifier.

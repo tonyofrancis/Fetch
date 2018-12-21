@@ -368,7 +368,7 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
-    override fun removeAllInGroupWithStatus(id: Int, status: Status): Convertible<List<Download>> {
+    override fun removeAllInGroupWithStatus(id: Int, status: List<Status>): Convertible<List<Download>> {
         return synchronized(lock) {
             throwExceptionIfClosed()
             Flowable.just(Pair(id, status))
@@ -488,10 +488,10 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
-    override fun deleteAllInGroupWithStatus(id: Int, status: Status): Convertible<List<Download>> {
+    override fun deleteAllInGroupWithStatus(id: Int, statuses: List<Status>): Convertible<List<Download>> {
         return synchronized(lock) {
             throwExceptionIfClosed()
-            Flowable.just(Pair(id, status))
+            Flowable.just(Pair(id, statuses))
                     .subscribeOn(scheduler)
                     .flatMap {
                         throwExceptionIfClosed()
@@ -804,7 +804,7 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
-    override fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): Convertible<List<Download>> {
+    override fun getDownloadsInGroupWithStatus(groupId: Int, status: List<Status>): Convertible<List<Download>> {
         return synchronized(lock) {
             throwExceptionIfClosed()
             Flowable.just(status)
