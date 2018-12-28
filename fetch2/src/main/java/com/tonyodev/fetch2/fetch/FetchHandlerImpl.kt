@@ -118,6 +118,13 @@ class FetchHandlerImpl(private val namespace: String,
                         downloadInfo.status = Status.QUEUED
                         downloadInfo.error = defaultNoError
                     }
+                    if (downloadInfo.status == Status.COMPLETED && !storageResolver.fileExists(downloadInfo.file)) {
+                        storageResolver.createFile(downloadInfo.file)
+                        downloadInfo.downloaded = 0L
+                        downloadInfo.total = -1L
+                        downloadInfo.status = Status.QUEUED
+                        downloadInfo.error = defaultNoError
+                    }
                     true
                 } else {
                     false
