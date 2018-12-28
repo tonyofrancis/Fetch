@@ -188,7 +188,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
             backOffTime = DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
             unregisterPriorityIterator()
             registerPriorityIterator()
-            logger.d("PriorityIterator backoffTime reset to $backOffTime milliseconds")
         }
     }
 
@@ -213,8 +212,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
         } else {
             backOffTime * 2L
         }
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(backOffTime)
-        logger.d("PriorityIterator backoffTime increased to $minutes minute(s)")
     }
 
     private companion object {
