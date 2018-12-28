@@ -244,8 +244,8 @@ class FetchHandlerImpl(private val namespace: String,
         return removeDownloads(databaseManager.getByStatus(status))
     }
 
-    override fun removeAllInGroupWithStatus(groupId: Int, status: Status): List<Download> {
-        return removeDownloads(databaseManager.getDownloadsInGroupWithStatus(groupId, status))
+    override fun removeAllInGroupWithStatus(groupId: Int, statuses: List<Status>): List<Download> {
+        return removeDownloads(databaseManager.getDownloadsInGroupWithStatus(groupId, statuses))
     }
 
     private fun removeDownloads(downloads: List<DownloadInfo>): List<Download> {
@@ -274,8 +274,8 @@ class FetchHandlerImpl(private val namespace: String,
         return deleteDownloads(databaseManager.getByStatus(status))
     }
 
-    override fun deleteAllInGroupWithStatus(groupId: Int, status: Status): List<Download> {
-        return deleteDownloads(databaseManager.getDownloadsInGroupWithStatus(groupId, status))
+    override fun deleteAllInGroupWithStatus(groupId: Int, statuses: List<Status>): List<Download> {
+        return deleteDownloads(databaseManager.getDownloadsInGroupWithStatus(groupId, statuses))
     }
 
     private fun deleteDownloads(downloads: List<DownloadInfo>): List<Download> {
@@ -397,8 +397,8 @@ class FetchHandlerImpl(private val namespace: String,
         return databaseManager.getByStatus(status)
     }
 
-    override fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<Download> {
-        return databaseManager.getDownloadsInGroupWithStatus(groupId, status)
+    override fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>): List<Download> {
+        return databaseManager.getDownloadsInGroupWithStatus(groupId, statuses)
     }
 
     override fun getDownloadsByRequestIdentifier(identifier: Long): List<Download> {

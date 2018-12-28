@@ -54,8 +54,8 @@ interface DownloadDao {
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_GROUP = :group")
     fun getByGroup(group: Int): List<DownloadInfo>
 
-    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_GROUP = :group AND $COLUMN_STATUS = :status")
-    fun getByGroupWithStatus(group: Int, status: Status): List<DownloadInfo>
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_GROUP = :group AND $COLUMN_STATUS IN (:statuses)")
+    fun getByGroupWithStatus(group: Int, statuses: MutableList<Status>): List<DownloadInfo>
 
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_STATUS = :status ORDER BY $COLUMN_PRIORITY DESC, $COLUMN_CREATED ASC")
     fun getPendingDownloadsSorted(status: Status): List<DownloadInfo>

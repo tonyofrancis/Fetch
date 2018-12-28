@@ -364,12 +364,12 @@ open class FetchImpl constructor(override val namespace: String,
         return removeAllWithStatus(status, null, null)
     }
 
-    override fun removeAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
-        return executeRemoveAction({ fetchHandler.removeAllInGroupWithStatus(id, status) }, func, func2)
+    override fun removeAllInGroupWithStatus(id: Int, statuses: List<Status>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeRemoveAction({ fetchHandler.removeAllInGroupWithStatus(id, statuses) }, func, func2)
     }
 
-    override fun removeAllInGroupWithStatus(id: Int, status: Status): Fetch {
-        return removeAllInGroupWithStatus(id, status, null, null)
+    override fun removeAllInGroupWithStatus(id: Int, statuses: List<Status>): Fetch {
+        return removeAllInGroupWithStatus(id, statuses, null, null)
     }
 
     private fun executeRemoveAction(downloadAction: () -> List<Download>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
@@ -446,12 +446,12 @@ open class FetchImpl constructor(override val namespace: String,
         return deleteAllWithStatus(status, null, null)
     }
 
-    override fun deleteAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
-        return executeDeleteAction({ fetchHandler.deleteAllInGroupWithStatus(id, status) }, func, func2)
+    override fun deleteAllInGroupWithStatus(id: Int, statuses: List<Status>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
+        return executeDeleteAction({ fetchHandler.deleteAllInGroupWithStatus(id, statuses) }, func, func2)
     }
 
-    override fun deleteAllInGroupWithStatus(id: Int, status: Status): Fetch {
-        return deleteAllInGroupWithStatus(id, status, null, null)
+    override fun deleteAllInGroupWithStatus(id: Int, statuses: List<Status>): Fetch {
+        return deleteAllInGroupWithStatus(id, statuses, null, null)
     }
 
     private fun executeDeleteAction(downloadAction: () -> List<Download>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
@@ -750,11 +750,11 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
-    override fun getDownloadsInGroupWithStatus(groupId: Int, status: Status, func: Func<List<Download>>): Fetch {
+    override fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>, func: Func<List<Download>>): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                val downloads = fetchHandler.getDownloadsInGroupWithStatus(groupId, status)
+                val downloads = fetchHandler.getDownloadsInGroupWithStatus(groupId, statuses)
                 uiHandler.post {
                     func.call(downloads)
                 }

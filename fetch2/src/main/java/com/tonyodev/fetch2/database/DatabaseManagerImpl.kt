@@ -197,12 +197,14 @@ class DatabaseManagerImpl constructor(context: Context,
         }
     }
 
-    override fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<DownloadInfo> {
+    override fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>): List<DownloadInfo> {
         synchronized(lock) {
             throwExceptionIfClosed()
-            var downloads = requestDatabase.requestDao().getByGroupWithStatus(groupId, status)
+            var downloads = requestDatabase.requestDao().getByGroupWithStatus(groupId, statuses.toMutableList())
             if (sanitize(downloads)) {
-                downloads = downloads.filter { it.status == status }
+                downloads = downloads.filter { download ->
+                    statuses.any { it == download.status }
+                }
             }
             return downloads
         }
