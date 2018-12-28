@@ -321,22 +321,22 @@ interface Fetch {
     /**
      * Remove all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files for removed downloads are not deleted.
-     * @param status status
+     * @param statuses statuses
      * @param func callback returning a list of downloads that were removed.
      * @param func2 Callback that is called when attempting to remove downloads fail. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun removeAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?, func2: Func<Error>? = null): Fetch
+    fun removeAllInGroupWithStatus(id: Int, statuses: List<Status>, func: Func<List<Download>>?, func2: Func<Error>? = null): Fetch
 
     /**
      * Remove all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files for removed downloads are not deleted.
-     * @param status status
+     * @param statuses statuses
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun removeAllInGroupWithStatus(id: Int, status: Status): Fetch
+    fun removeAllInGroupWithStatus(id: Int, statuses: List<Status>): Fetch
 
     /**
      * Delete a list of downloads managed by this instance of Fetch.
@@ -438,22 +438,22 @@ interface Fetch {
     /**
      * Deletes all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files are also deleted.
-     * @param status status
+     * @param statuses statuses
      * @param func callback returns all deleted downloads with a specified status.
      * @param func2 Callback that is called when attempting to delete downloads fail. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun deleteAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?, func2: Func<Error>? = null): Fetch
+    fun deleteAllInGroupWithStatus(id: Int, statuses: List<Status>, func: Func<List<Download>>?, func2: Func<Error>? = null): Fetch
 
     /**
      * Deletes all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files are also deleted.
-     * @param status status
+     * @param statuses statuses
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun deleteAllInGroupWithStatus(id: Int, status: Status): Fetch
+    fun deleteAllInGroupWithStatus(id: Int, statuses: List<Status>): Fetch
 
     /**
      * Cancel a list of non completed downloads managed by this instance of Fetch.
@@ -645,12 +645,12 @@ interface Fetch {
      * Gets all downloads in a specific group with a specific status.
      * @see com.tonyodev.fetch2.Status
      * @param groupId group id to query.
-     * @param status Status to query.
+     * @param statuses Statuses to query.
      * @param func Callback that the results will be returned on.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun getDownloadsInGroupWithStatus(groupId: Int, status: Status, func: Func<List<Download>>): Fetch
+    fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>, func: Func<List<Download>>): Fetch
 
     /**
      * Gets all downloads containing the identifier.

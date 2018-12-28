@@ -365,7 +365,6 @@ public class DatabaseInstrumentedTest {
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
-        final Status status = Status.QUEUED;
         final int group = 10;
         for (int i = 0; i < 10; i++) {
             final String file = dir + "test" + i + ".txt";
@@ -373,22 +372,40 @@ public class DatabaseInstrumentedTest {
             request.setGroupId(group);
             requestList.add(request);
         }
+
+
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfoList.add(downloadInfo);
         }
-        for (DownloadInfo downloadInfo : downloadInfoList) {
-            downloadInfo.setStatus(status);
+        for (int i = 0; i <= 4; i++) {
+            downloadInfoList.get(i).setStatus(Status.QUEUED);
         }
+        for (int i = 5; i < 10; i++) {
+            downloadInfoList.get(i).setStatus(Status.DOWNLOADING);
+        }
+
         databaseManager.insert(downloadInfoList);
-        final List<DownloadInfo> queryList = databaseManager.getDownloadsInGroupWithStatus(group, status);
+        List<Status> statuses = new ArrayList<>();
+        statuses.add(Status.QUEUED);
+        statuses.add(Status.DOWNLOADING);
+        final List<DownloadInfo> queryList = databaseManager.getDownloadsInGroupWithStatus(group, statuses);
+
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
+        int queuedCount = 0;
+        int downloadingCount = 0;
         for (DownloadInfo download : queryList) {
             assertTrue(downloadInfoList.contains(download));
-            assertEquals(status, download.getStatus());
+            if (download.getStatus() == Status.QUEUED) {
+                queuedCount++;
+            } else if (download.getStatus() == Status.DOWNLOADING) {
+                downloadingCount++;
+            }
         }
+        assertEquals(5, queuedCount);
+        assertEquals(5, downloadingCount);
     }
 
     @Test

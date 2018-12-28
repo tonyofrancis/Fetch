@@ -27,12 +27,12 @@ interface FetchHandler : Closeable {
     fun removeGroup(id: Int): List<Download>
     fun removeAll(): List<Download>
     fun removeAllWithStatus(status: Status): List<Download>
-    fun removeAllInGroupWithStatus(groupId: Int, status: Status): List<Download>
+    fun removeAllInGroupWithStatus(groupId: Int, statuses: List<Status>): List<Download>
     fun delete(ids: List<Int>): List<Download>
     fun deleteGroup(id: Int): List<Download>
     fun deleteAll(): List<Download>
     fun deleteAllWithStatus(status: Status): List<Download>
-    fun deleteAllInGroupWithStatus(groupId: Int, status: Status): List<Download>
+    fun deleteAllInGroupWithStatus(groupId: Int, statuses: List<Status>): List<Download>
     fun cancel(ids: List<Int>): List<Download>
     fun cancelGroup(id: Int): List<Download>
     fun cancelAll(): List<Download>
@@ -43,7 +43,7 @@ interface FetchHandler : Closeable {
     fun getDownloads(idList: List<Int>): List<Download>
     fun getDownloadsInGroup(id: Int): List<Download>
     fun getDownloadsWithStatus(status: Status): List<Download>
-    fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): List<Download>
+    fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>): List<Download>
     fun getDownloadsByRequestIdentifier(identifier: Long): List<Download>
     fun setGlobalNetworkType(networkType: NetworkType)
     fun enableLogging(enabled: Boolean)
