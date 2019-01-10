@@ -61,12 +61,15 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         var contentLength = -1L
         var byteStream: InputStream? = null
         val responseHeaders = client.headerFields
+        var errorResponseString: String? = null
         var hash = ""
         if (isResponseOk(code)) {
             success = true
             contentLength = client.getHeaderField("Content-Length")?.toLong() ?: -1L
             byteStream = client.inputStream
             hash = getContentHash(responseHeaders)
+        } else {
+            errorResponseString = copyStreamToString(client.errorStream, false)
         }
 
         val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
@@ -80,7 +83,8 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 request = request,
                 hash = hash,
                 responseHeaders = responseHeaders,
-                acceptsRanges = acceptsRanges))
+                acceptsRanges = acceptsRanges,
+                errorResponse = errorResponseString))
 
         val response = Downloader.Response(
                 code = code,
@@ -90,7 +94,8 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 request = request,
                 hash = hash,
                 responseHeaders = responseHeaders,
-                acceptsRanges = acceptsRanges)
+                acceptsRanges = acceptsRanges,
+                errorResponse = errorResponseString)
 
         connections[response] = client
         return response

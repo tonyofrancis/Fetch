@@ -14,7 +14,6 @@ import kotlin.math.ceil
 import java.net.CookieManager
 import java.net.CookiePolicy
 
-
 const val GET_REQUEST_METHOD = "GET"
 
 const val HEAD_REQUEST_METHOD = "HEAD"
@@ -285,7 +284,7 @@ fun deleteFile(file: File): Boolean {
 
 fun copyDownloadResponseNoStream(response: Downloader.Response): Downloader.Response {
     return Downloader.Response(response.code, response.isSuccessful, response.contentLength, null,
-            response.request, response.hash, response.responseHeaders, response.acceptsRanges)
+            response.request, response.hash, response.responseHeaders, response.acceptsRanges, response.errorResponse)
 }
 
 fun getDefaultCookieManager(): CookieManager {
@@ -304,5 +303,33 @@ fun getRefererFromUrl(url: String): String {
         "${uri.scheme}://${uri.authority}"
     } catch (e: Exception) {
         "https://google.com"
+    }
+}
+
+fun copyStreamToString(inputStream: InputStream?, closeStream: Boolean = true): String? {
+    return if (inputStream == null) {
+        return null
+    } else {
+        var bufferedReader: BufferedReader? = null
+        try {
+            bufferedReader = BufferedReader(InputStreamReader(inputStream))
+            val stringBuilder = StringBuilder()
+            var line: String? = bufferedReader.readLine()
+            while (line != null) {
+                stringBuilder.append(line)
+                        .append('\n')
+                line = bufferedReader.readLine()
+            }
+            stringBuilder.toString()
+        } catch (e: Exception) {
+            null
+        } finally {
+            if (closeStream) {
+                try {
+                    bufferedReader?.close()
+                } catch (e: Exception) {
+                }
+            }
+        }
     }
 }
