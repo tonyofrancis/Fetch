@@ -1,3 +1,13 @@
+Version 2.3.5
+- Fetch methods removeAllInGroupWithStatus, deleteAllInGroupWithStatus, getDownloadsInGroupWithStatus
+  have been updated to allow more than one Status to be queried or actioned upon. See Java doc for details
+  . Special thanks to Marcin Adamczewski for submitting PR.
+- Fetch logging is now disabled by default and can be enabled with the FetchConfiguration method. `.enableLogging(true)`
+- The Error enum object now has a new field attach `httpResponse`. This response object contains the HttpCode and other
+  http related information. This field is only provided when an error occurs and it is related to the Http response.
+- Fixed EnqueueAction.UPDATE_ACCORDINGLY that caused the onComplete listener method to be called if the newly enqueued request
+  was previously downloaded and completed but the file on the storage system was delete.
+
 Version 2.3.4
 - Added default cookie manager for the okhttp and httpurlconnection client Downloaders.
 - Fixed an EnqueueAction.INCREMENT_FILE_NAME bug where files were not properly created.
