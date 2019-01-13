@@ -76,7 +76,11 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         serverResponse.type == FileRequest.TYPE_FILE && serverResponse.status == HttpURLConnection.HTTP_PARTIAL
                 val contentLength = serverResponse.contentLength
                 val inputStream = transporter.getInputStream()
-
+                val errorResponse = if (!isSuccessful) {
+                    copyStreamToString(inputStream, false)
+                } else {
+                    null
+                }
                 val responseHeaders = mutableMapOf<String, List<String>>()
                 try {
                     val json = JSONObject(serverResponse.toJsonString)
@@ -101,7 +105,8 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         request = request,
                         hash = hash,
                         responseHeaders = responseHeaders,
-                        acceptsRanges = acceptsRanges))
+                        acceptsRanges = acceptsRanges,
+                        errorResponse = errorResponse))
 
                 val response = Downloader.Response(
                         code = code,
@@ -111,7 +116,8 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                         request = request,
                         hash = hash,
                         responseHeaders = responseHeaders,
-                        acceptsRanges = acceptsRanges)
+                        acceptsRanges = acceptsRanges,
+                        errorResponse = errorResponse)
 
                 connections[response] = transporter
                 return response

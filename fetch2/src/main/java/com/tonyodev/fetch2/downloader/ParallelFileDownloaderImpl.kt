@@ -216,6 +216,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 logger.e("FileDownloader download:$download", e)
                 var error = getErrorFromThrowable(e)
                 error.throwable = e
+                if (openingResponse != null) {
+                    error.httpResponse = copyDownloadResponseNoStream(openingResponse)
+                }
                 if (retryOnNetworkGain) {
                     var disconnectDetected = !networkInfoProvider.isNetworkAvailable
                     for (i in 1..10) {

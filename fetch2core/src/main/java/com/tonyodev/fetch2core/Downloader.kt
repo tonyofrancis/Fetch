@@ -195,7 +195,10 @@ interface Downloader<T, R> : Closeable {
             val responseHeaders: Map<String, List<String>>,
 
             /** Details if the server accepts byte ranges*/
-            val acceptsRanges: Boolean)
+            val acceptsRanges: Boolean,
+
+            /** Error Response string. May be null*/
+            val errorResponse: String?)
 
     /** File Downloading Type used to download each request.*/
     enum class FileDownloaderType {

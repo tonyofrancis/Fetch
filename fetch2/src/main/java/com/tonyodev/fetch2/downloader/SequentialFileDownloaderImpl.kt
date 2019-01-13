@@ -147,6 +147,9 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 logger.e("FileDownloader download:$download", e)
                 var error = getErrorFromThrowable(e)
                 error.throwable = e
+                if (response != null) {
+                    error.httpResponse = copyDownloadResponseNoStream(response)
+                }
                 if (retryOnNetworkGain) {
                     var disconnectDetected = !networkInfoProvider.isNetworkAvailable
                     for (i in 1..10) {

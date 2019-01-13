@@ -63,6 +63,11 @@ open class OkHttpDownloader @JvmOverloads constructor(
         var contentLength = okHttpResponse.body()?.contentLength() ?: -1L
         val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
         val responseHeaders = mutableMapOf<String, List<String>>()
+        val errorResponseString: String? = try {
+            okHttpResponse.body()?.string()
+        } catch (e: Exception) {
+            null
+        }
         val okResponseHeaders = okHttpResponse.headers()
         for (i in 0 until okResponseHeaders.size()) {
             val key = okResponseHeaders.name(i)
@@ -86,7 +91,8 @@ open class OkHttpDownloader @JvmOverloads constructor(
                 request = request,
                 hash = hash,
                 responseHeaders = responseHeaders,
-                acceptsRanges = acceptsRanges))
+                acceptsRanges = acceptsRanges,
+                errorResponse = errorResponseString))
 
         val response = Downloader.Response(
                 code = code,
@@ -96,7 +102,8 @@ open class OkHttpDownloader @JvmOverloads constructor(
                 request = request,
                 hash = hash,
                 responseHeaders = responseHeaders,
-                acceptsRanges = acceptsRanges)
+                acceptsRanges = acceptsRanges,
+                errorResponse = errorResponseString)
 
         connections[response] = okHttpResponse
         return response

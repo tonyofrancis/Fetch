@@ -105,6 +105,18 @@ class FetchHandlerImpl(private val namespace: String,
                 } catch (e: Exception) {
 
                 }
+            } else if (existingDownload?.status == Status.COMPLETED
+                    && downloadInfo.enqueueAction == EnqueueAction.UPDATE_ACCORDINGLY) {
+                if (!storageResolver.fileExists(existingDownload.file)) {
+                    try {
+                        databaseManager.delete(existingDownload)
+                    } catch (e: Exception) {
+                    }
+                    existingDownload = null
+                    if (downloadInfo.enqueueAction != EnqueueAction.INCREMENT_FILE_NAME) {
+                        storageResolver.createFile(downloadInfo.file)
+                    }
+                }
             }
         }
         return when (downloadInfo.enqueueAction) {

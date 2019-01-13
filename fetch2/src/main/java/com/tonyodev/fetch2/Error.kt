@@ -1,5 +1,7 @@
 package com.tonyodev.fetch2
 
+import com.tonyodev.fetch2core.Downloader
+
 /**
  * Enumeration which contains specific errors that can occur.
  * */
@@ -13,7 +15,12 @@ enum class Error constructor(
          * Fetch will not save the throwable in the database for later use.
          * Only the error enum type and value field of the error will be saved. This throwable field may be null.
          * */
-        var throwable: Throwable? = null) {
+        var throwable: Throwable? = null,
+
+        /** The http response containing the reason the error may have occured. It will only be present
+         * at the time the error occurs and will not be saved in the Fetch database.
+         * This httpResponse may be null.*/
+        var httpResponse: Downloader.Response? = null) {
 
     /** Indicates that the specific issue or error is not known.*/
     UNKNOWN(-1),
