@@ -1,3 +1,6 @@
+Version 2.3.6
+- Out of Memory Error. Fixed issued in the downloader where an out of memory error would occur.
+
 Version 2.3.5
 - Fetch methods removeAllInGroupWithStatus, deleteAllInGroupWithStatus, getDownloadsInGroupWithStatus
   have been updated to allow more than one Status to be queried or actioned upon. See Java doc for details
