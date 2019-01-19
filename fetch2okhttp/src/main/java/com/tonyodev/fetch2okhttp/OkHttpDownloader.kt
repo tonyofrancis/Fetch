@@ -63,9 +63,9 @@ open class OkHttpDownloader @JvmOverloads constructor(
         var contentLength = okHttpResponse.body()?.contentLength() ?: -1L
         val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
         val responseHeaders = mutableMapOf<String, List<String>>()
-        val errorResponseString: String? = try {
-            okHttpResponse.body()?.string()
-        } catch (e: Exception) {
+        val errorResponseString: String? = if (!success) {
+            copyStreamToString(byteStream, false)
+        } else {
             null
         }
         val okResponseHeaders = okHttpResponse.headers()
