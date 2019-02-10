@@ -15,6 +15,7 @@ import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator;
 import com.tonyodev.fetch2.fetch.LiveSettings;
+import com.tonyodev.fetch2.provider.GroupInfoProvider;
 import com.tonyodev.fetch2core.DefaultStorageResolver;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.FetchCoreDefaults;
@@ -65,12 +66,14 @@ public class DownloadPriorityIteratorProcessorTest {
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
-        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
+        final DownloadProvider downloadProvider = new DownloadProvider(databaseManager);
+        final GroupInfoProvider groupInfoProvider = new GroupInfoProvider(namespace, downloadProvider);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace, groupInfoProvider, uiHandler);
         final DefaultStorageResolver storageResolver = new DefaultStorageResolver(appContext, tempDir);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                  downloadInfoUpdater, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver, appContext, namespace);
+                listenerCoordinator, serverDownloader, false, storageResolver, appContext, namespace, groupInfoProvider);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 new HandlerWrapper(namespace),
                 new DownloadProvider(databaseManager),

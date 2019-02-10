@@ -2,18 +2,18 @@ package com.tonyodev.fetch2.fetch
 
 import android.os.Handler
 import android.os.HandlerThread
-import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Error
-import com.tonyodev.fetch2.FetchListener
-import com.tonyodev.fetch2.FetchNotificationManager
-import com.tonyodev.fetch2core.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS
+import com.tonyodev.fetch2.*
+import com.tonyodev.fetch2.provider.GroupInfoProvider
 import com.tonyodev.fetch2core.DownloadBlock
 import java.lang.ref.WeakReference
 
-class ListenerCoordinator(val namespace: String) {
+class ListenerCoordinator(val namespace: String,
+                          private val groupInfoProvider: GroupInfoProvider,
+                          private val uiHandler: Handler) {
 
     private val lock = Any()
     private val fetchListenerMap = mutableMapOf<Int, MutableSet<WeakReference<FetchListener>>>()
+    private val fetchGroupListenerMap = mutableMapOf<Int, MutableSet<WeakReference<FetchGroupListener>>>()
     private val fetchNotificationManagerList = mutableListOf<FetchNotificationManager>()
     private val fetchNotificationHandler = {
         val handlerThread = HandlerThread("FetchNotificationsIO")
@@ -26,6 +26,11 @@ class ListenerCoordinator(val namespace: String) {
             val set = fetchListenerMap[id] ?: mutableSetOf()
             set.add(WeakReference(fetchListener))
             fetchListenerMap[id] = set
+            if (fetchListener is FetchGroupListener) {
+                val groupSet = fetchGroupListenerMap[id] ?: mutableSetOf()
+                groupSet.add(WeakReference(fetchListener))
+                fetchGroupListenerMap[id] = groupSet
+            }
         }
     }
 
@@ -38,6 +43,18 @@ class ListenerCoordinator(val namespace: String) {
                     if (reference.get() == fetchListener) {
                         iterator.remove()
                         break
+                    }
+                }
+            }
+            if (fetchListener is FetchGroupListener) {
+                val groupIterator = fetchGroupListenerMap[id]?.iterator()
+                if (groupIterator != null) {
+                    while (groupIterator.hasNext()) {
+                        val reference = groupIterator.next()
+                        if (reference.get() == fetchListener) {
+                            groupIterator.remove()
+                            break
+                        }
                     }
                 }
             }
@@ -75,11 +92,30 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onAdded(download)
+                            uiHandler.post {
+                                fetchListener.onAdded(download)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                uiHandler.post {
+                                    fetchListener.onAdded(groupId, download, fetchGroup)
+                                }
+                            }
                         }
                     }
                 }
@@ -91,11 +127,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onQueued(download, waitingOnNetwork)
+                            uiHandler.post {
+                                fetchListener.onQueued(download, waitingOnNetwork)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onQueued(groupId, download, waitingOnNetwork, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -107,11 +160,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onWaitingNetwork(download)
+                            uiHandler.post {
+                                fetchListener.onWaitingNetwork(download)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onWaitingNetwork(groupId, download, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -130,11 +200,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onCompleted(download)
+                            uiHandler.post {
+                                fetchListener.onCompleted(download)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onCompleted(groupId, download, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -153,11 +240,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onError(download, error, throwable)
+                            uiHandler.post {
+                                fetchListener.onError(download, error, throwable)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onError(groupId, download, error, throwable, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -169,11 +273,26 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onDownloadBlockUpdated(download, downloadBlock, totalBlocks)
+                            fetchListener.onDownloadBlockUpdated(download, downloadBlock, totalBlocks)
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onDownloadBlockUpdated(groupId, download, downloadBlock, totalBlocks, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -192,11 +311,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onStarted(download, downloadBlocks, totalBlocks)
+                            uiHandler.post {
+                                fetchListener.onStarted(download, downloadBlocks, totalBlocks)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onStarted(groupId, download, downloadBlocks, totalBlocks, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -215,11 +351,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
+                            uiHandler.post {
+                                fetchListener.onProgress(download, etaInMilliSeconds, downloadedBytesPerSecond)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onProgress(groupId, download, etaInMilliSeconds, downloadedBytesPerSecond, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -238,11 +391,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onPaused(download)
+                            uiHandler.post {
+                                fetchListener.onPaused(download)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onPaused(groupId, download, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -261,11 +431,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onResumed(download)
+                            uiHandler.post {
+                                fetchListener.onResumed(download)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onResumed(groupId, download, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -284,11 +471,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onCancelled(download)
+                            uiHandler.post {
+                                fetchListener.onCancelled(download)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onCancelled(groupId, download, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -307,11 +511,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onRemoved(download)
+                            uiHandler.post {
+                                fetchListener.onRemoved(download)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onRemoved(groupId, download, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -330,11 +551,28 @@ class ListenerCoordinator(val namespace: String) {
                 fetchListenerMap.values.forEach {
                     val iterator = it.iterator()
                     while (iterator.hasNext()) {
-                        val reference = iterator.next()
-                        if (reference.get() == null) {
+                        val fetchListener = iterator.next().get()
+                        if (fetchListener == null) {
                             iterator.remove()
                         } else {
-                            reference.get()?.onDeleted(download)
+                            uiHandler.post {
+                                fetchListener.onDeleted(download)
+                            }
+                        }
+                    }
+                }
+                if (fetchGroupListenerMap.isNotEmpty()) {
+                    val groupId = download.group
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    fetchGroupListenerMap.values.forEach {
+                        val iterator = it.iterator()
+                        while (iterator.hasNext()) {
+                            val fetchListener = iterator.next().get()
+                            if (fetchListener == null) {
+                                iterator.remove()
+                            } else {
+                                fetchListener.onDeleted(groupId, download, fetchGroup)
+                            }
                         }
                     }
                 }
@@ -345,6 +583,7 @@ class ListenerCoordinator(val namespace: String) {
     fun clearAll() {
         synchronized(lock) {
             fetchListenerMap.clear()
+            fetchGroupListenerMap.clear()
             fetchNotificationManagerList.clear()
         }
     }

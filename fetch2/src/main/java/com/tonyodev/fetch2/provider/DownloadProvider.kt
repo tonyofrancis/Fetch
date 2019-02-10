@@ -23,6 +23,15 @@ class DownloadProvider(private val databaseManager: DatabaseManager) {
         return databaseManager.getByGroup(group)
     }
 
+    fun getByGroupReplace(group: Int, download: Download): List<Download> {
+        val downloads = getByGroup(group) as ArrayList
+        val index = downloads.indexOfFirst { it.id == download.id }
+        if (index != -1) {
+            downloads[index] = download
+        }
+        return downloads
+    }
+
     fun getByStatus(status: Status): List<Download> {
         return databaseManager.getByStatus(status)
     }

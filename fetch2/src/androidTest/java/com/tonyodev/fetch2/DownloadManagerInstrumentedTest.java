@@ -17,6 +17,8 @@ import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator;
 import com.tonyodev.fetch2.fetch.ListenerCoordinator;
 import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater;
+import com.tonyodev.fetch2.provider.DownloadProvider;
+import com.tonyodev.fetch2.provider.GroupInfoProvider;
 import com.tonyodev.fetch2.provider.NetworkInfoProvider;
 import com.tonyodev.fetch2.util.FetchDefaults;
 import com.tonyodev.fetch2.util.FetchTypeConverterExtensions;
@@ -26,7 +28,6 @@ import com.tonyodev.fetch2core.FetchCoreDefaults;
 import com.tonyodev.fetch2core.FetchCoreUtils;
 import com.tonyodev.fetch2core.FetchLogger;
 import com.tonyodev.fetch2core.FileServerDownloader;
-import com.tonyodev.fetch2core.HandlerWrapper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -67,13 +68,15 @@ public class DownloadManagerInstrumentedTest {
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
-        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
+        final DownloadProvider downloadProvider = new DownloadProvider(databaseManager);
+        final GroupInfoProvider groupInfoProvider = new GroupInfoProvider(namespace, downloadProvider);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace, groupInfoProvider, uiHandler);
         final DefaultStorageResolver storageResolver = new DefaultStorageResolver(appContext, tempDir);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 downloadInfoUpdater, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver,
-                appContext, namespace);
+                listenerCoordinator, serverDownloader, false, storageResolver,
+                appContext, namespace, groupInfoProvider);
     }
 
     @After

@@ -81,31 +81,31 @@ open class FetchImpl constructor(override val namespace: String,
                         throw FetchException(ENQUEUED_REQUESTS_ARE_NOT_DISTINCT)
                     }
                     val downloadPairs = fetchHandler.enqueue(requests)
-                    uiHandler.post {
-                        downloadPairs.forEach { downloadPair ->
-                            val download = downloadPair.first
-                            when (download.status) {
-                                Status.ADDED -> {
-                                    listenerCoordinator.mainListener.onAdded(download)
-                                    logger.d("Added $download")
-                                }
-                                Status.QUEUED -> {
-                                    val downloadCopy = download.toDownloadInfo()
-                                    downloadCopy.status = Status.ADDED
-                                    listenerCoordinator.mainListener.onAdded(downloadCopy)
-                                    logger.d("Added $download")
-                                    listenerCoordinator.mainListener.onQueued(download, false)
-                                    logger.d("Queued $download for download")
-                                }
-                                Status.COMPLETED -> {
-                                    listenerCoordinator.mainListener.onCompleted(download)
-                                    logger.d("Completed download $download")
-                                }
-                                else -> {
+                    downloadPairs.forEach { downloadPair ->
+                        val download = downloadPair.first
+                        when (download.status) {
+                            Status.ADDED -> {
+                                listenerCoordinator.mainListener.onAdded(download)
+                                logger.d("Added $download")
+                            }
+                            Status.QUEUED -> {
+                                val downloadCopy = download.toDownloadInfo()
+                                downloadCopy.status = Status.ADDED
+                                listenerCoordinator.mainListener.onAdded(downloadCopy)
+                                logger.d("Added $download")
+                                listenerCoordinator.mainListener.onQueued(download, false)
+                                logger.d("Queued $download for download")
+                            }
+                            Status.COMPLETED -> {
+                                listenerCoordinator.mainListener.onCompleted(download)
+                                logger.d("Completed download $download")
+                            }
+                            else -> {
 
-                                }
                             }
                         }
+                    }
+                    uiHandler.post {
                         func?.call(downloadPairs.map { Pair(it.first.request, it.second) })
                     }
                 } catch (e: Exception) {
@@ -164,11 +164,11 @@ open class FetchImpl constructor(override val namespace: String,
                             listOf()
                         }
                     }
+                    downloads.forEach {
+                        logger.d("Paused download $it")
+                        listenerCoordinator.mainListener.onPaused(it)
+                    }
                     uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Paused download $it")
-                            listenerCoordinator.mainListener.onPaused(it)
-                        }
                         func?.call(downloads)
                     }
                 } catch (e: Exception) {
@@ -295,13 +295,13 @@ open class FetchImpl constructor(override val namespace: String,
                             listOf()
                         }
                     }
+                    downloads.forEach {
+                        logger.d("Queued download $it")
+                        listenerCoordinator.mainListener.onQueued(it, false)
+                        logger.d("Resumed download $it")
+                        listenerCoordinator.mainListener.onResumed(it)
+                    }
                     uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Queued download $it")
-                            listenerCoordinator.mainListener.onQueued(it, false)
-                            logger.d("Resumed download $it")
-                            listenerCoordinator.mainListener.onResumed(it)
-                        }
                         func?.call(downloads)
                     }
                 } catch (e: Exception) {
@@ -378,11 +378,11 @@ open class FetchImpl constructor(override val namespace: String,
             handlerWrapper.post {
                 try {
                     val downloads = downloadAction.invoke()
+                    downloads.forEach {
+                        logger.d("Removed download $it")
+                        listenerCoordinator.mainListener.onRemoved(it)
+                    }
                     uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Removed download $it")
-                            listenerCoordinator.mainListener.onRemoved(it)
-                        }
                         func?.call(downloads)
                     }
                 } catch (e: Exception) {
@@ -460,11 +460,11 @@ open class FetchImpl constructor(override val namespace: String,
             handlerWrapper.post {
                 try {
                     val downloads = downloadAction.invoke()
+                    downloads.forEach {
+                        logger.d("Deleted download $it")
+                        listenerCoordinator.mainListener.onDeleted(it)
+                    }
                     uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Deleted download $it")
-                            listenerCoordinator.mainListener.onDeleted(it)
-                        }
                         func?.call(downloads)
                     }
                 } catch (e: Exception) {
@@ -526,11 +526,11 @@ open class FetchImpl constructor(override val namespace: String,
             handlerWrapper.post {
                 try {
                     val downloads = downloadAction.invoke()
+                    downloads.forEach {
+                        logger.d("Cancelled download $it")
+                        listenerCoordinator.mainListener.onCancelled(it)
+                    }
                     uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Cancelled download $it")
-                            listenerCoordinator.mainListener.onCancelled(it)
-                        }
                         func?.call(downloads)
                     }
                 } catch (e: Exception) {
@@ -554,11 +554,11 @@ open class FetchImpl constructor(override val namespace: String,
             handlerWrapper.post {
                 try {
                     val downloads = fetchHandler.retry(ids)
+                    downloads.forEach {
+                        logger.d("Queued $it for download")
+                        listenerCoordinator.mainListener.onQueued(it, false)
+                    }
                     uiHandler.post {
-                        downloads.forEach {
-                            logger.d("Queued $it for download")
-                            listenerCoordinator.mainListener.onQueued(it, false)
-                        }
                         func?.call(downloads)
                     }
                 } catch (e: Exception) {
@@ -603,45 +603,45 @@ open class FetchImpl constructor(override val namespace: String,
                     val downloadPair = fetchHandler.updateRequest(requestId, updatedRequest)
                     val download = downloadPair.first
                     logger.d("UpdatedRequest with id: $requestId to $download")
-                    uiHandler.post {
-                        if (notifyListeners) {
-                            when (download.status) {
-                                Status.COMPLETED -> {
-                                    listenerCoordinator.mainListener.onCompleted(download)
+                    if (notifyListeners) {
+                        when (download.status) {
+                            Status.COMPLETED -> {
+                                listenerCoordinator.mainListener.onCompleted(download)
+                            }
+                            Status.FAILED -> {
+                                listenerCoordinator.mainListener.onError(download, download.error, null)
+                            }
+                            Status.CANCELLED -> {
+                                listenerCoordinator.mainListener.onCancelled(download)
+                            }
+                            Status.DELETED -> {
+                                listenerCoordinator.mainListener.onDeleted(download)
+                            }
+                            Status.PAUSED -> {
+                                listenerCoordinator.mainListener.onPaused(download)
+                            }
+                            Status.QUEUED -> {
+                                if (!downloadPair.second) {
+                                    val downloadCopy = download.copy().toDownloadInfo()
+                                    downloadCopy.status = Status.ADDED
+                                    listenerCoordinator.mainListener.onAdded(downloadCopy)
+                                    logger.d("Added $download")
                                 }
-                                Status.FAILED -> {
-                                    listenerCoordinator.mainListener.onError(download, download.error, null)
-                                }
-                                Status.CANCELLED -> {
-                                    listenerCoordinator.mainListener.onCancelled(download)
-                                }
-                                Status.DELETED -> {
-                                    listenerCoordinator.mainListener.onDeleted(download)
-                                }
-                                Status.PAUSED -> {
-                                    listenerCoordinator.mainListener.onPaused(download)
-                                }
-                                Status.QUEUED -> {
-                                    if (!downloadPair.second) {
-                                        val downloadCopy = download.copy().toDownloadInfo()
-                                        downloadCopy.status = Status.ADDED
-                                        listenerCoordinator.mainListener.onAdded(downloadCopy)
-                                        logger.d("Added $download")
-                                    }
-                                    listenerCoordinator.mainListener.onQueued(download, false)
-                                }
-                                Status.REMOVED -> {
-                                    listenerCoordinator.mainListener.onRemoved(download)
-                                }
-                                Status.DOWNLOADING -> {
-                                }
-                                Status.ADDED -> {
-                                    listenerCoordinator.mainListener.onAdded(download)
-                                }
-                                Status.NONE -> {
-                                }
+                                listenerCoordinator.mainListener.onQueued(download, false)
+                            }
+                            Status.REMOVED -> {
+                                listenerCoordinator.mainListener.onRemoved(download)
+                            }
+                            Status.DOWNLOADING -> {
+                            }
+                            Status.ADDED -> {
+                                listenerCoordinator.mainListener.onAdded(download)
+                            }
+                            Status.NONE -> {
                             }
                         }
+                    }
+                    uiHandler.post {
                         func?.call(download)
                     }
                 } catch (e: Exception) {
@@ -792,13 +792,13 @@ open class FetchImpl constructor(override val namespace: String,
             handlerWrapper.post {
                 try {
                     val downloads = fetchHandler.enqueueCompletedDownloads(completedDownloads)
-                    uiHandler.post {
-                        if (alertListeners) {
-                            downloads.forEach {
-                                listenerCoordinator.mainListener.onCompleted(it)
-                                logger.d("Added CompletedDownload $it")
-                            }
+                    if (alertListeners) {
+                        downloads.forEach {
+                            listenerCoordinator.mainListener.onCompleted(it)
+                            logger.d("Added CompletedDownload $it")
                         }
+                    }
+                    uiHandler.post {
                         func?.call(downloads)
                     }
                 } catch (e: Exception) {
