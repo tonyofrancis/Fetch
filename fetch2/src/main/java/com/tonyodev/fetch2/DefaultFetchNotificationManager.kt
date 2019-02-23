@@ -115,7 +115,9 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
     override fun getActionPendingIntent(downloadNotification: DownloadNotification,
                                         actionType: DownloadNotification.ActionType): PendingIntent {
         synchronized(downloadNotificationsMap) {
-            val intent = Intent(ACTION_NOTIFICATION_ACTION)
+            val intent = Intent(context, FetchNotificationBroadcastReceiver::class.java).apply {
+                action = ACTION_NOTIFICATION_ACTION
+            }
             intent.putExtra(EXTRA_NAMESPACE, downloadNotification.download.namespace)
             intent.putExtra(EXTRA_DOWNLOAD_ID, downloadNotification.download.id)
             intent.putExtra(EXTRA_NOTIFICATION_ID, downloadNotification.notificationId)
