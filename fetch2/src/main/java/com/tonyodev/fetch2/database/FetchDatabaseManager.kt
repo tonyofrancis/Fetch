@@ -9,7 +9,6 @@ import java.io.Closeable
  * The default Fetch Database Manager is FetchDatabaseManagerImpl which uses sqlite/room
  * to store download information. All methods and fields will be called on Fetch's background thread.
  * Note: Fetch expects all the methods and fields on this interface to be synchronized when implemented.
- *
  * */
 interface FetchDatabaseManager : Closeable {
 
@@ -20,7 +19,8 @@ interface FetchDatabaseManager : Closeable {
 
     /**
      * Delegate used by Fetch to delete temporary files used to assist the parallel downloader.
-     * This field is set by the Fetch Builder directly.
+     * This field is set by the Fetch Builder directly. Your implemention should set this to null
+     * by default.
      * */
     var delegate: FetchDatabaseManager.Delegate?
 
