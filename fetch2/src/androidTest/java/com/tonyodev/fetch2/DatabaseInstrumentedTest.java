@@ -4,8 +4,8 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.tonyodev.fetch2.database.DatabaseManager;
-import com.tonyodev.fetch2.database.DatabaseManagerImpl;
+import com.tonyodev.fetch2.database.FetchDatabaseManager;
+import com.tonyodev.fetch2.database.FetchDatabaseManagerImpl;
 import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
@@ -35,7 +35,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(AndroidJUnit4.class)
 public class DatabaseInstrumentedTest {
 
-    private DatabaseManager databaseManager;
+    private FetchDatabaseManager fetchDatabaseManager;
     private Context appContext;
 
     @Before
@@ -48,19 +48,19 @@ public class DatabaseInstrumentedTest {
         final LiveSettings liveSettings = new LiveSettings(namespace);
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
         DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false,
+        fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false,
                 defaultStorageResolver);
     }
 
     @After
     public void cleanup() throws Exception {
-        databaseManager.deleteAll();
-        databaseManager.close();
+        fetchDatabaseManager.deleteAll();
+        fetchDatabaseManager.close();
     }
 
     @Test
     public void clear() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -74,25 +74,25 @@ public class DatabaseInstrumentedTest {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfoList.add(downloadInfo);
         }
-        databaseManager.insert(downloadInfoList);
-        databaseManager.deleteAll();
-        final List<DownloadInfo> downloads = databaseManager.get();
+        fetchDatabaseManager.insert(downloadInfoList);
+        fetchDatabaseManager.deleteAll();
+        final List<DownloadInfo> downloads = fetchDatabaseManager.get();
         assertEquals(0, downloads.size());
     }
 
     @Test
     public void insertSingle() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
-        final Pair<DownloadInfo, Boolean> pair = databaseManager.insert(downloadInfo);
+        final Pair<DownloadInfo, Boolean> pair = fetchDatabaseManager.insert(downloadInfo);
         assertTrue(pair.getSecond());
     }
 
 
     @Test
     public void multiInsert() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -106,7 +106,7 @@ public class DatabaseInstrumentedTest {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfoList.add(downloadInfo);
         }
-        final List<Pair<DownloadInfo, Boolean>> insertedList = databaseManager.insert(downloadInfoList);
+        final List<Pair<DownloadInfo, Boolean>> insertedList = fetchDatabaseManager.insert(downloadInfoList);
         for (Pair<DownloadInfo, Boolean> downloadInfoBooleanPair : insertedList) {
             assertTrue(downloadInfoBooleanPair.getSecond());
         }
@@ -114,18 +114,18 @@ public class DatabaseInstrumentedTest {
 
     @Test
     public void deleteSingle() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
-        databaseManager.insert(downloadInfo);
-        databaseManager.delete(downloadInfo);
-        final Download query = databaseManager.get(downloadInfo.getId());
+        fetchDatabaseManager.insert(downloadInfo);
+        fetchDatabaseManager.delete(downloadInfo);
+        final Download query = fetchDatabaseManager.get(downloadInfo.getId());
         assertNull(query);
     }
 
     @Test
     public void deleteMulti() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -139,31 +139,31 @@ public class DatabaseInstrumentedTest {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfoList.add(downloadInfo);
         }
-        databaseManager.insert(downloadInfoList);
-        databaseManager.delete(downloadInfoList);
+        fetchDatabaseManager.insert(downloadInfoList);
+        fetchDatabaseManager.delete(downloadInfoList);
         final List<Integer> ids = new ArrayList<>();
         for (DownloadInfo downloadInfo : downloadInfoList) {
             ids.add(downloadInfo.getId());
         }
-        final List<DownloadInfo> queryList = databaseManager.get(ids);
+        final List<DownloadInfo> queryList = fetchDatabaseManager.get(ids);
         assertEquals(0, queryList.size());
     }
 
     @Test
     public void update() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
         final File file = FetchCoreUtils.getFile(request.getFile());
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
-        databaseManager.insert(downloadInfo);
+        fetchDatabaseManager.insert(downloadInfo);
         final int groupId = 2;
         final Priority priority = Priority.HIGH;
         final Status status = Status.QUEUED;
         downloadInfo.setGroup(groupId);
         downloadInfo.setPriority(priority);
         downloadInfo.setStatus(status);
-        databaseManager.update(downloadInfo);
-        final Download query = databaseManager.get(downloadInfo.getId());
+        fetchDatabaseManager.update(downloadInfo);
+        final Download query = fetchDatabaseManager.get(downloadInfo.getId());
         assertNotNull(query);
         assertEquals(groupId, query.getGroup());
         assertEquals(priority, query.getPriority());
@@ -172,7 +172,7 @@ public class DatabaseInstrumentedTest {
 
     @Test
     public void updateMulti() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -186,7 +186,7 @@ public class DatabaseInstrumentedTest {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfoList.add(downloadInfo);
         }
-        databaseManager.insert(downloadInfoList);
+        fetchDatabaseManager.insert(downloadInfoList);
         final int groupId = 2;
         final Priority priority = Priority.HIGH;
         final Status status = Status.QUEUED;
@@ -196,12 +196,12 @@ public class DatabaseInstrumentedTest {
             downloadInfo.setPriority(priority);
             downloadInfo.setStatus(status);
         }
-        databaseManager.update(downloadInfoList);
+        fetchDatabaseManager.update(downloadInfoList);
         final List<Integer> ids = new ArrayList<>();
         for (DownloadInfo downloadInfo : downloadInfoList) {
             ids.add(downloadInfo.getId());
         }
-        final List<DownloadInfo> queryList = databaseManager.get(ids);
+        final List<DownloadInfo> queryList = fetchDatabaseManager.get(ids);
         assertNotNull(queryList);
         assertEquals(ids.size(), queryList.size());
         for (DownloadInfo downloadInfo : queryList) {
@@ -214,7 +214,7 @@ public class DatabaseInstrumentedTest {
 
     @Test
     public void get() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -228,8 +228,8 @@ public class DatabaseInstrumentedTest {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfoList.add(downloadInfo);
         }
-        databaseManager.insert(downloadInfoList);
-        final List<DownloadInfo> queryList = databaseManager.get();
+        fetchDatabaseManager.insert(downloadInfoList);
+        final List<DownloadInfo> queryList = fetchDatabaseManager.get();
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
     }
@@ -237,18 +237,18 @@ public class DatabaseInstrumentedTest {
 
     @Test
     public void getId() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
-        databaseManager.insert(downloadInfo);
-        final Download query = databaseManager.get(downloadInfo.getId());
+        fetchDatabaseManager.insert(downloadInfo);
+        final Download query = fetchDatabaseManager.get(downloadInfo.getId());
         assertNotNull(query);
         assertEquals(downloadInfo.getId(), query.getId());
     }
 
     @Test
     public void getIds() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -262,12 +262,12 @@ public class DatabaseInstrumentedTest {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfoList.add(downloadInfo);
         }
-        databaseManager.insert(downloadInfoList);
+        fetchDatabaseManager.insert(downloadInfoList);
         final List<Integer> ids = new ArrayList<>();
         for (DownloadInfo downloadInfo : downloadInfoList) {
             ids.add(downloadInfo.getId());
         }
-        final List<DownloadInfo> queryList = databaseManager.get(ids);
+        final List<DownloadInfo> queryList = fetchDatabaseManager.get(ids);
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
         for (DownloadInfo downloadInfo : queryList) {
@@ -278,7 +278,7 @@ public class DatabaseInstrumentedTest {
 
     @Test
     public void getStatus() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -296,8 +296,8 @@ public class DatabaseInstrumentedTest {
         for (DownloadInfo downloadInfo : downloadInfoList) {
             downloadInfo.setStatus(status);
         }
-        databaseManager.insert(downloadInfoList);
-        final List<DownloadInfo> queryList = databaseManager.getByStatus(status);
+        fetchDatabaseManager.insert(downloadInfoList);
+        final List<DownloadInfo> queryList = fetchDatabaseManager.getByStatus(status);
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
         for (DownloadInfo download : queryList) {
@@ -309,7 +309,7 @@ public class DatabaseInstrumentedTest {
 
     @Test
     public void getGroup() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -327,8 +327,8 @@ public class DatabaseInstrumentedTest {
         for (DownloadInfo downloadInfo : downloadInfoList) {
             downloadInfo.setGroup(group);
         }
-        databaseManager.insert(downloadInfoList);
-        final List<DownloadInfo> queryList = databaseManager.getByGroup(group);
+        fetchDatabaseManager.insert(downloadInfoList);
+        final List<DownloadInfo> queryList = fetchDatabaseManager.getByGroup(group);
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
         for (DownloadInfo download : queryList) {
@@ -339,7 +339,7 @@ public class DatabaseInstrumentedTest {
 
     @Test
     public void databaseVerification() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final List<Request> requests = getTestRequestList(20);
         final List<DownloadInfo> downloadInfoList = new ArrayList<>(20);
         for (Request request : requests) {
@@ -348,11 +348,11 @@ public class DatabaseInstrumentedTest {
             downloadInfoList.add(downloadInfo);
             final File file = FetchCoreUtils.getFile(request.getFile());
         }
-        databaseManager.insert(downloadInfoList);
-        int size = databaseManager.get().size();
+        fetchDatabaseManager.insert(downloadInfoList);
+        int size = fetchDatabaseManager.get().size();
         assertEquals(20, size);
-        databaseManager.sanitizeOnFirstEntry();
-        final List<DownloadInfo> downloads = databaseManager.get();
+        fetchDatabaseManager.sanitizeOnFirstEntry();
+        final List<DownloadInfo> downloads = fetchDatabaseManager.get();
         for (DownloadInfo download : downloads) {
             assertNotNull(download);
             assertEquals(Status.QUEUED, download.getStatus());
@@ -361,7 +361,7 @@ public class DatabaseInstrumentedTest {
 
     @Test
     public void getGroupWithStatus() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -386,11 +386,11 @@ public class DatabaseInstrumentedTest {
             downloadInfoList.get(i).setStatus(Status.DOWNLOADING);
         }
 
-        databaseManager.insert(downloadInfoList);
+        fetchDatabaseManager.insert(downloadInfoList);
         List<Status> statuses = new ArrayList<>();
         statuses.add(Status.QUEUED);
         statuses.add(Status.DOWNLOADING);
-        final List<DownloadInfo> queryList = databaseManager.getDownloadsInGroupWithStatus(group, statuses);
+        final List<DownloadInfo> queryList = fetchDatabaseManager.getDownloadsInGroupWithStatus(group, statuses);
 
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
@@ -410,10 +410,10 @@ public class DatabaseInstrumentedTest {
 
     @Test
     public void fileUpdate() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
-        final Pair<DownloadInfo, Boolean> pair = databaseManager.insert(downloadInfo);
+        final Pair<DownloadInfo, Boolean> pair = fetchDatabaseManager.insert(downloadInfo);
         assertTrue(pair.getSecond());
         final long downloaded = 2000;
         final long total = Long.MAX_VALUE;
@@ -421,8 +421,8 @@ public class DatabaseInstrumentedTest {
         downloadInfo.setDownloaded(downloaded);
         downloadInfo.setTotal(total);
         downloadInfo.setStatus(status);
-        databaseManager.updateFileBytesInfoAndStatusOnly(downloadInfo);
-        final DownloadInfo downloadInfo1 = databaseManager.get(downloadInfo.getId());
+        fetchDatabaseManager.updateFileBytesInfoAndStatusOnly(downloadInfo);
+        final DownloadInfo downloadInfo1 = fetchDatabaseManager.get(downloadInfo.getId());
         assertNotNull(downloadInfo1);
         assertEquals(downloaded, downloadInfo1.getDownloaded());
         assertEquals(total, downloadInfo1.getTotal());
@@ -431,7 +431,7 @@ public class DatabaseInstrumentedTest {
 
     @Test
     public void closed() throws Exception {
-        assertFalse(databaseManager.isClosed());
+        assertFalse(fetchDatabaseManager.isClosed());
     }
 
     public Request getTestRequest() {

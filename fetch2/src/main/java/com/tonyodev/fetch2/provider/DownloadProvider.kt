@@ -2,25 +2,25 @@ package com.tonyodev.fetch2.provider
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Status
-import com.tonyodev.fetch2.database.DatabaseManager
+import com.tonyodev.fetch2.database.FetchDatabaseManager
 
 
-class DownloadProvider(private val databaseManager: DatabaseManager) {
+class DownloadProvider(private val fetchDatabaseManager: FetchDatabaseManager) {
 
     fun getDownloads(): List<Download> {
-        return databaseManager.get()
+        return fetchDatabaseManager.get()
     }
 
     fun getDownload(id: Int): Download? {
-        return databaseManager.get(id)
+        return fetchDatabaseManager.get(id)
     }
 
     fun getDownloads(ids: List<Int>): List<Download?> {
-        return databaseManager.get(ids)
+        return fetchDatabaseManager.get(ids)
     }
 
     fun getByGroup(group: Int): List<Download> {
-        return databaseManager.getByGroup(group)
+        return fetchDatabaseManager.getByGroup(group)
     }
 
     fun getByGroupReplace(group: Int, download: Download): List<Download> {
@@ -33,11 +33,11 @@ class DownloadProvider(private val databaseManager: DatabaseManager) {
     }
 
     fun getByStatus(status: Status): List<Download> {
-        return databaseManager.getByStatus(status)
+        return fetchDatabaseManager.getByStatus(status)
     }
 
     fun getPendingDownloadsSorted(): List<Download> {
-        return databaseManager.getPendingDownloadsSorted()
+        return fetchDatabaseManager.getPendingDownloadsSorted()
     }
 
 }

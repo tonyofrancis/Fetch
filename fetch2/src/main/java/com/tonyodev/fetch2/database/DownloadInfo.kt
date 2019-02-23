@@ -18,7 +18,7 @@ import java.util.*
 @Entity(tableName = DownloadDatabase.TABLE_NAME,
         indices = [(Index(value = [DownloadDatabase.COLUMN_FILE], unique = true)),
             (Index(value = [DownloadDatabase.COLUMN_GROUP, DownloadDatabase.COLUMN_STATUS], unique = false))])
-class DownloadInfo : Download {
+open class DownloadInfo : Download {
 
     @PrimaryKey
     @ColumnInfo(name = DownloadDatabase.COLUMN_ID, typeAffinity = ColumnInfo.INTEGER)

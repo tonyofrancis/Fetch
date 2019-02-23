@@ -14,12 +14,12 @@ import com.tonyodev.fetch2core.DefaultStorageResolver
 import com.tonyodev.fetch2core.Extras
 
 
-class DatabaseManagerImpl constructor(context: Context,
-                                      private val namespace: String,
-                                      migrations: Array<Migration>,
-                                      private val liveSettings: LiveSettings,
-                                      private val fileExistChecksEnabled: Boolean,
-                                      private val defaultStorageResolver: DefaultStorageResolver) : DatabaseManager {
+class FetchDatabaseManagerImpl constructor(context: Context,
+                                           private val namespace: String,
+                                           migrations: Array<Migration>,
+                                           private val liveSettings: LiveSettings,
+                                           private val fileExistChecksEnabled: Boolean,
+                                           private val defaultStorageResolver: DefaultStorageResolver) : FetchDatabaseManager {
 
     private val lock = Object()
     @Volatile
@@ -28,11 +28,7 @@ class DatabaseManagerImpl constructor(context: Context,
         get() {
             return closed
         }
-    override val didSanitizeOnFirstEntry: Boolean
-        get() {
-            return liveSettings.didSanitizeDatabaseOnFirstEntry
-        }
-    override var delegate: DatabaseManager.Delegate? = null
+    override var delegate: FetchDatabaseManager.Delegate? = null
     private val requestDatabase: DownloadDatabase
     private val database: SupportSQLiteDatabase
 
@@ -91,13 +87,9 @@ class DatabaseManagerImpl constructor(context: Context,
 
     override fun update(downloadInfoList: List<DownloadInfo>) {
         synchronized(lock) {
-            updateNoLock(downloadInfoList)
+            throwExceptionIfClosed()
+            requestDatabase.requestDao().update(downloadInfoList)
         }
-    }
-
-    override fun updateNoLock(downloadInfoList: List<DownloadInfo>) {
-        throwExceptionIfClosed()
-        requestDatabase.requestDao().update(downloadInfoList)
     }
 
     override fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo) {
@@ -313,7 +305,7 @@ class DatabaseManagerImpl constructor(context: Context,
         val updatedCount = updatedDownloadsList.size
         if (updatedCount > 0) {
             try {
-                updateNoLock(updatedDownloadsList)
+                update(updatedDownloadsList)
             } catch (e: Exception) {
             }
         }

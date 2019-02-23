@@ -6,8 +6,8 @@ import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.tonyodev.fetch2.database.DatabaseManager;
-import com.tonyodev.fetch2.database.DatabaseManagerImpl;
+import com.tonyodev.fetch2.database.FetchDatabaseManager;
+import com.tonyodev.fetch2.database.FetchDatabaseManagerImpl;
 import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
@@ -44,7 +44,7 @@ import static org.junit.Assert.assertTrue;
 public class DownloadManagerInstrumentedTest {
 
     private DownloadManager downloadManager;
-    private DatabaseManager databaseManager;
+    private FetchDatabaseManager fetchDatabaseManager;
     private Context appContext;
 
     @Before
@@ -57,7 +57,7 @@ public class DownloadManagerInstrumentedTest {
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final LiveSettings liveSettings = new LiveSettings(namespace);
         DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false, defaultStorageResolver);
+        fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false, defaultStorageResolver);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
@@ -65,10 +65,10 @@ public class DownloadManagerInstrumentedTest {
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
-        final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
+        final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(fetchDatabaseManager);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
-        final DownloadProvider downloadProvider = new DownloadProvider(databaseManager);
+        final DownloadProvider downloadProvider = new DownloadProvider(fetchDatabaseManager);
         final GroupInfoProvider groupInfoProvider = new GroupInfoProvider(namespace, downloadProvider);
         final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace, groupInfoProvider, uiHandler);
         final DefaultStorageResolver storageResolver = new DefaultStorageResolver(appContext, tempDir);
@@ -83,8 +83,8 @@ public class DownloadManagerInstrumentedTest {
     public void cleanUp() throws Exception {
         downloadManager.close();
         assertTrue(downloadManager.isClosed());
-        databaseManager.close();
-        assertTrue(databaseManager.isClosed());
+        fetchDatabaseManager.close();
+        assertTrue(fetchDatabaseManager.isClosed());
     }
 
     @Test

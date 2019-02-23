@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2
 
 import android.content.Context
+import com.tonyodev.fetch2.database.FetchDatabaseManager
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
@@ -23,7 +24,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val hashCheckingEnabled: Boolean,
                                              val fileExistChecksEnabled: Boolean,
                                              val storageResolver: StorageResolver,
-                                             val fetchNotificationManager: FetchNotificationManager?) {
+                                             val fetchNotificationManager: FetchNotificationManager?,
+                                             val fetchDatabaseManager: FetchDatabaseManager?) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -51,6 +53,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var fileExistChecksEnabled = DEFAULT_FILE_EXIST_CHECKS
         private var storageResolver: StorageResolver = DefaultStorageResolver(appContext, getFileTempDir(appContext))
         private var fetchNotificationManager: FetchNotificationManager? = null
+        private var fetchDatabaseManager: FetchDatabaseManager? = null
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -230,6 +233,18 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Set the database manager used by instances of Fetch created by this configuration.
+         * See Java docs for FetchDatabaseManager interface or FetchDatabaseManagerImpl class on
+         * default use.
+         * @param fetchDatabaseManager the Fetch database managers.
+         * @return Builder
+         * */
+        fun setDatabaseManager(fetchDatabaseManager: FetchDatabaseManager?): Builder {
+            this.fetchDatabaseManager = fetchDatabaseManager
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -258,7 +273,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     hashCheckingEnabled = hashCheckEnabled,
                     fileExistChecksEnabled = fileExistChecksEnabled,
                     storageResolver = storageResolver,
-                    fetchNotificationManager = fetchNotificationManager)
+                    fetchNotificationManager = fetchNotificationManager,
+                    fetchDatabaseManager = fetchDatabaseManager)
         }
 
     }
@@ -282,6 +298,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (fileExistChecksEnabled != other.fileExistChecksEnabled) return false
         if (storageResolver != other.storageResolver) return false
         if (fetchNotificationManager != other.fetchNotificationManager) return false
+        if (fetchDatabaseManager != other.fetchDatabaseManager) return false
         return true
     }
 
@@ -303,6 +320,9 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (fetchNotificationManager != null) {
             result = 31 * result + fetchNotificationManager.hashCode()
         }
+        if (fetchDatabaseManager != null) {
+            result = 31 * result + fetchDatabaseManager.hashCode()
+        }
         return result
     }
 
@@ -314,7 +334,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                 "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
                 "fileServerDownloader=$fileServerDownloader, hashCheckingEnabled=$hashCheckingEnabled, " +
                 "fileExistChecksEnabled=$fileExistChecksEnabled, storageResolver=$storageResolver, " +
-                "fetchNotificationManager=$fetchNotificationManager)"
+                "fetchNotificationManager=$fetchNotificationManager, " +
+                "fetchDatabaseManager=$fetchDatabaseManager)"
     }
 
 }
