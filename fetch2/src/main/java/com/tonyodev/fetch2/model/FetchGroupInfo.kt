@@ -42,6 +42,12 @@ class FetchGroupInfo(override val id: Int = 0,
 
     override var removedDownloads: List<Download> = emptyList()
 
+    override val groupDownloadProgress: Int
+        get() {
+            val progressSum = downloads.sumBy { it.progress }
+            return  progressSum / downloads.size
+        }
+
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(id)
         dest.writeString(namespace)

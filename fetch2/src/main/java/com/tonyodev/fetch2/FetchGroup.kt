@@ -69,4 +69,9 @@ interface FetchGroup: Parcelable, Serializable {
      * */
     val removedDownloads: List<Download>
 
+    /**
+     * The groups downloading progress.
+     * */
+    val groupDownloadProgress: Int
+
 }
