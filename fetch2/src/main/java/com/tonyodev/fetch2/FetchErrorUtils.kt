@@ -77,6 +77,10 @@ fun getErrorFromMessage(message: String?): Error {
         Error.ENQUEUED_REQUESTS_ARE_NOT_DISTINCT
     } else if (message.contains(ENQUEUE_NOT_SUCCESSFUL, true)) {
         Error.ENQUEUE_NOT_SUCCESSFUL
+    } else if(message.contains(FAILED_RENAME_FILE_ASSOCIATED_WITH_INCOMPLETE_DOWNLOAD, true)) {
+        Error.FAILED_TO_RENAME_INCOMPLETE_DOWNLOAD_FILE
+    } else if(message.contains(FILE_CANNOT_BE_RENAMED, true)) {
+        Error.FAILED_TO_RENAME_FILE
     } else {
         Error.UNKNOWN
     }

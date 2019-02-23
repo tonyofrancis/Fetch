@@ -3,6 +3,7 @@
 package com.tonyodev.fetch2core
 
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.os.Build
@@ -144,6 +145,35 @@ fun deleteFile(filePath: String, context: Context): Boolean {
         }
     } else {
         deleteFile(File(filePath))
+    }
+}
+
+fun renameFile(oldFile: String, newFile: String, context: Context): Boolean {
+    return if (isUriPath(oldFile)) {
+        val uri = Uri.parse(oldFile)
+        when {
+            uri.scheme == "file" -> {
+                val file = File(uri.path)
+                if (file.canWrite() && file.exists()) renameFile(file, File(newFile)) else {
+                    val contentValue = ContentValues()
+                    contentValue.put("uri", newFile)
+                    context.contentResolver.update(uri, contentValue, null, null) > 0
+                }
+            }
+            uri.scheme == "content" -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+                        && DocumentsContract.isDocumentUri(context, uri)) {
+                    DocumentsContract.renameDocument(context.contentResolver, uri, newFile) != null
+                } else {
+                    val contentValue = ContentValues()
+                    contentValue.put("uri", newFile)
+                    context.contentResolver.update(uri, contentValue, null, null) > 0
+                }
+            }
+            else -> false
+        }
+    } else {
+        renameFile(File(oldFile), File(newFile))
     }
 }
 

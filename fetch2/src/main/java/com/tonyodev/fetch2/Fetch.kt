@@ -596,6 +596,17 @@ interface Fetch {
     fun replaceExtras(id: Int, extras: Extras, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
 
     /**
+     * Renames the file for a completed download. The StorageResolver attached to this fetch instance will rename the file.
+     * So it is okay to parse uri strings for the newFileName.
+     * @param id Id of existing request/download
+     * @param newFileName the new file name.
+     * @param func Successful callback that the download will be returned on.
+     * @param func2 Failed callback that the error will be returned on.
+     * @return Instance
+     * */
+    fun renameCompletedDownloadFile(id: Int, newFileName: String, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
+
+    /**
      * Gets all downloads managed by this instance of Fetch.
      * @param func Callback that the results will be returned on.
      * @throws FetchException if this instance of Fetch has been closed.

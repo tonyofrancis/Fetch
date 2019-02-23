@@ -714,6 +714,21 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun renameCompletedDownloadFile(id: Int, newFileName: String): Convertible<Download> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(Pair(id, newFileName))
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val download = fetchHandler.renameCompletedDownloadFile(it.first, it.second)
+                        Flowable.just(download)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
     override fun replaceExtras(id: Int, extras: Extras): Convertible<Download> {
         return synchronized(lock) {
             throwExceptionIfClosed()

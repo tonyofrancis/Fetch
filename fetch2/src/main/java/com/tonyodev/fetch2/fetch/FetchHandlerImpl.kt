@@ -375,6 +375,32 @@ class FetchHandlerImpl(private val namespace: String,
         }
     }
 
+    override fun renameCompletedDownloadFile(id: Int, newFileName: String): Download {
+        val download = databaseManager.get(id) ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
+        if (download.status != Status.COMPLETED) {
+            FetchException(FAILED_RENAME_FILE_ASSOCIATED_WITH_INCOMPLETE_DOWNLOAD)
+        }
+        val downloadWithFile = databaseManager.getByFile(newFileName)
+        if (downloadWithFile != null) {
+            throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+        }
+        val copy = download.copy() as DownloadInfo
+        copy.id = getUniqueId(download.url, newFileName)
+        copy.file = newFileName
+        val pair = databaseManager.insert(copy)
+        if (!pair.second) {
+         throw FetchException(FILE_CANNOT_BE_RENAMED)
+        }
+        val renamed = storageResolver.renameFile(download.file, newFileName)
+        return if (!renamed) {
+            databaseManager.delete(copy)
+            throw FetchException(FILE_CANNOT_BE_RENAMED)
+        } else {
+            databaseManager.delete(download)
+            pair.first
+        }
+    }
+
     override fun replaceExtras(id: Int, extras: Extras): Download {
         var downloadInfo = databaseManager.get(id)
         if (downloadInfo != null) {
