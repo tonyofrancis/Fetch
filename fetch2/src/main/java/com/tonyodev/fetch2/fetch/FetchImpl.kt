@@ -843,6 +843,19 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun getFetchGroup(group: Int, func: Func<FetchGroup>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                val fetchGroup = fetchHandler.getFetchGroup(group)
+                uiHandler.post {
+                    func.call(fetchGroup)
+                }
+            }
+        }
+        return this
+    }
+
     override fun addListener(listener: FetchListener): Fetch {
         return addListener(listener, DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED)
     }

@@ -118,6 +118,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -151,6 +153,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -184,6 +188,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -224,6 +230,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -264,6 +272,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -295,6 +305,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -335,6 +347,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -375,6 +389,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -415,6 +431,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -455,6 +473,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -495,6 +515,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -535,6 +557,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -575,6 +599,8 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
+                } else {
+                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }

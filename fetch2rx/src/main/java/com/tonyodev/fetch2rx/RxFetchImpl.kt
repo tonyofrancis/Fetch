@@ -849,6 +849,21 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun getFetchGroup(group: Int): Convertible<FetchGroup> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(group)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val fetchGroup = fetchHandler.getFetchGroup(group)
+                        Flowable.just(fetchGroup)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
     override fun addCompletedDownload(completedDownload: CompletedDownload, alertListeners: Boolean): Convertible<Download> {
         return addCompletedDownloads(listOf(completedDownload), alertListeners)
                 .flowable

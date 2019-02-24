@@ -380,6 +380,15 @@ interface RxFetch {
      * */
     fun getDownloadsByRequestIdentifier(identifier: Long): Convertible<List<Download>>
 
+    /**
+     * Gets the FetchGroup by id. Even if the database does not contain downloads with this group id
+     * a FetchGroup will be returned. It will contain no downloads however. When a download with this
+     * group id is added. The downloads field on this object will be update and attached FetchObservers will be notified.
+     * @param group the group id
+     * @return Convertible with results.
+     * */
+    fun getFetchGroup(group: Int): Convertible<FetchGroup>
+
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener
      * @throws FetchException if this instance of Fetch has been closed.

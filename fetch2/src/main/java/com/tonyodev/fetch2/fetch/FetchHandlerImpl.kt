@@ -8,6 +8,7 @@ import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.helper.PriorityListProcessor
+import com.tonyodev.fetch2.provider.GroupInfoProvider
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
 import java.io.IOException
@@ -27,7 +28,8 @@ class FetchHandlerImpl(private val namespace: String,
                        private val listenerCoordinator: ListenerCoordinator,
                        private val uiHandler: Handler,
                        private val storageResolver: StorageResolver,
-                       private val fetchNotificationManager: FetchNotificationManager?) : FetchHandler {
+                       private val fetchNotificationManager: FetchNotificationManager?,
+                       private val groupInfoProvider: GroupInfoProvider) : FetchHandler {
 
     private val listenerId = UUID.randomUUID().hashCode()
     private val listenerSet = mutableSetOf<FetchListener>()
@@ -699,6 +701,10 @@ class FetchHandlerImpl(private val namespace: String,
         if (priorityListProcessor.isPaused && !isTerminating) {
             priorityListProcessor.resume()
         }
+    }
+
+    override fun getFetchGroup(id: Int): FetchGroup {
+        return groupInfoProvider.getGroupInfo(id)
     }
 
 }

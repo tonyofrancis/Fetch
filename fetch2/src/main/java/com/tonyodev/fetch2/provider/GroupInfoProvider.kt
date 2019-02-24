@@ -11,14 +11,17 @@ class GroupInfoProvider(private val namespace: String,
     private val lock = Any()
     private val groupInfoMap = mutableMapOf<Int, WeakReference<FetchGroupInfo>>()
 
-    private fun getGroupInfo(id: Int): FetchGroupInfo {
-        val info = groupInfoMap[id]?.get()
-        return if (info == null) {
-            val groupInfo = FetchGroupInfo(id, namespace)
-            groupInfoMap[id] =  WeakReference(groupInfo)
-            groupInfo
-        } else {
-            info
+    fun getGroupInfo(id: Int): FetchGroupInfo {
+        synchronized(lock) {
+            val info = groupInfoMap[id]?.get()
+            return if (info == null) {
+                val groupInfo = FetchGroupInfo(id, namespace)
+                groupInfo.downloads = downloadProvider.getByGroup(id)
+                groupInfoMap[id] =  WeakReference(groupInfo)
+                groupInfo
+            } else {
+                info
+            }
         }
     }
 
@@ -27,6 +30,15 @@ class GroupInfoProvider(private val namespace: String,
             val groupInfo = getGroupInfo(id)
             groupInfo.downloads = downloadProvider.getByGroupReplace(id, download)
             groupInfo
+        }
+    }
+
+    fun postGroupReplace(id: Int, download: Download) {
+        synchronized(lock) {
+            val groupInfo = groupInfoMap[id]?.get()
+            if (groupInfo != null) {
+                groupInfo.downloads = downloadProvider.getByGroupReplace(id, download)
+            }
         }
     }
 

@@ -1,13 +1,12 @@
 package com.tonyodev.fetch2
 
-import android.os.Parcelable
-import java.io.Serializable
+import com.tonyodev.fetch2core.FetchObserver
 
 /**
  * An immutable object which contains a current snapshot of all the information
  * about a specific download group managed by Fetch.
  * */
-interface FetchGroup: Parcelable, Serializable {
+interface FetchGroup {
 
     /**
      * The group id.
@@ -73,5 +72,22 @@ interface FetchGroup: Parcelable, Serializable {
      * The groups downloading progress.
      * */
     val groupDownloadProgress: Int
+
+    /**
+     * The set of FetchObservers attached to this FetchGroup.
+     * */
+    val observers: Set<FetchObserver<List<Download>>>
+
+    /**
+     * Adds a FetchObserver that will be notified when the downloads in this group
+     * has been updated or changed.  FetchObservers are not lifecycle aware.
+     * @param fetchObserver the fetch observer.
+     * */
+    fun addFetchObserver(fetchObserver: FetchObserver<List<Download>>)
+
+    /**
+     * Remove a FetchObserver attached to this fetch group.
+     * */
+    fun removeFetchObserver(fetchObserver: FetchObserver<List<Download>>)
 
 }

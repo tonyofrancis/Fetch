@@ -59,4 +59,5 @@ interface FetchHandler : Closeable {
     fun getListenerSet(): Set<FetchListener>
     fun getPendingCount(): Long
     fun renameCompletedDownloadFile(id: Int, newFileName: String): Download
+    fun getFetchGroup(id: Int): FetchGroup
 }

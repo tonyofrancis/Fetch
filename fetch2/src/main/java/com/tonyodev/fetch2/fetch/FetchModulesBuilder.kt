@@ -27,6 +27,7 @@ object FetchModulesBuilder {
 
     private val lock = Any()
     private val holderMap = mutableMapOf<String, Holder>()
+    val mainUIHandler = Handler(Looper.getMainLooper())
 
     fun buildModulesFromPrefs(fetchConfiguration: FetchConfiguration): Modules {
         return synchronized(lock) {
@@ -47,12 +48,11 @@ object FetchModulesBuilder {
                                 getFileTempDir(fetchConfiguration.appContext)))
                 val downloadProvider = DownloadProvider(newDatabaseManager)
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
-                val uiHandler = Handler(Looper.getMainLooper())
                 val groupInfoProvider = GroupInfoProvider(fetchConfiguration.namespace, downloadProvider)
-                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace, groupInfoProvider, uiHandler)
-                val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager, downloadProvider, groupInfoProvider, uiHandler,
+                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace, groupInfoProvider, mainUIHandler)
+                val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager, downloadProvider, groupInfoProvider, mainUIHandler,
                         downloadManagerCoordinator, listenerCoordinator)
-                holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager, downloadProvider, groupInfoProvider, uiHandler,
+                holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager, downloadProvider, groupInfoProvider, mainUIHandler,
                         downloadManagerCoordinator, listenerCoordinator, newModules.networkInfoProvider)
                 newModules
             }
@@ -143,7 +143,8 @@ object FetchModulesBuilder {
                     listenerCoordinator = listenerCoordinator,
                     uiHandler = uiHandler,
                     storageResolver = fetchConfiguration.storageResolver,
-                    fetchNotificationManager = fetchConfiguration.fetchNotificationManager)
+                    fetchNotificationManager = fetchConfiguration.fetchNotificationManager,
+                    groupInfoProvider = groupInfoProvider)
             fetchDatabaseManager.delegate = object : FetchDatabaseManager.Delegate {
                 override fun deleteTempFilesForDownload(downloadInfo: DownloadInfo) {
                     val tempDir = fetchConfiguration.storageResolver
