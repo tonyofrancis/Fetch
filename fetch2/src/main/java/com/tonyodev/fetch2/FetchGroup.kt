@@ -79,15 +79,15 @@ interface FetchGroup {
     val observers: Set<FetchObserver<List<Download>>>
 
     /**
-     * Adds a FetchObserver that will be notified when the downloads in this group
-     * has been updated or changed.  FetchObservers are not lifecycle aware.
-     * @param fetchObserver the fetch observer.
+     * Adds a FetchGroupObserver that will be notified when the downloads in this group
+     * has been updated or changed.  FetchGroupObservers are not lifecycle aware.
+     * @param fetchGroupObserver the fetch group observer.
      * */
-    fun addFetchObserver(fetchObserver: FetchObserver<List<Download>>)
+    fun addFetchGroupObserver(fetchGroupObserver: FetchGroupObserver)
 
     /**
-     * Remove a FetchObserver attached to this fetch group.
+     * Remove a FetchGroupObserver attached to this fetch group.
      * */
-    fun removeFetchObserver(fetchObserver: FetchObserver<List<Download>>)
+    fun removeFetchGroupObserver(fetchGroupObserver: FetchGroupObserver)
 
 }

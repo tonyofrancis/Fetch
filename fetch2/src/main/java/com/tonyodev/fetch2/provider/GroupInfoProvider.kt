@@ -16,7 +16,7 @@ class GroupInfoProvider(private val namespace: String,
             val info = groupInfoMap[id]?.get()
             return if (info == null) {
                 val groupInfo = FetchGroupInfo(id, namespace)
-                groupInfo.downloads = downloadProvider.getByGroup(id)
+                groupInfo.update(downloadProvider.getByGroup(id), null)
                 groupInfoMap[id] =  WeakReference(groupInfo)
                 groupInfo
             } else {
@@ -28,7 +28,7 @@ class GroupInfoProvider(private val namespace: String,
     fun getGroupReplace(id: Int, download: Download): FetchGroup {
         return synchronized(lock) {
             val groupInfo = getGroupInfo(id)
-            groupInfo.downloads = downloadProvider.getByGroupReplace(id, download)
+            groupInfo.update(downloadProvider.getByGroupReplace(id, download), download)
             groupInfo
         }
     }
@@ -36,9 +36,7 @@ class GroupInfoProvider(private val namespace: String,
     fun postGroupReplace(id: Int, download: Download) {
         synchronized(lock) {
             val groupInfo = groupInfoMap[id]?.get()
-            if (groupInfo != null) {
-                groupInfo.downloads = downloadProvider.getByGroupReplace(id, download)
-            }
+            groupInfo?.update(downloadProvider.getByGroupReplace(id, download), download)
         }
     }
 

@@ -2,6 +2,7 @@ package com.tonyodev.fetch2.model
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchGroup
+import com.tonyodev.fetch2.FetchGroupObserver
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
 import com.tonyodev.fetch2core.FetchObserver
@@ -9,7 +10,7 @@ import com.tonyodev.fetch2core.FetchObserver
 class FetchGroupInfo(override val id: Int = 0,
                      override val namespace: String): FetchGroup {
 
-    private val observerSet = mutableSetOf<FetchObserver<List<Download>>>()
+    private val observerSet = mutableSetOf<FetchGroupObserver>()
 
     @Volatile
     override var downloads: List<Download> = emptyList()
@@ -24,12 +25,21 @@ class FetchGroupInfo(override val id: Int = 0,
             failedDownloads = value.filter { it.status == Status.FAILED }
             deletedDownloads = value.filter { it.status == Status.DELETED }
             removedDownloads = value.filter { it.status == Status.REMOVED }
-            FetchModulesBuilder.mainUIHandler.post {
-                synchronized(observerSet) {
-                  observerSet.iterator().forEach { it.onChanged(value) }
+        }
+
+    fun update(downloads: List<Download>, triggerDownload: Download?) {
+        this.downloads = downloads
+        FetchModulesBuilder.mainUIHandler.post {
+            synchronized(observerSet) {
+                observerSet.iterator().forEach {
+                    it.onChanged(downloads)
+                    if (triggerDownload != null) {
+                        it.onChanged(downloads, triggerDownload)
+                    }
                 }
             }
         }
+    }
 
     override var queuedDownloads: List<Download> = emptyList()
 
@@ -62,15 +72,15 @@ class FetchGroupInfo(override val id: Int = 0,
             }
         }
 
-    override fun addFetchObserver(fetchObserver: FetchObserver<List<Download>>) {
+    override fun addFetchGroupObserver(fetchGroupObserver: FetchGroupObserver) {
         synchronized(observerSet) {
-            observerSet.add(fetchObserver)
+            observerSet.add(fetchGroupObserver)
         }
     }
 
-    override fun removeFetchObserver(fetchObserver: FetchObserver<List<Download>>) {
+    override fun removeFetchGroupObserver(fetchGroupObserver: FetchGroupObserver) {
         synchronized(observerSet) {
-            observerSet.remove(fetchObserver)
+            observerSet.remove(fetchGroupObserver)
         }
     }
 

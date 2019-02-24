@@ -11,6 +11,6 @@ interface FetchObserver<T> {
      * Method called when the data on the observing object has changed.
      * @param data the data.
      * */
-    fun onChanged(data: T?)
+    fun onChanged(data: T)
 
 }
