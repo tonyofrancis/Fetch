@@ -728,10 +728,11 @@ class ListenerCoordinator(val namespace: String,
 
     fun addFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>) {
         synchronized(lock) {
+            val newFetchObservers = fetchObservers.distinct()
             val set = downloadsObserverMap[downloadId] ?: mutableListOf()
             val attachedObservers = set.mapNotNull { it.get() }
             val addedObservers = mutableListOf<FetchObserver<Download>>()
-            for (fetchObserver in fetchObservers) {
+            for (fetchObserver in newFetchObservers) {
                 if (!attachedObservers.contains(fetchObserver)) {
                     set.add(WeakReference(fetchObserver))
                     addedObservers.add(fetchObserver)

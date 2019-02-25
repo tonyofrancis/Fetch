@@ -75,18 +75,29 @@ class FetchGroupInfo(override val id: Int = 0,
             }
         }
 
-    override fun addFetchGroupObserver(fetchGroupObserver: FetchGroupObserver) {
+    override fun addFetchGroupObservers(vararg fetchGroupObservers: FetchGroupObserver) {
         synchronized(observerSet) {
-            observerSet.add(fetchGroupObserver)
+            val newFetchGroupObservers = fetchGroupObservers.distinct()
+            val addedObservers = mutableListOf<FetchGroupObserver>()
+            for (fetchGroupObserver in newFetchGroupObservers) {
+                if (!observerSet.contains(fetchGroupObserver)) {
+                    observerSet.add(fetchGroupObserver)
+                    addedObservers.add(fetchGroupObserver)
+                }
+            }
             FetchModulesBuilder.mainUIHandler.post {
-                fetchGroupObserver.onChanged(downloads, Reason.OBSERVER_ATTACHED)
+                for (addedObserver in addedObservers) {
+                    addedObserver.onChanged(downloads, Reason.OBSERVER_ATTACHED)
+                }
             }
         }
     }
 
-    override fun removeFetchGroupObserver(fetchGroupObserver: FetchGroupObserver) {
+    override fun removeFetchGroupObservers(vararg fetchGroupObservers: FetchGroupObserver) {
         synchronized(observerSet) {
-            observerSet.remove(fetchGroupObserver)
+            for (fetchGroupObserver in fetchGroupObservers) {
+                observerSet.remove(fetchGroupObserver)
+            }
         }
     }
 
