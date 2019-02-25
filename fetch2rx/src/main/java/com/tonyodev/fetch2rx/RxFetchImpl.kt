@@ -1027,21 +1027,21 @@ open class RxFetchImpl(override val namespace: String,
         awaitFinishOrTimeout(-1)
     }
 
-    override fun attachFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): RxFetch {
+    override fun attachFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): RxFetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                fetchHandler.addFetchObserverForDownload(downloadId, fetchObserver)
+                fetchHandler.addFetchObserversForDownload(downloadId, *fetchObservers)
             }
             return this
         }
     }
 
-    override fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): RxFetch {
+    override fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): RxFetch {
         synchronized(lock) {
             throwExceptionIfClosed()
             handlerWrapper.post {
-                fetchHandler.removeFetchObserverForDownload(downloadId, fetchObserver)
+                fetchHandler.removeFetchObserversForDownload(downloadId, *fetchObservers)
             }
             return this
         }

@@ -57,6 +57,6 @@ interface FetchHandler : Closeable {
     fun getPendingCount(): Long
     fun renameCompletedDownloadFile(id: Int, newFileName: String): Download
     fun getFetchGroup(id: Int): FetchGroup
-    fun addFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>)
-    fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>)
+    fun addFetchObserversForDownload(downloadId: Int, vararg  fetchObservers: FetchObserver<Download>)
+    fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>)
 }

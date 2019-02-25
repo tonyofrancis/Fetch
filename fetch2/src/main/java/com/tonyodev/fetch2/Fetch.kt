@@ -862,20 +862,20 @@ interface Fetch {
      * the passed in id, the FetchObserver will not be notified. Only when a download with the specified
      * id is managed by Fetch will the observer be called.
      * @param downloadId the download Id
-     * @param fetchObserver the fetch observer
+     * @param fetchObservers the fetch observers
      * @throws FetchException if this instance of Fetch has been closed.
      * @return instance
      * */
-    fun attachFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): Fetch
+    fun attachFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): Fetch
 
     /**
      * Removes a FetchObserver attached to this Fetch namespace for a download.
      * @param downloadId the download Id
-     * @param fetchObserver the fetch observer
+     * @param fetchObservers the fetch observers
      * @throws FetchException if this instance of Fetch has been closed.
      * @return instance
      * */
-    fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): Fetch
+    fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): Fetch
 
     /**
      * Fetch implementation class. Use this Singleton to get instances of Fetch.

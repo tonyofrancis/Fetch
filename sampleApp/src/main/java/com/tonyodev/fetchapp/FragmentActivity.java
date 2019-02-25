@@ -29,7 +29,6 @@ public class FragmentActivity extends AppCompatActivity {
     private View rootView;
     private ProgressFragment progressFragment1;
     private ProgressFragment progressFragment2;
-
     private Fetch fetch;
     private Request request;
 
@@ -43,23 +42,15 @@ public class FragmentActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             progressFragment1 = new ProgressFragment();
             progressFragment2 = new ProgressFragment();
-            fragmentManager.beginTransaction().add(R.id.fragment1, progressFragment1).add(R.id.fragment2, progressFragment2).commit();
+            fragmentManager.beginTransaction()
+                    .add(R.id.fragment1, progressFragment1)
+                    .add(R.id.fragment2, progressFragment2)
+                    .commit();
         } else {
             progressFragment1 = (ProgressFragment) fragmentManager.findFragmentById(R.id.fragment1);
             progressFragment2 = (ProgressFragment) fragmentManager.findFragmentById(R.id.fragment2);
         }
         checkStoragePermissions();
-    }
-
-    private void setRequestForFragments(@NotNull final Download download) {
-        if (progressFragment1 != null) {
-            progressFragment1.setRequest(request);
-            progressFragment1.updateProgress(download.getProgress());
-        }
-        if (progressFragment2 != null) {
-            progressFragment2.setRequest(request);
-            progressFragment2.updateProgress(download.getProgress());
-        }
     }
 
     private void checkStoragePermissions() {
@@ -68,47 +59,6 @@ public class FragmentActivity extends AppCompatActivity {
         } else {
             enqueueDownload();
         }
-    }
-
-    private void enqueueDownload() {
-        final String url = Data.sampleUrls[0];
-        final String filePath = Data.getSaveDir() + "/fragments/movie.mp4";
-        request = new Request(url, filePath);
-        fetch.enqueue(request, updatedRequest -> {
-            request = updatedRequest;
-        }, error -> {
-            Timber.d("FragmentActivity Error: %1$s", error.toString());
-            Snackbar.make(rootView, R.string.enqueue_error, Snackbar.LENGTH_INDEFINITE).show();
-        });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        fetch.addListener(progressFragment1)
-                .addListener(progressFragment2)
-                .addListener(fetchListener);
-        if (request != null) {
-            fetch.getDownload(request.getId(), download -> {
-                if (download != null) {
-                    setRequestForFragments(download);
-                }
-            });
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        fetch.removeListener(progressFragment1)
-                .removeListener(progressFragment2)
-                .removeListener(fetchListener);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        fetch.close();
     }
 
     @Override
@@ -120,13 +70,45 @@ public class FragmentActivity extends AppCompatActivity {
         }
     }
 
-    private final FetchListener fetchListener = new AbstractFetchListener() {
+    private void enqueueDownload() {
+        final String url = Data.sampleUrls[0];
+        final String filePath = Data.getSaveDir() + "/fragments/movie.mp4";
+        request = new Request(url, filePath);
 
-        @Override
-        public void onQueued(@NotNull Download download, boolean waitingOnNetwork) {
-            super.onQueued(download, waitingOnNetwork);
-            setRequestForFragments(download);
+        fetch.attachFetchObserversForDownload(request.getId(), progressFragment1, progressFragment2)
+                .enqueue(request, updatedRequest -> {
+                    request = updatedRequest;
+                }, error -> {
+                    Timber.d("FragmentActivity Error: %1$s", error.toString());
+                    Snackbar.make(rootView, R.string.enqueue_error, Snackbar.LENGTH_INDEFINITE).show();
+                });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        fetch.addListener(fetchListener);
+        if (request != null) {
+            fetch.attachFetchObserversForDownload(request.getId(), progressFragment1, progressFragment2);
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        fetch.removeListener(fetchListener);
+        if (request != null) {
+            fetch.removeFetchObserversForDownload(request.getId(), progressFragment1, progressFragment2);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        fetch.close();
+    }
+
+    private final FetchListener fetchListener = new AbstractFetchListener() {
 
         @Override
         public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
@@ -136,4 +118,5 @@ public class FragmentActivity extends AppCompatActivity {
         }
 
     };
+
 }

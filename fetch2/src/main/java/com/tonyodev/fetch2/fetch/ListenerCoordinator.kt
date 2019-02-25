@@ -726,36 +726,40 @@ class ListenerCoordinator(val namespace: String,
         }
     }
 
-    fun addFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>) {
+    fun addFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>) {
         synchronized(lock) {
             val set = downloadsObserverMap[downloadId] ?: mutableListOf()
-            val iterator = set.iterator()
-            while (iterator.hasNext()) {
-                val ref = iterator.next()
-                if (ref.get() == fetchObserver) {
-                    return
+            val attachedObservers = set.mapNotNull { it.get() }
+            val addedObservers = mutableListOf<FetchObserver<Download>>()
+            for (fetchObserver in fetchObservers) {
+                if (!attachedObservers.contains(fetchObserver)) {
+                    set.add(WeakReference(fetchObserver))
+                    addedObservers.add(fetchObserver)
                 }
             }
-            set.add(WeakReference(fetchObserver))
-            downloadsObserverMap[downloadId] = set
             val download = downloadProvider.getDownload(downloadId)
             if (download != null) {
                 uiHandler.post {
-                    fetchObserver.onChanged(download, Reason.OBSERVER_ATTACHED)
+                    for (addedObserver in addedObservers) {
+                        addedObserver.onChanged(download, Reason.OBSERVER_ATTACHED)
+                    }
                 }
             }
+            downloadsObserverMap[downloadId] = set
         }
     }
 
-    fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>) {
+    fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>) {
         synchronized(lock) {
-            val iterator = downloadsObserverMap[downloadId]?.iterator()
-            if (iterator != null) {
-                while (iterator.hasNext()) {
-                    val reference = iterator.next()
-                    if (reference.get() == fetchObserver) {
-                        iterator.remove()
-                        break
+            for (fetchObserver in fetchObservers) {
+                val iterator = downloadsObserverMap[downloadId]?.iterator()
+                if (iterator != null) {
+                    while (iterator.hasNext()) {
+                        val reference = iterator.next()
+                        if (reference.get() == fetchObservers) {
+                            iterator.remove()
+                            break
+                        }
                     }
                 }
             }

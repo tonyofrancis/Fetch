@@ -707,12 +707,12 @@ class FetchHandlerImpl(private val namespace: String,
         return groupInfoProvider.getGroupInfo(id, Reason.OBSERVER_ATTACHED)
     }
 
-    override fun addFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>) {
-        listenerCoordinator.addFetchObserverForDownload(downloadId, fetchObserver)
+    override fun addFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>) {
+        listenerCoordinator.addFetchObserversForDownload(downloadId, *fetchObservers)
     }
 
-    override fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>) {
-        listenerCoordinator.removeFetchObserverForDownload(downloadId, fetchObserver)
+    override fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>) {
+        listenerCoordinator.removeFetchObserversForDownload(downloadId, *fetchObservers)
     }
 
 }

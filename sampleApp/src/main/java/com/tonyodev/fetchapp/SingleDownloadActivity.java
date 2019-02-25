@@ -56,7 +56,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchOb
     protected void onResume() {
         super.onResume();
         if (request != null) {
-            fetch.attachFetchObserverForDownload(request.getId(), this);
+            fetch.attachFetchObserversForDownload(request.getId(), this);
         }
     }
 
@@ -64,7 +64,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchOb
     protected void onPause() {
         super.onPause();
         if (request != null) {
-            fetch.removeFetchObserverForDownload(request.getId(), this);
+            fetch.removeFetchObserversForDownload(request.getId(), this);
         }
     }
 
@@ -102,7 +102,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchOb
         request = new Request(url, filePath);
         request.setExtras(getExtrasForRequest(request));
 
-        fetch.attachFetchObserverForDownload(request.getId(), this)
+        fetch.attachFetchObserversForDownload(request.getId(), this)
                 .enqueue(request, new Func<Request>() {
                     @Override
                     public void call(@NotNull Request result) {
