@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.FetchGroupObserver
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
 import com.tonyodev.fetch2core.FetchObserver
+import com.tonyodev.fetch2core.Reason
 
 class FetchGroupInfo(override val id: Int = 0,
                      override val namespace: String): FetchGroup {
@@ -27,14 +28,16 @@ class FetchGroupInfo(override val id: Int = 0,
             removedDownloads = value.filter { it.status == Status.REMOVED }
         }
 
-    fun update(downloads: List<Download>, triggerDownload: Download?) {
+    fun update(downloads: List<Download>, triggerDownload: Download?, reason: Reason) {
         this.downloads = downloads
-        FetchModulesBuilder.mainUIHandler.post {
-            synchronized(observerSet) {
-                observerSet.iterator().forEach {
-                    it.onChanged(downloads)
-                    if (triggerDownload != null) {
-                        it.onChanged(downloads, triggerDownload)
+        if (reason != Reason.DOWNLOAD_BLOCK_UPDATED) {
+            FetchModulesBuilder.mainUIHandler.post {
+                synchronized(observerSet) {
+                    observerSet.iterator().forEach {
+                        it.onChanged(downloads, reason)
+                        if (triggerDownload != null) {
+                            it.onChanged(downloads, triggerDownload, reason)
+                        }
                     }
                 }
             }
@@ -76,7 +79,7 @@ class FetchGroupInfo(override val id: Int = 0,
         synchronized(observerSet) {
             observerSet.add(fetchGroupObserver)
             FetchModulesBuilder.mainUIHandler.post {
-                fetchGroupObserver.onChanged(downloads)
+                fetchGroupObserver.onChanged(downloads, Reason.OBSERVER_ATTACHED)
             }
         }
     }

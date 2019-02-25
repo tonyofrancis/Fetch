@@ -1027,6 +1027,26 @@ open class RxFetchImpl(override val namespace: String,
         awaitFinishOrTimeout(-1)
     }
 
+    override fun attachFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): RxFetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                fetchHandler.addFetchObserverForDownload(downloadId, fetchObserver)
+            }
+            return this
+        }
+    }
+
+    override fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): RxFetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                fetchHandler.removeFetchObserverForDownload(downloadId, fetchObserver)
+            }
+            return this
+        }
+    }
+
     companion object {
 
         @JvmStatic

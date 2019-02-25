@@ -704,7 +704,15 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun getFetchGroup(id: Int): FetchGroup {
-        return groupInfoProvider.getGroupInfo(id)
+        return groupInfoProvider.getGroupInfo(id, Reason.OBSERVER_ATTACHED)
+    }
+
+    override fun addFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>) {
+        listenerCoordinator.addFetchObserverForDownload(downloadId, fetchObserver)
+    }
+
+    override fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>) {
+        listenerCoordinator.removeFetchObserverForDownload(downloadId, fetchObserver)
     }
 
 }

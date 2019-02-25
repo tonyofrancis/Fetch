@@ -309,6 +309,7 @@ interface RxFetch {
      * So it is okay to parse uri strings for the newFileName.
      * @param id Id of existing request/download
      * @param newFileName the new file name.
+     * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with the successfully updated download or null.
      * */
     fun renameCompletedDownloadFile(id: Int, newFileName: String): Convertible<Download>
@@ -385,6 +386,7 @@ interface RxFetch {
      * a FetchGroup will be returned. It will contain no downloads however. When a download with this
      * group id is added. The downloads field on this object will be update and attached FetchObservers will be notified.
      * @param group the group id
+     * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with results.
      * */
     fun getFetchGroup(group: Int): Convertible<FetchGroup>
@@ -550,6 +552,27 @@ interface RxFetch {
      * @throws FetchException if calling on the main thread
      * */
     fun awaitFinish()
+
+    /**
+     * Attaches a FetchObserver to listen for changes on a download managed by this Fetch namespace.
+     * FetchObservers are held with a weak reference. Note: If fetch does not manage a download with
+     * the passed in id, the FetchObserver will not be notified. Only when a download with the specified
+     * id is managed by Fetch will the observer be called.
+     * @param downloadId the download Id
+     * @param fetchObserver the fetch observer
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun attachFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): RxFetch
+
+    /**
+     * Removes a FetchObserver attached to this Fetch namespace for a download.
+     * @param downloadId the download Id
+     * @param fetchObserver the fetch observer
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): RxFetch
 
     /**
      * RX Fetch implementation class. Use this Singleton to get instances of RxFetch or Fetch.

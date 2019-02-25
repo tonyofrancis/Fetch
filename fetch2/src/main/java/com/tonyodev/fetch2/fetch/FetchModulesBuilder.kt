@@ -49,7 +49,7 @@ object FetchModulesBuilder {
                 val downloadProvider = DownloadProvider(newDatabaseManager)
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
                 val groupInfoProvider = GroupInfoProvider(fetchConfiguration.namespace, downloadProvider)
-                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace, groupInfoProvider, mainUIHandler)
+                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace, groupInfoProvider, downloadProvider, mainUIHandler)
                 val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager, downloadProvider, groupInfoProvider, mainUIHandler,
                         downloadManagerCoordinator, listenerCoordinator)
                 holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager, downloadProvider, groupInfoProvider, mainUIHandler,

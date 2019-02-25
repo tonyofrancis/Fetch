@@ -891,6 +891,26 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun attachFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                fetchHandler.addFetchObserverForDownload(downloadId, fetchObserver)
+            }
+            return this
+        }
+    }
+
+    override fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                fetchHandler.removeFetchObserverForDownload(downloadId, fetchObserver)
+            }
+            return this
+        }
+    }
+
     override fun getDownloadBlocks(downloadId: Int, func: Func<List<DownloadBlock>>): Fetch {
         synchronized(lock) {
             throwExceptionIfClosed()

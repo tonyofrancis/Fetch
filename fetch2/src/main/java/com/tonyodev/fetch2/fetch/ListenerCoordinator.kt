@@ -3,12 +3,16 @@ package com.tonyodev.fetch2.fetch
 import android.os.Handler
 import android.os.HandlerThread
 import com.tonyodev.fetch2.*
+import com.tonyodev.fetch2.provider.DownloadProvider
 import com.tonyodev.fetch2.provider.GroupInfoProvider
 import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.FetchObserver
+import com.tonyodev.fetch2core.Reason
 import java.lang.ref.WeakReference
 
 class ListenerCoordinator(val namespace: String,
                           private val groupInfoProvider: GroupInfoProvider,
+                          private val downloadProvider: DownloadProvider,
                           private val uiHandler: Handler) {
 
     private val lock = Any()
@@ -20,6 +24,7 @@ class ListenerCoordinator(val namespace: String,
         handlerThread.start()
         Handler(handlerThread.looper)
     }()
+    private val downloadsObserverMap = mutableMapOf<Int, MutableList<WeakReference<FetchObserver<Download>>>>()
 
     fun addListener(id: Int, fetchListener: FetchListener) {
         synchronized(lock) {
@@ -104,7 +109,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_ADDED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -119,7 +124,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_ADDED)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_ADDED)
+                        }
+                    }
                 }
             }
         }
@@ -141,7 +155,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_QUEUED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -154,7 +168,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_QUEUED)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_QUEUED)
+                        }
+                    }
                 }
             }
         }
@@ -176,7 +199,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_WAITING_ON_NETWORK)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -189,7 +212,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_WAITING_ON_NETWORK)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_WAITING_ON_NETWORK)
+                        }
+                    }
                 }
             }
         }
@@ -218,7 +250,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_COMPLETED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -231,7 +263,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_COMPLETED)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_COMPLETED)
+                        }
+                    }
                 }
             }
         }
@@ -260,7 +301,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_ERROR)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -273,7 +314,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_ERROR)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_ERROR)
+                        }
+                    }
                 }
             }
         }
@@ -293,7 +343,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_BLOCK_UPDATED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -305,8 +355,6 @@ class ListenerCoordinator(val namespace: String,
                             }
                         }
                     }
-                } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
                 }
             }
         }
@@ -335,7 +383,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_STARTED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -348,7 +396,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_STARTED)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_STARTED)
+                        }
+                    }
                 }
             }
         }
@@ -377,7 +434,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_PROGRESS_CHANGED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -390,7 +447,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_PROGRESS_CHANGED)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_PROGRESS_CHANGED)
+                        }
+                    }
                 }
             }
         }
@@ -419,7 +485,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download,  Reason.DOWNLOAD_PAUSED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -432,7 +498,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_PAUSED)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_PAUSED)
+                        }
+                    }
                 }
             }
         }
@@ -461,7 +536,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_RESUMED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -474,7 +549,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_RESUMED)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_RESUMED)
+                        }
+                    }
                 }
             }
         }
@@ -503,7 +587,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_CANCELLED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -516,7 +600,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_CANCELLED)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_CANCELLED)
+                        }
+                    }
                 }
             }
         }
@@ -545,7 +638,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_REMOVED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -558,7 +651,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_REMOVED)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_REMOVED)
+                        }
+                    }
                 }
             }
         }
@@ -587,7 +689,7 @@ class ListenerCoordinator(val namespace: String,
                 }
                 if (fetchGroupListenerMap.isNotEmpty()) {
                     val groupId = download.group
-                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download)
+                    val fetchGroup = groupInfoProvider.getGroupReplace(groupId, download, Reason.DOWNLOAD_DELETED)
                     fetchGroupListenerMap.values.forEach {
                         val iterator = it.iterator()
                         while (iterator.hasNext()) {
@@ -600,7 +702,16 @@ class ListenerCoordinator(val namespace: String,
                         }
                     }
                 } else {
-                    groupInfoProvider.postGroupReplace(download.group, download)
+                    groupInfoProvider.postGroupReplace(download.group, download, Reason.DOWNLOAD_DELETED)
+                }
+                val downloadObserverSet = downloadsObserverMap[download.id]
+                downloadObserverSet?.forEach {
+                    val observer = it.get()
+                    if (observer != null) {
+                        uiHandler.post {
+                            observer.onChanged(download, Reason.DOWNLOAD_DELETED)
+                        }
+                    }
                 }
             }
         }
@@ -611,6 +722,43 @@ class ListenerCoordinator(val namespace: String,
             fetchListenerMap.clear()
             fetchGroupListenerMap.clear()
             fetchNotificationManagerList.clear()
+            downloadsObserverMap.clear()
+        }
+    }
+
+    fun addFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>) {
+        synchronized(lock) {
+            val set = downloadsObserverMap[downloadId] ?: mutableListOf()
+            val iterator = set.iterator()
+            while (iterator.hasNext()) {
+                val ref = iterator.next()
+                if (ref.get() == fetchObserver) {
+                    return
+                }
+            }
+            set.add(WeakReference(fetchObserver))
+            downloadsObserverMap[downloadId] = set
+            val download = downloadProvider.getDownload(downloadId)
+            if (download != null) {
+                uiHandler.post {
+                    fetchObserver.onChanged(download, Reason.OBSERVER_ATTACHED)
+                }
+            }
+        }
+    }
+
+    fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>) {
+        synchronized(lock) {
+            val iterator = downloadsObserverMap[downloadId]?.iterator()
+            if (iterator != null) {
+                while (iterator.hasNext()) {
+                    val reference = iterator.next()
+                    if (reference.get() == fetchObserver) {
+                        iterator.remove()
+                        break
+                    }
+                }
+            }
         }
     }
 

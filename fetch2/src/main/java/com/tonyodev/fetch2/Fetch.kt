@@ -602,6 +602,7 @@ interface Fetch {
      * @param newFileName the new file name.
      * @param func Successful callback that the download will be returned on.
      * @param func2 Failed callback that the error will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
     fun renameCompletedDownloadFile(id: Int, newFileName: String, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
@@ -678,6 +679,7 @@ interface Fetch {
      * group id is added. The downloads field on this object will be update and attached FetchObservers will be notified.
      * @param group the group id
      * @param func callback that the results will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance.
      * */
     fun getFetchGroup(group: Int, func: Func<FetchGroup>): Fetch
@@ -853,6 +855,27 @@ interface Fetch {
      * @throws FetchException if calling on the main thread
      * */
     fun awaitFinish()
+
+    /**
+     * Attaches a FetchObserver to listen for changes on a download managed by this Fetch namespace.
+     * FetchObservers are held with a weak reference. Note: If fetch does not manage a download with
+     * the passed in id, the FetchObserver will not be notified. Only when a download with the specified
+     * id is managed by Fetch will the observer be called.
+     * @param downloadId the download Id
+     * @param fetchObserver the fetch observer
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun attachFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): Fetch
+
+    /**
+     * Removes a FetchObserver attached to this Fetch namespace for a download.
+     * @param downloadId the download Id
+     * @param fetchObserver the fetch observer
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun removeFetchObserverForDownload(downloadId: Int, fetchObserver: FetchObserver<Download>): Fetch
 
     /**
      * Fetch implementation class. Use this Singleton to get instances of Fetch.
