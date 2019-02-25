@@ -85,7 +85,7 @@ public class FetchHandlerInstrumentedTest {
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
         final DownloadProvider downloadProvider = new DownloadProvider(fetchDatabaseManager);
         final GroupInfoProvider groupInfoProvider = new GroupInfoProvider(namespace, downloadProvider);
-        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace, groupInfoProvider, uiHandler);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace, groupInfoProvider, downloadProvider, uiHandler);
         final DefaultStorageResolver storageResolver = new DefaultStorageResolver(appContext, tempDir);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
@@ -103,7 +103,8 @@ public class FetchHandlerInstrumentedTest {
                 namespace);
         fetchHandler = new FetchHandlerImpl(namespace, fetchDatabaseManager, downloadManager,
                 priorityListProcessorImpl, fetchLogger, autoStart,
-                client, serverClient, listenerCoordinator, uiHandler, storageResolver, null);
+                client, serverClient, listenerCoordinator, uiHandler, storageResolver, null,
+                groupInfoProvider);
     }
 
     @Test

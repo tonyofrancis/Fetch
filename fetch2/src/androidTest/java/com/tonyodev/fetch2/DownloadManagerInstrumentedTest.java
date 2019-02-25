@@ -70,7 +70,7 @@ public class DownloadManagerInstrumentedTest {
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
         final DownloadProvider downloadProvider = new DownloadProvider(fetchDatabaseManager);
         final GroupInfoProvider groupInfoProvider = new GroupInfoProvider(namespace, downloadProvider);
-        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace, groupInfoProvider, uiHandler);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace, groupInfoProvider, downloadProvider, uiHandler);
         final DefaultStorageResolver storageResolver = new DefaultStorageResolver(appContext, tempDir);
         downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
