@@ -75,6 +75,9 @@ class FetchGroupInfo(override val id: Int = 0,
     override fun addFetchGroupObserver(fetchGroupObserver: FetchGroupObserver) {
         synchronized(observerSet) {
             observerSet.add(fetchGroupObserver)
+            FetchModulesBuilder.mainUIHandler.post {
+                fetchGroupObserver.onChanged(downloads)
+            }
         }
     }
 
