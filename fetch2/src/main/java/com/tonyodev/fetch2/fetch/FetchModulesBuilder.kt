@@ -36,7 +36,7 @@ object FetchModulesBuilder {
                 Modules(fetchConfiguration, holder.handlerWrapper, holder.fetchDatabaseManager, holder.downloadProvider,
                         holder.groupInfoProvider, holder.uiHandler, holder.downloadManagerCoordinator, holder.listenerCoordinator)
             } else {
-                val newHandlerWrapper = HandlerWrapper(fetchConfiguration.namespace)
+                val newHandlerWrapper = HandlerWrapper(fetchConfiguration.namespace, fetchConfiguration.backgroundHandler)
                 val liveSettings = LiveSettings(fetchConfiguration.namespace)
                 val newDatabaseManager = fetchConfiguration.fetchDatabaseManager ?: FetchDatabaseManagerImpl(
                         context = fetchConfiguration.appContext,

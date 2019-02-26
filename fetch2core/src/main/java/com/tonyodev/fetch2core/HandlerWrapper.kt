@@ -4,12 +4,13 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 
-class HandlerWrapper(val namespace: String) {
+class HandlerWrapper(val namespace: String,
+                     backgroundHandler: Handler? = null) {
 
     private val lock = Any()
     private var closed = false
     private var usageCounter = 0
-    private val handler = {
+    private val handler = backgroundHandler ?: {
         val handlerThread = HandlerThread(namespace)
         handlerThread.start()
         Handler(handlerThread.looper)

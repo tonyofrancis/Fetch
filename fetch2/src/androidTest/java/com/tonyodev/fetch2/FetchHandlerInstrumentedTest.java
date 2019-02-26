@@ -72,7 +72,7 @@ public class FetchHandlerInstrumentedTest {
         DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
         fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false, defaultStorageResolver);
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
-        final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace);
+        final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace, null);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final FileServerDownloader serverClient = FetchDefaults.getDefaultFileServerDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
