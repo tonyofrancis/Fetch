@@ -32,7 +32,7 @@ open class FetchImpl constructor(override val namespace: String,
     override val hasActiveDownloads: Boolean
         get() {
             return try {
-                fetchHandler.hasActiveDownloads()
+                fetchHandler.hasActiveDownloads(false)
             } catch (e: Exception) {
                 false
             }
@@ -850,6 +850,19 @@ open class FetchImpl constructor(override val namespace: String,
                 val fetchGroup = fetchHandler.getFetchGroup(group)
                 uiHandler.post {
                     func.call(fetchGroup)
+                }
+            }
+        }
+        return this
+    }
+
+    override fun hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                val hasActiveDownloads = fetchHandler.hasActiveDownloads(includeAddedDownloads)
+                uiHandler.post {
+                    func.call(hasActiveDownloads)
                 }
             }
         }

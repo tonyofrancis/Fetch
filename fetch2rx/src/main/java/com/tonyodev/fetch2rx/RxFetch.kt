@@ -574,6 +574,14 @@ interface RxFetch {
      * */
     fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): RxFetch
 
+    /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
+     * keep a background service ongoing until the results returns false.
+     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active.
+     * @throws FetchException if accessed on ui thread
+     * @return Convertible with results.
+     * */
+    fun hasActiveDownloads(includeAddedDownloads: Boolean): Convertible<Boolean>
+
     /**
      * RX Fetch implementation class. Use this Singleton to get instances of RxFetch or Fetch.
      * */

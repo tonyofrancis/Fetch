@@ -154,9 +154,11 @@ interface FetchDatabaseManager : Closeable {
 
     /**
      * Gets the count/sum of all downloads with the status of Queued and Downloading combined.
+     * @param includeAddedDownloads if to include downloads with the status of Added.
+     * Added downloads are not considered pending by default.
      * @return the pending download count.
      * */
-    fun getPendingCount(): Long
+    fun getPendingCount(includeAddedDownloads: Boolean): Long
 
     /**
      * Interface used for the DownloadManager's delegate.

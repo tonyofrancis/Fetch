@@ -38,7 +38,7 @@ open class RxFetchImpl(override val namespace: String,
     override val hasActiveDownloads: Boolean
         get() {
             return try {
-                fetchHandler.hasActiveDownloads()
+                fetchHandler.hasActiveDownloads(false)
             } catch (e: Exception) {
                 false
             }
@@ -911,6 +911,21 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloadBlocksList = fetchHandler.getDownloadBlocks(downloadId)
                         Flowable.just(downloadBlocksList)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
+    override fun hasActiveDownloads(includeAddedDownloads: Boolean): Convertible<Boolean> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(includeAddedDownloads)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val hasActiveDownloads = fetchHandler.hasActiveDownloads(it)
+                        Flowable.just(hasActiveDownloads)
                     }
                     .observeOn(uiScheduler)
                     .toConvertible()

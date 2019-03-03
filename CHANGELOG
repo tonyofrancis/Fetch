@@ -1,3 +1,7 @@
+Version 3.0.1
+- Added new method hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>)
+
+
 Version 3.0.0
 *Version 3 comes with a lot of enhancements and fixes*
 

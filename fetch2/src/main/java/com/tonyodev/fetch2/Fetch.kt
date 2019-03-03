@@ -877,6 +877,15 @@ interface Fetch {
      * */
     fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): Fetch
 
+    /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
+     * keep a background service ongoing until the callback function returns false.
+     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active.
+     * @param func the callback function
+     * @throws FetchException if accessed on ui thread
+     * @return instance
+     * */
+    fun hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>): Fetch
+
     /**
      * Fetch implementation class. Use this Singleton to get instances of Fetch.
      * */

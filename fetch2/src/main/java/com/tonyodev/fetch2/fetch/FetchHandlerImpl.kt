@@ -674,15 +674,15 @@ class FetchHandlerImpl(private val namespace: String,
         }
     }
 
-    override fun hasActiveDownloads(): Boolean {
+    override fun hasActiveDownloads(includeAddedDownloads: Boolean): Boolean {
         if (Thread.currentThread() == Looper.getMainLooper().thread) {
             throw FetchException(BLOCKING_CALL_ON_UI_THREAD)
         }
-        return fetchDatabaseManager.getPendingCount() > 0
+        return fetchDatabaseManager.getPendingCount(includeAddedDownloads) > 0
     }
 
     override fun getPendingCount(): Long {
-        return fetchDatabaseManager.getPendingCount()
+        return fetchDatabaseManager.getPendingCount(false)
     }
 
     private fun cancelDownloadsIfDownloading(downloads: List<DownloadInfo>) {
