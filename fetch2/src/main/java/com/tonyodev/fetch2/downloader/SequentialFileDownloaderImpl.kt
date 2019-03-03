@@ -110,6 +110,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         downloadBlock.startByte = seekPosition
                         downloadBlock.endByte = total
                         if (!terminated && !interrupted) {
+                            downloadInfo.etaInMilliSeconds = -1
+                            downloadInfo.downloadedBytesPerSecond = -1
                             delegate?.onStarted(
                                     download = downloadInfo,
                                     downloadBlocks = listOf(downloadBlock),
@@ -134,10 +136,12 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 if (!terminated && !interrupted) {
                     delegate?.saveDownloadProgress(downloadInfo)
                     delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                    downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
+                    downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
                     delegate?.onProgress(
                             download = downloadInfo,
-                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                            etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
+                            downloadedBytesPerSecond = downloadInfo.downloadedBytesPerSecond)
                 }
             } else if (isDownloadComplete() && response != null) {
                 verifyDownloadCompletion(response)
@@ -174,6 +178,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 downloadBlock.downloadedBytes = downloaded
                 downloadBlock.endByte = total
                 if (!terminated && !interrupted) {
+                    downloadInfo.etaInMilliSeconds = -1
+                    downloadInfo.downloadedBytesPerSecond = -1
                     delegate?.onError(download = downloadInfo, error = error, throwable = e)
                 }
             }
@@ -252,10 +258,12 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                     if (!terminated && !interrupted) {
                         delegate?.saveDownloadProgress(downloadInfo)
                         delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                        downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
+                        downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
                         delegate?.onProgress(
                                 download = downloadInfo,
-                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
+                                downloadedBytesPerSecond = downloadInfo.downloadedBytesPerSecond)
                     }
                     reportingStartTime = System.nanoTime()
                 }
@@ -280,10 +288,14 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                     if (!terminated && !interrupted) {
                         delegate?.saveDownloadProgress(downloadInfo)
                         delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                        downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
+                        downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
                         delegate?.onProgress(
                                 download = downloadInfo,
-                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
+                                downloadedBytesPerSecond = downloadInfo.downloadedBytesPerSecond)
+                        downloadInfo.etaInMilliSeconds = -1
+                        downloadInfo.downloadedBytesPerSecond = -1
                         delegate?.onComplete(
                                 download = downloadInfo)
                     }
@@ -294,10 +306,14 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 if (!terminated && !interrupted) {
                     delegate?.saveDownloadProgress(downloadInfo)
                     delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
+                    downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
+                    downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
                     delegate?.onProgress(
                             download = downloadInfo,
-                            etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                            downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                            etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
+                            downloadedBytesPerSecond = downloadInfo.downloadedBytesPerSecond)
+                    downloadInfo.etaInMilliSeconds = -1
+                    downloadInfo.downloadedBytesPerSecond = -1
                     delegate?.onComplete(
                             download = downloadInfo)
                 }

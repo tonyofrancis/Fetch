@@ -7,8 +7,8 @@ import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.tonyodev.fetch2.database.DatabaseManager;
-import com.tonyodev.fetch2.database.DatabaseManagerImpl;
+import com.tonyodev.fetch2.database.FetchDatabaseManager;
+import com.tonyodev.fetch2.database.FetchDatabaseManagerImpl;
 import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
 import com.tonyodev.fetch2.database.migration.Migration;
@@ -18,6 +18,7 @@ import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator;
 import com.tonyodev.fetch2.fetch.FetchHandler;
 import com.tonyodev.fetch2.fetch.FetchHandlerImpl;
 import com.tonyodev.fetch2.fetch.LiveSettings;
+import com.tonyodev.fetch2.provider.GroupInfoProvider;
 import com.tonyodev.fetch2core.DefaultStorageResolver;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.FetchCoreDefaults;
@@ -55,7 +56,7 @@ public class FetchHandlerInstrumentedTest {
 
     private Context appContext;
     private FetchHandler fetchHandler;
-    private DatabaseManager databaseManager;
+    private FetchDatabaseManager fetchDatabaseManager;
     private PriorityListProcessor<Download> priorityListProcessorImpl;
 
     @Before
@@ -69,9 +70,9 @@ public class FetchHandlerInstrumentedTest {
         final Migration[] migrations = DownloadDatabase.getMigrations();
         final LiveSettings liveSettings = new LiveSettings(namespace);
         DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false, defaultStorageResolver);
+        fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false, defaultStorageResolver);
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
-        final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace);
+        final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace, null);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final FileServerDownloader serverClient = FetchDefaults.getDefaultFileServerDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
@@ -79,18 +80,20 @@ public class FetchHandlerInstrumentedTest {
         final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
-        final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
+        final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(fetchDatabaseManager);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
-        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
+        final DownloadProvider downloadProvider = new DownloadProvider(fetchDatabaseManager);
+        final GroupInfoProvider groupInfoProvider = new GroupInfoProvider(namespace, downloadProvider);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace, groupInfoProvider, downloadProvider, uiHandler);
         final DefaultStorageResolver storageResolver = new DefaultStorageResolver(appContext, tempDir);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 downloadInfoUpdater, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver, appContext, namespace);
+                listenerCoordinator, serverDownloader, false, storageResolver, appContext, namespace, groupInfoProvider);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handlerWrapper,
-                new DownloadProvider(databaseManager),
+                new DownloadProvider(fetchDatabaseManager),
                 downloadManager,
                 new NetworkInfoProvider(appContext),
                 fetchLogger,
@@ -98,9 +101,10 @@ public class FetchHandlerInstrumentedTest {
                 concurrentLimit,
                 appContext,
                 namespace);
-        fetchHandler = new FetchHandlerImpl(namespace, databaseManager, downloadManager,
+        fetchHandler = new FetchHandlerImpl(namespace, fetchDatabaseManager, downloadManager,
                 priorityListProcessorImpl, fetchLogger, autoStart,
-                client, serverClient, listenerCoordinator, uiHandler, storageResolver, null);
+                client, serverClient, listenerCoordinator, uiHandler, storageResolver, null,
+                groupInfoProvider);
     }
 
     @Test
@@ -229,7 +233,7 @@ public class FetchHandlerInstrumentedTest {
         final Download removedDownload = downloads.get(0);
         assertNotNull(removedDownload);
         assertEquals(Status.REMOVED, removedDownload.getStatus());
-        final Download download1 = databaseManager.get(download.getFirst().getId());
+        final Download download1 = fetchDatabaseManager.get(download.getFirst().getId());
         assertNull(download1);
     }
 
@@ -258,7 +262,7 @@ public class FetchHandlerInstrumentedTest {
         final List<Integer> idList = new ArrayList<>();
         idList.add(request.getId());
         idList.add(request2.getId());
-        final List<DownloadInfo> downloads1 = databaseManager.get(idList);
+        final List<DownloadInfo> downloads1 = fetchDatabaseManager.get(idList);
         assertNotNull(downloads1);
         for (DownloadInfo downloadInfo : downloads1) {
             assertNull(downloadInfo);
@@ -280,7 +284,7 @@ public class FetchHandlerInstrumentedTest {
             assertEquals(Status.REMOVED, download.getStatus());
         }
 
-        final List<DownloadInfo> downloads1 = databaseManager.get();
+        final List<DownloadInfo> downloads1 = fetchDatabaseManager.get();
         assertNotNull(downloads1);
         for (DownloadInfo downloadInfo : downloads1) {
             assertNull(downloadInfo);
@@ -298,7 +302,7 @@ public class FetchHandlerInstrumentedTest {
         final Download deletedDownload = downloads.get(0);
         assertNotNull(deletedDownload);
         assertEquals(Status.DELETED, deletedDownload.getStatus());
-        final Download download1 = databaseManager.get(download.getFirst().getId());
+        final Download download1 = fetchDatabaseManager.get(download.getFirst().getId());
         assertNull(download1);
     }
 
@@ -327,7 +331,7 @@ public class FetchHandlerInstrumentedTest {
         final List<Integer> idList = new ArrayList<>();
         idList.add(request.getId());
         idList.add(request2.getId());
-        final List<DownloadInfo> downloads1 = databaseManager.get(idList);
+        final List<DownloadInfo> downloads1 = fetchDatabaseManager.get(idList);
         assertNotNull(downloads1);
         for (DownloadInfo downloadInfo : downloads1) {
             assertNull(downloadInfo);
@@ -349,7 +353,7 @@ public class FetchHandlerInstrumentedTest {
             assertEquals(Status.DELETED, download.getStatus());
         }
 
-        final List<DownloadInfo> downloads1 = databaseManager.get();
+        final List<DownloadInfo> downloads1 = fetchDatabaseManager.get();
         assertNotNull(downloads1);
         for (DownloadInfo downloadInfo : downloads1) {
             assertNull(downloadInfo);
@@ -418,7 +422,7 @@ public class FetchHandlerInstrumentedTest {
         assertEquals(request.getId(), download.getFirst().getId());
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(download.getFirst());
         downloadInfo.setStatus(Status.FAILED);
-        databaseManager.update(downloadInfo);
+        fetchDatabaseManager.update(downloadInfo);
         final List<Download> queuedDownloads = fetchHandler.retry(getIdList(request.getId()));
         assertNotNull(queuedDownloads);
         assertEquals(1, queuedDownloads.size());
@@ -516,7 +520,7 @@ public class FetchHandlerInstrumentedTest {
 
     @After
     public void cleanUp() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         fetchHandler.close();
     }
 

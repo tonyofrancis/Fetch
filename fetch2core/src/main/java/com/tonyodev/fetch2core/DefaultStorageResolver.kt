@@ -37,4 +37,12 @@ open class DefaultStorageResolver(
             false
         }
     }
+
+    override fun renameFile(oldFile: String, newFile: String): Boolean {
+        if (oldFile.isEmpty() || newFile.isEmpty()) {
+            return false
+        }
+        return renameFile(oldFile, newFile, context)
+    }
+
 }

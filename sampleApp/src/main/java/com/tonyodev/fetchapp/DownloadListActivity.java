@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import timber.log.Timber;
-
 public class DownloadListActivity extends AppCompatActivity implements ActionListener {
 
     private static final int STORAGE_PERMISSION_CODE = 200;

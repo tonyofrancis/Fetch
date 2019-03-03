@@ -596,6 +596,18 @@ interface Fetch {
     fun replaceExtras(id: Int, extras: Extras, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
 
     /**
+     * Renames the file for a completed download. The StorageResolver attached to this fetch instance will rename the file.
+     * So it is okay to parse uri strings for the newFileName.
+     * @param id Id of existing request/download
+     * @param newFileName the new file name.
+     * @param func Successful callback that the download will be returned on.
+     * @param func2 Failed callback that the error will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun renameCompletedDownloadFile(id: Int, newFileName: String, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
+
+    /**
      * Gets all downloads managed by this instance of Fetch.
      * @param func Callback that the results will be returned on.
      * @throws FetchException if this instance of Fetch has been closed.
@@ -660,6 +672,17 @@ interface Fetch {
      * @return Instance
      * */
     fun getDownloadsByRequestIdentifier(identifier: Long, func: Func<List<Download>>): Fetch
+
+    /**
+     * Gets the FetchGroup by id. Even if the database does not contain downloads with this group id
+     * a FetchGroup will be returned. It will contain no downloads however. When a download with this
+     * group id is added. The downloads field on this object will be update and attached FetchObservers will be notified.
+     * @param group the group id
+     * @param func callback that the results will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance.
+     * */
+    fun getFetchGroup(group: Int, func: Func<FetchGroup>): Fetch
 
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener
@@ -832,6 +855,36 @@ interface Fetch {
      * @throws FetchException if calling on the main thread
      * */
     fun awaitFinish()
+
+    /**
+     * Attaches a FetchObserver to listen for changes on a download managed by this Fetch namespace.
+     * FetchObservers are held with a weak reference. Note: If fetch does not manage a download with
+     * the passed in id, the FetchObserver will not be notified. Only when a download with the specified
+     * id is managed by Fetch will the observer be called.
+     * @param downloadId the download Id
+     * @param fetchObservers the fetch observers
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun attachFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): Fetch
+
+    /**
+     * Removes a FetchObserver attached to this Fetch namespace for a download.
+     * @param downloadId the download Id
+     * @param fetchObservers the fetch observers
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): Fetch
+
+    /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
+     * keep a background service ongoing until the callback function returns false.
+     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active.
+     * @param func the callback function
+     * @throws FetchException if accessed on ui thread
+     * @return instance
+     * */
+    fun hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>): Fetch
 
     /**
      * Fetch implementation class. Use this Singleton to get instances of Fetch.

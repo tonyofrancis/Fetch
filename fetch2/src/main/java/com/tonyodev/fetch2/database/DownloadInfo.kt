@@ -1,9 +1,6 @@
 package com.tonyodev.fetch2.database
 
-import android.arch.persistence.room.ColumnInfo
-import android.arch.persistence.room.Entity
-import android.arch.persistence.room.Index
-import android.arch.persistence.room.PrimaryKey
+import android.arch.persistence.room.*
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
@@ -21,7 +18,7 @@ import java.util.*
 @Entity(tableName = DownloadDatabase.TABLE_NAME,
         indices = [(Index(value = [DownloadDatabase.COLUMN_FILE], unique = true)),
             (Index(value = [DownloadDatabase.COLUMN_GROUP, DownloadDatabase.COLUMN_STATUS], unique = false))])
-class DownloadInfo : Download {
+open class DownloadInfo : Download {
 
     @PrimaryKey
     @ColumnInfo(name = DownloadDatabase.COLUMN_ID, typeAffinity = ColumnInfo.INTEGER)
@@ -78,6 +75,12 @@ class DownloadInfo : Download {
     @ColumnInfo(name = DownloadDatabase.COLUMN_EXTRAS, typeAffinity = ColumnInfo.TEXT)
     override var extras: Extras = Extras.emptyExtras
 
+    @Ignore
+    override var etaInMilliSeconds: Long = -1L
+
+    @Ignore
+    override var downloadedBytesPerSecond: Long = -1L
+
     override val progress: Int
         get() {
             return calculateProgress(downloaded, total)
@@ -128,6 +131,8 @@ class DownloadInfo : Download {
         if (identifier != other.identifier) return false
         if (downloadOnEnqueue != other.downloadOnEnqueue) return false
         if (extras != other.extras) return false
+        if (etaInMilliSeconds != other.etaInMilliSeconds) return false
+        if (downloadedBytesPerSecond != other.downloadedBytesPerSecond) return false
         return true
     }
 
@@ -150,15 +155,17 @@ class DownloadInfo : Download {
         result = 31 * result + identifier.hashCode()
         result = 31 * result + downloadOnEnqueue.hashCode()
         result = 31 * result + extras.hashCode()
+        result = 31 * result + etaInMilliSeconds.hashCode()
+        result = 31 * result + downloadedBytesPerSecond.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file', group=$group," +
-                " priority=$priority, headers=$headers, downloaded=$downloaded, total=$total, status=$status," +
-                " error=$error, networkType=$networkType, created=$created, tag=$tag, " +
-                "enqueueAction=$enqueueAction, identifier=$identifier, downloadOnEnqueue=$downloadOnEnqueue, " +
-                "extras=$extras)"
+        return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file', group=$group, " +
+                "priority=$priority, headers=$headers, downloaded=$downloaded, total=$total, status=$status," +
+                " error=$error, networkType=$networkType, created=$created, tag=$tag, enqueueAction=$enqueueAction, " +
+                "identifier=$identifier, downloadOnEnqueue=$downloadOnEnqueue, extras=$extras, " +
+                "etaInMilliSeconds=$etaInMilliSeconds, downloadedBytesPerSecond=$downloadedBytesPerSecond)"
     }
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
@@ -179,6 +186,8 @@ class DownloadInfo : Download {
         dest.writeInt(enqueueAction.value)
         dest.writeLong(identifier)
         dest.writeInt(if (downloadOnEnqueue) 1 else 0)
+        dest.writeLong(etaInMilliSeconds)
+        dest.writeLong(downloadedBytesPerSecond)
         dest.writeSerializable(HashMap(extras.map))
     }
 
@@ -207,6 +216,8 @@ class DownloadInfo : Download {
             val enqueueAction = EnqueueAction.valueOf(source.readInt())
             val identifier = source.readLong()
             val downloadOnEnqueue = source.readInt() == 1
+            val etaInMilliSeconds = source.readLong()
+            val downloadedBytesPerSecond = source.readLong()
             val extras = source.readSerializable() as Map<String, String>
 
             val downloadInfo = DownloadInfo()
@@ -227,6 +238,8 @@ class DownloadInfo : Download {
             downloadInfo.enqueueAction = enqueueAction
             downloadInfo.identifier = identifier
             downloadInfo.downloadOnEnqueue = downloadOnEnqueue
+            downloadInfo.etaInMilliSeconds = etaInMilliSeconds
+            downloadInfo.downloadedBytesPerSecond = downloadedBytesPerSecond
             downloadInfo.extras = Extras(extras)
             return downloadInfo
         }

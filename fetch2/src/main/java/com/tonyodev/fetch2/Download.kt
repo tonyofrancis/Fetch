@@ -105,4 +105,15 @@ interface Download : Parcelable, Serializable {
     /* Returns the fileUri.*/
     val fileUri: Uri
 
+    /** The estimated time in milliseconds until the download completes.
+     *  This field will always be -1 if the download is not currently being downloaded.
+     * */
+    val  etaInMilliSeconds: Long
+
+    /** Average downloaded bytes per second.
+     * Can return -1 to indicate that the estimated time remaining is unknown. This field will
+     * always return -1 when the download is not currently being downloaded.
+     * */
+    val downloadedBytesPerSecond: Long
+
 }
