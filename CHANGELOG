@@ -1,3 +1,32 @@
+Version 3.0.0
+*Version 3 comes with a lot of enhancements and fixes*
+
+  Fetch:
+- FetchGroupListener. FetchGroupListener extends from FetchListener and allows you to listener for
+  updates on a group. The methods on FetchGroupListener will return a FetchGroup object that contains
+  all the downloads in a group and will inform you which download triggered a change on the group. Also see AbstractFetchGroupListener.
+- Added new method to rename a completed download's file. see Fetch.renameCompletedDownloadFile method.
+
+  Observers:
+- Introducing FetchObserver. Fetch now allows you to subscribe from updates for a single Download or a Group of Downloads.
+  Using the FetchObserver and FetchGroupObserver interface respectively. See Fetch.attachFetchObserversForDownload(id, observers...) documentation
+  for more information. Also check the sample app for usage.
+- Introducing FetchGroup. FetchGroup is an object that contains all information about a group Fetch manages. The group is
+  automatically updated any time a download from the group updates. You can subscribe to FetchGroup's using the FetchGroupObserver.
+  FetchGroupObservers attached to a FetchGroup will be notified when downloads on a group changes. You will be notified of
+  the Reason for the change as well. See Fetch.getFetchGroup(id, callback) documentation for more information.
+
+  Database:
+- Fetch now allows you to provide your own database manager to manage downloads. See the FetchDatabaseManager documentation and
+  FetchConfiguration.Builder class to get started. Note: Fetch depends on your FetchDatabaseManager methods to be synchronized to work correctly.
+
+  Download:
+- Added new fields on the Download objects. Fields: etaInMilliSeconds, downloadedBytesPerSecond. See documentation.
+
+  Fixes & Small Improvements:
+- You can now set the Handler Fetch will use to perform all operations on. See FetchConfiguration.Builder.setHandler method.
+- Fixed a bug that prevented notification buttons (pause, cancel, resume, etc) from firing the intent.
+
 Version 2.3.6
 - Out of Memory Error. Fixed issued in the downloader where an out of memory error would occur.
 
