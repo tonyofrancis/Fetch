@@ -1,17 +1,17 @@
 package com.tonyodev.fetch2.helper
 
-import com.tonyodev.fetch2.database.FetchDatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
+import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper
 
 
-class DownloadInfoUpdater(private val fetchDatabaseManager: FetchDatabaseManager) {
+class DownloadInfoUpdater(private val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper) {
 
     fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo) {
-        fetchDatabaseManager.updateFileBytesInfoAndStatusOnly(downloadInfo)
+        fetchDatabaseManagerWrapper.updateFileBytesInfoAndStatusOnly(downloadInfo)
     }
 
     fun update(downloadInfo: DownloadInfo) {
-        fetchDatabaseManager.update(downloadInfo)
+        fetchDatabaseManagerWrapper.update(downloadInfo)
     }
 
 }

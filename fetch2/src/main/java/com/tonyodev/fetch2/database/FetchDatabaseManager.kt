@@ -8,7 +8,6 @@ import java.io.Closeable
  * This interface can be implemented by a class to create a custom FetchDatabaseManager.
  * The default Fetch Database Manager is FetchDatabaseManagerImpl which uses sqlite/room
  * to store download information. All methods and fields will be called on Fetch's background thread.
- * Note: Fetch expects all the methods and fields on this interface to be synchronized when implemented.
  * */
 interface FetchDatabaseManager : Closeable {
 

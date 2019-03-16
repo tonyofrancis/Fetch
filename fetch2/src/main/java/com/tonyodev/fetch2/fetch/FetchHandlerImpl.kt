@@ -3,8 +3,8 @@ package com.tonyodev.fetch2.fetch
 import android.os.Handler
 import android.os.Looper
 import com.tonyodev.fetch2.*
-import com.tonyodev.fetch2.database.FetchDatabaseManager
 import com.tonyodev.fetch2.database.DownloadInfo
+import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.helper.PriorityListProcessor
@@ -18,7 +18,7 @@ import java.util.*
  * This handlerWrapper class handles all tasks and operations of Fetch.
  * */
 class FetchHandlerImpl(private val namespace: String,
-                       private val fetchDatabaseManager: FetchDatabaseManager,
+                       private val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper,
                        private val downloadManager: DownloadManager,
                        private val priorityListProcessor: PriorityListProcessor<Download>,
                        private val logger: Logger,
@@ -41,7 +41,7 @@ class FetchHandlerImpl(private val namespace: String,
         if (fetchNotificationManager != null) {
             listenerCoordinator.addNotificationManager(fetchNotificationManager)
         }
-        fetchDatabaseManager.sanitizeOnFirstEntry()
+        fetchDatabaseManagerWrapper.sanitizeOnFirstEntry()
         if (autoStart) {
             priorityListProcessor.start()
         }
@@ -69,11 +69,11 @@ class FetchHandlerImpl(private val namespace: String,
                         Status.ADDED
                     }
                     if (!existing) {
-                        val downloadPair = fetchDatabaseManager.insert(downloadInfo)
+                        val downloadPair = fetchDatabaseManagerWrapper.insert(downloadInfo)
                         logger.d("Enqueued download ${downloadPair.first}")
                         results.add(Pair(downloadPair.first, Error.NONE))
                     } else {
-                        fetchDatabaseManager.update(downloadInfo)
+                        fetchDatabaseManagerWrapper.update(downloadInfo)
                         logger.d("Updated download $downloadInfo")
                         results.add(Pair(downloadInfo, Error.NONE))
                     }
@@ -92,18 +92,18 @@ class FetchHandlerImpl(private val namespace: String,
 
     private fun prepareDownloadInfoForEnqueue(downloadInfo: DownloadInfo): Boolean {
         cancelDownloadsIfDownloading(listOf(downloadInfo))
-        var existingDownload = fetchDatabaseManager.getByFile(downloadInfo.file)
+        var existingDownload = fetchDatabaseManagerWrapper.getByFile(downloadInfo.file)
         if (existingDownload == null) {
             if (downloadInfo.enqueueAction != EnqueueAction.INCREMENT_FILE_NAME) {
                 storageResolver.createFile(downloadInfo.file)
             }
         } else {
             cancelDownloadsIfDownloading(listOf(existingDownload))
-            existingDownload = fetchDatabaseManager.getByFile(downloadInfo.file)
+            existingDownload = fetchDatabaseManagerWrapper.getByFile(downloadInfo.file)
             if (existingDownload != null && existingDownload.status == Status.DOWNLOADING) {
                 existingDownload.status = Status.QUEUED
                 try {
-                    fetchDatabaseManager.update(existingDownload)
+                    fetchDatabaseManagerWrapper.update(existingDownload)
                 } catch (e: Exception) {
 
                 }
@@ -111,7 +111,7 @@ class FetchHandlerImpl(private val namespace: String,
                     && downloadInfo.enqueueAction == EnqueueAction.UPDATE_ACCORDINGLY) {
                 if (!storageResolver.fileExists(existingDownload.file)) {
                     try {
-                        fetchDatabaseManager.delete(existingDownload)
+                        fetchDatabaseManagerWrapper.delete(existingDownload)
                     } catch (e: Exception) {
                     }
                     existingDownload = null
@@ -177,25 +177,25 @@ class FetchHandlerImpl(private val namespace: String,
             downloadInfo.namespace = namespace
             downloadInfo.status = Status.COMPLETED
             prepareCompletedDownloadInfoForEnqueue(downloadInfo)
-            val downloadPair = fetchDatabaseManager.insert(downloadInfo)
+            val downloadPair = fetchDatabaseManagerWrapper.insert(downloadInfo)
             logger.d("Enqueued CompletedDownload ${downloadPair.first}")
             downloadPair.first
         }
     }
 
     private fun prepareCompletedDownloadInfoForEnqueue(downloadInfo: DownloadInfo) {
-        val existingDownload = fetchDatabaseManager.getByFile(downloadInfo.file)
+        val existingDownload = fetchDatabaseManagerWrapper.getByFile(downloadInfo.file)
         if (existingDownload != null) {
             deleteDownloads(listOf(downloadInfo))
         }
     }
 
     override fun pause(ids: List<Int>): List<Download> {
-        return pauseDownloads(fetchDatabaseManager.get(ids).filterNotNull())
+        return pauseDownloads(fetchDatabaseManagerWrapper.get(ids).filterNotNull())
     }
 
     override fun pausedGroup(id: Int): List<Download> {
-        return pauseDownloads(fetchDatabaseManager.getByGroup(id))
+        return pauseDownloads(fetchDatabaseManagerWrapper.getByGroup(id))
     }
 
     private fun pauseDownloads(downloads: List<DownloadInfo>): List<Download> {
@@ -207,7 +207,7 @@ class FetchHandlerImpl(private val namespace: String,
                 pausedDownloads.add(it)
             }
         }
-        fetchDatabaseManager.update(pausedDownloads)
+        fetchDatabaseManagerWrapper.update(pausedDownloads)
         return pausedDownloads
     }
 
@@ -225,11 +225,11 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun resumeGroup(id: Int): List<Download> {
-        return resumeDownloads(fetchDatabaseManager.getByGroup(id).map { it.id })
+        return resumeDownloads(fetchDatabaseManagerWrapper.getByGroup(id).map { it.id })
     }
 
     private fun resumeDownloads(downloadIds: List<Int>): List<Download> {
-        val downloads = fetchDatabaseManager.get(downloadIds).filterNotNull()
+        val downloads = fetchDatabaseManagerWrapper.get(downloadIds).filterNotNull()
         val resumedDownloads = mutableListOf<DownloadInfo>()
         downloads.forEach {
             if (!downloadManager.contains(it.id) && canResumeDownload(it)) {
@@ -237,82 +237,82 @@ class FetchHandlerImpl(private val namespace: String,
                 resumedDownloads.add(it)
             }
         }
-        fetchDatabaseManager.update(resumedDownloads)
+        fetchDatabaseManagerWrapper.update(resumedDownloads)
         startPriorityQueueIfNotStarted()
         return resumedDownloads
     }
 
     override fun remove(ids: List<Int>): List<Download> {
-        return removeDownloads(fetchDatabaseManager.get(ids).filterNotNull())
+        return removeDownloads(fetchDatabaseManagerWrapper.get(ids).filterNotNull())
     }
 
     override fun removeGroup(id: Int): List<Download> {
-        return removeDownloads(fetchDatabaseManager.getByGroup(id))
+        return removeDownloads(fetchDatabaseManagerWrapper.getByGroup(id))
     }
 
     override fun removeAll(): List<Download> {
-        return removeDownloads(fetchDatabaseManager.get())
+        return removeDownloads(fetchDatabaseManagerWrapper.get())
     }
 
     override fun removeAllWithStatus(status: Status): List<Download> {
-        return removeDownloads(fetchDatabaseManager.getByStatus(status))
+        return removeDownloads(fetchDatabaseManagerWrapper.getByStatus(status))
     }
 
     override fun removeAllInGroupWithStatus(groupId: Int, statuses: List<Status>): List<Download> {
-        return removeDownloads(fetchDatabaseManager.getDownloadsInGroupWithStatus(groupId, statuses))
+        return removeDownloads(fetchDatabaseManagerWrapper.getDownloadsInGroupWithStatus(groupId, statuses))
     }
 
     private fun removeDownloads(downloads: List<DownloadInfo>): List<Download> {
         cancelDownloadsIfDownloading(downloads)
-        fetchDatabaseManager.delete(downloads)
+        fetchDatabaseManagerWrapper.delete(downloads)
         downloads.forEach {
             it.status = Status.REMOVED
-            fetchDatabaseManager.delegate?.deleteTempFilesForDownload(it)
+            fetchDatabaseManagerWrapper.delegate?.deleteTempFilesForDownload(it)
         }
         return downloads
     }
 
     override fun delete(ids: List<Int>): List<Download> {
-        return deleteDownloads(fetchDatabaseManager.get(ids).filterNotNull())
+        return deleteDownloads(fetchDatabaseManagerWrapper.get(ids).filterNotNull())
     }
 
     override fun deleteGroup(id: Int): List<Download> {
-        return deleteDownloads(fetchDatabaseManager.getByGroup(id))
+        return deleteDownloads(fetchDatabaseManagerWrapper.getByGroup(id))
     }
 
     override fun deleteAll(): List<Download> {
-        return deleteDownloads(fetchDatabaseManager.get())
+        return deleteDownloads(fetchDatabaseManagerWrapper.get())
     }
 
     override fun deleteAllWithStatus(status: Status): List<Download> {
-        return deleteDownloads(fetchDatabaseManager.getByStatus(status))
+        return deleteDownloads(fetchDatabaseManagerWrapper.getByStatus(status))
     }
 
     override fun deleteAllInGroupWithStatus(groupId: Int, statuses: List<Status>): List<Download> {
-        return deleteDownloads(fetchDatabaseManager.getDownloadsInGroupWithStatus(groupId, statuses))
+        return deleteDownloads(fetchDatabaseManagerWrapper.getDownloadsInGroupWithStatus(groupId, statuses))
     }
 
     private fun deleteDownloads(downloads: List<DownloadInfo>): List<Download> {
         cancelDownloadsIfDownloading(downloads)
-        fetchDatabaseManager.delete(downloads)
+        fetchDatabaseManagerWrapper.delete(downloads)
         downloads.forEach {
             it.status = Status.DELETED
             storageResolver.deleteFile(it.file)
-            fetchDatabaseManager.delegate?.deleteTempFilesForDownload(it)
+            fetchDatabaseManagerWrapper.delegate?.deleteTempFilesForDownload(it)
         }
         return downloads
     }
 
     override fun cancel(ids: List<Int>): List<Download> {
-        return cancelDownloads(fetchDatabaseManager.get(ids).filterNotNull())
+        return cancelDownloads(fetchDatabaseManagerWrapper.get(ids).filterNotNull())
     }
 
     override fun cancelGroup(id: Int): List<Download> {
-        return cancelDownloads(fetchDatabaseManager.getByGroup(id))
+        return cancelDownloads(fetchDatabaseManagerWrapper.getByGroup(id))
     }
 
     override fun cancelAll(): List<Download> {
-        return cancelDownloads(fetchDatabaseManager.get())
+        return cancelDownloads(fetchDatabaseManagerWrapper.get())
     }
 
     private fun cancelDownloads(downloads: List<DownloadInfo>): List<Download> {
@@ -325,12 +325,12 @@ class FetchHandlerImpl(private val namespace: String,
                 cancelledDownloads.add(it)
             }
         }
-        fetchDatabaseManager.update(cancelledDownloads)
+        fetchDatabaseManagerWrapper.update(cancelledDownloads)
         return cancelledDownloads
     }
 
     override fun retry(ids: List<Int>): List<Download> {
-        val downloadInfoList = fetchDatabaseManager.get(ids).filterNotNull()
+        val downloadInfoList = fetchDatabaseManagerWrapper.get(ids).filterNotNull()
         val retryDownloads = mutableListOf<DownloadInfo>()
         downloadInfoList.forEach {
             if (canRetryDownload(it)) {
@@ -339,16 +339,16 @@ class FetchHandlerImpl(private val namespace: String,
                 retryDownloads.add(it)
             }
         }
-        fetchDatabaseManager.update(retryDownloads)
+        fetchDatabaseManagerWrapper.update(retryDownloads)
         startPriorityQueueIfNotStarted()
         return retryDownloads
     }
 
     override fun updateRequest(requestId: Int, newRequest: Request): Pair<Download, Boolean> {
-        var oldDownloadInfo = fetchDatabaseManager.get(requestId)
+        var oldDownloadInfo = fetchDatabaseManagerWrapper.get(requestId)
         if (oldDownloadInfo != null) {
             cancelDownloadsIfDownloading(listOf(oldDownloadInfo))
-            oldDownloadInfo = fetchDatabaseManager.get(requestId)
+            oldDownloadInfo = fetchDatabaseManagerWrapper.get(requestId)
         }
         return if (oldDownloadInfo != null) {
             if (newRequest.file == oldDownloadInfo.file) {
@@ -363,8 +363,8 @@ class FetchHandlerImpl(private val namespace: String,
                     newDownloadInfo.status = oldDownloadInfo.status
                     newDownloadInfo.error = oldDownloadInfo.error
                 }
-                fetchDatabaseManager.delete(oldDownloadInfo)
-                fetchDatabaseManager.insert(newDownloadInfo)
+                fetchDatabaseManagerWrapper.delete(oldDownloadInfo)
+                fetchDatabaseManagerWrapper.insert(newDownloadInfo)
                 startPriorityQueueIfNotStarted()
                 return Pair(newDownloadInfo, true)
             } else {
@@ -378,39 +378,39 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun renameCompletedDownloadFile(id: Int, newFileName: String): Download {
-        val download = fetchDatabaseManager.get(id) ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
+        val download = fetchDatabaseManagerWrapper.get(id) ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
         if (download.status != Status.COMPLETED) {
             FetchException(FAILED_RENAME_FILE_ASSOCIATED_WITH_INCOMPLETE_DOWNLOAD)
         }
-        val downloadWithFile = fetchDatabaseManager.getByFile(newFileName)
+        val downloadWithFile = fetchDatabaseManagerWrapper.getByFile(newFileName)
         if (downloadWithFile != null) {
             throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
         }
         val copy = download.copy() as DownloadInfo
         copy.id = getUniqueId(download.url, newFileName)
         copy.file = newFileName
-        val pair = fetchDatabaseManager.insert(copy)
+        val pair = fetchDatabaseManagerWrapper.insert(copy)
         if (!pair.second) {
          throw FetchException(FILE_CANNOT_BE_RENAMED)
         }
         val renamed = storageResolver.renameFile(download.file, newFileName)
         return if (!renamed) {
-            fetchDatabaseManager.delete(copy)
+            fetchDatabaseManagerWrapper.delete(copy)
             throw FetchException(FILE_CANNOT_BE_RENAMED)
         } else {
-            fetchDatabaseManager.delete(download)
+            fetchDatabaseManagerWrapper.delete(download)
             pair.first
         }
     }
 
     override fun replaceExtras(id: Int, extras: Extras): Download {
-        var downloadInfo = fetchDatabaseManager.get(id)
+        var downloadInfo = fetchDatabaseManagerWrapper.get(id)
         if (downloadInfo != null) {
             cancelDownloadsIfDownloading(listOf(downloadInfo))
-            downloadInfo = fetchDatabaseManager.get(id)
+            downloadInfo = fetchDatabaseManagerWrapper.get(id)
         }
         return if (downloadInfo != null) {
-            val download = fetchDatabaseManager.updateExtras(id, extras)
+            val download = fetchDatabaseManagerWrapper.updateExtras(id, extras)
             download ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
         } else {
             throw FetchException(REQUEST_DOES_NOT_EXIST)
@@ -418,35 +418,35 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun getDownloads(): List<Download> {
-        return fetchDatabaseManager.get()
+        return fetchDatabaseManagerWrapper.get()
     }
 
     override fun getDownload(id: Int): Download? {
-        return fetchDatabaseManager.get(id)
+        return fetchDatabaseManagerWrapper.get(id)
     }
 
     override fun getDownloads(idList: List<Int>): List<Download> {
-        return fetchDatabaseManager.get(idList).filterNotNull()
+        return fetchDatabaseManagerWrapper.get(idList).filterNotNull()
     }
 
     override fun getDownloadsInGroup(id: Int): List<Download> {
-        return fetchDatabaseManager.getByGroup(id)
+        return fetchDatabaseManagerWrapper.getByGroup(id)
     }
 
     override fun getDownloadsWithStatus(status: Status): List<Download> {
-        return fetchDatabaseManager.getByStatus(status)
+        return fetchDatabaseManagerWrapper.getByStatus(status)
     }
 
     override fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>): List<Download> {
-        return fetchDatabaseManager.getDownloadsInGroupWithStatus(groupId, statuses)
+        return fetchDatabaseManagerWrapper.getDownloadsInGroupWithStatus(groupId, statuses)
     }
 
     override fun getDownloadsByRequestIdentifier(identifier: Long): List<Download> {
-        return fetchDatabaseManager.getDownloadsByRequestIdentifier(identifier)
+        return fetchDatabaseManagerWrapper.getDownloadsByRequestIdentifier(identifier)
     }
 
     override fun getDownloadBlocks(id: Int): List<DownloadBlock> {
-        val download = fetchDatabaseManager.get(id)
+        val download = fetchDatabaseManagerWrapper.get(id)
         return if (download != null) {
             val fileTempDir = downloadManager.getDownloadFileTempDir(download)
             val fileSliceInfo = getFileSliceInfo(getPreviousSliceCount(download.id, fileTempDir), download.total)
@@ -489,7 +489,7 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun getContentLengthForRequest(request: Request, fromServer: Boolean): Long {
-        val download = fetchDatabaseManager.get(request.id)
+        val download = fetchDatabaseManagerWrapper.get(request.id)
         if (download != null && download.total > 0) {
             return download.total
         }
@@ -562,17 +562,17 @@ class FetchHandlerImpl(private val namespace: String,
         priorityListProcessor.globalNetworkType = networkType
         val ids = downloadManager.getActiveDownloadsIds()
         if (ids.isNotEmpty()) {
-            var downloads = fetchDatabaseManager.get(ids).filterNotNull()
+            var downloads = fetchDatabaseManagerWrapper.get(ids).filterNotNull()
             if (downloads.isNotEmpty()) {
                 cancelDownloadsIfDownloading(downloads)
-                downloads = fetchDatabaseManager.get(ids).filterNotNull()
+                downloads = fetchDatabaseManagerWrapper.get(ids).filterNotNull()
                 downloads.forEach {
                     if (it.status == Status.DOWNLOADING) {
                         it.status = Status.QUEUED
                         it.error = defaultNoError
                     }
                 }
-                fetchDatabaseManager.update(downloads)
+                fetchDatabaseManagerWrapper.update(downloads)
             }
         }
         priorityListProcessor.start()
@@ -582,10 +582,10 @@ class FetchHandlerImpl(private val namespace: String,
         priorityListProcessor.stop()
         val ids = downloadManager.getActiveDownloadsIds()
         if (ids.isNotEmpty()) {
-            var downloads = fetchDatabaseManager.get(ids).filterNotNull()
+            var downloads = fetchDatabaseManagerWrapper.get(ids).filterNotNull()
             if (downloads.isNotEmpty()) {
                 cancelDownloadsIfDownloading(downloads)
-                downloads = fetchDatabaseManager.get(ids).filterNotNull()
+                downloads = fetchDatabaseManagerWrapper.get(ids).filterNotNull()
                 downloadManager.concurrentLimit = downloadConcurrentLimit
                 priorityListProcessor.downloadConcurrentLimit = downloadConcurrentLimit
                 downloads.forEach {
@@ -594,7 +594,7 @@ class FetchHandlerImpl(private val namespace: String,
                         it.error = defaultNoError
                     }
                 }
-                fetchDatabaseManager.update(downloads)
+                fetchDatabaseManagerWrapper.update(downloads)
             }
         }
         priorityListProcessor.start()
@@ -611,7 +611,7 @@ class FetchHandlerImpl(private val namespace: String,
         }
         listenerCoordinator.addListener(listenerId, listener)
         if (notify) {
-            val downloads = fetchDatabaseManager.get()
+            val downloads = fetchDatabaseManagerWrapper.get()
             downloads.forEach {
                 uiHandler.post {
                     when (it.status) {
@@ -678,11 +678,11 @@ class FetchHandlerImpl(private val namespace: String,
         if (Thread.currentThread() == Looper.getMainLooper().thread) {
             throw FetchException(BLOCKING_CALL_ON_UI_THREAD)
         }
-        return fetchDatabaseManager.getPendingCount(includeAddedDownloads) > 0
+        return fetchDatabaseManagerWrapper.getPendingCount(includeAddedDownloads) > 0
     }
 
     override fun getPendingCount(): Long {
-        return fetchDatabaseManager.getPendingCount(false)
+        return fetchDatabaseManagerWrapper.getPendingCount(false)
     }
 
     private fun cancelDownloadsIfDownloading(downloads: List<DownloadInfo>) {
