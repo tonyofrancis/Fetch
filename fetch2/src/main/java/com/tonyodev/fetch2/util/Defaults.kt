@@ -29,6 +29,7 @@ val defaultGlobalNetworkType = NetworkType.GLOBAL_OFF
 val defaultPriority = Priority.NORMAL
 val defaultNoError = Error.NONE
 val defaultStatus = Status.NONE
+val defaultPrioritySort = PrioritySort.ASC
 val defaultEnqueueAction = EnqueueAction.UPDATE_ACCORDINGLY
 val defaultDownloader: Downloader<*, *> = HttpUrlConnectionDownloader()
 val defaultFileServerDownloader: FileServerDownloader = FetchFileServerDownloader()

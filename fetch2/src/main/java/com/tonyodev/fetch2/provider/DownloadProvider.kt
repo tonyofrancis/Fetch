@@ -1,26 +1,27 @@
 package com.tonyodev.fetch2.provider
 
 import com.tonyodev.fetch2.Download
+import com.tonyodev.fetch2.PrioritySort
 import com.tonyodev.fetch2.Status
-import com.tonyodev.fetch2.database.FetchDatabaseManager
+import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper
 
 
-class DownloadProvider(private val fetchDatabaseManager: FetchDatabaseManager) {
+class DownloadProvider(private val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper) {
 
     fun getDownloads(): List<Download> {
-        return fetchDatabaseManager.get()
+        return fetchDatabaseManagerWrapper.get()
     }
 
     fun getDownload(id: Int): Download? {
-        return fetchDatabaseManager.get(id)
+        return fetchDatabaseManagerWrapper.get(id)
     }
 
     fun getDownloads(ids: List<Int>): List<Download?> {
-        return fetchDatabaseManager.get(ids)
+        return fetchDatabaseManagerWrapper.get(ids)
     }
 
     fun getByGroup(group: Int): List<Download> {
-        return fetchDatabaseManager.getByGroup(group)
+        return fetchDatabaseManagerWrapper.getByGroup(group)
     }
 
     fun getByGroupReplace(group: Int, download: Download): List<Download> {
@@ -33,11 +34,11 @@ class DownloadProvider(private val fetchDatabaseManager: FetchDatabaseManager) {
     }
 
     fun getByStatus(status: Status): List<Download> {
-        return fetchDatabaseManager.getByStatus(status)
+        return fetchDatabaseManagerWrapper.getByStatus(status)
     }
 
-    fun getPendingDownloadsSorted(): List<Download> {
-        return fetchDatabaseManager.getPendingDownloadsSorted()
+    fun getPendingDownloadsSorted(prioritySort: PrioritySort): List<Download> {
+        return fetchDatabaseManagerWrapper.getPendingDownloadsSorted(prioritySort)
     }
 
 }

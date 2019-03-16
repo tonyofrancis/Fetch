@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2.database
 
+import com.tonyodev.fetch2.PrioritySort
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.Extras
 import java.io.Closeable
@@ -8,7 +9,6 @@ import java.io.Closeable
  * This interface can be implemented by a class to create a custom FetchDatabaseManager.
  * The default Fetch Database Manager is FetchDatabaseManagerImpl which uses sqlite/room
  * to store download information. All methods and fields will be called on Fetch's background thread.
- * Note: Fetch expects all the methods and fields on this interface to be synchronized when implemented.
  * */
 interface FetchDatabaseManager : Closeable {
 
@@ -133,9 +133,10 @@ interface FetchDatabaseManager : Closeable {
 
     /**
      * Get a list of downloads that are pending(status = Queued) for download in sorted order by(priority(DESC), created(ASC)
+     * @param prioritySort the sort priority for created. Default is ASC
      * @return list of pending downloads in sorted order.
      * */
-    fun getPendingDownloadsSorted(): List<DownloadInfo>
+    fun getPendingDownloadsSorted(prioritySort: PrioritySort): List<DownloadInfo>
 
     /**
      * Called when the first instance of Fetch for a namespace is created. Use this method

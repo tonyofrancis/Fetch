@@ -25,7 +25,8 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                                             @Volatile
                                             override var downloadConcurrentLimit: Int,
                                             private val context: Context,
-                                            private val namespace: String)
+                                            private val namespace: String,
+                                            private val prioritySort: PrioritySort)
     : PriorityListProcessor<Download> {
 
     private val lock = Any()
@@ -159,7 +160,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     override fun getPriorityList(): List<Download> {
         synchronized(lock) {
             return try {
-                downloadProvider.getPendingDownloadsSorted()
+                downloadProvider.getPendingDownloadsSorted(prioritySort)
             } catch (e: Exception) {
                 logger.d("PriorityIterator failed access database", e)
                 listOf()

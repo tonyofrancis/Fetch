@@ -1,3 +1,10 @@
+Version 3.0.2
+- Added Wrapper class around FetchDatabase to provide safer access
+- Added Priority Sort to change the way Fetch queues downloads based on time created.
+
+Note: Fetch 3.1.0 Will be the next big release. The library will be migrating to AndroidX packages.
+Point releases will be created for the none AndroidX version of the library.
+
 Version 3.0.1
 - Added new method hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>)
 
