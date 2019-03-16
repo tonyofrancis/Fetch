@@ -5,6 +5,7 @@ import android.arch.persistence.room.Room
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteException
+import com.tonyodev.fetch2.PrioritySort
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
 import com.tonyodev.fetch2.exception.FetchException
@@ -172,9 +173,13 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         return downloads
     }
 
-    override fun getPendingDownloadsSorted(): List<DownloadInfo> {
+    override fun getPendingDownloadsSorted(prioritySort: PrioritySort): List<DownloadInfo> {
         throwExceptionIfClosed()
-        var downloads = requestDatabase.requestDao().getPendingDownloadsSorted(Status.QUEUED)
+        var downloads = if (prioritySort == PrioritySort.ASC) {
+            requestDatabase.requestDao().getPendingDownloadsSorted(Status.QUEUED)
+        } else {
+            requestDatabase.requestDao().getPendingDownloadsSortedDesc(Status.QUEUED)
+        }
         if (sanitize(downloads)) {
             downloads = downloads.filter { it.status == Status.QUEUED }
         }

@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2.database
 
+import com.tonyodev.fetch2.PrioritySort
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.Extras
 
@@ -120,9 +121,9 @@ class FetchDatabaseManagerWrapper(private val fetchDatabaseManager: FetchDatabas
         }
     }
 
-    override fun getPendingDownloadsSorted(): List<DownloadInfo> {
+    override fun getPendingDownloadsSorted(prioritySort: PrioritySort): List<DownloadInfo> {
         return synchronized(fetchDatabaseManager) {
-            fetchDatabaseManager.getPendingDownloadsSorted()
+            fetchDatabaseManager.getPendingDownloadsSorted(prioritySort)
         }
     }
 

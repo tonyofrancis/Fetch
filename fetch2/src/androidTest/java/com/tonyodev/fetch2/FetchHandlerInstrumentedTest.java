@@ -102,11 +102,12 @@ public class FetchHandlerInstrumentedTest {
                 listenerCoordinator,
                 concurrentLimit,
                 appContext,
-                namespace);
+                namespace,
+                PrioritySort.ASC);
         fetchHandler = new FetchHandlerImpl(namespace, databaseManagerWrapper, downloadManager,
                 priorityListProcessorImpl, fetchLogger, autoStart,
                 client, serverClient, listenerCoordinator, uiHandler, storageResolver, null,
-                groupInfoProvider);
+                groupInfoProvider, PrioritySort.ASC);
     }
 
     @Test

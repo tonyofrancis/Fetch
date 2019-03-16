@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2.database
 
+import com.tonyodev.fetch2.PrioritySort
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.Extras
 import java.io.Closeable
@@ -132,9 +133,10 @@ interface FetchDatabaseManager : Closeable {
 
     /**
      * Get a list of downloads that are pending(status = Queued) for download in sorted order by(priority(DESC), created(ASC)
+     * @param prioritySort the sort priority for created. Default is ASC
      * @return list of pending downloads in sorted order.
      * */
-    fun getPendingDownloadsSorted(): List<DownloadInfo>
+    fun getPendingDownloadsSorted(prioritySort: PrioritySort): List<DownloadInfo>
 
     /**
      * Called when the first instance of Fetch for a namespace is created. Use this method

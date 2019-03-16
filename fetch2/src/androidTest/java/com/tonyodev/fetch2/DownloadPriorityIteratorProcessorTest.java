@@ -85,7 +85,8 @@ public class DownloadPriorityIteratorProcessorTest {
                 listenerCoordinator,
                 concurrentLimit,
                 appContext,
-                namespace);
+                namespace,
+                PrioritySort.ASC);
     }
 
     @Test

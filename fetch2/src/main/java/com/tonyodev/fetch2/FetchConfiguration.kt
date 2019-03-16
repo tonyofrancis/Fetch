@@ -28,7 +28,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val storageResolver: StorageResolver,
                                              val fetchNotificationManager: FetchNotificationManager?,
                                              val fetchDatabaseManager: FetchDatabaseManager?,
-                                             val backgroundHandler: Handler?) {
+                                             val backgroundHandler: Handler?,
+                                             val prioritySort: PrioritySort) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -58,6 +59,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var fetchNotificationManager: FetchNotificationManager? = null
         private var fetchDatabaseManager: FetchDatabaseManager? = null
         private var backgroundHandler: Handler? = null
+        private var prioritySort: PrioritySort = defaultPrioritySort
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -265,6 +267,16 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Used to dictate the order in which Fetch processes request/downloads
+         * based on time created. Default is PrioritySort.ASC
+         * @param prioritySort the priority sort.
+         * */
+        fun setPrioritySort(prioritySort: PrioritySort): Builder {
+            this.prioritySort = prioritySort
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -295,7 +307,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     storageResolver = storageResolver,
                     fetchNotificationManager = fetchNotificationManager,
                     fetchDatabaseManager = fetchDatabaseManager,
-                    backgroundHandler = backgroundHandler)
+                    backgroundHandler = backgroundHandler,
+                    prioritySort = prioritySort)
         }
 
     }
@@ -321,6 +334,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (fetchNotificationManager != other.fetchNotificationManager) return false
         if (fetchDatabaseManager != other.fetchDatabaseManager) return false
         if (backgroundHandler != other.backgroundHandler) return false
+        if (prioritySort != other.prioritySort) return false
         return true
     }
 
@@ -348,6 +362,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (backgroundHandler != null) {
             result = 31 * result + backgroundHandler.hashCode()
         }
+        result = 31 * result + prioritySort.hashCode()
         return result
     }
 
@@ -361,6 +376,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                 "fileExistChecksEnabled=$fileExistChecksEnabled, storageResolver=$storageResolver, " +
                 "fetchNotificationManager=$fetchNotificationManager, " +
                 "fetchDatabaseManager=$fetchDatabaseManager, " +
+                "prioritySort=$prioritySort, " +
                 "backgroundHandler=$backgroundHandler)"
     }
 

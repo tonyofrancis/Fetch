@@ -29,7 +29,8 @@ class FetchHandlerImpl(private val namespace: String,
                        private val uiHandler: Handler,
                        private val storageResolver: StorageResolver,
                        private val fetchNotificationManager: FetchNotificationManager?,
-                       private val groupInfoProvider: GroupInfoProvider) : FetchHandler {
+                       private val groupInfoProvider: GroupInfoProvider,
+                       private val prioritySort: PrioritySort) : FetchHandler {
 
     private val listenerId = UUID.randomUUID().hashCode()
     private val listenerSet = mutableSetOf<FetchListener>()
@@ -79,6 +80,9 @@ class FetchHandlerImpl(private val namespace: String,
                     }
                 } else {
                     results.add(Pair(downloadInfo, Error.NONE))
+                }
+                if (prioritySort == PrioritySort.DESC && !downloadManager.canAccommodateNewDownload()) {
+                    priorityListProcessor.pause()
                 }
             } catch (e: Exception) {
                 val error = getErrorFromThrowable(e)

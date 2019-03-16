@@ -127,7 +127,8 @@ object FetchModulesBuilder {
                     listenerCoordinator = listenerCoordinator,
                     downloadConcurrentLimit = fetchConfiguration.concurrentLimit,
                     context = fetchConfiguration.appContext,
-                    namespace = fetchConfiguration.namespace)
+                    namespace = fetchConfiguration.namespace,
+                    prioritySort = fetchConfiguration.prioritySort)
             priorityListProcessor.globalNetworkType = fetchConfiguration.globalNetworkType
             fetchHandler = FetchHandlerImpl(
                     namespace = fetchConfiguration.namespace,
@@ -142,7 +143,8 @@ object FetchModulesBuilder {
                     uiHandler = uiHandler,
                     storageResolver = fetchConfiguration.storageResolver,
                     fetchNotificationManager = fetchConfiguration.fetchNotificationManager,
-                    groupInfoProvider = groupInfoProvider)
+                    groupInfoProvider = groupInfoProvider,
+                    prioritySort = fetchConfiguration.prioritySort)
             fetchDatabaseManagerWrapper.delegate = object : FetchDatabaseManager.Delegate {
                 override fun deleteTempFilesForDownload(downloadInfo: DownloadInfo) {
                     val tempDir = fetchConfiguration.storageResolver

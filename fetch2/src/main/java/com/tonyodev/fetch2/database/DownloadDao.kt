@@ -60,6 +60,9 @@ interface DownloadDao {
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_STATUS = :status ORDER BY $COLUMN_PRIORITY DESC, $COLUMN_CREATED ASC")
     fun getPendingDownloadsSorted(status: Status): List<DownloadInfo>
 
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_STATUS = :status ORDER BY $COLUMN_PRIORITY DESC, $COLUMN_CREATED DESC")
+    fun getPendingDownloadsSortedDesc(status: Status): List<DownloadInfo>
+
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_IDENTIFIER = :identifier")
     fun getDownloadsByRequestIdentifier(identifier: Long): List<DownloadInfo>
 
