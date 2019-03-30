@@ -29,7 +29,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val fetchNotificationManager: FetchNotificationManager?,
                                              val fetchDatabaseManager: FetchDatabaseManager?,
                                              val backgroundHandler: Handler?,
-                                             val prioritySort: PrioritySort) {
+                                             val prioritySort: PrioritySort,
+                                             val internetCheckUrl: String?) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -60,6 +61,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var fetchDatabaseManager: FetchDatabaseManager? = null
         private var backgroundHandler: Handler? = null
         private var prioritySort: PrioritySort = defaultPrioritySort
+        private var internetCheckUrl: String? = null
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -277,6 +279,19 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * If set, Fetch will use this url to check against for internet connection.
+         * rather than using the Android frameworks internet check classes. Note: setting
+         * this will cause Fetch to always make a network request to the url.
+         * This will cause a small delay before downloading a request. Only set this option if
+         * necessary.
+         * @param url the url to check against.
+         * */
+        fun setInternetAccessUrlCheck(url: String?): Builder {
+            internetCheckUrl = url
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -308,7 +323,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     fetchNotificationManager = fetchNotificationManager,
                     fetchDatabaseManager = fetchDatabaseManager,
                     backgroundHandler = backgroundHandler,
-                    prioritySort = prioritySort)
+                    prioritySort = prioritySort,
+                    internetCheckUrl = internetCheckUrl)
         }
 
     }
@@ -335,6 +351,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (fetchDatabaseManager != other.fetchDatabaseManager) return false
         if (backgroundHandler != other.backgroundHandler) return false
         if (prioritySort != other.prioritySort) return false
+        if (internetCheckUrl != other.internetCheckUrl) return false
         return true
     }
 
@@ -363,6 +380,9 @@ class FetchConfiguration private constructor(val appContext: Context,
             result = 31 * result + backgroundHandler.hashCode()
         }
         result = 31 * result + prioritySort.hashCode()
+        if (internetCheckUrl != null) {
+            result = 31 * result + internetCheckUrl.hashCode()
+        }
         return result
     }
 
@@ -377,6 +397,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                 "fetchNotificationManager=$fetchNotificationManager, " +
                 "fetchDatabaseManager=$fetchDatabaseManager, " +
                 "prioritySort=$prioritySort, " +
+                "internetCheckUrl=$internetCheckUrl, " +
                 "backgroundHandler=$backgroundHandler)"
     }
 

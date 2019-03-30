@@ -79,7 +79,7 @@ public class FetchHandlerInstrumentedTest {
         final FileServerDownloader serverClient = FetchDefaults.getDefaultFileServerDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
-        final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
+        final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext, null);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManagerWrapper);
@@ -97,7 +97,7 @@ public class FetchHandlerInstrumentedTest {
                 handlerWrapper,
                 new DownloadProvider(databaseManagerWrapper),
                 downloadManager,
-                new NetworkInfoProvider(appContext),
+                new NetworkInfoProvider(appContext , null),
                 fetchLogger,
                 listenerCoordinator,
                 concurrentLimit,

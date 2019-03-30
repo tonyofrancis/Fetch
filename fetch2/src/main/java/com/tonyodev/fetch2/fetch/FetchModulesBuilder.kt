@@ -98,7 +98,7 @@ object FetchModulesBuilder {
         val downloadManager: DownloadManager
         val priorityListProcessor: PriorityListProcessor<Download>
         val downloadInfoUpdater = DownloadInfoUpdater(fetchDatabaseManagerWrapper)
-        val networkInfoProvider = NetworkInfoProvider(fetchConfiguration.appContext)
+        val networkInfoProvider = NetworkInfoProvider(fetchConfiguration.appContext, fetchConfiguration.internetCheckUrl)
         val fetchHandler: FetchHandler
 
         init {
