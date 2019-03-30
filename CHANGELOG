@@ -1,3 +1,10 @@
+Version 3.0.3
+- Bug fixes for hasActiveDownloads method.
+- Download url redirection fixes and improvements
+- Added internet check method to FetchConfiguration called setInternetAccessUrlCheck(url: String?): Builder
+  See documentation on usage.
+- Added new fields redirected and redirectedUrl on Downloader.ServerRequest class.
+
 Version 3.0.2
 - Added Wrapper class around FetchDatabase to provide safer access
 - Added Priority Sort to change the way Fetch queues downloads based on time created.

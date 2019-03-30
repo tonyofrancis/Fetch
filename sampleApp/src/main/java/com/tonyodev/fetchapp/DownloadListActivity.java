@@ -53,7 +53,6 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
                 .setDownloadConcurrentLimit(4)
                 .setHttpDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))
                 .setNamespace(FETCH_NAMESPACE)
-                .setNotificationManager(new DefaultFetchNotificationManager(this))
                 .build();
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
         checkStoragePermissions();
