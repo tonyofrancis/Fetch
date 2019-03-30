@@ -69,7 +69,9 @@ fun getRequestForDownload(download: Download,
             tag = download.tag,
             identifier = download.identifier,
             requestMethod = requestMethod,
-            extras = download.extras)
+            extras = download.extras,
+            redirected = false,
+            redirectUrl = "")
 }
 
 fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
@@ -82,7 +84,9 @@ fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
             requestMethod = GET_REQUEST_METHOD,
             file = request.file,
             fileUri = getFileUri(request.file),
-            extras = request.extras)
+            extras = request.extras,
+            redirected = false,
+            redirectUrl = "")
 }
 
 fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerRequest {
@@ -100,7 +104,9 @@ fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerReque
             requestMethod = GET_REQUEST_METHOD,
             file = request.file,
             fileUri = getFileUri(request.file),
-            extras = request.extras)
+            extras = request.extras,
+            redirected = false,
+            redirectUrl = "")
 }
 
 fun getPreviousSliceCount(id: Int, fileTempDir: String): Int {

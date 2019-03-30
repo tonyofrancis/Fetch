@@ -333,7 +333,9 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 tag = initialDownload.tag,
                 identifier = initialDownload.identifier,
                 requestMethod = GET_REQUEST_METHOD,
-                extras = initialDownload.extras)
+                extras = initialDownload.extras,
+                redirected = false,
+                redirectUrl = "")
     }
 
     private fun getAverageDownloadedBytesPerSecond(): Long {
