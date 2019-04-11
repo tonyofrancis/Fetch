@@ -88,6 +88,10 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                         val fileDownloader = getNewFileDownloaderForDownload(download)
                         val runDownload = synchronized(lock) {
                             if (currentDownloadsMap.containsKey(download.id)) {
+                                if(download.enqueueAction === EnqueueAction.CREATE_FILE_ON_DOWNLOAD &&
+                                        !storageResolver.fileExists(download.file)) {
+                                    storageResolver.createFile(download.file, false);
+                                }
                                 fileDownloader.delegate = getFileDownloaderDelegate()
                                 currentDownloadsMap[download.id] = fileDownloader
                                 downloadManagerCoordinator.addFileDownloader(download.id, fileDownloader)

@@ -98,7 +98,7 @@ class FetchHandlerImpl(private val namespace: String,
         cancelDownloadsIfDownloading(listOf(downloadInfo))
         var existingDownload = fetchDatabaseManagerWrapper.getByFile(downloadInfo.file)
         if (existingDownload == null) {
-            if (downloadInfo.enqueueAction != EnqueueAction.INCREMENT_FILE_NAME) {
+            if (downloadInfo.enqueueAction != EnqueueAction.INCREMENT_FILE_NAME && downloadInfo.enqueueAction != EnqueueAction.CREATE_FILE_ON_DOWNLOAD) {
                 storageResolver.createFile(downloadInfo.file)
             }
         } else {
@@ -149,6 +149,13 @@ class FetchHandlerImpl(private val namespace: String,
                 }
             }
             EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING -> {
+                if (existingDownload != null) {
+                    throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
+                } else {
+                    false
+                }
+            }
+            EnqueueAction.CREATE_FILE_ON_DOWNLOAD -> {
                 if (existingDownload != null) {
                     throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
                 } else {
