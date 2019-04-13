@@ -826,7 +826,6 @@ interface Fetch {
     /** Releases held resources and the namespace used by this Fetch instance.
      * Once closed this instance cannot be reused but the namespace can be reused
      * by a new instance of Fetch.
-     * @throws FetchException if this instance of Fetch has been closed.
      * */
     fun close()
 
