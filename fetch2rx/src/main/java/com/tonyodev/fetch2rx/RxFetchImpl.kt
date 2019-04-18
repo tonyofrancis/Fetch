@@ -37,10 +37,10 @@ open class RxFetchImpl(override val namespace: String,
 
     override val hasActiveDownloads: Boolean
         get() {
-            return try {
-                fetchHandler.hasActiveDownloads(false)
-            } catch (e: Exception) {
+            return if (isClosed) {
                 false
+            } else {
+                fetchHandler.hasActiveDownloads(false)
             }
         }
 
