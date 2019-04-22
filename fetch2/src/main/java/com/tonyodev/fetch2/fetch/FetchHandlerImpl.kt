@@ -30,7 +30,8 @@ class FetchHandlerImpl(private val namespace: String,
                        private val storageResolver: StorageResolver,
                        private val fetchNotificationManager: FetchNotificationManager?,
                        private val groupInfoProvider: GroupInfoProvider,
-                       private val prioritySort: PrioritySort) : FetchHandler {
+                       private val prioritySort: PrioritySort,
+                       private val createFileOnEnqueue: Boolean) : FetchHandler {
 
     private val listenerId = UUID.randomUUID().hashCode()
     private val listenerSet = mutableSetOf<FetchListener>()
@@ -99,7 +100,9 @@ class FetchHandlerImpl(private val namespace: String,
         var existingDownload = fetchDatabaseManagerWrapper.getByFile(downloadInfo.file)
         if (existingDownload == null) {
             if (downloadInfo.enqueueAction != EnqueueAction.INCREMENT_FILE_NAME) {
-                storageResolver.createFile(downloadInfo.file)
+                if (createFileOnEnqueue) {
+                    storageResolver.createFile(downloadInfo.file)
+                }
             }
         } else {
             cancelDownloadsIfDownloading(listOf(existingDownload))
@@ -120,7 +123,9 @@ class FetchHandlerImpl(private val namespace: String,
                     }
                     existingDownload = null
                     if (downloadInfo.enqueueAction != EnqueueAction.INCREMENT_FILE_NAME) {
-                        storageResolver.createFile(downloadInfo.file)
+                        if (createFileOnEnqueue) {
+                            storageResolver.createFile(downloadInfo.file)
+                        }
                     }
                 }
             }
@@ -137,7 +142,9 @@ class FetchHandlerImpl(private val namespace: String,
                         downloadInfo.error = defaultNoError
                     }
                     if (downloadInfo.status == Status.COMPLETED && !storageResolver.fileExists(downloadInfo.file)) {
-                        storageResolver.createFile(downloadInfo.file)
+                        if (createFileOnEnqueue) {
+                            storageResolver.createFile(downloadInfo.file)
+                        }
                         downloadInfo.downloaded = 0L
                         downloadInfo.total = -1L
                         downloadInfo.status = Status.QUEUED
@@ -163,8 +170,10 @@ class FetchHandlerImpl(private val namespace: String,
                 return false
             }
             EnqueueAction.INCREMENT_FILE_NAME -> {
-                val file = storageResolver.createFile(downloadInfo.file, true)
-                downloadInfo.file = file
+                if (createFileOnEnqueue) {
+                     storageResolver.createFile(downloadInfo.file, true)
+                }
+                downloadInfo.file = downloadInfo.file
                 downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
                 false
             }

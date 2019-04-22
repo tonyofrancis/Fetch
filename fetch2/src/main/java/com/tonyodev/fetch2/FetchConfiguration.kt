@@ -31,7 +31,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val backgroundHandler: Handler?,
                                              val prioritySort: PrioritySort,
                                              val internetCheckUrl: String?,
-                                             val activeDownloadsCheckInterval: Long) {
+                                             val activeDownloadsCheckInterval: Long,
+                                             val createFileOnEnqueue: Boolean) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -64,6 +65,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var prioritySort: PrioritySort = defaultPrioritySort
         private var internetCheckUrl: String? = null
         private var activeDownloadCheckInterval = DEFAULT_HAS_ACTIVE_DOWNLOADS_INTERVAL_IN_MILLISECONDS
+        private var createFileOnEnqueue = DEFAULT_CREATE_FILE_ON_ENQUEUE
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -312,6 +314,16 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Enable or disable creating the download file on enqueue
+         * @param create true or false. The default is true
+         * @return Builder
+         * */
+        fun createDownloadFileOnEnqueue(create: Boolean): Builder {
+            this.createFileOnEnqueue = create
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -345,7 +357,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     backgroundHandler = backgroundHandler,
                     prioritySort = prioritySort,
                     internetCheckUrl = internetCheckUrl,
-                    activeDownloadsCheckInterval = activeDownloadCheckInterval)
+                    activeDownloadsCheckInterval = activeDownloadCheckInterval,
+                    createFileOnEnqueue = createFileOnEnqueue)
         }
 
     }
@@ -374,6 +387,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (prioritySort != other.prioritySort) return false
         if (internetCheckUrl != other.internetCheckUrl) return false
         if (activeDownloadsCheckInterval != other.activeDownloadsCheckInterval) return false
+        if (createFileOnEnqueue != other.createFileOnEnqueue) return false
         return true
     }
 
@@ -406,6 +420,7 @@ class FetchConfiguration private constructor(val appContext: Context,
             result = 31 * result + internetCheckUrl.hashCode()
         }
         result = 31 * result + activeDownloadsCheckInterval.hashCode()
+        result = 31 * result + createFileOnEnqueue.hashCode()
         return result
     }
 
@@ -422,6 +437,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                 "prioritySort=$prioritySort, " +
                 "internetCheckUrl=$internetCheckUrl, " +
                 "activeDownloadsCheckInterval=$activeDownloadsCheckInterval, " +
+                "createFileOnEnqueue=$createFileOnEnqueue, " +
                 "backgroundHandler=$backgroundHandler)"
     }
 
