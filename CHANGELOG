@@ -1,3 +1,19 @@
+Version 3.0.4
+1. updated documentation
+2. remove has activeDownloads(): Boolean method. Use fun hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>): Fetch or fun addActiveDownloadsObserver(includeAddedDownloads: Boolean = false, fetchObserver: FetchObserver<Boolean>): Fetch instead.
+3. Added new methods on Fetch addActiveDownloadsObserver(includeAddedDownloads: Boolean = false, fetchObserver: FetchObserver<Boolean>): Fetch and removeActiveDownloadsObserver(fetchObserver: FetchObserver<Boolean>): Fetch
+4. Added new method on FetchConfiguration fun setHasActiveDownloadsCheckInterval(intervalInMillis: Long): Builder
+5. Added new REPORTING option on Reason enum
+6. Added new method on FetchConfiguration fun createDownloadFileOnEnqueue(create: Boolean): Builder
+7. Fix for starting download immediately whiles enqueuing
+
+Version 3.0.3
+- Bug fixes for hasActiveDownloads method.
+- Download url redirection fixes and improvements
+- Added internet check method to FetchConfiguration called setInternetAccessUrlCheck(url: String?): Builder
+  See documentation on usage.
+- Added new fields redirected and redirectedUrl on Downloader.ServerRequest class.
+
 Version 3.0.2
 - Added Wrapper class around FetchDatabase to provide safer access
 - Added Priority Sort to change the way Fetch queues downloads based on time created.

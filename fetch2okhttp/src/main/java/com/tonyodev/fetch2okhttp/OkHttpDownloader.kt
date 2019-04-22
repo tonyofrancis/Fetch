@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2okhttp
 
 import com.tonyodev.fetch2core.*
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -49,6 +50,31 @@ open class OkHttpDownloader @JvmOverloads constructor(
         return okHttpRequestBuilder.build()
     }
 
+    private fun getResponseHeaders(okResponseHeaders: Headers): MutableMap<String, List<String>> {
+        val headers = mutableMapOf<String, List<String>>()
+        for (i in 0 until okResponseHeaders.size()) {
+            val key = okResponseHeaders.name(i)
+            val values = okResponseHeaders.values(key)
+            headers[key] = values
+        }
+        return headers
+    }
+
+    private fun getRedirectedServerRequest(oldRequest: Downloader.ServerRequest, redirectUrl: String): Downloader.ServerRequest {
+        return Downloader.ServerRequest(
+                id = oldRequest.id,
+                url = oldRequest.url,
+                headers = oldRequest.headers,
+                file = oldRequest.file,
+                fileUri = oldRequest.fileUri,
+                tag = oldRequest.tag,
+                identifier = oldRequest.identifier,
+                requestMethod = oldRequest.requestMethod,
+                extras = oldRequest.extras,
+                redirected = true,
+                redirectUrl = redirectUrl)
+    }
+
     override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
         var okHttpRequest = onPreClientExecute(client, request)
         if (okHttpRequest.header("Referer") == null) {
@@ -57,23 +83,33 @@ open class OkHttpDownloader @JvmOverloads constructor(
                     .addHeader("Referer", referer)
                     .build()
         }
-        val okHttpResponse = client.newCall(okHttpRequest).execute()
-        val code = okHttpResponse.code()
+        var okHttpResponse = client.newCall(okHttpRequest).execute()
+        var responseHeaders = getResponseHeaders(okHttpResponse.headers())
+        var code = okHttpResponse.code()
+        if ((code == HttpURLConnection.HTTP_MOVED_TEMP
+                        || code == HttpURLConnection.HTTP_MOVED_PERM
+                        || code == HttpURLConnection.HTTP_SEE_OTHER) && responseHeaders.containsKey("Location")) {
+            okHttpRequest = onPreClientExecute(client, getRedirectedServerRequest(request,
+                    responseHeaders["Location"]?.firstOrNull() ?: ""))
+            if (okHttpRequest.header("Referer") == null) {
+                val referer = getRefererFromUrl(request.url)
+                okHttpRequest = okHttpRequest.newBuilder()
+                        .addHeader("Referer", referer)
+                        .build()
+            }
+            okHttpResponse = client.newCall(okHttpRequest).execute()
+            responseHeaders = getResponseHeaders(okHttpResponse.headers())
+            code = okHttpResponse.code()
+        }
         val success = okHttpResponse.isSuccessful
         var contentLength = okHttpResponse.body()?.contentLength() ?: -1L
         val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
-        val responseHeaders = mutableMapOf<String, List<String>>()
         val errorResponseString: String? = if (!success) {
             copyStreamToString(byteStream, false)
         } else {
             null
         }
-        val okResponseHeaders = okHttpResponse.headers()
-        for (i in 0 until okResponseHeaders.size()) {
-            val key = okResponseHeaders.name(i)
-            val values = okResponseHeaders.values(key)
-            responseHeaders[key] = values
-        }
+
         val hash = getContentHash(responseHeaders)
 
         if (contentLength < 1) {

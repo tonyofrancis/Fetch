@@ -48,19 +48,33 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
         CookieHandler.setDefault(cookieManager)
-        val httpUrl = URL(request.url)
-        val client = httpUrl.openConnection() as HttpURLConnection
+        var httpUrl = URL(request.url)
+        var client = httpUrl.openConnection() as HttpURLConnection
         onPreClientExecute(client, request)
         if (client.getRequestProperty("Referer") == null) {
             val referer = getRefererFromUrl(request.url)
             client.addRequestProperty("Referer", referer)
         }
         client.connect()
-        val code = client.responseCode
+        var responseHeaders = client.headerFields
+        var code = client.responseCode
+        if ((code == HttpURLConnection.HTTP_MOVED_TEMP
+                || code == HttpURLConnection.HTTP_MOVED_PERM
+                || code == HttpURLConnection.HTTP_SEE_OTHER) && responseHeaders.containsKey("Location")) {
+            httpUrl = URL(responseHeaders["Location"]?.firstOrNull() ?: "")
+            client = httpUrl.openConnection() as HttpURLConnection
+            onPreClientExecute(client, request)
+            if (client.getRequestProperty("Referer") == null) {
+                val referer = getRefererFromUrl(request.url)
+                client.addRequestProperty("Referer", referer)
+            }
+            client.connect()
+            responseHeaders = client.headerFields
+            code = client.responseCode
+        }
         var success = false
         var contentLength = -1L
         var byteStream: InputStream? = null
-        val responseHeaders = client.headerFields
         var errorResponseString: String? = null
         var hash = ""
         if (isResponseOk(code)) {

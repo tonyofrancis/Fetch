@@ -64,7 +64,7 @@ public class DownloadManagerInstrumentedTest {
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
-        final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
+        final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext, null);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManagerWrapper);

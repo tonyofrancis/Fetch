@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2.downloader
 
 import com.tonyodev.fetch2.Download
+import com.tonyodev.fetch2.EnqueueAction
 import com.tonyodev.fetch2core.Downloader
 import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2core.Logger
@@ -397,6 +398,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     private fun downloadSliceFiles(request: Downloader.ServerRequest, fileSlicesDownloadsList: List<FileSlice>) {
         actionsCounter = 0
         actionsTotal = fileSlicesDownloadsList.size
+        if (!storageResolver.fileExists(request.file)) {
+            storageResolver.createFile(request.file, initialDownload.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME)
+        }
         outputResourceWrapper = storageResolver.getRequestOutputResourceWrapper(request)
         outputResourceWrapper?.setWriteOffset(0)
         for (fileSlice in fileSlicesDownloadsList) {

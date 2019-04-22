@@ -99,6 +99,9 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                     }
                     downloadInfo.downloaded = downloaded
                     downloadInfo.total = total
+                    if (!storageResolver.fileExists(request.file)) {
+                        storageResolver.createFile(request.file, initialDownload.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME)
+                    }
                     outputResourceWrapper = storageResolver.getRequestOutputResourceWrapper(request)
                     outputResourceWrapper.setWriteOffset(seekPosition)
                     if (!interrupted && !terminated) {
@@ -333,7 +336,9 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                 tag = initialDownload.tag,
                 identifier = initialDownload.identifier,
                 requestMethod = GET_REQUEST_METHOD,
-                extras = initialDownload.extras)
+                extras = initialDownload.extras,
+                redirected = false,
+                redirectUrl = "")
     }
 
     private fun getAverageDownloadedBytesPerSecond(): Long {

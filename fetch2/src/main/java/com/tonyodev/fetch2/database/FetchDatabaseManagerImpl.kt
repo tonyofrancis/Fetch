@@ -188,12 +188,12 @@ class FetchDatabaseManagerImpl constructor(context: Context,
 
     private val pendingCountQuery = "SELECT ${DownloadDatabase.COLUMN_ID} FROM ${DownloadDatabase.TABLE_NAME}" +
             " WHERE ${DownloadDatabase.COLUMN_STATUS} = '${Status.QUEUED.value}'" +
-            " OR ${DownloadDatabase.COLUMN_STATUS} = '${Status.DOWNLOADING}'"
+            " OR ${DownloadDatabase.COLUMN_STATUS} = '${Status.DOWNLOADING.value}'"
 
     private val pendingCountIncludeAddedQuery = "SELECT ${DownloadDatabase.COLUMN_ID} FROM ${DownloadDatabase.TABLE_NAME}" +
             " WHERE ${DownloadDatabase.COLUMN_STATUS} = '${Status.QUEUED.value}'" +
-            " OR ${DownloadDatabase.COLUMN_STATUS} = '${Status.DOWNLOADING}'" +
-            " OR ${DownloadDatabase.COLUMN_STATUS} = '${Status.ADDED}'"
+            " OR ${DownloadDatabase.COLUMN_STATUS} = '${Status.DOWNLOADING.value}'" +
+            " OR ${DownloadDatabase.COLUMN_STATUS} = '${Status.ADDED.value}'"
 
     override fun getPendingCount(includeAddedDownloads: Boolean): Long {
         return try {

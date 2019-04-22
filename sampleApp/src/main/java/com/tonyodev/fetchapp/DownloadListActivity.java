@@ -21,7 +21,6 @@ import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.FetchConfiguration;
-import com.tonyodev.fetch2.DefaultFetchNotificationManager;
 import com.tonyodev.fetch2okhttp.OkHttpDownloader;
 
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +52,6 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
                 .setDownloadConcurrentLimit(4)
                 .setHttpDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))
                 .setNamespace(FETCH_NAMESPACE)
-                .setNotificationManager(new DefaultFetchNotificationManager(this))
                 .build();
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
         checkStoragePermissions();
