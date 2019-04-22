@@ -74,6 +74,7 @@ class FetchHandlerImpl(private val namespace: String,
                         val downloadPair = fetchDatabaseManagerWrapper.insert(downloadInfo)
                         logger.d("Enqueued download ${downloadPair.first}")
                         results.add(Pair(downloadPair.first, Error.NONE))
+                        startPriorityQueueIfNotStarted()
                     } else {
                         fetchDatabaseManagerWrapper.update(downloadInfo)
                         logger.d("Updated download $downloadInfo")
