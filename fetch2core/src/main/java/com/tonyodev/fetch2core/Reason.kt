@@ -52,7 +52,10 @@ enum class Reason(val value: Int) {
     DOWNLOAD_BLOCK_UPDATED(13),
 
     /** When the FetchObserver is attached for the first time.*/
-    OBSERVER_ATTACHED(14);
+    OBSERVER_ATTACHED(14),
+
+    /** A normal reporting of a FetchObserver. Used to report updates. etc.*/
+    REPORTING(15);
 
     companion object {
 
@@ -73,6 +76,7 @@ enum class Reason(val value: Int) {
                 12 -> DOWNLOAD_DELETED
                 13 -> DOWNLOAD_BLOCK_UPDATED
                 14 -> OBSERVER_ATTACHED
+                15 -> REPORTING
                 else -> NOT_SPECIFIED
             }
         }

@@ -34,13 +34,6 @@ interface RxFetch {
      * */
     val fetchConfiguration: FetchConfiguration
 
-    /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
-     * keep a background service ongoing until this field returns false.
-     * This field can be accessed on non UI threads.
-     * @throws FetchException if accessed on ui thread
-     * */
-    val hasActiveDownloads: Boolean
-
     /**
      * Queues a request for downloading. If Fetch fails to enqueue the request,
      * func2 will be called with the error.
@@ -581,6 +574,22 @@ interface RxFetch {
      * @return Convertible with results.
      * */
     fun hasActiveDownloads(includeAddedDownloads: Boolean): Convertible<Boolean>
+
+    /** Subscribe a FetchObserver that indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
+     * keep a background service ongoing until the value returned is false.
+     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active by default.
+     * @param fetchObserver the fetch observer
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun addActiveDownloadsObserver(includeAddedDownloads: Boolean = false, fetchObserver: FetchObserver<Boolean>): RxFetch
+
+    /** Removes a subscribed FetchObserver that is listening for active downloads.
+     * @param fetchObserver the fetch observer to remove.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun removeActiveDownloadsObserver(fetchObserver: FetchObserver<Boolean>): RxFetch
 
     /**
      * RX Fetch implementation class. Use this Singleton to get instances of RxFetch or Fetch.
