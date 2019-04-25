@@ -2,7 +2,7 @@ package com.tonyodev.fetch2
 
 /**
  * Action used by Fetch when enqueuing a request and a previous request with the
- * same file is already being managed by Fetch. The default set on a Request is EnqueueAction.REPLACE_EXISTING
+ * same file is already being managed by Fetch. The default set on a Request is EnqueueAction.UPDATE_ACCORDINGLY
  * which will replaces the existing request.
  * */
 enum class EnqueueAction(val value: Int) {

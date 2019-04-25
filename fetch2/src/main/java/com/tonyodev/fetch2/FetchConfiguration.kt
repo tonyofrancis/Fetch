@@ -30,7 +30,9 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val fetchDatabaseManager: FetchDatabaseManager?,
                                              val backgroundHandler: Handler?,
                                              val prioritySort: PrioritySort,
-                                             val internetCheckUrl: String?) {
+                                             val internetCheckUrl: String?,
+                                             val activeDownloadsCheckInterval: Long,
+                                             val createFileOnEnqueue: Boolean) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -62,6 +64,8 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var backgroundHandler: Handler? = null
         private var prioritySort: PrioritySort = defaultPrioritySort
         private var internetCheckUrl: String? = null
+        private var activeDownloadCheckInterval = DEFAULT_HAS_ACTIVE_DOWNLOADS_INTERVAL_IN_MILLISECONDS
+        private var createFileOnEnqueue = DEFAULT_CREATE_FILE_ON_ENQUEUE
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -292,6 +296,34 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Sets the HasActiveDownloads reporting interval in milliseconds for instances of Fetch
+         * created with this FetchConfiguration. This controls how often HasActiveDownloads is reported
+         * when a FetchObserver is attached to Fetch to monitor hasActiveDownloads.
+         * The default value is 5 minutes.
+         * This method can only accept values greater than 0.
+         * @param intervalInMillis reporting interval in milliseconds
+         * @throws FetchException if the passed in progress reporting interval is less than 0.
+         * @return Builder
+         * */
+        fun setHasActiveDownloadsCheckInterval(intervalInMillis: Long): Builder {
+            if (intervalInMillis < 0) {
+                throw FetchException("intervalInMillis cannot be less than 0")
+            }
+            this.activeDownloadCheckInterval = intervalInMillis
+            return this
+        }
+
+        /**
+         * Enable or disable creating the download file on enqueue
+         * @param create true or false. The default is true
+         * @return Builder
+         * */
+        fun createDownloadFileOnEnqueue(create: Boolean): Builder {
+            this.createFileOnEnqueue = create
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -324,7 +356,9 @@ class FetchConfiguration private constructor(val appContext: Context,
                     fetchDatabaseManager = fetchDatabaseManager,
                     backgroundHandler = backgroundHandler,
                     prioritySort = prioritySort,
-                    internetCheckUrl = internetCheckUrl)
+                    internetCheckUrl = internetCheckUrl,
+                    activeDownloadsCheckInterval = activeDownloadCheckInterval,
+                    createFileOnEnqueue = createFileOnEnqueue)
         }
 
     }
@@ -352,6 +386,8 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (backgroundHandler != other.backgroundHandler) return false
         if (prioritySort != other.prioritySort) return false
         if (internetCheckUrl != other.internetCheckUrl) return false
+        if (activeDownloadsCheckInterval != other.activeDownloadsCheckInterval) return false
+        if (createFileOnEnqueue != other.createFileOnEnqueue) return false
         return true
     }
 
@@ -383,6 +419,8 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (internetCheckUrl != null) {
             result = 31 * result + internetCheckUrl.hashCode()
         }
+        result = 31 * result + activeDownloadsCheckInterval.hashCode()
+        result = 31 * result + createFileOnEnqueue.hashCode()
         return result
     }
 
@@ -398,6 +436,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                 "fetchDatabaseManager=$fetchDatabaseManager, " +
                 "prioritySort=$prioritySort, " +
                 "internetCheckUrl=$internetCheckUrl, " +
+                "activeDownloadsCheckInterval=$activeDownloadsCheckInterval, " +
+                "createFileOnEnqueue=$createFileOnEnqueue, " +
                 "backgroundHandler=$backgroundHandler)"
     }
 

@@ -144,7 +144,8 @@ object FetchModulesBuilder {
                     storageResolver = fetchConfiguration.storageResolver,
                     fetchNotificationManager = fetchConfiguration.fetchNotificationManager,
                     groupInfoProvider = groupInfoProvider,
-                    prioritySort = fetchConfiguration.prioritySort)
+                    prioritySort = fetchConfiguration.prioritySort,
+                    createFileOnEnqueue = fetchConfiguration.createFileOnEnqueue)
             fetchDatabaseManagerWrapper.delegate = object : FetchDatabaseManager.Delegate {
                 override fun deleteTempFilesForDownload(downloadInfo: DownloadInfo) {
                     val tempDir = fetchConfiguration.storageResolver

@@ -99,6 +99,9 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                     }
                     downloadInfo.downloaded = downloaded
                     downloadInfo.total = total
+                    if (!storageResolver.fileExists(request.file)) {
+                        storageResolver.createFile(request.file, initialDownload.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME)
+                    }
                     outputResourceWrapper = storageResolver.getRequestOutputResourceWrapper(request)
                     outputResourceWrapper.setWriteOffset(seekPosition)
                     if (!interrupted && !terminated) {

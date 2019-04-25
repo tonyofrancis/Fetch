@@ -33,13 +33,6 @@ interface Fetch {
      * */
     val fetchConfiguration: FetchConfiguration
 
-    /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
-     * keep a background service ongoing until this field returns false.
-     * This field can be accessed on non UI threads.
-     * @throws FetchException if accessed on ui thread
-     * */
-    val hasActiveDownloads: Boolean
-
     /**
      * Queues a request for downloading. If Fetch fails to enqueue the request,
      * func2 will be called with the error.
@@ -826,7 +819,6 @@ interface Fetch {
     /** Releases held resources and the namespace used by this Fetch instance.
      * Once closed this instance cannot be reused but the namespace can be reused
      * by a new instance of Fetch.
-     * @throws FetchException if this instance of Fetch has been closed.
      * */
     fun close()
 
@@ -879,12 +871,28 @@ interface Fetch {
 
     /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
      * keep a background service ongoing until the callback function returns false.
-     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active.
+     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active by default.
      * @param func the callback function
      * @throws FetchException if accessed on ui thread
      * @return instance
      * */
     fun hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>): Fetch
+
+    /** Subscribe a FetchObserver that indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
+     * keep a background service ongoing until the value returned is false.
+     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active by default.
+     * @param fetchObserver the fetch observer
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun addActiveDownloadsObserver(includeAddedDownloads: Boolean = false, fetchObserver: FetchObserver<Boolean>): Fetch
+
+    /** Removes a subscribed FetchObserver that is listening for active downloads.
+     * @param fetchObserver the fetch observer to remove.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun removeActiveDownloadsObserver(fetchObserver: FetchObserver<Boolean>): Fetch
 
     /**
      * Fetch implementation class. Use this Singleton to get instances of Fetch.
