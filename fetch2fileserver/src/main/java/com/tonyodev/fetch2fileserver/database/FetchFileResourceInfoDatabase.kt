@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2fileserver.database
 
-import android.arch.persistence.room.*
+import androidx.room.*
 import android.content.Context
 import java.io.Closeable
 
