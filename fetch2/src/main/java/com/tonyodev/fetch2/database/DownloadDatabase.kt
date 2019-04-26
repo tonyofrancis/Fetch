@@ -36,13 +36,15 @@ abstract class DownloadDatabase : RoomDatabase() {
         const val COLUMN_IDENTIFIER = "_identifier"
         const val COLUMN_DOWNLOAD_ON_ENQUEUE = "_download_on_enqueue"
         const val COLUMN_EXTRAS = "_extras"
-        const val OLD_DATABASE_VERSION = 5
-        const val DATABASE_VERSION = 6
+        const val COLUMN_AUTO_RETRY_MAX_ATTEMPTS = "_auto_retry_max_attempts"
+        const val COLUMN_AUTO_RETRY_ATTEMPTS = "_auto_retry_attempts"
+        const val OLD_DATABASE_VERSION = 6
+        const val DATABASE_VERSION = 7
 
         @JvmStatic
         fun getMigrations(): Array<Migration> {
             return arrayOf(MigrationOneToTwo(), MigrationTwoToThree(), MigrationThreeToFour(),
-                    MigrationFourToFive(), MigrationFiveToSix())
+                    MigrationFourToFive(), MigrationFiveToSix(), MigrationSixToSeven())
         }
 
     }

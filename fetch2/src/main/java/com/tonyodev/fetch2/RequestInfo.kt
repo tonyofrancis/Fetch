@@ -58,6 +58,19 @@ open class RequestInfo : Serializable {
     var downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
 
     /**
+     * The maximum number of times Fetch will auto retry a failed download.
+     * The default is 0. Value has to be greater than -1
+     * @throws IllegalArgumentException if value passed in is less than 0
+     * */
+    var autoRetryMaxAttempts = DEFAULT_AUTO_RETRY_ATTEMPTS
+        set(value) {
+            if (value < 0) {
+                throw IllegalArgumentException("The maximum number of attempts has to be greater than -1")
+            }
+            field = value
+        }
+
+    /**
      * Set or get the extras for this request. Use this to
      * save and get custom key/value data for the request.
      * Use fetch.replaceExtras(id, extras)
@@ -80,6 +93,7 @@ open class RequestInfo : Serializable {
         if (enqueueAction != other.enqueueAction) return false
         if (downloadOnEnqueue != other.downloadOnEnqueue) return false
         if (extras != other.extras) return false
+        if (autoRetryMaxAttempts != other.autoRetryMaxAttempts) return false
         return true
     }
 
@@ -93,13 +107,15 @@ open class RequestInfo : Serializable {
         result = 31 * result + enqueueAction.hashCode()
         result = 31 * result + downloadOnEnqueue.hashCode()
         result = 31 * result + extras.hashCode()
+        result = 31 * result + autoRetryMaxAttempts
         return result
     }
 
     override fun toString(): String {
-        return "RequestInfo(identifier=$identifier, groupId=$groupId, headers=$headers, priority=$priority, " +
-                "networkType=$networkType, tag=$tag, enqueueAction=$enqueueAction, downloadOnEnqueue=$downloadOnEnqueue, " +
-                "extras=$extras)"
+        return "RequestInfo(identifier=$identifier, groupId=$groupId," +
+                " headers=$headers, priority=$priority, networkType=$networkType," +
+                " tag=$tag, enqueueAction=$enqueueAction, downloadOnEnqueue=$downloadOnEnqueue, " +
+                "autoRetryMaxAttempts=$autoRetryMaxAttempts, extras=$extras)"
     }
 
 }

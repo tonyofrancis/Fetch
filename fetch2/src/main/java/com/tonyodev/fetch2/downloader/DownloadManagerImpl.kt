@@ -28,7 +28,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                           private val storageResolver: StorageResolver,
                           private val context: Context,
                           private val namespace: String,
-                          private val groupInfoProvider: GroupInfoProvider) : DownloadManager {
+                          private val groupInfoProvider: GroupInfoProvider,
+                          private val globalAutoRetryMaxAttempts: Int) : DownloadManager {
 
     private val lock = Any()
     private var executor: ExecutorService? = getNewDownloadExecutorService(concurrentLimit)
@@ -285,7 +286,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
         return FileDownloaderDelegate(
                 downloadInfoUpdater = downloadInfoUpdater,
                 fetchListener = listenerCoordinator.mainListener,
-                retryOnNetworkGain = retryOnNetworkGain)
+                retryOnNetworkGain = retryOnNetworkGain,
+                globalAutoRetryMaxAttempts = globalAutoRetryMaxAttempts)
     }
 
     override fun getDownloadFileTempDir(download: Download): String {

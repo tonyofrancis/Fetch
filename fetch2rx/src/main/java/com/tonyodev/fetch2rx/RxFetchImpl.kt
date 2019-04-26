@@ -642,6 +642,27 @@ open class RxFetchImpl(override val namespace: String,
                 .toConvertible()
     }
 
+    override fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean): Convertible<Download?> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(downloadId)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val download = fetchHandler.resetAutoRetryAttempts(downloadId, retryDownload)
+                        uiHandler.post {
+                            if (download != null && download.status == Status.QUEUED) {
+                                logger.d("Queued $download for download")
+                                listenerCoordinator.mainListener.onQueued(download, false)
+                            }
+                        }
+                        Flowable.just(download)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
     override fun addListener(listener: FetchListener): RxFetch {
         return addListener(listener, DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED)
     }

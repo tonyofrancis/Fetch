@@ -595,6 +595,34 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean, func: Func2<Download?>?, func2: Func<Error>?): Fetch {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val download = fetchHandler.resetAutoRetryAttempts(downloadId, retryDownload)
+                    if (download != null && download.status == Status.QUEUED) {
+                        logger.d("Queued $download for download")
+                        listenerCoordinator.mainListener.onQueued(download, false)
+                    }
+                    uiHandler.post {
+                        func?.call(download)
+                    }
+                } catch (e: Exception) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    error.throwable = e
+                    if (func2 != null) {
+                        uiHandler.post {
+                            func2.call(error)
+                        }
+                    }
+                }
+            }
+            this
+        }
+    }
+
     override fun retry(ids: List<Int>): Fetch {
         return retry(ids, null, null)
     }

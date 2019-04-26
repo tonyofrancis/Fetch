@@ -75,6 +75,12 @@ open class DownloadInfo : Download {
     @ColumnInfo(name = DownloadDatabase.COLUMN_EXTRAS, typeAffinity = ColumnInfo.TEXT)
     override var extras: Extras = Extras.emptyExtras
 
+    @ColumnInfo(name = DownloadDatabase.COLUMN_AUTO_RETRY_MAX_ATTEMPTS, typeAffinity = ColumnInfo.INTEGER)
+    override var autoRetryMaxAttempts: Int = DEFAULT_AUTO_RETRY_ATTEMPTS
+
+    @ColumnInfo(name = DownloadDatabase.COLUMN_AUTO_RETRY_ATTEMPTS, typeAffinity = ColumnInfo.INTEGER)
+    override var autoRetryAttempts: Int = DEFAULT_AUTO_RETRY_ATTEMPTS
+
     @Ignore
     override var etaInMilliSeconds: Long = -1L
 
@@ -102,6 +108,7 @@ open class DownloadInfo : Download {
             request.identifier = identifier
             request.downloadOnEnqueue = downloadOnEnqueue
             request.extras = extras
+            request.autoRetryMaxAttempts = autoRetryMaxAttempts
             return request
         }
 
@@ -133,6 +140,8 @@ open class DownloadInfo : Download {
         if (extras != other.extras) return false
         if (etaInMilliSeconds != other.etaInMilliSeconds) return false
         if (downloadedBytesPerSecond != other.downloadedBytesPerSecond) return false
+        if (autoRetryMaxAttempts != other.autoRetryMaxAttempts) return false
+        if (autoRetryAttempts != other.autoRetryAttempts) return false
         return true
     }
 
@@ -157,16 +166,12 @@ open class DownloadInfo : Download {
         result = 31 * result + extras.hashCode()
         result = 31 * result + etaInMilliSeconds.hashCode()
         result = 31 * result + downloadedBytesPerSecond.hashCode()
+        result = 31 * result + autoRetryMaxAttempts.hashCode()
+        result = 31 * result + autoRetryAttempts.hashCode()
         return result
     }
 
-    override fun toString(): String {
-        return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file', group=$group, " +
-                "priority=$priority, headers=$headers, downloaded=$downloaded, total=$total, status=$status," +
-                " error=$error, networkType=$networkType, created=$created, tag=$tag, enqueueAction=$enqueueAction, " +
-                "identifier=$identifier, downloadOnEnqueue=$downloadOnEnqueue, extras=$extras, " +
-                "etaInMilliSeconds=$etaInMilliSeconds, downloadedBytesPerSecond=$downloadedBytesPerSecond)"
-    }
+
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(id)
@@ -189,10 +194,22 @@ open class DownloadInfo : Download {
         dest.writeLong(etaInMilliSeconds)
         dest.writeLong(downloadedBytesPerSecond)
         dest.writeSerializable(HashMap(extras.map))
+        dest.writeInt(autoRetryMaxAttempts)
+        dest.writeInt(autoRetryAttempts)
     }
 
     override fun describeContents(): Int {
         return 0
+    }
+
+    override fun toString(): String {
+        return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file', " +
+                "group=$group, priority=$priority, headers=$headers, downloaded=$downloaded," +
+                " total=$total, status=$status, error=$error, networkType=$networkType, " +
+                "created=$created, tag=$tag, enqueueAction=$enqueueAction, identifier=$identifier," +
+                " downloadOnEnqueue=$downloadOnEnqueue, extras=$extras, " +
+                "autoRetryMaxAttempts=$autoRetryMaxAttempts, autoRetryAttempts=$autoRetryAttempts," +
+                " etaInMilliSeconds=$etaInMilliSeconds, downloadedBytesPerSecond=$downloadedBytesPerSecond)"
     }
 
     companion object CREATOR : Parcelable.Creator<DownloadInfo> {
@@ -219,6 +236,8 @@ open class DownloadInfo : Download {
             val etaInMilliSeconds = source.readLong()
             val downloadedBytesPerSecond = source.readLong()
             val extras = source.readSerializable() as Map<String, String>
+            val autoRetryMaxAttempts = source.readInt()
+            val autoRetryAttempts = source.readInt()
 
             val downloadInfo = DownloadInfo()
             downloadInfo.id = id
@@ -241,6 +260,8 @@ open class DownloadInfo : Download {
             downloadInfo.etaInMilliSeconds = etaInMilliSeconds
             downloadInfo.downloadedBytesPerSecond = downloadedBytesPerSecond
             downloadInfo.extras = Extras(extras)
+            downloadInfo.autoRetryMaxAttempts = autoRetryMaxAttempts
+            downloadInfo.autoRetryAttempts = autoRetryAttempts
             return downloadInfo
         }
 

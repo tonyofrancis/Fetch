@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
+import com.tonyodev.fetch2.util.DEFAULT_AUTO_RETRY_ATTEMPTS
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_REQUEST_UPDATED
 import com.tonyodev.fetch2core.*
@@ -587,6 +588,17 @@ interface Fetch {
      * @return Instance
      * */
     fun replaceExtras(id: Int, extras: Extras, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
+
+    /**
+     * Resets the autoRetryAttempts value for a download back to 0.
+     * @param downloadId Id of existing request/download
+     * @param retryDownload Retry the download if its status is Status.ERROR. True by default.
+     * @param func callback that returns the download if it exists.
+     * @param func2 callback that returns the error if on occurred.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean = true, func: Func2<Download?>? = null, func2: Func<Error>? = null): Fetch
 
     /**
      * Renames the file for a completed download. The StorageResolver attached to this fetch instance will rename the file.

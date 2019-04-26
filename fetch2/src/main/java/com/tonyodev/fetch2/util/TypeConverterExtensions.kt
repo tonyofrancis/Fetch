@@ -23,6 +23,8 @@ fun Request.toDownloadInfo(): DownloadInfo {
     downloadInfo.identifier = identifier
     downloadInfo.downloadOnEnqueue = downloadOnEnqueue
     downloadInfo.extras = extras
+    downloadInfo.autoRetryMaxAttempts = autoRetryMaxAttempts
+    downloadInfo.autoRetryAttempts = DEFAULT_AUTO_RETRY_ATTEMPTS
     return downloadInfo
 }
 
@@ -46,6 +48,8 @@ fun Download.toDownloadInfo(): DownloadInfo {
     downloadInfo.identifier = identifier
     downloadInfo.downloadOnEnqueue = downloadOnEnqueue
     downloadInfo.extras = extras
+    downloadInfo.autoRetryMaxAttempts = autoRetryMaxAttempts
+    downloadInfo.autoRetryAttempts = autoRetryAttempts
     return downloadInfo
 }
 
@@ -68,5 +72,7 @@ fun CompletedDownload.toDownloadInfo(): DownloadInfo {
     downloadInfo.identifier = identifier
     downloadInfo.downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
     downloadInfo.extras = extras
+    downloadInfo.autoRetryMaxAttempts = DEFAULT_AUTO_RETRY_ATTEMPTS
+    downloadInfo.autoRetryAttempts = DEFAULT_AUTO_RETRY_ATTEMPTS
     return downloadInfo
 }

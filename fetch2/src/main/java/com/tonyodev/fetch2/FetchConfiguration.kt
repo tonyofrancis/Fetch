@@ -32,7 +32,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val prioritySort: PrioritySort,
                                              val internetCheckUrl: String?,
                                              val activeDownloadsCheckInterval: Long,
-                                             val createFileOnEnqueue: Boolean) {
+                                             val createFileOnEnqueue: Boolean,
+                                             val maxAutoRetryAttempts: Int) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -66,6 +67,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var internetCheckUrl: String? = null
         private var activeDownloadCheckInterval = DEFAULT_HAS_ACTIVE_DOWNLOADS_INTERVAL_IN_MILLISECONDS
         private var createFileOnEnqueue = DEFAULT_CREATE_FILE_ON_ENQUEUE
+        private var maxAutoRetryAttempts = DEFAULT_GLOBAL_AUTO_RETRY_ATTEMPTS
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -322,6 +324,18 @@ class FetchConfiguration private constructor(val appContext: Context,
             this.createFileOnEnqueue = create
             return this
         }
+        /**
+         * The Global maximum number of times Fetch will auto retry a failed download. If set,
+         * the autoRetryMaxAttempts on the individual download is overridden.
+         * @throws IllegalArgumentException if value passed in is less than 0
+         * */
+        fun setAutoRetryMaxAttempts(autoRetryMaxAttempts: Int): Builder {
+            if (autoRetryMaxAttempts < 0) {
+                throw IllegalArgumentException("The AutoRetryMaxAttempts has to be greater than -1")
+            }
+            this.maxAutoRetryAttempts = autoRetryMaxAttempts
+            return this
+        }
 
         /**
          * Build FetchConfiguration instance.
@@ -358,7 +372,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     prioritySort = prioritySort,
                     internetCheckUrl = internetCheckUrl,
                     activeDownloadsCheckInterval = activeDownloadCheckInterval,
-                    createFileOnEnqueue = createFileOnEnqueue)
+                    createFileOnEnqueue = createFileOnEnqueue,
+                    maxAutoRetryAttempts = maxAutoRetryAttempts)
         }
 
     }
@@ -388,6 +403,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (internetCheckUrl != other.internetCheckUrl) return false
         if (activeDownloadsCheckInterval != other.activeDownloadsCheckInterval) return false
         if (createFileOnEnqueue != other.createFileOnEnqueue) return false
+        if (maxAutoRetryAttempts != other.maxAutoRetryAttempts) return false
         return true
     }
 
@@ -421,24 +437,21 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
         result = 31 * result + activeDownloadsCheckInterval.hashCode()
         result = 31 * result + createFileOnEnqueue.hashCode()
+        result = 31 * result + maxAutoRetryAttempts.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "FetchConfiguration(appContext=$appContext, namespace='$namespace'," +
-                " concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis, " +
-                "loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader, " +
-                "globalNetworkType=$globalNetworkType, logger=$logger, " +
-                "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
+        return "FetchConfiguration(appContext=$appContext, namespace='$namespace', " +
+                "concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis, " +
+                "loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType," +
+                " logger=$logger, autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
                 "fileServerDownloader=$fileServerDownloader, hashCheckingEnabled=$hashCheckingEnabled, " +
                 "fileExistChecksEnabled=$fileExistChecksEnabled, storageResolver=$storageResolver, " +
-                "fetchNotificationManager=$fetchNotificationManager, " +
-                "fetchDatabaseManager=$fetchDatabaseManager, " +
-                "prioritySort=$prioritySort, " +
-                "internetCheckUrl=$internetCheckUrl, " +
-                "activeDownloadsCheckInterval=$activeDownloadsCheckInterval, " +
-                "createFileOnEnqueue=$createFileOnEnqueue, " +
-                "backgroundHandler=$backgroundHandler)"
+                "fetchNotificationManager=$fetchNotificationManager, fetchDatabaseManager=$fetchDatabaseManager," +
+                " backgroundHandler=$backgroundHandler, prioritySort=$prioritySort, internetCheckUrl=$internetCheckUrl," +
+                " activeDownloadsCheckInterval=$activeDownloadsCheckInterval, createFileOnEnqueue=$createFileOnEnqueue, " +
+                "maxAutoRetryAttempts=$maxAutoRetryAttempts)"
     }
 
 }

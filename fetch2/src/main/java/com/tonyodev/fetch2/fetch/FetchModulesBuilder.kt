@@ -117,7 +117,8 @@ object FetchModulesBuilder {
                     storageResolver = fetchConfiguration.storageResolver,
                     context = fetchConfiguration.appContext,
                     namespace = fetchConfiguration.namespace,
-                    groupInfoProvider = groupInfoProvider)
+                    groupInfoProvider = groupInfoProvider,
+                    globalAutoRetryMaxAttempts = fetchConfiguration.maxAutoRetryAttempts)
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,
                     downloadProvider = downloadProvider,

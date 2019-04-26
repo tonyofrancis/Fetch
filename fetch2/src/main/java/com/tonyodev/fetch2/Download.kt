@@ -2,6 +2,7 @@ package com.tonyodev.fetch2
 
 import android.net.Uri
 import android.os.Parcelable
+import com.tonyodev.fetch2.util.DEFAULT_AUTO_RETRY_ATTEMPTS
 import com.tonyodev.fetch2core.Extras
 import java.io.Serializable
 
@@ -115,5 +116,16 @@ interface Download : Parcelable, Serializable {
      * always return -1 when the download is not currently being downloaded.
      * */
     val downloadedBytesPerSecond: Long
+
+    /**
+     * The maximum number of times Fetch will auto retry a failed download.
+     * The default is 0.
+     * */
+    val autoRetryMaxAttempts: Int
+
+    /**
+     * The number of times Fetch has tried to download this request after a failed attempt.
+     * */
+    val autoRetryAttempts: Int
 
 }

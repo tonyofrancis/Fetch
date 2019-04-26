@@ -358,6 +358,21 @@ class FetchHandlerImpl(private val namespace: String,
         return retryDownloads
     }
 
+    override fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean): Download? {
+        val download = fetchDatabaseManagerWrapper.get(downloadId)
+        if (download != null) {
+            cancelDownloadsIfDownloading(listOf(download))
+            if (retryDownload && canRetryDownload(download)) {
+                download.status = Status.QUEUED
+                download.error = defaultNoError
+            }
+            download.autoRetryAttempts = 0
+            fetchDatabaseManagerWrapper.update(download)
+            startPriorityQueueIfNotStarted()
+        }
+        return download
+    }
+
     override fun updateRequest(requestId: Int, newRequest: Request): Pair<Download, Boolean> {
         var oldDownloadInfo = fetchDatabaseManagerWrapper.get(requestId)
         if (oldDownloadInfo != null) {

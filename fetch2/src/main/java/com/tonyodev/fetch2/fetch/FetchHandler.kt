@@ -59,4 +59,5 @@ interface FetchHandler : Closeable {
     fun getFetchGroup(id: Int): FetchGroup
     fun addFetchObserversForDownload(downloadId: Int, vararg  fetchObservers: FetchObserver<Download>)
     fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>)
+    fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean): Download?
 }

@@ -287,6 +287,15 @@ interface RxFetch {
      * */
     fun retry(id: Int): Convertible<Download>
 
+    /**
+     * Resets the autoRetryAttempts value for a download back to 0.
+     * @param downloadId Id of existing request/download
+     * @param retryDownload Retry the download if its status is Status.ERROR. True by default.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Convertible with the download that was successfully queued or null.
+     * */
+    fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean = true): Convertible<Download?>
+
     /** Updates an existing request.
      * @see com.tonyodev.fetch2.Request for more details.
      * @param requestId Id of existing request/download
