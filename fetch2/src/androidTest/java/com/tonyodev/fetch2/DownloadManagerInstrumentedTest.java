@@ -78,7 +78,7 @@ public class DownloadManagerInstrumentedTest {
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 downloadInfoUpdater, downloadManagerCoordinator,
                 listenerCoordinator, serverDownloader, false, storageResolver,
-                appContext, namespace, groupInfoProvider);
+                appContext, namespace, groupInfoProvider, FetchDefaults.DEFAULT_GLOBAL_AUTO_RETRY_ATTEMPTS);
     }
 
     @After

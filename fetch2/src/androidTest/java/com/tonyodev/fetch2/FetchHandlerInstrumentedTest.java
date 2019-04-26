@@ -92,7 +92,7 @@ public class FetchHandlerInstrumentedTest {
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                 downloadInfoUpdater, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, storageResolver, appContext, namespace, groupInfoProvider);
+                listenerCoordinator, serverDownloader, false, storageResolver, appContext, namespace, groupInfoProvider, FetchDefaults.DEFAULT_GLOBAL_AUTO_RETRY_ATTEMPTS);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 handlerWrapper,
                 new DownloadProvider(databaseManagerWrapper),
@@ -107,7 +107,7 @@ public class FetchHandlerInstrumentedTest {
         fetchHandler = new FetchHandlerImpl(namespace, databaseManagerWrapper, downloadManager,
                 priorityListProcessorImpl, fetchLogger, autoStart,
                 client, serverClient, listenerCoordinator, uiHandler, storageResolver, null,
-                groupInfoProvider, PrioritySort.ASC);
+                groupInfoProvider, PrioritySort.ASC, FetchDefaults.DEFAULT_CREATE_FILE_ON_ENQUEUE);
     }
 
     @Test

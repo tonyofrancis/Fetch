@@ -75,7 +75,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                  downloadInfoUpdater, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, storageResolver, appContext, namespace, groupInfoProvider);
+                listenerCoordinator, serverDownloader, false, storageResolver, appContext, namespace, groupInfoProvider, FetchDefaults.DEFAULT_GLOBAL_AUTO_RETRY_ATTEMPTS);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
                 new HandlerWrapper(namespace, null),
                 new DownloadProvider(databaseManagerWrapper),
