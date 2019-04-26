@@ -1,6 +1,6 @@
 
 [![Build Status](https://travis-ci.org/tonyofrancis/Fetch.svg?branch=v2)](https://travis-ci.org/tonyofrancis/Fetch)
-[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch2/images/download.svg?version=3.1.0) ](https://bintray.com/tonyofrancis/maven/fetch2/3.1.0/link)
+[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/xfetch2/images/download.svg?version=3.1.0) ](https://bintray.com/tonyofrancis/maven/xfetch2/3.1.0/link)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Networking-blue.svg?style=flat)](https://android-arsenal.com/details/1/5196)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tonyofrancis/Fetch/blob/master/LICENSE)
 
@@ -54,7 +54,7 @@ implementation "com.tonyodev.fetch2:fetch2:3.1.0"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2:fetch2:3.1.0"
+implementation "androidx.tonyodev.fetch2:xfetch2:3.1.0"
 ```
 
 Next, get an instance of Fetch and request a download.
@@ -224,7 +224,7 @@ implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:3.1.0"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2okhttp:fetch2okhttp:3.1.0"
+implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.1.0"
 ```
 
 Set the OkHttp Downloader for Fetch to use.
@@ -250,7 +250,7 @@ implementation "com.tonyodev.fetch2rx:fetch2rx:3.1.0"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2rx:fetch2rx:3.1.0"
+implementation "androidx.tonyodev.fetch2rx:xfetch2rx:3.1.0"
 ```
 
 RxFetch makes it super easy to enqueue download requests and query downloads using rxJava2 functional methods.
@@ -290,7 +290,7 @@ implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:3.1.0"
 ```
 Androidx use: 
 ```java
-implementation "androidx.tonyodev.fetch2fileserver:fetch2fileserver:3.1.0"
+implementation "androidx.tonyodev.fetch2fileserver:xfetch2fileserver:3.1.0"
 ```
 
 Start a FetchFileServer instance and add resource files that it can server to connected clients.
@@ -403,7 +403,7 @@ implementation "com.tonyodev.fetchmigrator:fetchmigrator:3.1.0"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetchmigrator:fetchmigrator:3.1.0"
+implementation "androidx.tonyodev.fetchmigrator:xfetchmigrator:3.1.0"
 ```
 
 Then run the Migrator.
