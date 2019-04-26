@@ -1,3 +1,38 @@
+Version 3.0.5
+This release only adds a new Feature that allows Fetch to auto retry failed downloads for any reason. Set the number of times Fetch will auto retry a download when it fails.
+This feature if off by default.
+1. New fields added on Download: autoRetryMaxAttempts and autoRetryAttempts. See Java docs.
+2. New field added on RequestInfo: autoRetryMaxAttempts. See Java docs.
+3. New method added on Fetch: fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean = true, func: Func2<Download?>? = null, func2: Func<Error>? = null): Fetch
+4. New method added on RXFetch: fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean = true): Convertible<Download?>
+5. New method added on FetchConfiguration: fun setAutoRetryMaxAttempts(autoRetryMaxAttempts: Int): Builder. See Java Docs
+
+```java
+        final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+                .enableRetryOnNetworkGain(true)
+                .setDownloadConcurrentLimit(2)
+                .setAutoRetryMaxAttempts(10) // set global auto retry max attempts for all downloads.
+                .build();
+        final Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
+
+        //OR
+
+        final String url = "dummy url";
+        final String file = "dummy file";
+        final Request request = new Request(url, file);
+        request.setAutoRetryMaxAttempts(5); // set auto retry on individual downloads.
+
+        fetch.getDownload(request.getId(), download -> {
+            if (download != null) {
+                download.getAutoRetryAttempts(); //get the number of auto retry attempts.
+                download.getAutoRetryMaxAttempts(); //get the number of max attempts.
+            }
+        });
+
+        //reset the auto retry attempts for a download
+        fetch.resetAutoRetryAttempts(request.getId(), true, null, null);
+```
+
 Version 3.0.4
 1. updated documentation
 2. remove has activeDownloads(): Boolean method. Use fun hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>): Fetch or fun addActiveDownloadsObserver(includeAddedDownloads: Boolean = false, fetchObserver: FetchObserver<Boolean>): Fetch instead.
