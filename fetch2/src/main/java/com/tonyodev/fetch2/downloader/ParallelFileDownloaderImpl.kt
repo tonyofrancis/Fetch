@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2.downloader
 
 import com.tonyodev.fetch2.Download
+import com.tonyodev.fetch2.EnqueueAction
 import com.tonyodev.fetch2core.Downloader
 import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2core.Logger
@@ -131,6 +132,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             downloadBlock
                         }
                         if (!interrupted && !terminated) {
+                            downloadInfo.etaInMilliSeconds = -1
+                            downloadInfo.downloadedBytesPerSecond = -1
                             delegate?.onStarted(
                                     download = downloadInfo,
                                     downloadBlocks = downloadBlocks,
@@ -162,10 +165,12 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             throwExceptionIfFound()
             if (!isDownloadComplete() && !terminated && !interrupted) {
                 delegate?.saveDownloadProgress(downloadInfo)
+                downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
+                downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
                 delegate?.onProgress(
                         download = downloadInfo,
-                        etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                        downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                        etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
+                        downloadedBytesPerSecond = downloadInfo.downloadedBytesPerSecond)
             } else if (!interrupted && !terminated && isDownloadComplete()) {
                 if (!totalUnknown) {
                     var fileSlicesTotal = 0L
@@ -188,10 +193,14 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                     if (openingResponse != null && downloader.verifyContentHash(openingResponse.request, openingResponse.hash)) {
                         deleteAllInFolderForId(downloadInfo.id, fileTempDir)
                         if (!interrupted && !terminated) {
+                            downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
+                            downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
                             delegate?.onProgress(
                                     download = downloadInfo,
-                                    etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                    downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                    etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
+                                    downloadedBytesPerSecond = downloadInfo.downloadedBytesPerSecond)
+                            downloadInfo.etaInMilliSeconds = -1
+                            downloadInfo.downloadedBytesPerSecond = -1
                             delegate?.onComplete(
                                     download = downloadInfo)
                         }
@@ -202,10 +211,14 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 } else {
                     deleteAllInFolderForId(downloadInfo.id, fileTempDir)
                     if (!interrupted && !terminated) {
+                        downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
+                        downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
                         delegate?.onProgress(
                                 download = downloadInfo,
-                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
+                                downloadedBytesPerSecond = downloadInfo.downloadedBytesPerSecond)
+                        downloadInfo.etaInMilliSeconds = -1
+                        downloadInfo.downloadedBytesPerSecond = -1
                         delegate?.onComplete(
                                 download = downloadInfo)
                     }
@@ -241,6 +254,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 downloadInfo.total = total
                 downloadInfo.error = error
                 if (!terminated && !interrupted) {
+                    downloadInfo.etaInMilliSeconds = -1
+                    downloadInfo.downloadedBytesPerSecond = -1
                     delegate?.onError(download = downloadInfo, error = error, throwable = e)
                 }
             }
@@ -364,10 +379,12 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         downloadInfo.downloaded = downloaded
                         downloadInfo.total = total
                         delegate?.saveDownloadProgress(downloadInfo)
+                        downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
+                        downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
                         delegate?.onProgress(
                                 download = downloadInfo,
-                                etaInMilliSeconds = estimatedTimeRemainingInMilliseconds,
-                                downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond())
+                                etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
+                                downloadedBytesPerSecond = downloadInfo.downloadedBytesPerSecond)
                     }
                 }
                 reportingStartTime = System.nanoTime()
@@ -381,6 +398,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
     private fun downloadSliceFiles(request: Downloader.ServerRequest, fileSlicesDownloadsList: List<FileSlice>) {
         actionsCounter = 0
         actionsTotal = fileSlicesDownloadsList.size
+        if (!storageResolver.fileExists(request.file)) {
+            storageResolver.createFile(request.file, initialDownload.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME)
+        }
         outputResourceWrapper = storageResolver.getRequestOutputResourceWrapper(request)
         outputResourceWrapper?.setWriteOffset(0)
         for (fileSlice in fileSlicesDownloadsList) {

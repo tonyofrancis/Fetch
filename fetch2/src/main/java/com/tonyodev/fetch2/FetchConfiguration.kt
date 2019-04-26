@@ -1,6 +1,9 @@
 package com.tonyodev.fetch2
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import com.tonyodev.fetch2.database.FetchDatabaseManager
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
@@ -23,7 +26,14 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val hashCheckingEnabled: Boolean,
                                              val fileExistChecksEnabled: Boolean,
                                              val storageResolver: StorageResolver,
-                                             val fetchNotificationManager: FetchNotificationManager?) {
+                                             val fetchNotificationManager: FetchNotificationManager?,
+                                             val fetchDatabaseManager: FetchDatabaseManager?,
+                                             val backgroundHandler: Handler?,
+                                             val prioritySort: PrioritySort,
+                                             val internetCheckUrl: String?,
+                                             val activeDownloadsCheckInterval: Long,
+                                             val createFileOnEnqueue: Boolean,
+                                             val maxAutoRetryAttempts: Int) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -51,6 +61,13 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var fileExistChecksEnabled = DEFAULT_FILE_EXIST_CHECKS
         private var storageResolver: StorageResolver = DefaultStorageResolver(appContext, getFileTempDir(appContext))
         private var fetchNotificationManager: FetchNotificationManager? = null
+        private var fetchDatabaseManager: FetchDatabaseManager? = null
+        private var backgroundHandler: Handler? = null
+        private var prioritySort: PrioritySort = defaultPrioritySort
+        private var internetCheckUrl: String? = null
+        private var activeDownloadCheckInterval = DEFAULT_HAS_ACTIVE_DOWNLOADS_INTERVAL_IN_MILLISECONDS
+        private var createFileOnEnqueue = DEFAULT_CREATE_FILE_ON_ENQUEUE
+        private var maxAutoRetryAttempts = DEFAULT_GLOBAL_AUTO_RETRY_ATTEMPTS
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -230,6 +247,97 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Set the database manager used by instances of Fetch created by this configuration.
+         * See Java docs for FetchDatabaseManager interface or FetchDatabaseManagerImpl class on
+         * default use.
+         * @param fetchDatabaseManager the Fetch database managers.
+         * @return Builder
+         * */
+        fun setDatabaseManager(fetchDatabaseManager: FetchDatabaseManager?): Builder {
+            this.fetchDatabaseManager = fetchDatabaseManager
+            return this
+        }
+
+        /**
+         * Sets the handler(worker thread) Fetch namespace uses to perform all operations on.
+         * This handler cannot contain the main thread. Any instance of Fetch that uses the
+         * passed in namespace in this configuration will use this handler.
+         * @param handler the handler.
+         * @throws IllegalAccessException if handler uses main thread.
+         * @return Builder
+         * */
+        fun setBackgroundHandler(handler: Handler): Builder {
+            if (handler.looper.thread == Looper.getMainLooper().thread) {
+                throw IllegalAccessException("The background handler cannot use the main/ui thread")
+            }
+            this.backgroundHandler = handler
+            return this
+        }
+
+        /**
+         * Used to dictate the order in which Fetch processes request/downloads
+         * based on time created. Default is PrioritySort.ASC
+         * @param prioritySort the priority sort.
+         * */
+        fun setPrioritySort(prioritySort: PrioritySort): Builder {
+            this.prioritySort = prioritySort
+            return this
+        }
+
+        /**
+         * If set, Fetch will use this url to check against for internet connection.
+         * rather than using the Android frameworks internet check classes. Note: setting
+         * this will cause Fetch to always make a network request to the url.
+         * This will cause a small delay before downloading a request. Only set this option if
+         * necessary.
+         * @param url the url to check against.
+         * */
+        fun setInternetAccessUrlCheck(url: String?): Builder {
+            internetCheckUrl = url
+            return this
+        }
+
+        /**
+         * Sets the HasActiveDownloads reporting interval in milliseconds for instances of Fetch
+         * created with this FetchConfiguration. This controls how often HasActiveDownloads is reported
+         * when a FetchObserver is attached to Fetch to monitor hasActiveDownloads.
+         * The default value is 5 minutes.
+         * This method can only accept values greater than 0.
+         * @param intervalInMillis reporting interval in milliseconds
+         * @throws FetchException if the passed in progress reporting interval is less than 0.
+         * @return Builder
+         * */
+        fun setHasActiveDownloadsCheckInterval(intervalInMillis: Long): Builder {
+            if (intervalInMillis < 0) {
+                throw FetchException("intervalInMillis cannot be less than 0")
+            }
+            this.activeDownloadCheckInterval = intervalInMillis
+            return this
+        }
+
+        /**
+         * Enable or disable creating the download file on enqueue
+         * @param create true or false. The default is true
+         * @return Builder
+         * */
+        fun createDownloadFileOnEnqueue(create: Boolean): Builder {
+            this.createFileOnEnqueue = create
+            return this
+        }
+        /**
+         * The Global maximum number of times Fetch will auto retry a failed download. If set,
+         * the autoRetryMaxAttempts on the individual download is overridden.
+         * @throws IllegalArgumentException if value passed in is less than 0
+         * */
+        fun setAutoRetryMaxAttempts(autoRetryMaxAttempts: Int): Builder {
+            if (autoRetryMaxAttempts < 0) {
+                throw IllegalArgumentException("The AutoRetryMaxAttempts has to be greater than -1")
+            }
+            this.maxAutoRetryAttempts = autoRetryMaxAttempts
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -258,7 +366,14 @@ class FetchConfiguration private constructor(val appContext: Context,
                     hashCheckingEnabled = hashCheckEnabled,
                     fileExistChecksEnabled = fileExistChecksEnabled,
                     storageResolver = storageResolver,
-                    fetchNotificationManager = fetchNotificationManager)
+                    fetchNotificationManager = fetchNotificationManager,
+                    fetchDatabaseManager = fetchDatabaseManager,
+                    backgroundHandler = backgroundHandler,
+                    prioritySort = prioritySort,
+                    internetCheckUrl = internetCheckUrl,
+                    activeDownloadsCheckInterval = activeDownloadCheckInterval,
+                    createFileOnEnqueue = createFileOnEnqueue,
+                    maxAutoRetryAttempts = maxAutoRetryAttempts)
         }
 
     }
@@ -282,6 +397,13 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (fileExistChecksEnabled != other.fileExistChecksEnabled) return false
         if (storageResolver != other.storageResolver) return false
         if (fetchNotificationManager != other.fetchNotificationManager) return false
+        if (fetchDatabaseManager != other.fetchDatabaseManager) return false
+        if (backgroundHandler != other.backgroundHandler) return false
+        if (prioritySort != other.prioritySort) return false
+        if (internetCheckUrl != other.internetCheckUrl) return false
+        if (activeDownloadsCheckInterval != other.activeDownloadsCheckInterval) return false
+        if (createFileOnEnqueue != other.createFileOnEnqueue) return false
+        if (maxAutoRetryAttempts != other.maxAutoRetryAttempts) return false
         return true
     }
 
@@ -303,18 +425,33 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (fetchNotificationManager != null) {
             result = 31 * result + fetchNotificationManager.hashCode()
         }
+        if (fetchDatabaseManager != null) {
+            result = 31 * result + fetchDatabaseManager.hashCode()
+        }
+        if (backgroundHandler != null) {
+            result = 31 * result + backgroundHandler.hashCode()
+        }
+        result = 31 * result + prioritySort.hashCode()
+        if (internetCheckUrl != null) {
+            result = 31 * result + internetCheckUrl.hashCode()
+        }
+        result = 31 * result + activeDownloadsCheckInterval.hashCode()
+        result = 31 * result + createFileOnEnqueue.hashCode()
+        result = 31 * result + maxAutoRetryAttempts.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "FetchConfiguration(appContext=$appContext, namespace='$namespace'," +
-                " concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis, " +
-                "loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader, " +
-                "globalNetworkType=$globalNetworkType, logger=$logger, " +
-                "autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
+        return "FetchConfiguration(appContext=$appContext, namespace='$namespace', " +
+                "concurrentLimit=$concurrentLimit, progressReportingIntervalMillis=$progressReportingIntervalMillis, " +
+                "loggingEnabled=$loggingEnabled, httpDownloader=$httpDownloader, globalNetworkType=$globalNetworkType," +
+                " logger=$logger, autoStart=$autoStart, retryOnNetworkGain=$retryOnNetworkGain, " +
                 "fileServerDownloader=$fileServerDownloader, hashCheckingEnabled=$hashCheckingEnabled, " +
                 "fileExistChecksEnabled=$fileExistChecksEnabled, storageResolver=$storageResolver, " +
-                "fetchNotificationManager=$fetchNotificationManager)"
+                "fetchNotificationManager=$fetchNotificationManager, fetchDatabaseManager=$fetchDatabaseManager," +
+                " backgroundHandler=$backgroundHandler, prioritySort=$prioritySort, internetCheckUrl=$internetCheckUrl," +
+                " activeDownloadsCheckInterval=$activeDownloadsCheckInterval, createFileOnEnqueue=$createFileOnEnqueue, " +
+                "maxAutoRetryAttempts=$maxAutoRetryAttempts)"
     }
 
 }

@@ -1,10 +1,7 @@
 package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.*
-import com.tonyodev.fetch2core.DownloadBlock
-import com.tonyodev.fetch2core.Downloader
-import com.tonyodev.fetch2core.Extras
-import com.tonyodev.fetch2core.FileResource
+import com.tonyodev.fetch2core.*
 import java.io.Closeable
 
 /**
@@ -55,7 +52,12 @@ interface FetchHandler : Closeable {
     fun getFetchFileServerCatalog(request: Request): List<FileResource>
     fun setDownloadConcurrentLimit(downloadConcurrentLimit: Int)
     fun replaceExtras(id: Int, extras: Extras): Download
-    fun hasActiveDownloads(): Boolean
+    fun hasActiveDownloads(includeAddedDownloads: Boolean): Boolean
     fun getListenerSet(): Set<FetchListener>
     fun getPendingCount(): Long
+    fun renameCompletedDownloadFile(id: Int, newFileName: String): Download
+    fun getFetchGroup(id: Int): FetchGroup
+    fun addFetchObserversForDownload(downloadId: Int, vararg  fetchObservers: FetchObserver<Download>)
+    fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>)
+    fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean): Download?
 }

@@ -4,10 +4,11 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.tonyodev.fetch2.database.DatabaseManager;
-import com.tonyodev.fetch2.database.DatabaseManagerImpl;
+import com.tonyodev.fetch2.database.FetchDatabaseManager;
+import com.tonyodev.fetch2.database.FetchDatabaseManagerImpl;
 import com.tonyodev.fetch2.database.DownloadDatabase;
 import com.tonyodev.fetch2.database.DownloadInfo;
+import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.fetch.LiveSettings;
 import com.tonyodev.fetch2.provider.DownloadProvider;
@@ -32,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(AndroidJUnit4.class)
 public class DownloadProviderInstrumentedTest {
 
-    private DatabaseManager databaseManager;
+    private FetchDatabaseManager fetchDatabaseManager;
     private Context appContext;
     private DownloadProvider downloadProvider;
 
@@ -46,20 +47,21 @@ public class DownloadProviderInstrumentedTest {
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
         final LiveSettings liveSettings = new LiveSettings(namespace);
         DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
-        databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings,
+        fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, migrations, liveSettings,
                 false, defaultStorageResolver);
-        downloadProvider = new DownloadProvider(databaseManager);
+        final FetchDatabaseManagerWrapper databaseManagerWrapper = new FetchDatabaseManagerWrapper(fetchDatabaseManager);
+        downloadProvider = new DownloadProvider(databaseManagerWrapper);
     }
 
     @After
     public void cleanup() throws Exception {
-        databaseManager.deleteAll();
-        databaseManager.close();
+        fetchDatabaseManager.deleteAll();
+        fetchDatabaseManager.close();
     }
 
     @Test
     public void get() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -73,7 +75,7 @@ public class DownloadProviderInstrumentedTest {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfoList.add(downloadInfo);
         }
-        databaseManager.insert(downloadInfoList);
+        fetchDatabaseManager.insert(downloadInfoList);
         final List<Download> queryList = downloadProvider.getDownloads();
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
@@ -82,10 +84,10 @@ public class DownloadProviderInstrumentedTest {
 
     @Test
     public void getId() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
         final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
-        databaseManager.insert(downloadInfo);
+        fetchDatabaseManager.insert(downloadInfo);
         final Download query = downloadProvider.getDownload(downloadInfo.getId());
         assertNotNull(query);
         assertEquals(downloadInfo.getId(), query.getId());
@@ -93,7 +95,7 @@ public class DownloadProviderInstrumentedTest {
 
     @Test
     public void getIds() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -107,7 +109,7 @@ public class DownloadProviderInstrumentedTest {
             final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
             downloadInfoList.add(downloadInfo);
         }
-        databaseManager.insert(downloadInfoList);
+        fetchDatabaseManager.insert(downloadInfoList);
         final List<Integer> ids = new ArrayList<>();
         for (DownloadInfo downloadInfo : downloadInfoList) {
             ids.add(downloadInfo.getId());
@@ -123,7 +125,7 @@ public class DownloadProviderInstrumentedTest {
 
     @Test
     public void getStatus() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -141,7 +143,7 @@ public class DownloadProviderInstrumentedTest {
         for (DownloadInfo downloadInfo : downloadInfoList) {
             downloadInfo.setStatus(status);
         }
-        databaseManager.insert(downloadInfoList);
+        fetchDatabaseManager.insert(downloadInfoList);
         final List<Download> queryList = downloadProvider.getByStatus(status);
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());
@@ -153,7 +155,7 @@ public class DownloadProviderInstrumentedTest {
 
     @Test
     public void getGroup() throws Exception {
-        databaseManager.deleteAll();
+        fetchDatabaseManager.deleteAll();
         final String url = "http://www.example.com/test.txt";
         final String dir = appContext.getFilesDir() + "/testFolder/";
         final List<Request> requestList = new ArrayList<>();
@@ -171,7 +173,7 @@ public class DownloadProviderInstrumentedTest {
         for (DownloadInfo downloadInfo : downloadInfoList) {
             downloadInfo.setGroup(group);
         }
-        databaseManager.insert(downloadInfoList);
+        fetchDatabaseManager.insert(downloadInfoList);
         final List<Download> queryList = downloadProvider.getByGroup(group);
         assertNotNull(queryList);
         assertEquals(downloadInfoList.size(), queryList.size());

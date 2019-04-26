@@ -73,6 +73,7 @@ open class Request constructor(
         dest?.writeInt(enqueueAction.value)
         dest?.writeInt(if (downloadOnEnqueue) 1 else 0)
         dest?.writeSerializable(HashMap(extras.map))
+        dest?.writeInt(autoRetryMaxAttempts)
     }
 
     override fun describeContents(): Int {
@@ -94,6 +95,8 @@ open class Request constructor(
             val enqueueAction = EnqueueAction.valueOf(input.readInt())
             val downloadOnEnqueue = input.readInt() == 1
             val extras = input.readSerializable() as Map<String, String>
+            val autoRetryMaxAttempts = input.readInt()
+            val autoRetryAttempts = input.readInt()
             val request = Request(url, file)
             request.identifier = identifier
             request.groupId = groupId
@@ -106,6 +109,7 @@ open class Request constructor(
             request.enqueueAction = enqueueAction
             request.downloadOnEnqueue = downloadOnEnqueue
             request.extras = Extras(extras)
+            request.autoRetryMaxAttempts = autoRetryMaxAttempts
             return request
         }
 

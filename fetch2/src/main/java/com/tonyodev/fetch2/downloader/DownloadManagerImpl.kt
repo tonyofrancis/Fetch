@@ -2,12 +2,12 @@ package com.tonyodev.fetch2.downloader
 
 import android.content.Context
 import android.content.Intent
-import android.os.Handler
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater
 import com.tonyodev.fetch2.helper.FileDownloaderDelegate
 import com.tonyodev.fetch2.fetch.ListenerCoordinator
+import com.tonyodev.fetch2.provider.GroupInfoProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.getRequestForDownload
 import com.tonyodev.fetch2core.*
@@ -25,10 +25,11 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                           private val listenerCoordinator: ListenerCoordinator,
                           private val fileServerDownloader: FileServerDownloader,
                           private val hashCheckingEnabled: Boolean,
-                          private val uiHandler: Handler,
                           private val storageResolver: StorageResolver,
                           private val context: Context,
-                          private val namespace: String) : DownloadManager {
+                          private val namespace: String,
+                          private val groupInfoProvider: GroupInfoProvider,
+                          private val globalAutoRetryMaxAttempts: Int) : DownloadManager {
 
     private val lock = Any()
     private var executor: ExecutorService? = getNewDownloadExecutorService(concurrentLimit)
@@ -101,6 +102,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                             fileDownloader.run()
                         }
                         removeDownloadMappings(download)
+                        groupInfoProvider.clean()
                     } catch (e: Exception) {
 
                     } finally {
@@ -284,8 +286,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
         return FileDownloaderDelegate(
                 downloadInfoUpdater = downloadInfoUpdater,
                 fetchListener = listenerCoordinator.mainListener,
-                uiHandler = uiHandler,
-                retryOnNetworkGain = retryOnNetworkGain)
+                retryOnNetworkGain = retryOnNetworkGain,
+                globalAutoRetryMaxAttempts = globalAutoRetryMaxAttempts)
     }
 
     override fun getDownloadFileTempDir(download: Download): String {

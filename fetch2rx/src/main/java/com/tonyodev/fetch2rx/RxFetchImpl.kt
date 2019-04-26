@@ -7,6 +7,7 @@ import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
 import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.util.ActiveDownloadInfo
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.toDownloadInfo
@@ -34,20 +35,38 @@ open class RxFetchImpl(override val namespace: String,
                 return closed
             }
         }
-
-    override val hasActiveDownloads: Boolean
-        get() {
-            return try {
-                fetchHandler.hasActiveDownloads()
-            } catch (e: Exception) {
-                false
+    private val activeDownloadsSet = mutableSetOf<ActiveDownloadInfo>()
+    private val activeDownloadsRunnable = Runnable {
+        if (!isClosed) {
+            val hasActiveDownloadsAdded = fetchHandler.hasActiveDownloads(true)
+            val hasActiveDownloads = fetchHandler.hasActiveDownloads(false)
+            uiHandler.post {
+                if (!isClosed) {
+                    val iterator = activeDownloadsSet.iterator()
+                    var activeDownloadInfo: ActiveDownloadInfo
+                    var hasActive: Boolean
+                    while (iterator.hasNext()) {
+                        activeDownloadInfo = iterator.next()
+                        hasActive = if (activeDownloadInfo.includeAddedDownloads) hasActiveDownloadsAdded else hasActiveDownloads
+                        activeDownloadInfo.fetchObserver.onChanged(hasActive, Reason.REPORTING)
+                    }
+                }
+                if (!isClosed) {
+                    registerActiveDownloadsRunnable()
+                }
             }
         }
+    }
 
     init {
         handlerWrapper.post {
             fetchHandler.init()
         }
+        registerActiveDownloadsRunnable()
+    }
+
+    private fun registerActiveDownloadsRunnable() {
+        handlerWrapper.postDelayed(activeDownloadsRunnable, fetchConfiguration.activeDownloadsCheckInterval)
     }
 
     override fun enqueue(request: Request): Convertible<Request> {
@@ -623,6 +642,27 @@ open class RxFetchImpl(override val namespace: String,
                 .toConvertible()
     }
 
+    override fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean): Convertible<Download?> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(downloadId)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val download = fetchHandler.resetAutoRetryAttempts(downloadId, retryDownload)
+                        uiHandler.post {
+                            if (download != null && download.status == Status.QUEUED) {
+                                logger.d("Queued $download for download")
+                                listenerCoordinator.mainListener.onQueued(download, false)
+                            }
+                        }
+                        Flowable.just(download)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
     override fun addListener(listener: FetchListener): RxFetch {
         return addListener(listener, DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED)
     }
@@ -707,6 +747,21 @@ open class RxFetchImpl(override val namespace: String,
                                 }
                             }
                         }
+                        Flowable.just(download)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
+    override fun renameCompletedDownloadFile(id: Int, newFileName: String): Convertible<Download> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(Pair(id, newFileName))
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val download = fetchHandler.renameCompletedDownloadFile(it.first, it.second)
                         Flowable.just(download)
                     }
                     .observeOn(uiScheduler)
@@ -834,6 +889,21 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun getFetchGroup(group: Int): Convertible<FetchGroup> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(group)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val fetchGroup = fetchHandler.getFetchGroup(group)
+                        Flowable.just(fetchGroup)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
     override fun addCompletedDownload(completedDownload: CompletedDownload, alertListeners: Boolean): Convertible<Download> {
         return addCompletedDownloads(listOf(completedDownload), alertListeners)
                 .flowable
@@ -881,6 +951,21 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val downloadBlocksList = fetchHandler.getDownloadBlocks(downloadId)
                         Flowable.just(downloadBlocksList)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
+    override fun hasActiveDownloads(includeAddedDownloads: Boolean): Convertible<Boolean> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(includeAddedDownloads)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val hasActiveDownloads = fetchHandler.hasActiveDownloads(it)
+                        Flowable.just(hasActiveDownloads)
                     }
                     .observeOn(uiScheduler)
                     .toConvertible()
@@ -972,6 +1057,7 @@ open class RxFetchImpl(override val namespace: String,
             }
             closed = true
             logger.d("$namespace closing/shutting down")
+            handlerWrapper.removeCallbacks(activeDownloadsRunnable)
             handlerWrapper.post {
                 try {
                     fetchHandler.close()
@@ -995,6 +1081,54 @@ open class RxFetchImpl(override val namespace: String,
 
     override fun awaitFinish() {
         awaitFinishOrTimeout(-1)
+    }
+
+    override fun attachFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): RxFetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                fetchHandler.addFetchObserversForDownload(downloadId, *fetchObservers)
+            }
+            return this
+        }
+    }
+
+    override fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): RxFetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                fetchHandler.removeFetchObserversForDownload(downloadId, *fetchObservers)
+            }
+            return this
+        }
+    }
+
+    override fun addActiveDownloadsObserver(includeAddedDownloads: Boolean, fetchObserver: FetchObserver<Boolean>): RxFetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                activeDownloadsSet.add(ActiveDownloadInfo(fetchObserver, includeAddedDownloads))
+            }
+            return this
+        }
+    }
+
+    override fun removeActiveDownloadsObserver(fetchObserver: FetchObserver<Boolean>): RxFetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                val iterator = activeDownloadsSet.iterator()
+                while (iterator.hasNext()) {
+                    val activeDownloadInfo = iterator.next()
+                    if (activeDownloadInfo.fetchObserver == fetchObserver) {
+                        iterator.remove()
+                        logger.d("Removed ActiveDownload FetchObserver $fetchObserver")
+                        break
+                    }
+                }
+            }
+            return this
+        }
     }
 
     companion object {

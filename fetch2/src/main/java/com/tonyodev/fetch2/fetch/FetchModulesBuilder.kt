@@ -4,10 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchConfiguration
-import com.tonyodev.fetch2.database.DatabaseManager
-import com.tonyodev.fetch2.database.DatabaseManagerImpl
-import com.tonyodev.fetch2.database.DownloadDatabase
-import com.tonyodev.fetch2.database.DownloadInfo
+import com.tonyodev.fetch2.database.*
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl
@@ -15,6 +12,7 @@ import com.tonyodev.fetch2.helper.DownloadInfoUpdater
 import com.tonyodev.fetch2.helper.PriorityListProcessor
 import com.tonyodev.fetch2.helper.PriorityListProcessorImpl
 import com.tonyodev.fetch2.provider.DownloadProvider
+import com.tonyodev.fetch2.provider.GroupInfoProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.deleteAllInFolderForId
 import com.tonyodev.fetch2.util.getRequestForDownload
@@ -26,17 +24,18 @@ object FetchModulesBuilder {
 
     private val lock = Any()
     private val holderMap = mutableMapOf<String, Holder>()
+    val mainUIHandler = Handler(Looper.getMainLooper())
 
     fun buildModulesFromPrefs(fetchConfiguration: FetchConfiguration): Modules {
         return synchronized(lock) {
             val holder = holderMap[fetchConfiguration.namespace]
             val modules = if (holder != null) {
-                Modules(fetchConfiguration, holder.handlerWrapper, holder.databaseManager,
-                        holder.downloadManagerCoordinator, holder.listenerCoordinator)
+                Modules(fetchConfiguration, holder.handlerWrapper, holder.fetchDatabaseManagerWrapper, holder.downloadProvider,
+                        holder.groupInfoProvider, holder.uiHandler, holder.downloadManagerCoordinator, holder.listenerCoordinator)
             } else {
-                val newHandlerWrapper = HandlerWrapper(fetchConfiguration.namespace)
+                val newHandlerWrapper = HandlerWrapper(fetchConfiguration.namespace, fetchConfiguration.backgroundHandler)
                 val liveSettings = LiveSettings(fetchConfiguration.namespace)
-                val newDatabaseManager = DatabaseManagerImpl(
+                val newDatabaseManager = fetchConfiguration.fetchDatabaseManager ?: FetchDatabaseManagerImpl(
                         context = fetchConfiguration.appContext,
                         namespace = fetchConfiguration.namespace,
                         migrations = DownloadDatabase.getMigrations(),
@@ -44,11 +43,14 @@ object FetchModulesBuilder {
                         fileExistChecksEnabled = fetchConfiguration.fileExistChecksEnabled,
                         defaultStorageResolver = DefaultStorageResolver(fetchConfiguration.appContext,
                                 getFileTempDir(fetchConfiguration.appContext)))
+                val databaseManagerWrapper = FetchDatabaseManagerWrapper(newDatabaseManager)
+                val downloadProvider = DownloadProvider(databaseManagerWrapper)
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
-                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace)
-                val newModules = Modules(fetchConfiguration, newHandlerWrapper, newDatabaseManager,
+                val groupInfoProvider = GroupInfoProvider(fetchConfiguration.namespace, downloadProvider)
+                val listenerCoordinator = ListenerCoordinator(fetchConfiguration.namespace, groupInfoProvider, downloadProvider, mainUIHandler)
+                val newModules = Modules(fetchConfiguration, newHandlerWrapper, databaseManagerWrapper, downloadProvider, groupInfoProvider, mainUIHandler,
                         downloadManagerCoordinator, listenerCoordinator)
-                holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, newDatabaseManager,
+                holderMap[fetchConfiguration.namespace] = Holder(newHandlerWrapper, databaseManagerWrapper, downloadProvider, groupInfoProvider, mainUIHandler,
                         downloadManagerCoordinator, listenerCoordinator, newModules.networkInfoProvider)
                 newModules
             }
@@ -65,7 +67,8 @@ object FetchModulesBuilder {
                 if (holder.handlerWrapper.usageCount() == 0) {
                     holder.handlerWrapper.close()
                     holder.listenerCoordinator.clearAll()
-                    holder.databaseManager.close()
+                    holder.groupInfoProvider.clear()
+                    holder.fetchDatabaseManagerWrapper.close()
                     holder.downloadManagerCoordinator.clearAll()
                     holder.networkInfoProvider.unregisterAllNetworkChangeListeners()
                     holderMap.remove(namespace)
@@ -75,24 +78,28 @@ object FetchModulesBuilder {
     }
 
     data class Holder(val handlerWrapper: HandlerWrapper,
-                      val databaseManager: DatabaseManager,
+                      val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper,
+                      val downloadProvider: DownloadProvider,
+                      val groupInfoProvider: GroupInfoProvider,
+                      val uiHandler: Handler,
                       val downloadManagerCoordinator: DownloadManagerCoordinator,
                       val listenerCoordinator: ListenerCoordinator,
                       val networkInfoProvider: NetworkInfoProvider)
 
     class Modules constructor(val fetchConfiguration: FetchConfiguration,
                               val handlerWrapper: HandlerWrapper,
-                              databaseManager: DatabaseManager,
+                              fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper,
+                              val downloadProvider: DownloadProvider,
+                              val groupInfoProvider: GroupInfoProvider,
+                              val uiHandler: Handler,
                               downloadManagerCoordinator: DownloadManagerCoordinator,
                               val listenerCoordinator: ListenerCoordinator) {
 
         val downloadManager: DownloadManager
         val priorityListProcessor: PriorityListProcessor<Download>
-        val downloadProvider = DownloadProvider(databaseManager)
-        val downloadInfoUpdater = DownloadInfoUpdater(databaseManager)
-        val networkInfoProvider = NetworkInfoProvider(fetchConfiguration.appContext)
+        val downloadInfoUpdater = DownloadInfoUpdater(fetchDatabaseManagerWrapper)
+        val networkInfoProvider = NetworkInfoProvider(fetchConfiguration.appContext, fetchConfiguration.internetCheckUrl)
         val fetchHandler: FetchHandler
-        val uiHandler = Handler(Looper.getMainLooper())
 
         init {
             downloadManager = DownloadManagerImpl(
@@ -107,10 +114,11 @@ object FetchModulesBuilder {
                     listenerCoordinator = listenerCoordinator,
                     fileServerDownloader = fetchConfiguration.fileServerDownloader,
                     hashCheckingEnabled = fetchConfiguration.hashCheckingEnabled,
-                    uiHandler = uiHandler,
                     storageResolver = fetchConfiguration.storageResolver,
                     context = fetchConfiguration.appContext,
-                    namespace = fetchConfiguration.namespace)
+                    namespace = fetchConfiguration.namespace,
+                    groupInfoProvider = groupInfoProvider,
+                    globalAutoRetryMaxAttempts = fetchConfiguration.maxAutoRetryAttempts)
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,
                     downloadProvider = downloadProvider,
@@ -120,11 +128,12 @@ object FetchModulesBuilder {
                     listenerCoordinator = listenerCoordinator,
                     downloadConcurrentLimit = fetchConfiguration.concurrentLimit,
                     context = fetchConfiguration.appContext,
-                    namespace = fetchConfiguration.namespace)
+                    namespace = fetchConfiguration.namespace,
+                    prioritySort = fetchConfiguration.prioritySort)
             priorityListProcessor.globalNetworkType = fetchConfiguration.globalNetworkType
             fetchHandler = FetchHandlerImpl(
                     namespace = fetchConfiguration.namespace,
-                    databaseManager = databaseManager,
+                    fetchDatabaseManagerWrapper = fetchDatabaseManagerWrapper,
                     downloadManager = downloadManager,
                     priorityListProcessor = priorityListProcessor,
                     logger = fetchConfiguration.logger,
@@ -134,8 +143,11 @@ object FetchModulesBuilder {
                     listenerCoordinator = listenerCoordinator,
                     uiHandler = uiHandler,
                     storageResolver = fetchConfiguration.storageResolver,
-                    fetchNotificationManager = fetchConfiguration.fetchNotificationManager)
-            databaseManager.delegate = object : DatabaseManager.Delegate {
+                    fetchNotificationManager = fetchConfiguration.fetchNotificationManager,
+                    groupInfoProvider = groupInfoProvider,
+                    prioritySort = fetchConfiguration.prioritySort,
+                    createFileOnEnqueue = fetchConfiguration.createFileOnEnqueue)
+            fetchDatabaseManagerWrapper.delegate = object : FetchDatabaseManager.Delegate {
                 override fun deleteTempFilesForDownload(downloadInfo: DownloadInfo) {
                     val tempDir = fetchConfiguration.storageResolver
                             .getDirectoryForFileDownloaderTypeParallel(getRequestForDownload(downloadInfo))

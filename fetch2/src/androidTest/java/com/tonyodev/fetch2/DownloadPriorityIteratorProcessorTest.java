@@ -7,14 +7,16 @@ import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.tonyodev.fetch2.database.DatabaseManager;
-import com.tonyodev.fetch2.database.DatabaseManagerImpl;
+import com.tonyodev.fetch2.database.FetchDatabaseManager;
+import com.tonyodev.fetch2.database.FetchDatabaseManagerImpl;
 import com.tonyodev.fetch2.database.DownloadDatabase;
+import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper;
 import com.tonyodev.fetch2.database.migration.Migration;
 import com.tonyodev.fetch2.downloader.DownloadManager;
 import com.tonyodev.fetch2.downloader.DownloadManagerImpl;
 import com.tonyodev.fetch2.downloader.DownloadManagerCoordinator;
 import com.tonyodev.fetch2.fetch.LiveSettings;
+import com.tonyodev.fetch2.provider.GroupInfoProvider;
 import com.tonyodev.fetch2core.DefaultStorageResolver;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.FetchCoreDefaults;
@@ -53,34 +55,38 @@ public class DownloadPriorityIteratorProcessorTest {
         final Migration[] migrations = DownloadDatabase.getMigrations();
         final LiveSettings liveSettings = new LiveSettings(namespace);
         DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
-        final DatabaseManager databaseManager = new DatabaseManagerImpl(appContext, namespace, migrations, liveSettings,
+        final FetchDatabaseManager fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, migrations, liveSettings,
                 false, defaultStorageResolver);
+        final FetchDatabaseManagerWrapper databaseManagerWrapper = new FetchDatabaseManagerWrapper(fetchDatabaseManager);
         final Downloader client = FetchDefaults.getDefaultDownloader();
         final FileServerDownloader serverDownloader = FetchDefaults.getDefaultFileServerDownloader();
         final long progessInterval = FetchCoreDefaults.DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS;
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
-        final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext);
+        final NetworkInfoProvider networkInfoProvider = new NetworkInfoProvider(appContext, null);
         final boolean retryOnNetworkGain = false;
         final Handler uiHandler = new Handler(Looper.getMainLooper());
-        final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManager);
+        final DownloadInfoUpdater downloadInfoUpdater = new DownloadInfoUpdater(databaseManagerWrapper);
         final String tempDir = FetchCoreUtils.getFileTempDir(appContext);
         final DownloadManagerCoordinator downloadManagerCoordinator = new DownloadManagerCoordinator(namespace);
-        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace);
+        final DownloadProvider downloadProvider = new DownloadProvider(databaseManagerWrapper);
+        final GroupInfoProvider groupInfoProvider = new GroupInfoProvider(namespace, downloadProvider);
+        final ListenerCoordinator listenerCoordinator = new ListenerCoordinator(namespace, groupInfoProvider, downloadProvider, uiHandler);
         final DefaultStorageResolver storageResolver = new DefaultStorageResolver(appContext, tempDir);
         final DownloadManager downloadManager = new DownloadManagerImpl(client, concurrentLimit,
                 progessInterval, fetchLogger, networkInfoProvider, retryOnNetworkGain,
                  downloadInfoUpdater, downloadManagerCoordinator,
-                listenerCoordinator, serverDownloader, false, uiHandler, storageResolver, appContext, namespace);
+                listenerCoordinator, serverDownloader, false, storageResolver, appContext, namespace, groupInfoProvider, FetchDefaults.DEFAULT_GLOBAL_AUTO_RETRY_ATTEMPTS);
         priorityListProcessorImpl = new PriorityListProcessorImpl(
-                new HandlerWrapper(namespace),
-                new DownloadProvider(databaseManager),
+                new HandlerWrapper(namespace, null),
+                new DownloadProvider(databaseManagerWrapper),
                 downloadManager,
-                new NetworkInfoProvider(appContext),
+                new NetworkInfoProvider(appContext, null),
                 fetchLogger,
                 listenerCoordinator,
                 concurrentLimit,
                 appContext,
-                namespace);
+                namespace,
+                PrioritySort.ASC);
     }
 
     @Test
