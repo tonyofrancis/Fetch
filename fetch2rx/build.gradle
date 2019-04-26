@@ -67,7 +67,7 @@ dependencies {
 
 //publish {
 //    userOrg = 'tonyofrancis'
-//    groupId = 'com.tonyodev.fetch2rx'
+//    groupId = 'androidx.tonyodev.fetch2rx'
 //    artifactId = 'fetch2rx'
 //    publishVersion = library_version
 //    desc = 'RxJava extensions for Fetch2'

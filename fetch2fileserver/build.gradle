@@ -70,7 +70,7 @@ dependencies {
 
 //publish {
 //    userOrg = 'tonyofrancis'
-//    groupId = 'com.tonyodev.fetch2fileserver'
+//    groupId = 'androidx.tonyodev.fetch2fileserver'
 //    artifactId = 'fetch2fileserver'
 //    publishVersion = library_version
 //    desc = 'Fetch File Server'

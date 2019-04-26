@@ -65,7 +65,7 @@ dependencies {
 
 //publish {
 //    userOrg = 'tonyofrancis'
-//    groupId = 'com.tonyodev.fetch2core'
+//    groupId = 'androidx.tonyodev.fetch2core'
 //    artifactId = 'fetch2core'
 //    publishVersion = library_version
 //    desc = 'Fetch Core Library'

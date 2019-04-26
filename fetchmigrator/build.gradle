@@ -66,7 +66,7 @@ dependencies {
 
 //publish {
 //    userOrg = 'tonyofrancis'
-//    groupId = 'com.tonyodev.fetchmigrator'
+//    groupId = 'androidx.tonyodev.fetchmigrator'
 //    artifactId = 'fetchmigrator'
 //    publishVersion = library_version
 //    desc = 'Migration Assistant for Fetch'

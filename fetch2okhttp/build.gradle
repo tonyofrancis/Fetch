@@ -73,7 +73,7 @@ dependencies {
 
 //publish {
 //    userOrg = 'tonyofrancis'
-//    groupId = 'com.tonyodev.fetch2okhttp'
+//    groupId = 'androidx.tonyodev.fetch2okhttp'
 //    artifactId = 'fetch2okhttp'
 //    publishVersion = library_version
 //    desc = 'OkHttp Downloader for Fetch2'
