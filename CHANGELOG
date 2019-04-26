@@ -1,3 +1,6 @@
+Version 3.0.6
+Identical to the androidx version 3.1.0
+
 Version 3.0.5
 This release only adds a new Feature that allows Fetch to auto retry failed downloads for any reason. Set the number of times Fetch will auto retry a download when it fails.
 This feature if off by default.
