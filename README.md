@@ -54,7 +54,7 @@ implementation "com.tonyodev.fetch2:fetch2:3.0.6"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.xfetch2:xfetch2:3.1.0"
+implementation "androidx.tonyodev.fetch2:xfetch2:3.1.0"
 ```
 
 Next, get an instance of Fetch and request a download.
