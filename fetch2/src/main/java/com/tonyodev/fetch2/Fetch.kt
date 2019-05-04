@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
+import com.tonyodev.fetch2.util.DEFAULT_AUTO_RETRY_ATTEMPTS
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_REQUEST_UPDATED
 import com.tonyodev.fetch2core.*
@@ -33,12 +34,6 @@ interface Fetch {
      * */
     val fetchConfiguration: FetchConfiguration
 
-    /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
-     * keep a background service using fetch ongoing until this field returns false.
-     * This field can be accessed from any thread.
-     * */
-    val hasActiveDownloads: Boolean
-
     /**
      * Queues a request for downloading. If Fetch fails to enqueue the request,
      * func2 will be called with the error.
@@ -46,6 +41,7 @@ interface Fetch {
      * 1. No storage space on the device.
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
+     * 3. Fetch is already managing a request that is downloading to the request file.
      * @param request Download Request
      * @param func Callback that the enqueued request will be returned on.
      *             Fetch may update a request depending on the initial request's Enqueue Action.
@@ -64,15 +60,20 @@ interface Fetch {
      * 1. No storage space on the device.
      * 2. Fetch is already managing the same request. This means that a request with the same url
      * and file name is already managed.
+     * 3. Fetch is already managing a request that is downloading to the request file.
      * @param requests Request List
-     * @param func Callback that the enqueued request will be returned on.
+     * @param func Callback that the enqueued or failed requests will be returned on.
+     *             This callback returns a list with a pair<Request,Error> for each enqueued request.
+     *             If the pair's second parameter is Error.NONE. this indicates that the request
+     *             was enqueued successfully. If the Error is not ERROR.NONE. This indicates
+     *             that the request was not enqueued for the specified reason.
      *             Fetch may update a request depending on the initial request's Enqueue Action.
      *             Update old request references with this request.
-     * @param func2 Callback that is called when enqueuing a request fails. An error is returned.
+     *
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun enqueue(requests: List<Request>, func: Func<List<Request>>? = null, func2: Func<Error>? = null): Fetch
+    fun enqueue(requests: List<Request>, func: Func<List<Pair<Request, Error>>>? = null): Fetch
 
     /** Pause a queued or downloading download.
      * @param ids ids of downloads to be paused.
@@ -314,22 +315,22 @@ interface Fetch {
     /**
      * Remove all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files for removed downloads are not deleted.
-     * @param status status
+     * @param statuses statuses
      * @param func callback returning a list of downloads that were removed.
      * @param func2 Callback that is called when attempting to remove downloads fail. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun removeAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?, func2: Func<Error>? = null): Fetch
+    fun removeAllInGroupWithStatus(id: Int, statuses: List<Status>, func: Func<List<Download>>?, func2: Func<Error>? = null): Fetch
 
     /**
      * Remove all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files for removed downloads are not deleted.
-     * @param status status
+     * @param statuses statuses
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun removeAllInGroupWithStatus(id: Int, status: Status): Fetch
+    fun removeAllInGroupWithStatus(id: Int, statuses: List<Status>): Fetch
 
     /**
      * Delete a list of downloads managed by this instance of Fetch.
@@ -431,22 +432,22 @@ interface Fetch {
     /**
      * Deletes all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files are also deleted.
-     * @param status status
+     * @param statuses statuses
      * @param func callback returns all deleted downloads with a specified status.
      * @param func2 Callback that is called when attempting to delete downloads fail. An error is returned.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun deleteAllInGroupWithStatus(id: Int, status: Status, func: Func<List<Download>>?, func2: Func<Error>? = null): Fetch
+    fun deleteAllInGroupWithStatus(id: Int, statuses: List<Status>, func: Func<List<Download>>?, func2: Func<Error>? = null): Fetch
 
     /**
      * Deletes all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files are also deleted.
-     * @param status status
+     * @param statuses statuses
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun deleteAllInGroupWithStatus(id: Int, status: Status): Fetch
+    fun deleteAllInGroupWithStatus(id: Int, statuses: List<Status>): Fetch
 
     /**
      * Cancel a list of non completed downloads managed by this instance of Fetch.
@@ -589,6 +590,29 @@ interface Fetch {
     fun replaceExtras(id: Int, extras: Extras, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
 
     /**
+     * Resets the autoRetryAttempts value for a download back to 0.
+     * @param downloadId Id of existing request/download
+     * @param retryDownload Retry the download if its status is Status.ERROR. True by default.
+     * @param func callback that returns the download if it exists.
+     * @param func2 callback that returns the error if on occurred.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean = true, func: Func2<Download?>? = null, func2: Func<Error>? = null): Fetch
+
+    /**
+     * Renames the file for a completed download. The StorageResolver attached to this fetch instance will rename the file.
+     * So it is okay to parse uri strings for the newFileName.
+     * @param id Id of existing request/download
+     * @param newFileName the new file name.
+     * @param func Successful callback that the download will be returned on.
+     * @param func2 Failed callback that the error will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun renameCompletedDownloadFile(id: Int, newFileName: String, func: Func<Download>? = null, func2: Func<Error>? = null): Fetch
+
+    /**
      * Gets all downloads managed by this instance of Fetch.
      * @param func Callback that the results will be returned on.
      * @throws FetchException if this instance of Fetch has been closed.
@@ -638,12 +662,12 @@ interface Fetch {
      * Gets all downloads in a specific group with a specific status.
      * @see com.tonyodev.fetch2.Status
      * @param groupId group id to query.
-     * @param status Status to query.
+     * @param statuses Statuses to query.
      * @param func Callback that the results will be returned on.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Instance
      * */
-    fun getDownloadsInGroupWithStatus(groupId: Int, status: Status, func: Func<List<Download>>): Fetch
+    fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>, func: Func<List<Download>>): Fetch
 
     /**
      * Gets all downloads containing the identifier.
@@ -653,6 +677,17 @@ interface Fetch {
      * @return Instance
      * */
     fun getDownloadsByRequestIdentifier(identifier: Long, func: Func<List<Download>>): Fetch
+
+    /**
+     * Gets the FetchGroup by id. Even if the database does not contain downloads with this group id
+     * a FetchGroup will be returned. It will contain no downloads however. When a download with this
+     * group id is added. The downloads field on this object will be update and attached FetchObservers will be notified.
+     * @param group the group id
+     * @param func callback that the results will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance.
+     * */
+    fun getFetchGroup(group: Int, func: Func<FetchGroup>): Fetch
 
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener
@@ -669,7 +704,6 @@ interface Fetch {
      * @return Instance
      * */
     fun addListener(listener: FetchListener, notify: Boolean = DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED): Fetch
-
 
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener
@@ -741,6 +775,17 @@ interface Fetch {
     fun getContentLengthForRequest(request: Request, fromServer: Boolean, func: Func<Long>, func2: Func<Error>?): Fetch
 
     /**
+     * Gets the Server Response for the url and associated headers.
+     * @param url the url. Cannot be null.
+     * @param headers the request headers for the url. Can be null.
+     * @param func the callback the server response is returned on. Cannot be null.
+     * @param func2 the callback that is executed with an error occurs. Can be null.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun getServerResponse(url: String, headers: Map<String, String>?, func: Func<Downloader.Response>, func2: Func<Error>? = null): Fetch
+
+    /**
      * Gets the full File Resource Catalog of a Fetch File Server.
      * @param request Request. Can be a managed or un-managed request. The request is not stored in
      * the fetch database.
@@ -786,7 +831,6 @@ interface Fetch {
     /** Releases held resources and the namespace used by this Fetch instance.
      * Once closed this instance cannot be reused but the namespace can be reused
      * by a new instance of Fetch.
-     * @throws FetchException if this instance of Fetch has been closed.
      * */
     fun close()
 
@@ -794,6 +838,73 @@ interface Fetch {
      * @return set of attached FetchListeners.
      * */
     fun getListenerSet(): Set<FetchListener>
+
+    /**
+     * Blocks the current thread(Not Ui Thread) to waiting on one of the two conditions.
+     * Condition One: Waits until Fetch has downloaded all downloading and pending downloads.
+     * Condition Two: Waits until the allow time expires
+     * if Fetch has not completed or attempted to download queued downloads.
+     * This method returns when one of the conditions if violated.
+     * Note: Calling this method on the UIThread is strongly discouraged and an exception is thrown.
+     * @param allowTimeInMilliseconds the allowed time in milliseconds. If zero the wait is indefinite.
+     * @throws FetchException if calling on the main thread
+     * */
+    fun awaitFinishOrTimeout(allowTimeInMilliseconds: Long)
+
+    /**
+     * Blocks the current thread(Not Ui Thread) to waiting on the current conditions.
+     * Condition One: Waits until Fetch has downloaded all downloading and pending downloads.
+     * This method returns when one of the conditions if violated.
+     * Note: Calling this method on the UIThread is strongly discouraged and an exception is thrown.
+     * @throws FetchException if calling on the main thread
+     * */
+    fun awaitFinish()
+
+    /**
+     * Attaches a FetchObserver to listen for changes on a download managed by this Fetch namespace.
+     * FetchObservers are held with a weak reference. Note: If fetch does not manage a download with
+     * the passed in id, the FetchObserver will not be notified. Only when a download with the specified
+     * id is managed by Fetch will the observer be called.
+     * @param downloadId the download Id
+     * @param fetchObservers the fetch observers
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun attachFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): Fetch
+
+    /**
+     * Removes a FetchObserver attached to this Fetch namespace for a download.
+     * @param downloadId the download Id
+     * @param fetchObservers the fetch observers
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): Fetch
+
+    /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
+     * keep a background service ongoing until the callback function returns false.
+     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active by default.
+     * @param func the callback function
+     * @throws FetchException if accessed on ui thread
+     * @return instance
+     * */
+    fun hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>): Fetch
+
+    /** Subscribe a FetchObserver that indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
+     * keep a background service ongoing until the value returned is false.
+     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active by default.
+     * @param fetchObserver the fetch observer
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun addActiveDownloadsObserver(includeAddedDownloads: Boolean = false, fetchObserver: FetchObserver<Boolean>): Fetch
+
+    /** Removes a subscribed FetchObserver that is listening for active downloads.
+     * @param fetchObserver the fetch observer to remove.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun removeActiveDownloadsObserver(fetchObserver: FetchObserver<Boolean>): Fetch
 
     /**
      * Fetch implementation class. Use this Singleton to get instances of Fetch.

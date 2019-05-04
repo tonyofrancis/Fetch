@@ -1,5 +1,9 @@
 package com.tonyodev.fetch2.helper
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2core.HandlerWrapper
@@ -19,7 +23,10 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
                                             private val logger: Logger,
                                             private val listenerCoordinator: ListenerCoordinator,
                                             @Volatile
-                                            override var downloadConcurrentLimit: Int)
+                                            override var downloadConcurrentLimit: Int,
+                                            private val context: Context,
+                                            private val namespace: String,
+                                            private val prioritySort: PrioritySort)
     : PriorityListProcessor<Download> {
 
     private val lock = Any()
@@ -35,58 +42,78 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
         get() = stopped
     @Volatile
     private var backOffTime = DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
-
-    init {
-        networkInfoProvider.registerNetworkChangeListener(object : NetworkInfoProvider.NetworkChangeListener {
-            override fun onNetworkChanged() {
-                if (!stopped && !paused && networkInfoProvider.isNetworkAvailable
-                        && backOffTime > DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS) {
-                    resetBackOffTime()
+    private val networkChangeListener: NetworkInfoProvider.NetworkChangeListener = object : NetworkInfoProvider.NetworkChangeListener {
+        override fun onNetworkChanged() {
+            if (!stopped && !paused && networkInfoProvider.isNetworkAvailable
+                    && backOffTime > DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS) {
+                resetBackOffTime()
+            }
+        }
+    }
+    private val priorityBackoffResetReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (context != null && intent != null) {
+                when (intent.action) {
+                    ACTION_QUEUE_BACKOFF_RESET -> {
+                        if (!stopped && !paused && namespace == intent.getStringExtra(EXTRA_NAMESPACE)) {
+                            resetBackOffTime()
+                        }
+                    }
                 }
             }
-        })
+        }
+    }
+
+    init {
+        networkInfoProvider.registerNetworkChangeListener(networkChangeListener)
+        context.registerReceiver(priorityBackoffResetReceiver, IntentFilter(ACTION_QUEUE_BACKOFF_RESET))
     }
 
     private val priorityIteratorRunnable = Runnable {
         if (canContinueToProcess()) {
             if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
                 val priorityList = getPriorityList()
+                var shouldBackOff = false
                 if (priorityList.isEmpty() || !networkInfoProvider.isNetworkAvailable) {
-                    increaseBackOffTime()
+                    shouldBackOff = true
                 }
-                var shouldBackOff = true
-                for (index in 0..priorityList.lastIndex) {
-                    if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
-                        val download = priorityList[index]
-                        val isFetchServerRequest = isFetchFileServerUrl(download.url)
-                        if ((isFetchServerRequest || networkInfoProvider.isNetworkAvailable) && canContinueToProcess()) {
-                            val networkType = when {
-                                globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
-                                download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
-                                else -> download.networkType
-                            }
-                            val properNetworkConditions = networkInfoProvider.isOnAllowedNetwork(networkType)
-                            if (!properNetworkConditions) {
-                                listenerCoordinator.mainListener.onWaitingNetwork(download)
-                            }
-                            if ((isFetchServerRequest || properNetworkConditions)) {
-                                shouldBackOff = false
-                                if (!downloadManager.contains(download.id) && canContinueToProcess()) {
-                                    downloadManager.start(download)
+                if (!shouldBackOff) {
+                    shouldBackOff = true
+                    for (index in 0..priorityList.lastIndex) {
+                        if (downloadManager.canAccommodateNewDownload() && canContinueToProcess()) {
+                            val download = priorityList[index]
+                            val isFetchServerRequest = isFetchFileServerUrl(download.url)
+                            if ((isFetchServerRequest || networkInfoProvider.isNetworkAvailable) && canContinueToProcess()) {
+                                val networkType = when {
+                                    globalNetworkType != NetworkType.GLOBAL_OFF -> globalNetworkType
+                                    download.networkType == NetworkType.GLOBAL_OFF -> NetworkType.ALL
+                                    else -> download.networkType
                                 }
+                                val properNetworkConditions = networkInfoProvider.isOnAllowedNetwork(networkType)
+                                if (!properNetworkConditions) {
+                                    listenerCoordinator.mainListener.onWaitingNetwork(download)
+                                }
+                                if ((isFetchServerRequest || properNetworkConditions)) {
+                                    shouldBackOff = false
+                                    if (!downloadManager.contains(download.id) && canContinueToProcess()) {
+                                        downloadManager.start(download)
+                                    }
+                                }
+                            } else {
+                                break
                             }
                         } else {
                             break
                         }
-                    } else {
-                        break
                     }
                 }
                 if (shouldBackOff) {
                     increaseBackOffTime()
                 }
             }
-            registerPriorityIterator()
+            if (canContinueToProcess()) {
+                registerPriorityIterator()
+            }
         }
     }
 
@@ -133,7 +160,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     override fun getPriorityList(): List<Download> {
         synchronized(lock) {
             return try {
-                downloadProvider.getPendingDownloadsSorted()
+                downloadProvider.getPendingDownloadsSorted(prioritySort)
             } catch (e: Exception) {
                 logger.d("PriorityIterator failed access database", e)
                 listOf()
@@ -162,7 +189,21 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
             backOffTime = DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
             unregisterPriorityIterator()
             registerPriorityIterator()
-            logger.d("PriorityIterator backoffTime reset to $backOffTime milliseconds")
+        }
+    }
+
+    override fun sendBackOffResetSignal() {
+        synchronized(lock) {
+            val intent = Intent(ACTION_QUEUE_BACKOFF_RESET)
+            intent.putExtra(EXTRA_NAMESPACE, namespace)
+            context.sendBroadcast(intent)
+        }
+    }
+
+    override fun close() {
+        synchronized(lock) {
+            networkInfoProvider.registerNetworkChangeListener(networkChangeListener)
+            context.unregisterReceiver(priorityBackoffResetReceiver)
         }
     }
 
@@ -172,8 +213,6 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
         } else {
             backOffTime * 2L
         }
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(backOffTime)
-        logger.d("PriorityIterator backoffTime increased to $minutes minute(s)")
     }
 
     private companion object {

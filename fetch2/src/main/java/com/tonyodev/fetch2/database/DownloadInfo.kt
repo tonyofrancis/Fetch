@@ -1,9 +1,7 @@
 package com.tonyodev.fetch2.database
 
-import android.arch.persistence.room.ColumnInfo
-import android.arch.persistence.room.Entity
-import android.arch.persistence.room.Index
-import android.arch.persistence.room.PrimaryKey
+import android.arch.persistence.room.*
+import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
 import com.tonyodev.fetch2.*
@@ -13,13 +11,14 @@ import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.calculateProgress
+import com.tonyodev.fetch2core.getFileUri
 import java.util.*
 
 
 @Entity(tableName = DownloadDatabase.TABLE_NAME,
         indices = [(Index(value = [DownloadDatabase.COLUMN_FILE], unique = true)),
             (Index(value = [DownloadDatabase.COLUMN_GROUP, DownloadDatabase.COLUMN_STATUS], unique = false))])
-class DownloadInfo : Download {
+open class DownloadInfo : Download {
 
     @PrimaryKey
     @ColumnInfo(name = DownloadDatabase.COLUMN_ID, typeAffinity = ColumnInfo.INTEGER)
@@ -76,9 +75,26 @@ class DownloadInfo : Download {
     @ColumnInfo(name = DownloadDatabase.COLUMN_EXTRAS, typeAffinity = ColumnInfo.TEXT)
     override var extras: Extras = Extras.emptyExtras
 
+    @ColumnInfo(name = DownloadDatabase.COLUMN_AUTO_RETRY_MAX_ATTEMPTS, typeAffinity = ColumnInfo.INTEGER)
+    override var autoRetryMaxAttempts: Int = DEFAULT_AUTO_RETRY_ATTEMPTS
+
+    @ColumnInfo(name = DownloadDatabase.COLUMN_AUTO_RETRY_ATTEMPTS, typeAffinity = ColumnInfo.INTEGER)
+    override var autoRetryAttempts: Int = DEFAULT_AUTO_RETRY_ATTEMPTS
+
+    @Ignore
+    override var etaInMilliSeconds: Long = -1L
+
+    @Ignore
+    override var downloadedBytesPerSecond: Long = -1L
+
     override val progress: Int
         get() {
             return calculateProgress(downloaded, total)
+        }
+
+    override val fileUri: Uri
+        get() {
+            return getFileUri(file)
         }
 
     override val request: Request
@@ -92,6 +108,7 @@ class DownloadInfo : Download {
             request.identifier = identifier
             request.downloadOnEnqueue = downloadOnEnqueue
             request.extras = extras
+            request.autoRetryMaxAttempts = autoRetryMaxAttempts
             return request
         }
 
@@ -121,6 +138,10 @@ class DownloadInfo : Download {
         if (identifier != other.identifier) return false
         if (downloadOnEnqueue != other.downloadOnEnqueue) return false
         if (extras != other.extras) return false
+        if (etaInMilliSeconds != other.etaInMilliSeconds) return false
+        if (downloadedBytesPerSecond != other.downloadedBytesPerSecond) return false
+        if (autoRetryMaxAttempts != other.autoRetryMaxAttempts) return false
+        if (autoRetryAttempts != other.autoRetryAttempts) return false
         return true
     }
 
@@ -143,16 +164,14 @@ class DownloadInfo : Download {
         result = 31 * result + identifier.hashCode()
         result = 31 * result + downloadOnEnqueue.hashCode()
         result = 31 * result + extras.hashCode()
+        result = 31 * result + etaInMilliSeconds.hashCode()
+        result = 31 * result + downloadedBytesPerSecond.hashCode()
+        result = 31 * result + autoRetryMaxAttempts.hashCode()
+        result = 31 * result + autoRetryAttempts.hashCode()
         return result
     }
 
-    override fun toString(): String {
-        return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file', group=$group," +
-                " priority=$priority, headers=$headers, downloaded=$downloaded, total=$total, status=$status," +
-                " error=$error, networkType=$networkType, created=$created, tag=$tag, " +
-                "enqueueAction=$enqueueAction, identifier=$identifier, downloadOnEnqueue=$downloadOnEnqueue, " +
-                "extras=$extras)"
-    }
+
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(id)
@@ -172,32 +191,25 @@ class DownloadInfo : Download {
         dest.writeInt(enqueueAction.value)
         dest.writeLong(identifier)
         dest.writeInt(if (downloadOnEnqueue) 1 else 0)
+        dest.writeLong(etaInMilliSeconds)
+        dest.writeLong(downloadedBytesPerSecond)
         dest.writeSerializable(HashMap(extras.map))
-    }
-
-    fun copyFrom(downloadInfo: DownloadInfo) {
-        id = downloadInfo.id
-        namespace = downloadInfo.namespace
-        url = downloadInfo.url
-        file = downloadInfo.file
-        group = downloadInfo.group
-        priority = downloadInfo.priority
-        headers = downloadInfo.headers
-        downloaded = downloadInfo.downloaded
-        total = downloadInfo.total
-        status = downloadInfo.status
-        error = downloadInfo.error
-        networkType = downloadInfo.networkType
-        created = downloadInfo.created
-        tag = downloadInfo.tag
-        enqueueAction = downloadInfo.enqueueAction
-        identifier = downloadInfo.identifier
-        downloadOnEnqueue = downloadInfo.downloadOnEnqueue
-        extras = downloadInfo.extras
+        dest.writeInt(autoRetryMaxAttempts)
+        dest.writeInt(autoRetryAttempts)
     }
 
     override fun describeContents(): Int {
         return 0
+    }
+
+    override fun toString(): String {
+        return "DownloadInfo(id=$id, namespace='$namespace', url='$url', file='$file', " +
+                "group=$group, priority=$priority, headers=$headers, downloaded=$downloaded," +
+                " total=$total, status=$status, error=$error, networkType=$networkType, " +
+                "created=$created, tag=$tag, enqueueAction=$enqueueAction, identifier=$identifier," +
+                " downloadOnEnqueue=$downloadOnEnqueue, extras=$extras, " +
+                "autoRetryMaxAttempts=$autoRetryMaxAttempts, autoRetryAttempts=$autoRetryAttempts," +
+                " etaInMilliSeconds=$etaInMilliSeconds, downloadedBytesPerSecond=$downloadedBytesPerSecond)"
     }
 
     companion object CREATOR : Parcelable.Creator<DownloadInfo> {
@@ -205,9 +217,9 @@ class DownloadInfo : Download {
         @Suppress("UNCHECKED_CAST")
         override fun createFromParcel(source: Parcel): DownloadInfo {
             val id = source.readInt()
-            val namespace = source.readString()
-            val url = source.readString()
-            val file = source.readString()
+            val namespace = source.readString() ?: ""
+            val url = source.readString() ?: ""
+            val file = source.readString() ?: ""
             val group = source.readInt()
             val priority = Priority.valueOf(source.readInt())
             val headers = source.readSerializable() as Map<String, String>
@@ -221,7 +233,11 @@ class DownloadInfo : Download {
             val enqueueAction = EnqueueAction.valueOf(source.readInt())
             val identifier = source.readLong()
             val downloadOnEnqueue = source.readInt() == 1
+            val etaInMilliSeconds = source.readLong()
+            val downloadedBytesPerSecond = source.readLong()
             val extras = source.readSerializable() as Map<String, String>
+            val autoRetryMaxAttempts = source.readInt()
+            val autoRetryAttempts = source.readInt()
 
             val downloadInfo = DownloadInfo()
             downloadInfo.id = id
@@ -241,7 +257,11 @@ class DownloadInfo : Download {
             downloadInfo.enqueueAction = enqueueAction
             downloadInfo.identifier = identifier
             downloadInfo.downloadOnEnqueue = downloadOnEnqueue
+            downloadInfo.etaInMilliSeconds = etaInMilliSeconds
+            downloadInfo.downloadedBytesPerSecond = downloadedBytesPerSecond
             downloadInfo.extras = Extras(extras)
+            downloadInfo.autoRetryMaxAttempts = autoRetryMaxAttempts
+            downloadInfo.autoRetryAttempts = autoRetryAttempts
             return downloadInfo
         }
 

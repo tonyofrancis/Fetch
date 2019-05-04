@@ -2,6 +2,7 @@ package com.tonyodev.fetch2
 
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.Extras
+import java.io.Serializable
 
 /**
  * A RequestInfo allows you to update an existing download managed by Fetch.
@@ -9,7 +10,7 @@ import com.tonyodev.fetch2core.Extras
  * existing download. Be sure to update all the fields in this class with
  * the proper values.
  * */
-open class RequestInfo {
+open class RequestInfo : Serializable {
 
     /** Can be used to set your own unique identifier for the request.*/
     var identifier: Long = DEFAULT_UNIQUE_IDENTIFIER
@@ -57,6 +58,19 @@ open class RequestInfo {
     var downloadOnEnqueue = DEFAULT_DOWNLOAD_ON_ENQUEUE
 
     /**
+     * The maximum number of times Fetch will auto retry a failed download.
+     * The default is 0. Value has to be greater than -1
+     * @throws IllegalArgumentException if value passed in is less than 0
+     * */
+    var autoRetryMaxAttempts = DEFAULT_AUTO_RETRY_ATTEMPTS
+        set(value) {
+            if (value < 0) {
+                throw IllegalArgumentException("The maximum number of attempts has to be greater than -1")
+            }
+            field = value
+        }
+
+    /**
      * Set or get the extras for this request. Use this to
      * save and get custom key/value data for the request.
      * Use fetch.replaceExtras(id, extras)
@@ -79,6 +93,7 @@ open class RequestInfo {
         if (enqueueAction != other.enqueueAction) return false
         if (downloadOnEnqueue != other.downloadOnEnqueue) return false
         if (extras != other.extras) return false
+        if (autoRetryMaxAttempts != other.autoRetryMaxAttempts) return false
         return true
     }
 
@@ -92,13 +107,15 @@ open class RequestInfo {
         result = 31 * result + enqueueAction.hashCode()
         result = 31 * result + downloadOnEnqueue.hashCode()
         result = 31 * result + extras.hashCode()
+        result = 31 * result + autoRetryMaxAttempts
         return result
     }
 
     override fun toString(): String {
-        return "RequestInfo(identifier=$identifier, groupId=$groupId, headers=$headers, priority=$priority, " +
-                "networkType=$networkType, tag=$tag, enqueueAction=$enqueueAction, downloadOnEnqueue=$downloadOnEnqueue, " +
-                "extras=$extras)"
+        return "RequestInfo(identifier=$identifier, groupId=$groupId," +
+                " headers=$headers, priority=$priority, networkType=$networkType," +
+                " tag=$tag, enqueueAction=$enqueueAction, downloadOnEnqueue=$downloadOnEnqueue, " +
+                "autoRetryMaxAttempts=$autoRetryMaxAttempts, extras=$extras)"
     }
 
 }

@@ -11,6 +11,8 @@ import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.ceil
+import java.net.CookieManager
+import java.net.CookiePolicy
 
 const val GET_REQUEST_METHOD = "GET"
 
@@ -58,25 +60,25 @@ fun getIncrementedFileIfOriginalExists(originalPath: String): File {
         val fileName: String = file.nameWithoutExtension
         while (file.exists()) {
             ++counter
-            val newFileName = "$fileName ($counter) "
+            val newFileName = "$fileName ($counter)"
             file = File("$parentPath$newFileName.$extension")
         }
     }
+    createFile(file)
     return file
 }
 
-fun createFileIfPossible(file: File) {
-    try {
-        if (!file.exists()) {
-            if (file.parentFile != null && !file.parentFile.exists()) {
-                if (file.parentFile.mkdirs()) {
-                    file.createNewFile()
-                }
+fun createFile(file: File) {
+    if (!file.exists()) {
+        if (file.parentFile != null && !file.parentFile.exists()) {
+            if (file.parentFile.mkdirs()) {
+                if (!file.createNewFile()) throw FileNotFoundException("$file $FILE_NOT_FOUND")
             } else {
-                file.createNewFile()
+                throw FileNotFoundException("$file $FILE_NOT_FOUND")
             }
+        } else {
+            if (!file.createNewFile()) throw FileNotFoundException("$file $FILE_NOT_FOUND")
         }
-    } catch (e: IOException) {
     }
 }
 
@@ -164,7 +166,7 @@ fun getFetchFileServerHostAddress(url: String): String {
 }
 
 fun getFileResourceIdFromUrl(url: String): String {
-    return Uri.parse(url).lastPathSegment
+    return Uri.parse(url).lastPathSegment ?: "-1"
 }
 
 //eg: bytes=10-
@@ -227,7 +229,7 @@ fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): 
     return transferEncoding != "chunked" && contentLength > -1L
 }
 
-fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, downloader: Downloader): Set<Downloader.FileDownloaderType> {
+fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Set<Downloader.FileDownloaderType> {
     val fileDownloaderTypeSet = mutableSetOf(Downloader.FileDownloaderType.SEQUENTIAL)
     return try {
         val response = downloader.execute(request, object : InterruptMonitor {
@@ -246,7 +248,7 @@ fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, do
     }
 }
 
-fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downloader): Long {
+fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Long {
     return try {
         val response = downloader.execute(request, object : InterruptMonitor {
             override val isInterrupted: Boolean
@@ -259,5 +261,79 @@ fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downl
         contentLength
     } catch (e: Exception) {
         -1L
+    }
+}
+
+fun isUriPath(path: String): Boolean {
+    return when {
+        path.startsWith("content://") || path.startsWith("file://") -> true
+        else -> false
+    }
+}
+
+fun getFileUri(path: String): Uri {
+    return when {
+        isUriPath(path) -> Uri.parse(path)
+        else -> Uri.fromFile(File(path))
+    }
+}
+
+fun deleteFile(file: File): Boolean {
+    return if (file.exists() && file.canWrite()) file.delete() else false
+}
+
+fun renameFile(oldFile: File, newFile: File): Boolean {
+    return oldFile.renameTo(newFile)
+}
+
+fun copyDownloadResponseNoStream(response: Downloader.Response): Downloader.Response {
+    return Downloader.Response(response.code, response.isSuccessful, response.contentLength, null,
+            response.request, response.hash, response.responseHeaders, response.acceptsRanges, response.errorResponse)
+}
+
+fun getDefaultCookieManager(): CookieManager {
+    val cookieManager = CookieManager()
+    cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
+    return cookieManager
+}
+
+fun hasAllowedTimeExpired(timeStartedMillis: Long, timeStopMillis: Long, allowedTimeMillis: Long): Boolean {
+    return timeStopMillis - timeStartedMillis >= allowedTimeMillis
+}
+
+fun getRefererFromUrl(url: String): String {
+    return try {
+        val uri = Uri.parse(url)
+        "${uri.scheme}://${uri.authority}"
+    } catch (e: Exception) {
+        "https://google.com"
+    }
+}
+
+fun copyStreamToString(inputStream: InputStream?, closeStream: Boolean = true): String? {
+    return if (inputStream == null) {
+        return null
+    } else {
+        var bufferedReader: BufferedReader? = null
+        try {
+            bufferedReader = BufferedReader(InputStreamReader(inputStream))
+            val stringBuilder = StringBuilder()
+            var line: String? = bufferedReader.readLine()
+            while (line != null) {
+                stringBuilder.append(line)
+                        .append('\n')
+                line = bufferedReader.readLine()
+            }
+            stringBuilder.toString()
+        } catch (e: Exception) {
+            null
+        } finally {
+            if (closeStream) {
+                try {
+                    bufferedReader?.close()
+                } catch (e: Exception) {
+                }
+            }
+        }
     }
 }

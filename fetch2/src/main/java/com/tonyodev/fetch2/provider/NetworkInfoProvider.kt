@@ -12,9 +12,12 @@ import android.os.Build
 import com.tonyodev.fetch2.NetworkType
 import com.tonyodev.fetch2core.isNetworkAvailable
 import com.tonyodev.fetch2core.isOnWiFi
+import java.net.HttpURLConnection
+import java.net.URL
 
 
-class NetworkInfoProvider constructor(private val context: Context) {
+class NetworkInfoProvider constructor(private val context: Context,
+                                      private val internetCheckUrl: String?) {
 
     private val lock = Any()
     private val networkChangeListenerSet = hashSetOf<NetworkChangeListener>()
@@ -107,7 +110,24 @@ class NetworkInfoProvider constructor(private val context: Context) {
 
     val isNetworkAvailable: Boolean
         get() {
-            return context.isNetworkAvailable()
+            val url = internetCheckUrl
+            return if (url != null) {
+                try {
+                    val urlConnection = URL(url)
+                    val connection = urlConnection.openConnection() as HttpURLConnection
+                    connection.connectTimeout = 15_000
+                    connection.readTimeout = 20_000
+                    connection.instanceFollowRedirects = true
+                    connection.useCaches = false
+                    connection.defaultUseCaches = false
+                    connection.connect()
+                    connection.responseCode != -1
+                } catch (e: Exception) {
+                    false
+                }
+            } else {
+                context.isNetworkAvailable()
+            }
         }
 
     interface NetworkChangeListener {

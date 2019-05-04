@@ -31,8 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import timber.log.Timber;
-
 public class DownloadListActivity extends AppCompatActivity implements ActionListener {
 
     private static final int STORAGE_PERMISSION_CODE = 200;
@@ -174,7 +172,7 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
         final List<Request> requests = Data.getFetchRequestWithGroupId(GROUP_ID);
         fetch.enqueue(requests, updatedRequests -> {
 
-        }, error -> Timber.d("DownloadListActivity Error: %1$s", error.toString()));
+        });
 
     }
 

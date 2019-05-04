@@ -11,12 +11,14 @@ fun getErrorFromThrowable(throwable: Throwable): Error {
     if (throwable is SocketTimeoutException && message.isEmpty()) {
         message = CONNECTION_TIMEOUT
     }
-    val error = getErrorFromMessage(message)
-    return when {
+    var error = getErrorFromMessage(message)
+    error = when {
         error == Error.UNKNOWN && throwable is SocketTimeoutException -> Error.CONNECTION_TIMED_OUT
         error == Error.UNKNOWN && throwable is IOException -> Error.UNKNOWN_IO_ERROR
         else -> error
     }
+    error.throwable = throwable
+    return error
 }
 
 fun getErrorFromMessage(message: String?): Error {
@@ -75,6 +77,10 @@ fun getErrorFromMessage(message: String?): Error {
         Error.ENQUEUED_REQUESTS_ARE_NOT_DISTINCT
     } else if (message.contains(ENQUEUE_NOT_SUCCESSFUL, true)) {
         Error.ENQUEUE_NOT_SUCCESSFUL
+    } else if(message.contains(FAILED_RENAME_FILE_ASSOCIATED_WITH_INCOMPLETE_DOWNLOAD, true)) {
+        Error.FAILED_TO_RENAME_INCOMPLETE_DOWNLOAD_FILE
+    } else if(message.contains(FILE_CANNOT_BE_RENAMED, true)) {
+        Error.FAILED_TO_RENAME_FILE
     } else {
         Error.UNKNOWN
     }

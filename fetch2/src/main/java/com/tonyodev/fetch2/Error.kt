@@ -1,5 +1,7 @@
 package com.tonyodev.fetch2
 
+import com.tonyodev.fetch2core.Downloader
+
 /**
  * Enumeration which contains specific errors that can occur.
  * */
@@ -13,7 +15,12 @@ enum class Error constructor(
          * Fetch will not save the throwable in the database for later use.
          * Only the error enum type and value field of the error will be saved. This throwable field may be null.
          * */
-        var throwable: Throwable? = null) {
+        var throwable: Throwable? = null,
+
+        /** The http response containing the reason the error may have occured. It will only be present
+         * at the time the error occurs and will not be saved in the Fetch database.
+         * This httpResponse may be null.*/
+        var httpResponse: Downloader.Response? = null) {
 
     /** Indicates that the specific issue or error is not known.*/
     UNKNOWN(-1),
@@ -109,7 +116,16 @@ enum class Error constructor(
     COMPLETED_NOT_ADDED_SUCCESSFULLY(26),
 
     /** Indicates that the requests in the list are not distinct by file name.*/
-    ENQUEUED_REQUESTS_ARE_NOT_DISTINCT(27);
+    ENQUEUED_REQUESTS_ARE_NOT_DISTINCT(27),
+
+    /** Indicates that the operation to rename the file for a download failed because
+     * the download does not have a status of complete.*/
+    FAILED_TO_RENAME_INCOMPLETE_DOWNLOAD_FILE(28),
+
+    /**
+     * Indicates that the operation to rename the file failed for some reason.
+     * */
+    FAILED_TO_RENAME_FILE(29);
 
     companion object {
 
@@ -142,6 +158,8 @@ enum class Error constructor(
                 25 -> ENQUEUE_NOT_SUCCESSFUL
                 26 -> COMPLETED_NOT_ADDED_SUCCESSFULLY
                 27 -> ENQUEUED_REQUESTS_ARE_NOT_DISTINCT
+                28 -> FAILED_TO_RENAME_INCOMPLETE_DOWNLOAD_FILE
+                29 -> FAILED_TO_RENAME_FILE
                 else -> UNKNOWN
             }
         }

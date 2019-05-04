@@ -1,9 +1,12 @@
 package com.tonyodev.fetch2
 
+import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
 import com.tonyodev.fetch2core.Extras
+import com.tonyodev.fetch2core.getFileUri
 import com.tonyodev.fetch2core.getUniqueId
+import java.io.Serializable
 
 /**
  * Use this class to create a request that is used by Fetch to enqueue a download and
@@ -15,10 +18,24 @@ open class Request constructor(
 
         /** The file eg(/files/download.txt) where the file will be
          * downloaded to and saved on disk.*/
-        val file: String) : RequestInfo(), Parcelable {
+        val file: String) : RequestInfo(), Parcelable, Serializable {
+
+    constructor(
+            /** The url where the file will be downloaded from.*/
+            url: String,
+            /** The file uri eg(file:///files/download.txt or
+             * content://com.contentprovider.provider/data/download.txt) where the file will be
+             * downloaded to and saved on disk.*/
+            fileUri: Uri) : this(url, fileUri.toString())
 
     /** Unique Identifier. Used to identify a download.*/
     val id: Int = getUniqueId(url, file)
+
+    /** Returns the FileUri.*/
+    val fileUri: Uri
+        get() {
+            return getFileUri(file)
+        }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -56,6 +73,7 @@ open class Request constructor(
         dest?.writeInt(enqueueAction.value)
         dest?.writeInt(if (downloadOnEnqueue) 1 else 0)
         dest?.writeSerializable(HashMap(extras.map))
+        dest?.writeInt(autoRetryMaxAttempts)
     }
 
     override fun describeContents(): Int {
@@ -66,8 +84,8 @@ open class Request constructor(
 
         @Suppress("UNCHECKED_CAST")
         override fun createFromParcel(input: Parcel): Request {
-            val url = input.readString()
-            val file = input.readString()
+            val url = input.readString() ?: ""
+            val file = input.readString() ?: ""
             val identifier = input.readLong()
             val groupId = input.readInt()
             val headers = input.readSerializable() as Map<String, String>
@@ -77,7 +95,8 @@ open class Request constructor(
             val enqueueAction = EnqueueAction.valueOf(input.readInt())
             val downloadOnEnqueue = input.readInt() == 1
             val extras = input.readSerializable() as Map<String, String>
-
+            val autoRetryMaxAttempts = input.readInt()
+            val autoRetryAttempts = input.readInt()
             val request = Request(url, file)
             request.identifier = identifier
             request.groupId = groupId
@@ -90,6 +109,7 @@ open class Request constructor(
             request.enqueueAction = enqueueAction
             request.downloadOnEnqueue = downloadOnEnqueue
             request.extras = Extras(extras)
+            request.autoRetryMaxAttempts = autoRetryMaxAttempts
             return request
         }
 

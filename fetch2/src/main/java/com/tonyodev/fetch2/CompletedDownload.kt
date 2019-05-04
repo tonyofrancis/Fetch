@@ -3,11 +3,12 @@ package com.tonyodev.fetch2
 import android.os.Parcel
 import android.os.Parcelable
 import com.tonyodev.fetch2core.Extras
+import java.io.Serializable
 import java.util.*
 import kotlin.collections.HashMap
 
 /** Class used to enqueue an already completed download into Fetch for management.*/
-open class CompletedDownload : Parcelable {
+open class CompletedDownload : Parcelable, Serializable {
 
     /** The url where the file was downloaded from.*/
     var url: String = ""
@@ -92,8 +93,8 @@ open class CompletedDownload : Parcelable {
 
         @Suppress("UNCHECKED_CAST")
         override fun createFromParcel(source: Parcel): CompletedDownload {
-            val url = source.readString()
-            val file = source.readString()
+            val url = source.readString() ?: ""
+            val file = source.readString() ?: ""
             val groupId = source.readInt()
             val fileByteSize = source.readLong()
             val headers = source.readSerializable() as Map<String, String>

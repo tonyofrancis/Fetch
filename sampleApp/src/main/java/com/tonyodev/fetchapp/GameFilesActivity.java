@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.reactivex.disposables.Disposable;
+import kotlin.Pair;
 import timber.log.Timber;
 
 public class GameFilesActivity extends AppCompatActivity {
@@ -192,8 +193,8 @@ public class GameFilesActivity extends AppCompatActivity {
             request.setGroupId(groupId);
         }
         enqueueDisposable = rxFetch.enqueue(requestList).asFlowable().subscribe(updatedRequests -> {
-            for (Request request : updatedRequests) {
-                fileProgressMap.put(request.getId(), 0);
+            for (Pair<Request, Error> request : updatedRequests) {
+                fileProgressMap.put(request.getFirst().getId(), 0);
                 updateUIWithProgress();
             }
         }, throwable -> {

@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2okhttp
 
 import com.tonyodev.fetch2core.*
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -22,7 +23,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
          * The PARALLEL type downloads bytes in parallel.
          * */
         private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL)
-    : Downloader {
+    : Downloader<OkHttpClient, Request> {
 
     constructor(fileDownloaderType: Downloader.FileDownloaderType) : this(null, fileDownloaderType)
 
@@ -36,30 +37,79 @@ open class OkHttpDownloader @JvmOverloads constructor(
             .followRedirects(true)
             .followSslRedirects(true)
             .retryOnConnectionFailure(false)
+            .cookieJar(getDefaultCookieJar())
             .build()
 
-    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
+    override fun onPreClientExecute(client: OkHttpClient, request: Downloader.ServerRequest): Request {
         val okHttpRequestBuilder = Request.Builder()
                 .url(request.url)
                 .method(request.requestMethod, null)
-
         request.headers.entries.forEach {
             okHttpRequestBuilder.addHeader(it.key, it.value)
         }
+        return okHttpRequestBuilder.build()
+    }
 
-        val okHttpRequest = okHttpRequestBuilder.build()
-        val okHttpResponse = client.newCall(okHttpRequest).execute()
-        val code = okHttpResponse.code()
-        val success = okHttpResponse.isSuccessful
-        var contentLength = okHttpResponse.body()?.contentLength() ?: -1L
-        val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
-        val responseHeaders = mutableMapOf<String, List<String>>()
-        val okResponseHeaders = okHttpResponse.headers()
+    private fun getResponseHeaders(okResponseHeaders: Headers): MutableMap<String, List<String>> {
+        val headers = mutableMapOf<String, List<String>>()
         for (i in 0 until okResponseHeaders.size()) {
             val key = okResponseHeaders.name(i)
             val values = okResponseHeaders.values(key)
-            responseHeaders[key] = values
+            headers[key] = values
         }
+        return headers
+    }
+
+    private fun getRedirectedServerRequest(oldRequest: Downloader.ServerRequest, redirectUrl: String): Downloader.ServerRequest {
+        return Downloader.ServerRequest(
+                id = oldRequest.id,
+                url = oldRequest.url,
+                headers = oldRequest.headers,
+                file = oldRequest.file,
+                fileUri = oldRequest.fileUri,
+                tag = oldRequest.tag,
+                identifier = oldRequest.identifier,
+                requestMethod = oldRequest.requestMethod,
+                extras = oldRequest.extras,
+                redirected = true,
+                redirectUrl = redirectUrl)
+    }
+
+    override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
+        var okHttpRequest = onPreClientExecute(client, request)
+        if (okHttpRequest.header("Referer") == null) {
+            val referer = getRefererFromUrl(request.url)
+            okHttpRequest = okHttpRequest.newBuilder()
+                    .addHeader("Referer", referer)
+                    .build()
+        }
+        var okHttpResponse = client.newCall(okHttpRequest).execute()
+        var responseHeaders = getResponseHeaders(okHttpResponse.headers())
+        var code = okHttpResponse.code()
+        if ((code == HttpURLConnection.HTTP_MOVED_TEMP
+                        || code == HttpURLConnection.HTTP_MOVED_PERM
+                        || code == HttpURLConnection.HTTP_SEE_OTHER) && responseHeaders.containsKey("Location")) {
+            okHttpRequest = onPreClientExecute(client, getRedirectedServerRequest(request,
+                    responseHeaders["Location"]?.firstOrNull() ?: ""))
+            if (okHttpRequest.header("Referer") == null) {
+                val referer = getRefererFromUrl(request.url)
+                okHttpRequest = okHttpRequest.newBuilder()
+                        .addHeader("Referer", referer)
+                        .build()
+            }
+            okHttpResponse = client.newCall(okHttpRequest).execute()
+            responseHeaders = getResponseHeaders(okHttpResponse.headers())
+            code = okHttpResponse.code()
+        }
+        val success = okHttpResponse.isSuccessful
+        var contentLength = okHttpResponse.body()?.contentLength() ?: -1L
+        val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
+        val errorResponseString: String? = if (!success) {
+            copyStreamToString(byteStream, false)
+        } else {
+            null
+        }
+
         val hash = getContentHash(responseHeaders)
 
         if (contentLength < 1) {
@@ -77,7 +127,8 @@ open class OkHttpDownloader @JvmOverloads constructor(
                 request = request,
                 hash = hash,
                 responseHeaders = responseHeaders,
-                acceptsRanges = acceptsRanges))
+                acceptsRanges = acceptsRanges,
+                errorResponse = errorResponseString))
 
         val response = Downloader.Response(
                 code = code,
@@ -87,7 +138,8 @@ open class OkHttpDownloader @JvmOverloads constructor(
                 request = request,
                 hash = hash,
                 responseHeaders = responseHeaders,
-                acceptsRanges = acceptsRanges)
+                acceptsRanges = acceptsRanges,
+                errorResponse = errorResponseString)
 
         connections[response] = okHttpResponse
         return response
@@ -120,15 +172,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper? {
-        return null
-    }
-
     override fun getFileSlicingCount(request: Downloader.ServerRequest, contentLength: Long): Int? {
-        return null
-    }
-
-    override fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.ServerRequest): String? {
         return null
     }
 

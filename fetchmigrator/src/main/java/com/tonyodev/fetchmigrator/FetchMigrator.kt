@@ -5,11 +5,12 @@ package com.tonyodev.fetchmigrator
 import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import android.support.annotation.WorkerThread
-import com.tonyodev.fetch2.database.DatabaseManagerImpl
+import com.tonyodev.fetch2.database.FetchDatabaseManagerImpl
 import com.tonyodev.fetch2.database.DownloadDatabase
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.fetch.LiveSettings
-import com.tonyodev.fetch2core.FetchLogger
+import com.tonyodev.fetch2core.DefaultStorageResolver
+import com.tonyodev.fetch2core.getFileTempDir
 import com.tonyodev.fetchmigrator.fetch1.DatabaseHelper
 import com.tonyodev.fetchmigrator.fetch1.DownloadTransferPair
 import com.tonyodev.fetchmigrator.helpers.v1CursorToV2DownloadInfo
@@ -53,12 +54,13 @@ fun migrateFromV1toV2(context: Context, v2Namespace: String): List<DownloadTrans
             cursor.moveToNext()
         }
         cursor.close()
-        val fetchTwoDatabaseManager = DatabaseManagerImpl(
+        val fetchTwoDatabaseManager = FetchDatabaseManagerImpl(
                 context = context,
                 namespace = v2Namespace,
                 migrations = DownloadDatabase.getMigrations(),
                 liveSettings = liveSettings,
-                fileExistChecksEnabled = false)
+                fileExistChecksEnabled = false,
+                defaultStorageResolver = DefaultStorageResolver(context, getFileTempDir(context)))
         fetchTwoDatabaseManager.insert(downloadInfoList.map { it.newDownload as DownloadInfo })
         fetchTwoDatabaseManager.close()
     }

@@ -1,3 +1,189 @@
+Version 3.0.6
+Identical to the androidx version 3.1.0
+
+Version 3.0.5
+This release only adds a new Feature that allows Fetch to auto retry failed downloads for any reason. Set the number of times Fetch will auto retry a download when it fails.
+This feature if off by default.
+1. New fields added on Download: autoRetryMaxAttempts and autoRetryAttempts. See Java docs.
+2. New field added on RequestInfo: autoRetryMaxAttempts. See Java docs.
+3. New method added on Fetch: fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean = true, func: Func2<Download?>? = null, func2: Func<Error>? = null): Fetch
+4. New method added on RXFetch: fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean = true): Convertible<Download?>
+5. New method added on FetchConfiguration: fun setAutoRetryMaxAttempts(autoRetryMaxAttempts: Int): Builder. See Java Docs
+
+```java
+        final FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
+                .enableRetryOnNetworkGain(true)
+                .setDownloadConcurrentLimit(2)
+                .setAutoRetryMaxAttempts(10) // set global auto retry max attempts for all downloads.
+                .build();
+        final Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
+
+        //OR
+
+        final String url = "dummy url";
+        final String file = "dummy file";
+        final Request request = new Request(url, file);
+        request.setAutoRetryMaxAttempts(5); // set auto retry on individual downloads.
+
+        fetch.getDownload(request.getId(), download -> {
+            if (download != null) {
+                download.getAutoRetryAttempts(); //get the number of auto retry attempts.
+                download.getAutoRetryMaxAttempts(); //get the number of max attempts.
+            }
+        });
+
+        //reset the auto retry attempts for a download
+        fetch.resetAutoRetryAttempts(request.getId(), true, null, null);
+```
+
+Version 3.0.4
+1. updated documentation
+2. remove has activeDownloads(): Boolean method. Use fun hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>): Fetch or fun addActiveDownloadsObserver(includeAddedDownloads: Boolean = false, fetchObserver: FetchObserver<Boolean>): Fetch instead.
+3. Added new methods on Fetch addActiveDownloadsObserver(includeAddedDownloads: Boolean = false, fetchObserver: FetchObserver<Boolean>): Fetch and removeActiveDownloadsObserver(fetchObserver: FetchObserver<Boolean>): Fetch
+4. Added new method on FetchConfiguration fun setHasActiveDownloadsCheckInterval(intervalInMillis: Long): Builder
+5. Added new REPORTING option on Reason enum
+6. Added new method on FetchConfiguration fun createDownloadFileOnEnqueue(create: Boolean): Builder
+7. Fix for starting download immediately whiles enqueuing
+
+Version 3.0.3
+- Bug fixes for hasActiveDownloads method.
+- Download url redirection fixes and improvements
+- Added internet check method to FetchConfiguration called setInternetAccessUrlCheck(url: String?): Builder
+  See documentation on usage.
+- Added new fields redirected and redirectedUrl on Downloader.ServerRequest class.
+
+Version 3.0.2
+- Added Wrapper class around FetchDatabase to provide safer access
+- Added Priority Sort to change the way Fetch queues downloads based on time created.
+
+Note: Fetch 3.1.0 Will be the next big release. The library will be migrating to AndroidX packages.
+Point releases will be created for the none AndroidX version of the library.
+
+Version 3.0.1
+- Added new method hasActiveDownloads(includeAddedDownloads: Boolean, func: Func<Boolean>)
+
+
+Version 3.0.0
+*Version 3 comes with a lot of enhancements and fixes*
+
+  Fetch:
+- FetchGroupListener. FetchGroupListener extends from FetchListener and allows you to listener for
+  updates on a group. The methods on FetchGroupListener will return a FetchGroup object that contains
+  all the downloads in a group and will inform you which download triggered a change on the group. Also see AbstractFetchGroupListener.
+- Added new method to rename a completed download's file. see Fetch.renameCompletedDownloadFile method.
+
+  Observers:
+- Introducing FetchObserver. Fetch now allows you to subscribe from updates for a single Download or a Group of Downloads.
+  Using the FetchObserver and FetchGroupObserver interface respectively. See Fetch.attachFetchObserversForDownload(id, observers...) documentation
+  for more information. Also check the sample app for usage.
+- Introducing FetchGroup. FetchGroup is an object that contains all information about a group Fetch manages. The group is
+  automatically updated any time a download from the group updates. You can subscribe to FetchGroup's using the FetchGroupObserver.
+  FetchGroupObservers attached to a FetchGroup will be notified when downloads on a group changes. You will be notified of
+  the Reason for the change as well. See Fetch.getFetchGroup(id, callback) documentation for more information.
+
+  Database:
+- Fetch now allows you to provide your own database manager to manage downloads. See the FetchDatabaseManager documentation and
+  FetchConfiguration.Builder class to get started. Note: Fetch depends on your FetchDatabaseManager methods to be synchronized to work correctly.
+
+  Download:
+- Added new fields on the Download objects. Fields: etaInMilliSeconds, downloadedBytesPerSecond. See documentation.
+
+  Fixes & Small Improvements:
+- You can now set the Handler Fetch will use to perform all operations on. See FetchConfiguration.Builder.setHandler method.
+- Fixed a bug that prevented notification buttons (pause, cancel, resume, etc) from firing the intent.
+
+Version 2.3.6
+- Out of Memory Error. Fixed issued in the downloader where an out of memory error would occur.
+
+Version 2.3.5
+- Fetch methods removeAllInGroupWithStatus, deleteAllInGroupWithStatus, getDownloadsInGroupWithStatus
+  have been updated to allow more than one Status to be queried or actioned upon. See Java doc for details
+  . Special thanks to Marcin Adamczewski for submitting PR.
+- Fetch logging is now disabled by default and can be enabled with the FetchConfiguration method. `.enableLogging(true)`
+- The Error enum object now has a new field attach `httpResponse`. This response object contains the HttpCode and other
+  http related information. This field is only provided when an error occurs and it is related to the Http response.
+- Fixed EnqueueAction.UPDATE_ACCORDINGLY that caused the onComplete listener method to be called if the newly enqueued request
+  was previously downloaded and completed but the file on the storage system was delete.
+
+Version 2.3.4
+- Added default cookie manager for the okhttp and httpurlconnection client Downloaders.
+- Fixed an EnqueueAction.INCREMENT_FILE_NAME bug where files were not properly created.
+- Download, Request, DownloadBlock and other data classes now extend Serializable.
+- Okhttp and HttpUrlConnection clients now add a default Referer header to each request if
+  one is not provided. Default Referer is the host of the url passed in the request.
+- Behavior change and Updates for ActiveDownloads method on Fetch. The ActiveDownload method
+  can now only be called on threads other than the Main(UI) Thread. The ActiveDownload method
+  now correctly return true if there are active downloads. Downloads with a queued or Downloading status.
+  Note: Calling this method on a UI thread will throw a FetchException.
+- Added new awaitFinish methods on Fetch. The awaitFinish method blocks the current non UI thread
+  until Fetch has completed all enqueued downloads. The awaitFinishTimeout method takes in a time in milliseconds
+  to release the hold if Fetch has not completed all downloads in the allocated timeframe.
+  Passing 0 to the awaitFinishTimeout method will hold the thread indefinitely(Never releasing).
+  Recommend to use the awaitFinishTimeout method inside Android Workers and release the task when a certain amount of time has passed. See Java docs for details.
+  Note: Calling this method on a UI thread will throw a FetchException.
+
+Version 2.3.3
+- Fixed return type of Downloader interface method onPreClientExecute. Now returns Void correctly.
+
+Version 2.3.2
+- Downloader interfaces and classes that extend Downloader now have a new method called onPreClientExecute(client: T, request: Downloader.ServerRequest): R?
+  This method allows you to specify settings on the client before executing the request.
+- Fixed resume bug with Parallel downloader
+
+Version 2.3.1
+This is the first stable version of Fetch 2. Enjoy.
+- Fixed an issue where the priority queue backoff would not work correctly.
+- Fixed an issue where request with a file uri would not resume correctly.
+- Fixed an issue where the Fetch database would crash on large group calls.
+- Added new method fun fileExists(file: String): Boolean on StorageResolver.
+- Added new method getServerResponse for Fetch and RxFetch.
+- Fixed an issue where completed download notifications using the DefaultNotificationManager would
+  show the progress bar when a download completed.
+
+Version 2.3.0-RC1
+This version has lots of changes, improvements and bug fixes. Please read carefully.
+
+New
+1. Fetch now supports notifications via the FetchNotificationManager interface.
+   See DefaultFetchNotificationManager class and sample code on usage.
+2. Fetch now supports saving downloads to URI paths via StorageResolver.
+   See sample code and DefaultStorageResolver class for usage.
+
+- New constructor added for Request object. Request(url, Uri)
+- New get method added on Request object. request.getFileUri()
+- New get method added on Download interface. download.getFileUri()
+- New set method added on FetchConfiguration.Builder class. builder.setStorageResolver(storageResolver)
+- New set method added on FetchConfiguration.Builder class. builder.setNotificationManager(fetchNotificationManager)
+- New interface added FetchNotificationManager. See java Docs.
+- New class added DefaultFetchNotificationManager. See java Docs.
+- New interface added StorageResolver. See javaDocs.
+- New class added DefaultStorageResolver. See java Docs.
+
+Bug Fixes
+- Improvements and bug fixes to Parallel and Sequential file downloader.
+- Fixed an issue where the onCompleted method would not be called for downloads with unknown content length.
+- Fixed bug where EnqueueAction.DO_NOT_ENQUEUE_IF_EXISTING would throw an exception when it should not.
+- Improvements to EnqueueAction.Update_ Accordingly
+- Tons of bug fixes and performance improvements.
+
+Breaking Changes
+- The Fetch and RxFetch List enqueue method now has a new signature.
+fun enqueue(requests: List<Request>, func: Func<List<Pair<Request, Error>>>? = null): Fetch
+See Java Docs for more information. The new signature allows for the case where a request may fail
+to enqueue but other request are still enqueued instead of the whole operation being terminated.
+If the Error is Error.NONE this means that the download was successfully enqueued. Otherwise
+this means that the enqueue for the request failed.
+- In order to make Fetch more modular and accommodating to different application environments,
+ the following methods were removed from the Downloader interface and are now on the StorageResolver interface.
+ If you are overriding these methods, you must extend the StorageResolver interface or DefaultStorageResolver class
+ and set an instance on the Fetch Configuration builder you are using to create your Fetch instance.
+ Methods Moved:
+ fun getRequestOutputResourceWrapper(request: Downloader.ServerRequest): OutputResourceWrapper
+ fun getDirectoryForFileDownloaderTypeParallel(request: Downloader.ServerRequest): String
+
+Version 2.2.0-RC16
+- Enqueue Action bug fixes
+
 Version 2.2.0-RC15
 - Network state check improvements.
 - Fetch.getHasActiveDownloads() should now report accurately.

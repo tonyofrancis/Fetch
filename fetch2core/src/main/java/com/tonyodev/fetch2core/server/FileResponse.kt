@@ -2,6 +2,7 @@ package com.tonyodev.fetch2core.server
 
 import android.os.Parcel
 import android.os.Parcelable
+import java.io.Serializable
 import java.lang.StringBuilder
 import java.net.HttpURLConnection
 import java.util.*
@@ -15,7 +16,7 @@ data class FileResponse(val status: Int = HttpURLConnection.HTTP_UNSUPPORTED_TYP
                         val date: Long = Date().time,
                         val contentLength: Long = 0,
                         val md5: String = "",
-                        val sessionId: String = "") : Parcelable {
+                        val sessionId: String = "") : Parcelable, Serializable {
 
     val toJsonString: String
         get() {
@@ -67,8 +68,8 @@ data class FileResponse(val status: Int = HttpURLConnection.HTTP_UNSUPPORTED_TYP
                     connection = source.readInt(),
                     date = source.readLong(),
                     contentLength = source.readLong(),
-                    md5 = source.readString(),
-                    sessionId = source.readString())
+                    md5 = source.readString() ?: "",
+                    sessionId = source.readString() ?: "")
         }
 
         override fun newArray(size: Int): Array<FileResponse?> {

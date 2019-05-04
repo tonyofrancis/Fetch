@@ -1,13 +1,16 @@
 package com.tonyodev.fetch2
 
+import android.net.Uri
 import android.os.Parcelable
+import com.tonyodev.fetch2.util.DEFAULT_AUTO_RETRY_ATTEMPTS
 import com.tonyodev.fetch2core.Extras
+import java.io.Serializable
 
 /**
  * An immutable object which contains a current snapshot of all the information
  * about a specific download managed by Fetch.
  * */
-interface Download : Parcelable {
+interface Download : Parcelable, Serializable {
 
     /** Used to identify a download. This id also matches the id of the request that started
      * the download.*/
@@ -99,5 +102,30 @@ interface Download : Parcelable {
      * Use fetch.replaceExtras(id, extras)
      * */
     val extras: Extras
+
+    /* Returns the fileUri.*/
+    val fileUri: Uri
+
+    /** The estimated time in milliseconds until the download completes.
+     *  This field will always be -1 if the download is not currently being downloaded.
+     * */
+    val  etaInMilliSeconds: Long
+
+    /** Average downloaded bytes per second.
+     * Can return -1 to indicate that the estimated time remaining is unknown. This field will
+     * always return -1 when the download is not currently being downloaded.
+     * */
+    val downloadedBytesPerSecond: Long
+
+    /**
+     * The maximum number of times Fetch will auto retry a failed download.
+     * The default is 0.
+     * */
+    val autoRetryMaxAttempts: Int
+
+    /**
+     * The number of times Fetch has tried to download this request after a failed attempt.
+     * */
+    val autoRetryAttempts: Int
 
 }

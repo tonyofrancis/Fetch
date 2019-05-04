@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2core
 
+import android.net.Uri
 import java.io.Closeable
 import java.io.InputStream
 
@@ -13,7 +14,16 @@ import java.io.InputStream
  * For an example see
  * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader
  * */
-interface Downloader : Closeable {
+interface Downloader<T, R> : Closeable {
+
+    /**
+     * This method is called by Fetch before executing a request against the client.
+     * Override this method to setup and configure the client for the request.
+     * @param client the client
+     * @param request the request
+     * @return returns any object that makes sense for the specified downloader. can be null.
+     * */
+    fun onPreClientExecute(client: T, request: Downloader.ServerRequest): R?
 
     /**
      * This method is called by Fetch to execute a request against the client.
@@ -22,6 +32,7 @@ interface Downloader : Closeable {
      * is called on a background thread.
      * @param request The request information for the download.
      * @param interruptMonitor Notifies the downloader that there may be an interruption for the request.
+     * If an interruption occurs, the execute method should return quickly.
      * @return Response containing the server response code, headers, connection success, content-length,
      * and input stream if a connection was successful.
      * For an example:
@@ -37,17 +48,6 @@ interface Downloader : Closeable {
      * @see com.tonyodev.fetch2.HttpUrlConnectionDownloader.disconnect
      * */
     fun disconnect(response: Response)
-
-    /**
-     * This method is called by Fetch to request the OutputResourceWrapper that will be used to save
-     * the download information too. If null is returned, Fetch will provide the OutputResourceWrapper.
-     * This method is called on a background thread.
-     * @param request The request information for the download.
-     * @return OutputResourceWrapper object. Fetch will call the close method automatically
-     *         after the disconnect(response) method is called. Can return null. If null,
-     *         Fetch will provide the OutputResourceWrapper.
-     * */
-    fun getRequestOutputResourceWrapper(request: ServerRequest): OutputResourceWrapper?
 
     /**
      * This method is called by Fetch if the FileDownloaderType.Parallel type was set
@@ -68,18 +68,6 @@ interface Downloader : Closeable {
      * @return the FileDownloaderType.
      * */
     fun getRequestFileDownloaderType(request: ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): FileDownloaderType
-
-    /**
-     * This method is called by Fetch for download requests that are downloading using the
-     * FileDownloaderType.PARALLEL type. Fetch uses this directory to store the
-     * temp files for the request. If the return directory is null, Fetch
-     * will select the default directory. Temp files in this directory are automatically
-     * deleted by Fetch once a download completes or a request is removed.
-     * This method is called on a background thread.
-     * @param request the request information for the download.
-     * @return the directory where the temp files will be stored. Can be null.
-     * */
-    fun getDirectoryForFileDownloaderTypeParallel(request: ServerRequest): String?
 
     /**
      * This method should be used to verify that the download file Hash matches the
@@ -165,6 +153,9 @@ interface Downloader : Closeable {
             /** The file where the download will be stored.*/
             val file: String,
 
+            /** The file uri*/
+            val fileUri: Uri,
+
             /** The tag associated with this request.*/
             val tag: String?,
 
@@ -175,7 +166,13 @@ interface Downloader : Closeable {
             val requestMethod: String,
 
             /** The extras associated with this request*/
-            val extras: Extras)
+            val extras: Extras,
+
+            /** If the original url was redirected.*/
+            val redirected: Boolean,
+
+            /** redirect url*/
+            val redirectUrl: String)
 
     /**
      * A class that contains the server response information used by Fetch
@@ -204,7 +201,10 @@ interface Downloader : Closeable {
             val responseHeaders: Map<String, List<String>>,
 
             /** Details if the server accepts byte ranges*/
-            val acceptsRanges: Boolean)
+            val acceptsRanges: Boolean,
+
+            /** Error Response string. May be null*/
+            val errorResponse: String?)
 
     /** File Downloading Type used to download each request.*/
     enum class FileDownloaderType {

@@ -2,9 +2,12 @@
 
 package com.tonyodev.fetch2.util
 
+import android.os.Looper
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.exception.FetchException
+import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2core.*
 import com.tonyodev.fetch2core.server.FileRequest
 import java.io.File
@@ -62,10 +65,13 @@ fun getRequestForDownload(download: Download,
             url = download.url,
             headers = headers,
             file = download.file,
+            fileUri = getFileUri(download.file),
             tag = download.tag,
             identifier = download.identifier,
             requestMethod = requestMethod,
-            extras = download.extras)
+            extras = download.extras,
+            redirected = false,
+            redirectUrl = "")
 }
 
 fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
@@ -77,7 +83,10 @@ fun getServerRequestFromRequest(request: Request): Downloader.ServerRequest {
             identifier = request.identifier,
             requestMethod = GET_REQUEST_METHOD,
             file = request.file,
-            extras = request.extras)
+            fileUri = getFileUri(request.file),
+            extras = request.extras,
+            redirected = false,
+            redirectUrl = "")
 }
 
 fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerRequest {
@@ -94,7 +103,10 @@ fun getCatalogServerRequestFromRequest(request: Request): Downloader.ServerReque
             identifier = request.identifier,
             requestMethod = GET_REQUEST_METHOD,
             file = request.file,
-            extras = request.extras)
+            fileUri = getFileUri(request.file),
+            extras = request.extras,
+            redirected = false,
+            redirectUrl = "")
 }
 
 fun getPreviousSliceCount(id: Int, fileTempDir: String): Int {
@@ -174,5 +186,33 @@ fun getFileSliceInfo(fileSliceSize: Int, totalBytes: Long): FileSliceInfo {
     } else {
         val bytesPerSlice = ceil((totalBytes.toFloat() / fileSliceSize.toFloat())).toLong()
         return FileSliceInfo(fileSliceSize, bytesPerSlice)
+    }
+}
+
+fun awaitFinishOrTimeout(allowTimeInMilliseconds: Long, fetchHandler: FetchHandler) {
+    if (Thread.currentThread() == Looper.getMainLooper().thread) {
+        throw FetchException(AWAIT_CALL_ON_UI_THREAD)
+    }
+    var hasAllowedTimeExpired = false
+    val indefinite = allowTimeInMilliseconds == 0L
+    val sleepTime = when {
+        indefinite -> 5000
+        allowTimeInMilliseconds < 1000 -> allowTimeInMilliseconds
+        else -> 1000
+    }
+    val timeStarted = System.currentTimeMillis()
+    var pendingCount = fetchHandler.getPendingCount()
+    while (indefinite || (pendingCount > 0 && !hasAllowedTimeExpired)) {
+        try {
+            Thread.sleep(sleepTime)
+        } catch (e: Exception) {
+
+        }
+        hasAllowedTimeExpired = if (allowTimeInMilliseconds == -1L) {
+            false
+        } else {
+            hasAllowedTimeExpired(timeStarted, System.currentTimeMillis(), allowTimeInMilliseconds)
+        }
+        pendingCount = fetchHandler.getPendingCount()
     }
 }

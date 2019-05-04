@@ -7,10 +7,7 @@ import com.tonyodev.fetch2.fetch.FetchModulesBuilder
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_REQUEST_UPDATED
-import com.tonyodev.fetch2core.DownloadBlock
-import com.tonyodev.fetch2core.Extras
-import com.tonyodev.fetch2core.FileResource
-import com.tonyodev.fetch2core.GLOBAL_FETCH_CONFIGURATION_NOT_SET
+import com.tonyodev.fetch2core.*
 
 /**
  * A light weight file download manager for Android with Rx features.
@@ -37,12 +34,6 @@ interface RxFetch {
      * */
     val fetchConfiguration: FetchConfiguration
 
-    /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
-     * keep a background service using fetch ongoing until this field returns false.
-     * This field can be accessed from any thread.
-     * */
-    val hasActiveDownloads: Boolean
-
     /**
      * Queues a request for downloading. If Fetch fails to enqueue the request,
      * func2 will be called with the error.
@@ -68,11 +59,14 @@ interface RxFetch {
      * and file name is already managed.
      * @param requests Request List
      * @throws FetchException if this instance of Fetch has been closed.
-     * @return Convertible with requests list.
+     * @return Convertible with requests list. Returns a list with a pair<Request,Error> for each enqueued request.
+     *         If the pair's second parameter is Error.NONE. this indicates that the request
+     *         was enqueued successfully. If the Error is not ERROR.NONE. This indicates
+     *         that the request was not enqueued for the specified reason.
      * Fetch may update a request depending on the initial request's Enqueue Action.
      * Update old request references with this request.
      * */
-    fun enqueue(requests: List<Request>): Convertible<List<Request>>
+    fun enqueue(requests: List<Request>): Convertible<List<Pair<Request, Error>>>
 
     /** Pause a queued or downloading download.
      * @param ids ids of downloads to be paused.
@@ -183,11 +177,11 @@ interface RxFetch {
     /**
      * Remove all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files for removed downloads are not deleted.
-     * @param status status
+     * @param statuses statuses
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with list of downloads that were removed.
      * */
-    fun removeAllInGroupWithStatus(id: Int, status: Status): Convertible<List<Download>>
+    fun removeAllInGroupWithStatus(id: Int, statuses: List<Status>): Convertible<List<Download>>
 
     /**
      * Delete a list of downloads managed by this instance of Fetch.
@@ -236,11 +230,11 @@ interface RxFetch {
     /**
      * Deletes all downloads with the specified group and status in this instance of Fetch.
      * The downloaded files are also deleted.
-     * @param status status
+     * @param statuses statuses
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with list of downloads that were deleted.
      * */
-    fun deleteAllInGroupWithStatus(id: Int, status: Status): Convertible<List<Download>>
+    fun deleteAllInGroupWithStatus(id: Int, statuses: List<Status>): Convertible<List<Download>>
 
     /**
      * Cancel a list of non completed downloads managed by this instance of Fetch.
@@ -293,6 +287,15 @@ interface RxFetch {
      * */
     fun retry(id: Int): Convertible<Download>
 
+    /**
+     * Resets the autoRetryAttempts value for a download back to 0.
+     * @param downloadId Id of existing request/download
+     * @param retryDownload Retry the download if its status is Status.ERROR. True by default.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Convertible with the download that was successfully queued or null.
+     * */
+    fun resetAutoRetryAttempts(downloadId: Int, retryDownload: Boolean = true): Convertible<Download?>
+
     /** Updates an existing request.
      * @see com.tonyodev.fetch2.Request for more details.
      * @param requestId Id of existing request/download
@@ -302,6 +305,16 @@ interface RxFetch {
      * @return Convertible with the successfully updated download or null.
      * */
     fun updateRequest(requestId: Int, updatedRequest: Request, notifyListeners: Boolean = DEFAULT_ENABLE_LISTENER_NOTIFY_ON_REQUEST_UPDATED): Convertible<Download>
+
+    /**
+     * Renames the file for a completed download. The StorageResolver attached to this fetch instance will rename the file.
+     * So it is okay to parse uri strings for the newFileName.
+     * @param id Id of existing request/download
+     * @param newFileName the new file name.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Convertible with the successfully updated download or null.
+     * */
+    fun renameCompletedDownloadFile(id: Int, newFileName: String): Convertible<Download>
 
     /** Replaces the existing extras object associated with an existing download/request with the newly passed in extras object.
      * @param id Id of existing request/download
@@ -356,11 +369,11 @@ interface RxFetch {
      * Gets all downloads in a specific group with a specific status.
      * @see com.tonyodev.fetch2.Status
      * @param groupId group id to query.
-     * @param status Status to query.
+     * @param statuses Statuses to query.
      * @throws FetchException if this instance of Fetch has been closed.
      * @return Convertible with results.
      * */
-    fun getDownloadsInGroupWithStatus(groupId: Int, status: Status): Convertible<List<Download>>
+    fun getDownloadsInGroupWithStatus(groupId: Int, status: List<Status>): Convertible<List<Download>>
 
     /**
      * Gets all downloads containing the identifier.
@@ -369,6 +382,16 @@ interface RxFetch {
      * @return Convertible with results.
      * */
     fun getDownloadsByRequestIdentifier(identifier: Long): Convertible<List<Download>>
+
+    /**
+     * Gets the FetchGroup by id. Even if the database does not contain downloads with this group id
+     * a FetchGroup will be returned. It will contain no downloads however. When a download with this
+     * group id is added. The downloads field on this object will be update and attached FetchObservers will be notified.
+     * @param group the group id
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Convertible with results.
+     * */
+    fun getFetchGroup(group: Int): Convertible<FetchGroup>
 
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener
@@ -467,7 +490,6 @@ interface RxFetch {
     /** Releases held resources and the namespace used by this Fetch instance.
      * Once closed this instance cannot be reused but the namespace can be reused
      * by a new instance of Fetch.
-     * @throws FetchException if this instance of Fetch has been closed.
      * */
     fun close()
 
@@ -493,6 +515,16 @@ interface RxFetch {
     fun getContentLengthForRequest(request: Request, fromServer: Boolean): Convertible<Long>
 
     /**
+     * Gets the Server Response for the url and associated headers.
+     * @param url the url. Cannot be null.
+     * @param headers the request headers for the url. Can be null.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @throws IOException if the the server request was not successful.
+     * @return Convertible with the server response.
+     * */
+    fun getServerResponse(url: String, headers: Map<String, String>?): Convertible<Downloader.Response>
+
+    /**
      * Gets the full Catalog of a Fetch File Server.
      * @param request Request. Can be a managed or un-managed request. The request is not stored in
      * the fetch database.
@@ -500,6 +532,72 @@ interface RxFetch {
      * @return Convertible with catalog results.
      * */
     fun getFetchFileServerCatalog(request: Request): Convertible<List<FileResource>>
+
+    /**
+     * Blocks the current thread(Not Ui Thread) to waiting on one of the two conditions.
+     * Condition One: Waits until Fetch has downloaded all downloading and pending downloads.
+     * Condition Two: Waits until the allow time expires
+     * if Fetch has not completed or attempted to download queued downloads.
+     * This method returns when one of the conditions if violated.
+     * Note: Calling this method on the UIThread is strongly discouraged and an exception is thrown.
+     * @param allowTimeInMilliseconds the allowed time in milliseconds. If zero the wait is indefinite.
+     * @throws FetchException if calling on the main thread
+     * */
+    fun awaitFinishOrTimeout(allowTimeInMilliseconds: Long)
+
+    /**
+     * Blocks the current thread(Not Ui Thread) to waiting on the current conditions.
+     * Condition One: Waits until Fetch has downloaded all downloading and pending downloads.
+     * This method returns when one of the conditions if violated.
+     * Note: Calling this method on the UIThread is strongly discouraged and an exception is thrown.
+     * @throws FetchException if calling on the main thread
+     * */
+    fun awaitFinish()
+
+    /**
+     * Attaches a FetchObserver to listen for changes on a download managed by this Fetch namespace.
+     * FetchObservers are held with a weak reference. Note: If fetch does not manage a download with
+     * the passed in id, the FetchObserver will not be notified. Only when a download with the specified
+     * id is managed by Fetch will the observer be called.
+     * @param downloadId the download Id
+     * @param fetchObservers the fetch observers
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun attachFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): RxFetch
+
+    /**
+     * Removes a FetchObserver attached to this Fetch namespace for a download.
+     * @param downloadId the download Id
+     * @param fetchObservers the fetch observers
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun removeFetchObserversForDownload(downloadId: Int, vararg fetchObservers: FetchObserver<Download>): RxFetch
+
+    /** Indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
+     * keep a background service ongoing until the results returns false.
+     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active.
+     * @throws FetchException if accessed on ui thread
+     * @return Convertible with results.
+     * */
+    fun hasActiveDownloads(includeAddedDownloads: Boolean): Convertible<Boolean>
+
+    /** Subscribe a FetchObserver that indicates if this fetch namespace has active(Queued or Downloading) downloads. You can use this value to
+     * keep a background service ongoing until the value returned is false.
+     * @param includeAddedDownloads To include downloads with a status of Added. Added downloads are not considered active by default.
+     * @param fetchObserver the fetch observer
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun addActiveDownloadsObserver(includeAddedDownloads: Boolean = false, fetchObserver: FetchObserver<Boolean>): RxFetch
+
+    /** Removes a subscribed FetchObserver that is listening for active downloads.
+     * @param fetchObserver the fetch observer to remove.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return instance
+     * */
+    fun removeActiveDownloadsObserver(fetchObserver: FetchObserver<Boolean>): RxFetch
 
     /**
      * RX Fetch implementation class. Use this Singleton to get instances of RxFetch or Fetch.
