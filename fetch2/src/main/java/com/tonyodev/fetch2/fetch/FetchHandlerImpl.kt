@@ -225,6 +225,10 @@ class FetchHandlerImpl(private val namespace: String,
         return pausedDownloads
     }
 
+    override fun pauseAll(): List<Download> {
+        return pauseDownloads(fetchDatabaseManagerWrapper.get())
+    }
+
     override fun freeze() {
         priorityListProcessor.pause()
         downloadManager.cancelAll()
@@ -254,6 +258,10 @@ class FetchHandlerImpl(private val namespace: String,
         fetchDatabaseManagerWrapper.update(resumedDownloads)
         startPriorityQueueIfNotStarted()
         return resumedDownloads
+    }
+
+    override fun resumeAll(): List<Download> {
+        return resumeDownloads(fetchDatabaseManagerWrapper.get().map { it.id })
     }
 
     override fun remove(ids: List<Int>): List<Download> {
@@ -464,6 +472,10 @@ class FetchHandlerImpl(private val namespace: String,
 
     override fun getDownloadsWithStatus(status: Status): List<Download> {
         return fetchDatabaseManagerWrapper.getByStatus(status)
+    }
+
+    override fun getDownloadsWithStatus(statuses: List<Status>): List<Download> {
+        return fetchDatabaseManagerWrapper.getByStatus(statuses)
     }
 
     override fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>): List<Download> {

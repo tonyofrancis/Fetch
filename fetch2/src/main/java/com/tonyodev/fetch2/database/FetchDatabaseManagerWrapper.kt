@@ -3,8 +3,11 @@ package com.tonyodev.fetch2.database
 import com.tonyodev.fetch2.PrioritySort
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.Extras
+import com.tonyodev.fetch2core.Logger
 
 class FetchDatabaseManagerWrapper(private val fetchDatabaseManager: FetchDatabaseManager): FetchDatabaseManager {
+
+    override val logger: Logger = fetchDatabaseManager.logger
 
     override val isClosed: Boolean
         get() {
@@ -100,6 +103,12 @@ class FetchDatabaseManagerWrapper(private val fetchDatabaseManager: FetchDatabas
     override fun getByStatus(status: Status): List<DownloadInfo> {
         return synchronized(fetchDatabaseManager) {
             fetchDatabaseManager.getByStatus(status)
+        }
+    }
+
+    override fun getByStatus(statuses: List<Status>): List<DownloadInfo> {
+        return synchronized(fetchDatabaseManager) {
+            fetchDatabaseManager.getByStatus(statuses)
         }
     }
 

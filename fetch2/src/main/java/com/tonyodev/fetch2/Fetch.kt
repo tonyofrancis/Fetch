@@ -15,7 +15,7 @@ import com.tonyodev.fetch2core.*
  *           Queue based Priority downloading,
  *           Pause & Resume downloads,
  *           Network specific downloading and more...
- * @see https://github.com/tonyofrancis/Fetch
+ * @see <a href="https://github.com/tonyofrancis/Fetch</a>
  * */
 interface Fetch {
 
@@ -138,6 +138,14 @@ interface Fetch {
      * */
     fun freeze(func: Func<Boolean>? = null, func2: Func<Error>? = null): Fetch
 
+    /**
+     * Pause all downloads associated by this fetch.
+     *
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun pauseAll(): Fetch
+
     /** Pauses all currently downloading items, and pauses all download processing fetch operations.
      *  Use this method when you do not want Fetch to keep processing downloads
      *  but do not want to release the instance of Fetch. However, you are still able to query
@@ -189,6 +197,14 @@ interface Fetch {
      * @return Instance
      * */
     fun resumeGroup(id: Int, func: Func<List<Download>>? = null, func2: Func<Error>? = null): Fetch
+
+    /**
+     * Resume all paused downloads associated the specified group.
+     *
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun resumeAll(): Fetch
 
     /**
      * Resume all paused downloads within the specified group.
@@ -657,6 +673,16 @@ interface Fetch {
      * @return Instance
      * */
     fun getDownloadsWithStatus(status: Status, func: Func<List<Download>>): Fetch
+
+    /**
+     * Gets all downloads with a specific status.
+     * @see com.tonyodev.fetch2.Status
+     * @param statuses Statuses to query.
+     * @param func Callback that the results will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun getDownloadsWithStatus(statuses: List<Status>, func: Func<List<Download>>): Fetch
 
     /**
      * Gets all downloads in a specific group with a specific status.
