@@ -153,9 +153,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         return null
     }
 
-    override fun getRequestFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): Downloader.FileDownloaderType {
-        return fileDownloaderType
-    }
+    override fun getRequestFileDownloaderType(request: Downloader.ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>) = fileDownloaderType
 
     override fun verifyContentHash(request: Downloader.ServerRequest, hash: String): Boolean {
         if (hash.isEmpty()) {
@@ -173,17 +171,12 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
 
     }
 
-    override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest): Boolean {
-        return false
-    }
+    override fun getHeadRequestMethodSupported(request: Downloader.ServerRequest) = false
 
-    override fun getRequestBufferSize(request: Downloader.ServerRequest): Int {
-        return DEFAULT_BUFFER_SIZE
-    }
+    override fun getRequestBufferSize(request: Downloader.ServerRequest) = DEFAULT_BUFFER_SIZE
 
-    override fun getRequestContentLength(request: Downloader.ServerRequest): Long {
-        return getRequestContentLength(request, this)
-    }
+    override fun getRequestContentLength(request: Downloader.ServerRequest) =
+        getRequestContentLength(request, this)
 
     override fun getFetchFileServerCatalog(serverRequest: Downloader.ServerRequest): List<FileResource> {
         val response = execute(serverRequest, object : InterruptMonitor {
@@ -210,29 +203,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 inputReader.close()
                 val data = stringBuilder.toString()
                 if (data.isNotEmpty()) {
-                    val json = JSONObject(data)
-                    val catalogArray = JSONArray(json.getString("catalog"))
-                    val size = catalogArray.length()
-                    val fileResourceList = mutableListOf<FileResource>()
-                    for (index in 0 until size) {
-                        val fileResource = FileResource()
-                        val catalogItem = catalogArray.getJSONObject(index)
-                        fileResource.id = catalogItem.getLong("id")
-                        fileResource.name = catalogItem.getString("name")
-                        fileResource.length = catalogItem.getLong("length")
-                        fileResource.extras = try {
-                            val map = mutableMapOf<String, String>()
-                            val customJson = JSONObject(catalogItem.getString("extras"))
-                            customJson.keys().forEach {
-                                map[it] = customJson.getString(it)
-                            }
-                            Extras(map)
-                        } catch (e: Exception) {
-                            Extras.emptyExtras
-                        }
-                        fileResource.md5 = catalogItem.getString("md5")
-                        fileResourceList.add(fileResource)
-                    }
+                    val fileResourceList = parseFileResourceList(data)
                     disconnect(response)
                     return fileResourceList
                 } else {
@@ -247,12 +218,41 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         }
     }
 
-    override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
-        return try {
+    private fun parseFileResourceList(data: String): List<FileResource> {
+        val json = JSONObject(data)
+        val catalogArray = JSONArray(json.getString("catalog"))
+        val size = catalogArray.length()
+        val fileResourceList = mutableListOf<FileResource>()
+
+        for (index in 0 until size) {
+            val fileResource = FileResource()
+            val catalogItem = catalogArray.getJSONObject(index)
+            fileResource.id = catalogItem.getLong("id")
+            fileResource.name = catalogItem.getString("name")
+            fileResource.length = catalogItem.getLong("length")
+            fileResource.extras = getExtrasFromCatalogItem(catalogItem)
+            fileResource.md5 = catalogItem.getString("md5")
+            fileResourceList.add(fileResource)
+        }
+        return fileResourceList
+    }
+
+    private fun getExtrasFromCatalogItem(catalogItem: JSONObject) = try {
+        val map = mutableMapOf<String, String>()
+        val customJson = JSONObject(catalogItem.getString("extras"))
+        customJson.keys().forEach {
+            map[it] = customJson.getString(it)
+        }
+        Extras(map)
+    } catch (e: Exception) {
+        Extras.emptyExtras
+    }
+
+    override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> =
+        try {
             getRequestSupportedFileDownloaderTypes(request, this)
         } catch (e: Exception) {
             mutableSetOf(fileDownloaderType)
         }
-    }
 
 }

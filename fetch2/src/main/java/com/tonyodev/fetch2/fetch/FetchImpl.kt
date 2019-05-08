@@ -208,6 +208,26 @@ open class FetchImpl constructor(override val namespace: String,
         return pauseGroup(id, null, null)
     }
 
+    override fun pauseAll(): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val downloads = fetchHandler.pauseAll()
+                    downloads.forEach {
+                        logger.d("Paused download $it")
+                        listenerCoordinator.mainListener.onPaused(it)
+                    }
+                } catch (e: Exception) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    error.throwable = e
+                }
+            }
+        }
+        return this
+    }
+
     override fun freeze(func: Func<Boolean>?, func2: Func<Error>?): Fetch {
         return synchronized(lock) {
             throwExceptionIfClosed()
@@ -335,6 +355,28 @@ open class FetchImpl constructor(override val namespace: String,
                 }
             }
         }
+    }
+
+    override fun resumeAll(): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val downloads = fetchHandler.resumeAll()
+                    downloads.forEach {
+                        logger.d("Queued download $it")
+                        listenerCoordinator.mainListener.onQueued(it, false)
+                        logger.d("Resumed download $it")
+                        listenerCoordinator.mainListener.onResumed(it)
+                    }
+                } catch (e: Exception) {
+                    logger.e("Fetch with namespace $namespace error", e)
+                    val error = getErrorFromMessage(e.message)
+                    error.throwable = e
+                }
+            }
+        }
+        return this
     }
 
     override fun remove(ids: List<Int>, func: Func<List<Download>>?, func2: Func<Error>?): Fetch {
@@ -841,6 +883,19 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 val downloads = fetchHandler.getDownloadsByRequestIdentifier(identifier)
+                uiHandler.post {
+                    func.call(downloads)
+                }
+            }
+            return this
+        }
+    }
+
+    override fun getDownloadsWithStatus(statuses: List<Status>, func: Func<List<Download>>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                val downloads = fetchHandler.getDownloadsWithStatus(statuses)
                 uiHandler.post {
                     func.call(downloads)
                 }

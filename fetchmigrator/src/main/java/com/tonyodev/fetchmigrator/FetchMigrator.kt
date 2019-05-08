@@ -9,6 +9,7 @@ import com.tonyodev.fetch2.database.FetchDatabaseManagerImpl
 import com.tonyodev.fetch2.database.DownloadDatabase
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.fetch.LiveSettings
+import com.tonyodev.fetch2core.FetchLogger
 import com.tonyodev.fetch2core.DefaultStorageResolver
 import com.tonyodev.fetch2core.getFileTempDir
 import com.tonyodev.fetchmigrator.fetch1.DatabaseHelper
@@ -57,6 +58,7 @@ fun migrateFromV1toV2(context: Context, v2Namespace: String): List<DownloadTrans
         val fetchTwoDatabaseManager = FetchDatabaseManagerImpl(
                 context = context,
                 namespace = v2Namespace,
+                logger = FetchLogger(),
                 migrations = DownloadDatabase.getMigrations(),
                 liveSettings = liveSettings,
                 fileExistChecksEnabled = false,

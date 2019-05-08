@@ -104,7 +104,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                         removeDownloadMappings(download)
                         groupInfoProvider.clean()
                     } catch (e: Exception) {
-
+                        logger.e("DownloadManager failed to start download $download", e)
                     } finally {
                         removeDownloadMappings(download)
                         val intent = Intent(ACTION_QUEUE_BACKOFF_RESET)

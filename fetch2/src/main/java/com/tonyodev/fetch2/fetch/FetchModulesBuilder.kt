@@ -38,6 +38,7 @@ object FetchModulesBuilder {
                 val newDatabaseManager = fetchConfiguration.fetchDatabaseManager ?: FetchDatabaseManagerImpl(
                         context = fetchConfiguration.appContext,
                         namespace = fetchConfiguration.namespace,
+                        logger = fetchConfiguration.logger,
                         migrations = DownloadDatabase.getMigrations(),
                         liveSettings = liveSettings,
                         fileExistChecksEnabled = fetchConfiguration.fileExistChecksEnabled,
