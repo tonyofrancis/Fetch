@@ -71,7 +71,7 @@ public class FetchHandlerInstrumentedTest {
         final Migration[] migrations = DownloadDatabase.getMigrations();
         final LiveSettings liveSettings = new LiveSettings(namespace);
         DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
-        fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false, defaultStorageResolver);
+        fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, fetchLogger, migrations, liveSettings, false, defaultStorageResolver);
         final FetchDatabaseManagerWrapper databaseManagerWrapper = new FetchDatabaseManagerWrapper(fetchDatabaseManager);
         final int concurrentLimit = FetchDefaults.DEFAULT_CONCURRENT_LIMIT;
         final HandlerWrapper handlerWrapper = new HandlerWrapper(namespace, null);

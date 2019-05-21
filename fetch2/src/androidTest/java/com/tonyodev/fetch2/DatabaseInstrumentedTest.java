@@ -48,7 +48,7 @@ public class DatabaseInstrumentedTest {
         final LiveSettings liveSettings = new LiveSettings(namespace);
         FetchLogger fetchLogger = new FetchLogger(true, namespace);
         DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
-        fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, migrations, liveSettings, false,
+        fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, fetchLogger, migrations, liveSettings, false,
                 defaultStorageResolver);
     }
 
