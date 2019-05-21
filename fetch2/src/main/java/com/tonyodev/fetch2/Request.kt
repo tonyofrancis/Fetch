@@ -61,19 +61,19 @@ open class Request constructor(
                 "headers=$headers, priority=$priority, networkType=$networkType, tag=$tag)"
     }
 
-    override fun writeToParcel(dest: Parcel?, flags: Int) {
-        dest?.writeString(url)
-        dest?.writeString(file)
-        dest?.writeLong(identifier)
-        dest?.writeInt(groupId)
-        dest?.writeSerializable(HashMap(headers))
-        dest?.writeInt(priority.value)
-        dest?.writeInt(networkType.value)
-        dest?.writeString(tag)
-        dest?.writeInt(enqueueAction.value)
-        dest?.writeInt(if (downloadOnEnqueue) 1 else 0)
-        dest?.writeSerializable(HashMap(extras.map))
-        dest?.writeInt(autoRetryMaxAttempts)
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(url)
+        parcel.writeString(file)
+        parcel.writeLong(identifier)
+        parcel.writeInt(groupId)
+        parcel.writeSerializable(HashMap(headers))
+        parcel.writeInt(priority.value)
+        parcel.writeInt(networkType.value)
+        parcel.writeString(tag)
+        parcel.writeInt(enqueueAction.value)
+        parcel.writeInt(if (downloadOnEnqueue) 1 else 0)
+        parcel.writeSerializable(HashMap(extras.map))
+        parcel.writeInt(autoRetryMaxAttempts)
     }
 
     override fun describeContents(): Int {
@@ -96,7 +96,6 @@ open class Request constructor(
             val downloadOnEnqueue = input.readInt() == 1
             val extras = input.readSerializable() as Map<String, String>
             val autoRetryMaxAttempts = input.readInt()
-            val autoRetryAttempts = input.readInt()
             val request = Request(url, file)
             request.identifier = identifier
             request.groupId = groupId

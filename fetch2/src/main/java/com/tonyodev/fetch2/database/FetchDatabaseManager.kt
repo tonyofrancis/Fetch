@@ -3,6 +3,7 @@ package com.tonyodev.fetch2.database
 import com.tonyodev.fetch2.PrioritySort
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.Extras
+import com.tonyodev.fetch2core.Logger
 import java.io.Closeable
 
 /**
@@ -16,13 +17,16 @@ interface FetchDatabaseManager : Closeable {
      * Checks if the database is closed.
      * */
     val isClosed: Boolean
-
+    /**
+     * Logger to be used
+     * */
+    val logger: Logger
     /**
      * Delegate used by Fetch to delete temporary files used to assist the parallel downloader.
      * This field is set by the Fetch Builder directly. Your implemention should set this to null
      * by default.
      * */
-    var delegate: FetchDatabaseManager.Delegate?
+    var delegate: Delegate?
 
     /**
      * Inserts a new download into the database.
@@ -82,7 +86,7 @@ interface FetchDatabaseManager : Closeable {
 
     /**
      * Gets a download from the database by id if it exists.
-     * @param the download id.
+     * @param id download id.
      * @return the download or null.
      * */
     fun get(id: Int): DownloadInfo?
@@ -108,6 +112,13 @@ interface FetchDatabaseManager : Closeable {
      * @return all downloads in the database with the specified status.
      * */
     fun getByStatus(status: Status): List<DownloadInfo>
+
+    /**
+     * Get all downloads by the specified statuses.
+     * @param statuses the query statuses list.
+     * @return all downloads in the database with the specified statuses.
+     * */
+    fun getByStatus(statuses: List<Status>): List<DownloadInfo>
 
     /**
      * Gets all downloads that belongs to the specified group.

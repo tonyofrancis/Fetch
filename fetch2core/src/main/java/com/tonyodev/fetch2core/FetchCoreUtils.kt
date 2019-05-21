@@ -232,10 +232,7 @@ fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): 
 fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Set<Downloader.FileDownloaderType> {
     val fileDownloaderTypeSet = mutableSetOf(Downloader.FileDownloaderType.SEQUENTIAL)
     return try {
-        val response = downloader.execute(request, object : InterruptMonitor {
-            override val isInterrupted: Boolean
-                get() = false
-        })
+        val response = downloader.execute(request, getSimpleInterruptMonitor())
         if (response != null) {
             if (isParallelDownloadingSupported(response.responseHeaders)) {
                 fileDownloaderTypeSet.add(Downloader.FileDownloaderType.PARALLEL)
@@ -250,10 +247,7 @@ fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, do
 
 fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Long {
     return try {
-        val response = downloader.execute(request, object : InterruptMonitor {
-            override val isInterrupted: Boolean
-                get() = false
-        })
+        val response = downloader.execute(request, getSimpleInterruptMonitor())
         val contentLength = response?.contentLength ?: -1L
         if (response != null) {
             downloader.disconnect(response)
@@ -336,4 +330,9 @@ fun copyStreamToString(inputStream: InputStream?, closeStream: Boolean = true): 
             }
         }
     }
+}
+
+fun getSimpleInterruptMonitor() = object : InterruptMonitor {
+    override val isInterrupted: Boolean
+        get() = false
 }

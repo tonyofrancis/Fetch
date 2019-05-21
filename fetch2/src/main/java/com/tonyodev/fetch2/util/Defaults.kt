@@ -37,3 +37,4 @@ val defaultPrioritySort = PrioritySort.ASC
 val defaultEnqueueAction = EnqueueAction.UPDATE_ACCORDINGLY
 val defaultDownloader: Downloader<*, *> = HttpUrlConnectionDownloader()
 val defaultFileServerDownloader: FileServerDownloader = FetchFileServerDownloader()
+val defaultLogger: Logger = FetchLogger(DEFAULT_LOGGING_ENABLED, DEFAULT_TAG)

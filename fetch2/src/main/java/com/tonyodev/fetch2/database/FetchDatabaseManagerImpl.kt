@@ -13,10 +13,12 @@ import com.tonyodev.fetch2.fetch.LiveSettings
 import com.tonyodev.fetch2.util.defaultNoError
 import com.tonyodev.fetch2core.DefaultStorageResolver
 import com.tonyodev.fetch2core.Extras
+import com.tonyodev.fetch2core.Logger
 
 
 class FetchDatabaseManagerImpl constructor(context: Context,
                                            private val namespace: String,
+                                           override val logger: Logger,
                                            migrations: Array<Migration>,
                                            private val liveSettings: LiveSettings,
                                            private val fileExistChecksEnabled: Boolean,
@@ -66,6 +68,7 @@ class FetchDatabaseManagerImpl constructor(context: Context,
     override fun deleteAll() {
         throwExceptionIfClosed()
         requestDatabase.requestDao().deleteAll()
+        logger.d("Cleared Database $namespace")
     }
 
     override fun update(downloadInfo: DownloadInfo) {
@@ -89,12 +92,12 @@ class FetchDatabaseManagerImpl constructor(context: Context,
                     + "WHERE ${DownloadDatabase.COLUMN_ID} = ${downloadInfo.id}")
             database.setTransactionSuccessful()
         } catch (e: SQLiteException) {
-
+            logger.e("DatabaseManager exception", e)
         }
         try {
             database.endTransaction()
         } catch (e: SQLiteException) {
-
+            logger.e("DatabaseManager exception", e)
         }
     }
 
@@ -148,6 +151,15 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         return downloads
     }
 
+    override fun getByStatus(statuses: List<Status>): List<DownloadInfo> {
+        throwExceptionIfClosed()
+        var downloads = requestDatabase.requestDao().getByStatus(statuses)
+        if (sanitize(downloads)) {
+            downloads = downloads.filter { statuses.contains(it.status) }
+        }
+        return downloads
+    }
+
     override fun getByGroup(group: Int): List<DownloadInfo> {
         throwExceptionIfClosed()
         val downloads = requestDatabase.requestDao().getByGroup(group)
@@ -157,7 +169,7 @@ class FetchDatabaseManagerImpl constructor(context: Context,
 
     override fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>): List<DownloadInfo> {
         throwExceptionIfClosed()
-        var downloads = requestDatabase.requestDao().getByGroupWithStatus(groupId, statuses.toMutableList())
+            var downloads = requestDatabase.requestDao().getByGroupWithStatus(groupId, statuses)
         if (sanitize(downloads)) {
             downloads = downloads.filter { download ->
                 statuses.any { it == download.status }
@@ -225,40 +237,10 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         for (i in 0 until downloads.size) {
             downloadInfo = downloads[i]
             when (downloadInfo.status) {
-                Status.COMPLETED -> {
-                    if (downloadInfo.total < 1 && downloadInfo.downloaded > 0) {
-                        downloadInfo.total = downloadInfo.downloaded
-                        downloadInfo.error = defaultNoError
-                        updatedDownloadsList.add(downloadInfo)
-                    }
-                }
-                Status.DOWNLOADING -> {
-                    if (firstEntry) {
-                        val status = if (downloadInfo.downloaded > 0 && downloadInfo.total >
-                                0 && downloadInfo.downloaded >= downloadInfo.total) {
-                            Status.COMPLETED
-                        } else {
-                            Status.QUEUED
-                        }
-                        downloadInfo.status = status
-                        downloadInfo.error = defaultNoError
-                        updatedDownloadsList.add(downloadInfo)
-                    }
-                }
+                Status.COMPLETED -> onCompleted(downloadInfo)
+                Status.DOWNLOADING -> onDownloading(downloadInfo, firstEntry)
                 Status.QUEUED,
-                Status.PAUSED -> {
-                    if (downloadInfo.downloaded > 0) {
-                        if (fileExistChecksEnabled) {
-                            if (!defaultStorageResolver.fileExists(downloadInfo.file)) {
-                                downloadInfo.downloaded = 0
-                                downloadInfo.total = -1L
-                                downloadInfo.error = defaultNoError
-                                updatedDownloadsList.add(downloadInfo)
-                                delegate?.deleteTempFilesForDownload(downloadInfo)
-                            }
-                        }
-                    }
-                }
+                Status.PAUSED -> onPaused(downloadInfo)
                 Status.CANCELLED,
                 Status.FAILED,
                 Status.ADDED,
@@ -273,10 +255,46 @@ class FetchDatabaseManagerImpl constructor(context: Context,
             try {
                 update(updatedDownloadsList)
             } catch (e: Exception) {
+                logger.e("Failed to update", e)
             }
         }
         updatedDownloadsList.clear()
         return updatedCount > 0
+    }
+
+    private fun onPaused(downloadInfo: DownloadInfo) {
+        if (downloadInfo.downloaded > 0) {
+            if (fileExistChecksEnabled) {
+                if (!defaultStorageResolver.fileExists(downloadInfo.file)) {
+                    downloadInfo.downloaded = 0
+                    downloadInfo.total = -1L
+                    downloadInfo.error = defaultNoError
+                    updatedDownloadsList.add(downloadInfo)
+                    delegate?.deleteTempFilesForDownload(downloadInfo)
+                }
+            }
+        }
+    }
+
+    private fun onDownloading(downloadInfo: DownloadInfo, firstEntry: Boolean) {
+        if (firstEntry) {
+            val status = if (downloadInfo.downloaded > 0 && downloadInfo.total > 0 && downloadInfo.downloaded >= downloadInfo.total) {
+                Status.COMPLETED
+            } else {
+                Status.QUEUED
+            }
+            downloadInfo.status = status
+            downloadInfo.error = defaultNoError
+            updatedDownloadsList.add(downloadInfo)
+        }
+    }
+
+    private fun onCompleted(downloadInfo: DownloadInfo) {
+        if (downloadInfo.total < 1 && downloadInfo.downloaded > 0) {
+            downloadInfo.total = downloadInfo.downloaded
+            downloadInfo.error = defaultNoError
+            updatedDownloadsList.add(downloadInfo)
+        }
     }
 
     private fun sanitize(downloadInfo: DownloadInfo?, initializing: Boolean = false): Boolean {
@@ -293,6 +311,7 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         }
         closed = true
         requestDatabase.close()
+        logger.d("Database closed")
     }
 
     private fun throwExceptionIfClosed() {
