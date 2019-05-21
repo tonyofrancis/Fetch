@@ -55,7 +55,7 @@ public class DownloadPriorityIteratorProcessorTest {
         final Migration[] migrations = DownloadDatabase.getMigrations();
         final LiveSettings liveSettings = new LiveSettings(namespace);
         DefaultStorageResolver defaultStorageResolver = new DefaultStorageResolver(appContext, FetchCoreUtils.getFileTempDir(appContext));
-        final FetchDatabaseManager fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, migrations, liveSettings,
+        final FetchDatabaseManager fetchDatabaseManager = new FetchDatabaseManagerImpl(appContext, namespace, fetchLogger, migrations, liveSettings,
                 false, defaultStorageResolver);
         final FetchDatabaseManagerWrapper databaseManagerWrapper = new FetchDatabaseManagerWrapper(fetchDatabaseManager);
         final Downloader client = FetchDefaults.getDefaultDownloader();
