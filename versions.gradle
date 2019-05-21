@@ -12,7 +12,7 @@ ext {
     library_compile_version = 28
     library_target_version = 28
     library_build_tools_version = "28.0.3"
-    gradle_tools_version = '3.4.0'
+    gradle_tools_version = '3.4.1'
     rxJava2_version = "2.2.8"
     rxAndroid2_version = "2.1.1"
     timber_version = "4.7.1"
