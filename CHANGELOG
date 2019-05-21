@@ -1,3 +1,10 @@
+Version 3.0.7
+Added new pauseAll method on Fetch.
+Added new resumeAll method on Fetch.
+Better logging.
+Library code cleanup.
+Special thanks to Alex Starchenko for submitting the fixes and improvements
+
 Version 3.0.6
 Identical to the androidx version 3.1.0
 
