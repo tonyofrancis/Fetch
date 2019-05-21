@@ -1,4 +1,4 @@
-Version 3.0.7
+Version 3.0.7/ Android x version 3.1.1
 Added new pauseAll method on Fetch.
 Added new resumeAll method on Fetch.
 Better logging.

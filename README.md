@@ -54,7 +54,7 @@ implementation "com.tonyodev.fetch2:fetch2:3.0.7"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2:xfetch2:3.1.0"
+implementation "androidx.tonyodev.fetch2:xfetch2:3.1.1"
 ```
 
 Next, get an instance of Fetch and request a download.
@@ -224,7 +224,7 @@ implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:3.0.7"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.1.0"
+implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.1.1"
 ```
 
 Set the OkHttp Downloader for Fetch to use.
@@ -250,7 +250,7 @@ implementation "com.tonyodev.fetch2rx:fetch2rx:3.0.7"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2rx:xfetch2rx:3.1.0"
+implementation "androidx.tonyodev.fetch2rx:xfetch2rx:3.1.1"
 ```
 
 RxFetch makes it super easy to enqueue download requests and query downloads using rxJava2 functional methods.
@@ -290,7 +290,7 @@ implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:3.0.7"
 ```
 Androidx use: 
 ```java
-implementation "androidx.tonyodev.fetch2fileserver:xfetch2fileserver:3.1.0"
+implementation "androidx.tonyodev.fetch2fileserver:xfetch2fileserver:3.1.1"
 ```
 
 Start a FetchFileServer instance and add resource files that it can server to connected clients.
@@ -403,7 +403,7 @@ implementation "com.tonyodev.fetchmigrator:fetchmigrator:3.0.7"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetchmigrator:xfetchmigrator:3.1.0"
+implementation "androidx.tonyodev.fetchmigrator:xfetchmigrator:3.1.1"
 ```
 
 Then run the Migrator.
