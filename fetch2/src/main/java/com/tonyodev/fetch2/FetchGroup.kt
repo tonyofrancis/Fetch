@@ -69,7 +69,7 @@ interface FetchGroup {
     val removedDownloads: List<Download>
 
     /**
-     * The groups downloading progress.
+     * The groups downloading progress. -1 if the group progress is indeterminate.
      * */
     val groupDownloadProgress: Int
 

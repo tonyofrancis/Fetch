@@ -7,6 +7,7 @@ import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
 import com.tonyodev.fetch2core.FetchObserver
 import com.tonyodev.fetch2core.Reason
+import com.tonyodev.fetch2core.calculateProgress
 
 class FetchGroupInfo(override val id: Int = 0,
                      override val namespace: String): FetchGroup {
@@ -64,8 +65,17 @@ class FetchGroupInfo(override val id: Int = 0,
 
     override val groupDownloadProgress: Int
         get() {
-            val progressSum = downloads.sumBy { it.progress }
-            return  progressSum / downloads.size
+            return if (downloads.any { it.total < 1L }) {
+                -1
+            } else {
+                var downloaded = 0L
+                var total = 0L
+                for (download in downloads) {
+                    downloaded += download.downloaded
+                    total += download.total
+                }
+                return calculateProgress(downloaded, total)
+            }
         }
 
     override val observers: Set<FetchObserver<List<Download>>>
