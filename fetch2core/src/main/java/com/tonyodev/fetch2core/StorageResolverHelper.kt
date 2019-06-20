@@ -63,7 +63,7 @@ fun getOutputResourceWrapper(filePath: String, contentResolver: ContentResolver)
 fun getOutputResourceWrapper(fileUri: Uri, contentResolver: ContentResolver): OutputResourceWrapper {
     return when {
         fileUri.scheme == "content" -> {
-            val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "rw")
+            val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "w")
             if (parcelFileDescriptor == null) {
                 throw FileNotFoundException("$fileUri $FILE_NOT_FOUND")
             } else {
@@ -75,7 +75,7 @@ fun getOutputResourceWrapper(fileUri: Uri, contentResolver: ContentResolver): Ou
             if (file.exists() && file.canWrite()) {
                 getOutputResourceWrapper(file)
             } else {
-                val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "rw")
+                val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "w")
                 if (parcelFileDescriptor == null) {
                     throw FileNotFoundException("$fileUri $FILE_NOT_FOUND")
                 } else {
@@ -185,7 +185,7 @@ fun createFileAtPath(filePath: String, increment: Boolean, context: Context): St
                 createLocalFile(uri.path ?: filePath, increment)
             }
             uri.scheme == "content" -> {
-                val parcelFileDescriptor = context.contentResolver.openFileDescriptor(uri, "rw")
+                val parcelFileDescriptor = context.contentResolver.openFileDescriptor(uri, "w")
                 if (parcelFileDescriptor == null) {
                     throw IOException(FNC)
                 } else {
