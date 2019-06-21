@@ -33,7 +33,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val internetCheckUrl: String?,
                                              val activeDownloadsCheckInterval: Long,
                                              val createFileOnEnqueue: Boolean,
-                                             val maxAutoRetryAttempts: Int) {
+                                             val maxAutoRetryAttempts: Int,
+                                             val preAllocateFileOnCreation: Boolean) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -68,6 +69,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var activeDownloadCheckInterval = DEFAULT_HAS_ACTIVE_DOWNLOADS_INTERVAL_IN_MILLISECONDS
         private var createFileOnEnqueue = DEFAULT_CREATE_FILE_ON_ENQUEUE
         private var maxAutoRetryAttempts = DEFAULT_GLOBAL_AUTO_RETRY_ATTEMPTS
+        private var preAllocateFileOnCreation = DEFAULT_PREALLOCATE_FILE_ON_CREATE
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -338,6 +340,16 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Preallocate the download file on the local storage when a request is enqueued.
+         * @param preAllocateFile true to pre allocate. False otherwise. The default is true.
+         * @return Builder
+         * */
+        fun preAllocateFileOnCreation(preAllocateFile: Boolean): Builder {
+            this.preAllocateFileOnCreation = preAllocateFile
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -373,7 +385,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     internetCheckUrl = internetCheckUrl,
                     activeDownloadsCheckInterval = activeDownloadCheckInterval,
                     createFileOnEnqueue = createFileOnEnqueue,
-                    maxAutoRetryAttempts = maxAutoRetryAttempts)
+                    maxAutoRetryAttempts = maxAutoRetryAttempts,
+                    preAllocateFileOnCreation = preAllocateFileOnCreation)
         }
 
     }
@@ -404,6 +417,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (activeDownloadsCheckInterval != other.activeDownloadsCheckInterval) return false
         if (createFileOnEnqueue != other.createFileOnEnqueue) return false
         if (maxAutoRetryAttempts != other.maxAutoRetryAttempts) return false
+        if (preAllocateFileOnCreation != other.preAllocateFileOnCreation) return false
         return true
     }
 
@@ -438,6 +452,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         result = 31 * result + activeDownloadsCheckInterval.hashCode()
         result = 31 * result + createFileOnEnqueue.hashCode()
         result = 31 * result + maxAutoRetryAttempts.hashCode()
+        result = 31 * result + preAllocateFileOnCreation.hashCode()
         return result
     }
 
@@ -450,7 +465,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                 "fileExistChecksEnabled=$fileExistChecksEnabled, storageResolver=$storageResolver, " +
                 "fetchNotificationManager=$fetchNotificationManager, fetchDatabaseManager=$fetchDatabaseManager," +
                 " backgroundHandler=$backgroundHandler, prioritySort=$prioritySort, internetCheckUrl=$internetCheckUrl," +
-                " activeDownloadsCheckInterval=$activeDownloadsCheckInterval, createFileOnEnqueue=$createFileOnEnqueue, " +
+                " activeDownloadsCheckInterval=$activeDownloadsCheckInterval, createFileOnEnqueue=$createFileOnEnqueue," +
+                " preAllocateFileOnCreation=$preAllocateFileOnCreation, " +
                 "maxAutoRetryAttempts=$maxAutoRetryAttempts)"
     }
 

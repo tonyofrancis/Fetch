@@ -24,7 +24,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                  private val retryOnNetworkGain: Boolean,
                                  private val fileTempDir: String,
                                  private val hashCheckingEnabled: Boolean,
-                                 private val storageResolver: StorageResolver) : FileDownloader {
+                                 private val storageResolver: StorageResolver,
+                                 private val preAllocateFileOnCreation: Boolean) : FileDownloader {
 
     @Volatile
     override var interrupted = false
@@ -400,6 +401,9 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
         actionsTotal = fileSlicesDownloadsList.size
         if (!storageResolver.fileExists(request.file)) {
             storageResolver.createFile(request.file, initialDownload.enqueueAction == EnqueueAction.INCREMENT_FILE_NAME)
+        }
+        if (preAllocateFileOnCreation) {
+            storageResolver.preAllocateFile(request.file, downloadInfo.total)
         }
         outputResourceWrapper = storageResolver.getRequestOutputResourceWrapper(request)
         outputResourceWrapper?.setWriteOffset(0)

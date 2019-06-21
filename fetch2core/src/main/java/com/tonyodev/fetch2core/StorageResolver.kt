@@ -18,6 +18,15 @@ interface StorageResolver {
      * */
     fun createFile(file: String, increment: Boolean = false): String
 
+    /**
+     * This method asks the file system to preallocate the file if needed.
+     * @param file the file to pre allocate.
+     * @param contentLength the file content length
+     * @throws IOException if the file cannot be preallocated.
+     * @return true if the file was allocated. Otherwise false
+     * */
+    fun preAllocateFile(file: String, contentLength: Long = -1): Boolean
+
     /** This method is called by Fetch to delete the File object or remove an entry in the storage database
      * whatever that is. This method can throw IOExceptions if the file cannot be deleted.
      * This method is called on a background thread.

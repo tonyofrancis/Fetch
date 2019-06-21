@@ -119,7 +119,8 @@ object FetchModulesBuilder {
                     context = fetchConfiguration.appContext,
                     namespace = fetchConfiguration.namespace,
                     groupInfoProvider = groupInfoProvider,
-                    globalAutoRetryMaxAttempts = fetchConfiguration.maxAutoRetryAttempts)
+                    globalAutoRetryMaxAttempts = fetchConfiguration.maxAutoRetryAttempts,
+                    preAllocateFileOnCreation = fetchConfiguration.preAllocateFileOnCreation)
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,
                     downloadProvider = downloadProvider,
