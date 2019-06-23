@@ -1,3 +1,14 @@
+Version 3.0.8/  Android x version 3.1.2
+1. Fixed group error reporting bugs with FetchGroup.getProgress() method.
+2. Fixed network on main thread error.
+3. Improved network connection checks.
+4. Improvements and fixes to the StorageResolver when working with the Storage Access Framework.
+5. Files are now pre allocated on local storage on request enqueue. This prevents waste of data. See FetchConfiguration method `fun preAllocateFileOnCreation(preAllocateFile: Boolean)` to enable or disable this feature. On by default.
+6. Added new field segment to Downloader.Request. See java docs for details.
+7. Added new Fetch method `fun getContentLengthForRequests(requests:List<Request>, fromServer: Boolean, func: Func<List<Pair<Request,Long>>>, func2: Func<List<Pair<Request, Error>>>): Fetch`
+8. Performance improvements to the Parallel downloader mode.
+
+
 Version 3.0.7/ Android x version 3.1.1
 Added new pauseAll method on Fetch.
 Added new resumeAll method on Fetch.
