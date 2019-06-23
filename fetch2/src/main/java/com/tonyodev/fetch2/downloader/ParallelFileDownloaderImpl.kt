@@ -393,6 +393,11 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
             if (downloadSpeedCheckTimeElapsed) {
                 downloadSpeedStartTime = System.nanoTime()
             }
+            try {
+                Thread.sleep(progressReportingIntervalMillis)
+            } catch (e: InterruptedException) {
+                logger.e("FileDownloader", e)
+            }
         }
     }
 
