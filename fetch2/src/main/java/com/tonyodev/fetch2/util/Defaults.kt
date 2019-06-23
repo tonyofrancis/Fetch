@@ -28,6 +28,7 @@ const val DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED = false
 const val DEFAULT_ENABLE_LISTENER_NOTIFY_ON_REQUEST_UPDATED = true
 const val DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED = false
 const val DEFAULT_DOWNLOAD_ON_ENQUEUE = true
+const val DEFAULT_PREALLOCATE_FILE_ON_CREATE = true
 val defaultNetworkType = NetworkType.ALL
 val defaultGlobalNetworkType = NetworkType.GLOBAL_OFF
 val defaultPriority = Priority.NORMAL

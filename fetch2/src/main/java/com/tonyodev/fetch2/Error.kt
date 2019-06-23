@@ -125,7 +125,12 @@ enum class Error constructor(
     /**
      * Indicates that the operation to rename the file failed for some reason.
      * */
-    FAILED_TO_RENAME_FILE(29);
+    FAILED_TO_RENAME_FILE(29),
+
+    /**
+     * Indicates that an error occured when pre allocating the needed space on the storage system for the download.
+     * */
+    FILE_ALLOCATION_FAILED(30);
 
     companion object {
 
@@ -160,6 +165,7 @@ enum class Error constructor(
                 27 -> ENQUEUED_REQUESTS_ARE_NOT_DISTINCT
                 28 -> FAILED_TO_RENAME_INCOMPLETE_DOWNLOAD_FILE
                 29 -> FAILED_TO_RENAME_FILE
+                30 -> FILE_ALLOCATION_FAILED
                 else -> UNKNOWN
             }
         }

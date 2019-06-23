@@ -44,9 +44,11 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
     private var backOffTime = DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS
     private val networkChangeListener: NetworkInfoProvider.NetworkChangeListener = object : NetworkInfoProvider.NetworkChangeListener {
         override fun onNetworkChanged() {
-            if (!stopped && !paused && networkInfoProvider.isNetworkAvailable
-                    && backOffTime > DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS) {
-                resetBackOffTime()
+            handlerWrapper.post {
+                if (!stopped && !paused && networkInfoProvider.isNetworkAvailable
+                        && backOffTime > DEFAULT_PRIORITY_QUEUE_INTERVAL_IN_MILLISECONDS) {
+                    resetBackOffTime()
+                }
             }
         }
     }

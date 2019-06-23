@@ -81,6 +81,8 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FAILED_TO_RENAME_INCOMPLETE_DOWNLOAD_FILE
     } else if(message.contains(FILE_CANNOT_BE_RENAMED, true)) {
         Error.FAILED_TO_RENAME_FILE
+    } else if(message.contains(FILE_ALLOCATION_ERROR, true)) {
+        Error.FILE_ALLOCATION_FAILED
     } else {
         Error.UNKNOWN
     }

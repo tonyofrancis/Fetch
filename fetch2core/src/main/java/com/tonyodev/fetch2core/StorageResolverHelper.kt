@@ -63,7 +63,7 @@ fun getOutputResourceWrapper(filePath: String, contentResolver: ContentResolver)
 fun getOutputResourceWrapper(fileUri: Uri, contentResolver: ContentResolver): OutputResourceWrapper {
     return when {
         fileUri.scheme == "content" -> {
-            val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "rw")
+            val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "w")
             if (parcelFileDescriptor == null) {
                 throw FileNotFoundException("$fileUri $FILE_NOT_FOUND")
             } else {
@@ -75,7 +75,7 @@ fun getOutputResourceWrapper(fileUri: Uri, contentResolver: ContentResolver): Ou
             if (file.exists() && file.canWrite()) {
                 getOutputResourceWrapper(file)
             } else {
-                val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "rw")
+                val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "w")
                 if (parcelFileDescriptor == null) {
                     throw FileNotFoundException("$fileUri $FILE_NOT_FOUND")
                 } else {
@@ -185,7 +185,7 @@ fun createFileAtPath(filePath: String, increment: Boolean, context: Context): St
                 createLocalFile(uri.path ?: filePath, increment)
             }
             uri.scheme == "content" -> {
-                val parcelFileDescriptor = context.contentResolver.openFileDescriptor(uri, "rw")
+                val parcelFileDescriptor = context.contentResolver.openFileDescriptor(uri, "w")
                 if (parcelFileDescriptor == null) {
                     throw IOException(FNC)
                 } else {
@@ -205,5 +205,59 @@ fun createLocalFile(filePath: String, increment: Boolean): String {
         filePath
     } else {
         getIncrementedFileIfOriginalExists(filePath).absolutePath
+    }
+}
+
+fun allocateFile(filePath: String, contentLength: Long, context: Context) {
+    return if (isUriPath(filePath)) {
+        val uri = Uri.parse(filePath)
+        when {
+            uri.scheme == "file" -> {
+                allocateFile(File(uri.path ?: filePath), contentLength)
+            }
+            uri.scheme == "content" -> {
+                val parcelFileDescriptor = context.contentResolver.openFileDescriptor(uri, "w")
+                if (parcelFileDescriptor == null) {
+                    throw IOException(FILE_ALLOCATION_ERROR)
+                } else {
+                    allocateParcelFileDescriptor(parcelFileDescriptor, contentLength)
+                }
+            }
+            else -> throw IOException(FILE_ALLOCATION_ERROR)
+        }
+    } else {
+        allocateFile(File(filePath), contentLength)
+    }
+}
+
+fun allocateParcelFileDescriptor(parcelFileDescriptor: ParcelFileDescriptor, contentLength: Long) {
+    if (contentLength > 0) {
+        try {
+            val fileOutputStream = FileOutputStream(parcelFileDescriptor.fileDescriptor)
+            if (fileOutputStream.channel.size() == contentLength) {
+                return
+            }
+            fileOutputStream.channel.position(contentLength - 1.toLong())
+            fileOutputStream.write(1)
+        } catch (e: Exception) {
+            throw IOException(FILE_ALLOCATION_ERROR)
+        }
+    }
+}
+
+fun allocateFile(file: File, contentLength: Long) {
+    if (!file.exists()) {
+        createFile(file)
+    }
+    if (file.length() == contentLength) {
+        return
+    }
+    if (contentLength > 0) {
+        try {
+            val randomAccessFile = RandomAccessFile(file, "rw")
+            randomAccessFile.setLength(contentLength)
+        } catch (e: Exception) {
+            throw IOException(FILE_ALLOCATION_ERROR)
+        }
     }
 }

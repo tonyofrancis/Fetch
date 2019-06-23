@@ -29,7 +29,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                           private val context: Context,
                           private val namespace: String,
                           private val groupInfoProvider: GroupInfoProvider,
-                          private val globalAutoRetryMaxAttempts: Int) : DownloadManager {
+                          private val globalAutoRetryMaxAttempts: Int,
+                          private val preAllocateFileOnCreation: Boolean) : DownloadManager {
 
     private val lock = Any()
     private var executor: ExecutorService? = getNewDownloadExecutorService(concurrentLimit)
@@ -267,7 +268,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                     networkInfoProvider = networkInfoProvider,
                     retryOnNetworkGain = retryOnNetworkGain,
                     hashCheckingEnabled = hashCheckingEnabled,
-                    storageResolver = storageResolver)
+                    storageResolver = storageResolver,
+                    preAllocateFileOnCreation = preAllocateFileOnCreation)
         } else {
             ParallelFileDownloaderImpl(
                     initialDownload = download,
@@ -278,7 +280,8 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                     retryOnNetworkGain = retryOnNetworkGain,
                     fileTempDir = storageResolver.getDirectoryForFileDownloaderTypeParallel(request),
                     hashCheckingEnabled = hashCheckingEnabled,
-                    storageResolver = storageResolver)
+                    storageResolver = storageResolver,
+                    preAllocateFileOnCreation = preAllocateFileOnCreation)
         }
     }
 

@@ -987,6 +987,32 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun getContentLengthForRequests(requests: List<Request>, fromServer: Boolean): Convertible<Pair<List<Pair<Request, Long>>, List<Pair<Request, Error>>>> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(Pair(requests, fromServer))
+                    .subscribeOn(AndroidSchedulers.from(handlerWrapper.getWorkTaskLooper()))
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val results = mutableListOf<Pair<Request, Long>>()
+                        val results2 = mutableListOf<Pair<Request, Error>>()
+                        for (request in requests) {
+                            try {
+                                results.add(Pair(request, fetchHandler.getContentLengthForRequest(request, fromServer)))
+                            } catch (e: Exception) {
+                                logger.e("RxFetch with namespace $namespace error", e)
+                                val error = getErrorFromMessage(e.message)
+                                error.throwable = e
+                                results2.add(Pair(request, error))
+                            }
+                        }
+                        Flowable.just(Pair(results as List<Pair<Request, Long>>, results2 as List<Pair<Request, Error>>))
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
     override fun getServerResponse(url: String, headers: Map<String, String>?): Convertible<Downloader.Response> {
         return synchronized(lock) {
             throwExceptionIfClosed()

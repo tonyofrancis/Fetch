@@ -1,6 +1,7 @@
 package com.tonyodev.fetch2core
 
 import android.content.Context
+import java.io.FileNotFoundException
 
 /** The default Storage Resolver used by Fetch. Extend this class if you want to provide your
  * own implementation.*/
@@ -43,6 +44,17 @@ open class DefaultStorageResolver(
             return false
         }
         return renameFile(oldFile, newFile, context)
+    }
+
+    override fun preAllocateFile(file: String, contentLength: Long): Boolean {
+        if (file.isEmpty()) {
+            throw FileNotFoundException("$file $FILE_NOT_FOUND")
+        }
+        if (contentLength < 1) {
+            return true
+        }
+        allocateFile(file, contentLength, context)
+        return true
     }
 
 }

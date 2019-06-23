@@ -1063,6 +1063,34 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun getContentLengthForRequests(requests: List<Request>, fromServer: Boolean, func: Func<List<Pair<Request, Long>>>, func2: Func<List<Pair<Request, Error>>>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.executeWorkerTask {
+                val results = mutableListOf<Pair<Request, Long>>()
+                val results2 = mutableListOf<Pair<Request, Error>>()
+                for (request in requests) {
+                    try {
+                        results.add(Pair(request, fetchHandler.getContentLengthForRequest(request, fromServer)))
+                    } catch (e: Exception) {
+                        logger.e("Fetch with namespace $namespace error", e)
+                        val error = getErrorFromMessage(e.message)
+                        error.throwable = e
+                        results2.add(Pair(request, error))
+                    }
+                }
+                uiHandler.post {
+                    func.call(results)
+                }
+                uiHandler.post {
+                    func2.call(results2)
+                }
+            }
+            return this
+        }
+    }
+
+
     override fun getServerResponse(url: String,
                                    headers: Map<String, String>?,
                                    func: Func<Downloader.Response>,
