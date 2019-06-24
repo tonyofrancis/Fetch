@@ -801,6 +801,22 @@ interface Fetch {
     fun getContentLengthForRequest(request: Request, fromServer: Boolean, func: Func<Long>, func2: Func<Error>?): Fetch
 
     /**
+     * Gets the content Length for each request in the passed in list. If the request or contentLength cannot be found in
+     * the Fetch database(meaning Fetch never processed the request and started downloading it) -1 is returned.
+     * However, setting fromServer to true will create a new connection to the server to get the connectLength
+     * if Fetch does not already contain the data in the database for the request.
+     * @param requests Request list. Can be a managed or un-managed list of requests. The requests are not stored in
+     * the fetch database.
+     * @param fromServer If true, fetch will attempt to get the ContentLength
+     * from the server directly by making a network request. Otherwise no action is taken.
+     * @param func callback which returns a list of all the success request pairs with their content length.
+     * @param func2 callback used to return a list of all the request that error when trying to get their content length.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun getContentLengthForRequests(requests:List<Request>, fromServer: Boolean, func: Func<List<Pair<Request,Long>>>, func2: Func<List<Pair<Request, Error>>>): Fetch
+
+    /**
      * Gets the Server Response for the url and associated headers.
      * @param url the url. Cannot be null.
      * @param headers the request headers for the url. Can be null.

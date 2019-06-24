@@ -72,7 +72,8 @@ open class OkHttpDownloader @JvmOverloads constructor(
                 requestMethod = oldRequest.requestMethod,
                 extras = oldRequest.extras,
                 redirected = true,
-                redirectUrl = redirectUrl)
+                redirectUrl = redirectUrl,
+                segment = oldRequest.segment)
     }
 
     override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
