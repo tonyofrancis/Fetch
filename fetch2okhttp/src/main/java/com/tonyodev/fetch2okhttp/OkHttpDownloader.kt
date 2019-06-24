@@ -102,7 +102,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
             code = okHttpResponse.code()
         }
         val success = okHttpResponse.isSuccessful
-        var contentLength = okHttpResponse.body()?.contentLength() ?: -1L
+        var contentLength = getContentLengthFromHeader(responseHeaders, -1)
         val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
         val errorResponseString: String? = if (!success) {
             copyStreamToString(byteStream, false)

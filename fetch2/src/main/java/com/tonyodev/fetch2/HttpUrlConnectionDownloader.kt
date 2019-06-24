@@ -79,7 +79,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         var hash = ""
         if (isResponseOk(code)) {
             success = true
-            contentLength = client.getHeaderField("Content-Length")?.toLong() ?: -1L
+            contentLength = getContentLengthFromHeader(responseHeaders, contentLength)
             byteStream = client.inputStream
             hash = getContentHash(responseHeaders)
         } else {
