@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2fileserver.database
 
-import android.arch.persistence.room.*
+import androidx.room.*
 import com.tonyodev.fetch2fileserver.database.FileResourceInfoDatabase.Companion.COLUMN_ID
 import com.tonyodev.fetch2fileserver.database.FileResourceInfoDatabase.Companion.COLUMN_NAME
 import com.tonyodev.fetch2fileserver.database.FileResourceInfoDatabase.Companion.TABLE_NAME

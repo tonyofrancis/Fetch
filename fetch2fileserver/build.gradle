@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-kapt'
 
-//apply plugin: 'com.novoda.bintray-release'
+apply plugin: 'com.novoda.bintray-release'
 
 buildscript {
     apply from: '../versions.gradle'
@@ -15,7 +15,7 @@ buildscript {
     dependencies {
         classpath "com.android.tools.build:gradle:$gradle_tools_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-//        classpath "com.novoda:bintray-release:$novoda_bintray_version"
+        classpath "com.novoda:bintray-release:$novoda_bintray_version"
     }
 }
 
@@ -28,7 +28,7 @@ android {
         versionCode library_version_code
         versionName library_version
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
     }
 
@@ -44,8 +44,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     sourceSets {
@@ -56,26 +56,26 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "com.android.support:appcompat-v7:$android_support_version"
+    implementation "androidx.appcompat:appcompat:$android_support_version"
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    kapt "android.arch.persistence.room:compiler:$room_version"
-    api "android.arch.persistence.room:runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    api "androidx.room:room-runtime:$room_version"
 
     api project(':fetch2core')
 
     testImplementation "junit:junit:$junit_version"
-    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
+    androidTestImplementation "androidx.test:runner:$test_runner_version"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
 }
 
-//publish {
-//    userOrg = 'tonyofrancis'
-//    groupId = 'com.tonyodev.fetch2fileserver'
-//    artifactId = 'fetch2fileserver'
-//    publishVersion = library_version
-//    desc = 'Fetch File Server'
-//    website = 'https://github.com/tonyofrancis/fetch'
-//}
+publish {
+    userOrg = 'tonyofrancis'
+    groupId = 'androidx.tonyodev.fetch2fileserver'
+    artifactId = 'xfetch2fileserver'
+    publishVersion = library_version
+    desc = 'Fetch File Server'
+    website = 'https://github.com/tonyofrancis/fetch'
+}
 
 tasks.withType(Javadoc).all {
     enabled = false

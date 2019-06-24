@@ -4,7 +4,7 @@
  * gradle plugin from the resource data it found. It
  * should not be modified by hand.
  */
-package android.arch.persistence.db;
+package androidx.sqlite.db;
 
 public final class R {
 }

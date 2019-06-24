@@ -4,7 +4,7 @@
  * gradle plugin from the resource data it found. It
  * should not be modified by hand.
  */
-package android.arch.persistence.room;
+package androidx.room;
 
 public final class R {
     public static final class attr {
