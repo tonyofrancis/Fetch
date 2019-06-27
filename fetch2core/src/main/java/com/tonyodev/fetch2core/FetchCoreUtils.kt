@@ -337,17 +337,21 @@ fun getSimpleInterruptMonitor() = object : InterruptMonitor {
         get() = false
 }
 
-fun getContentLengthFromHeader(headers: Map<String, List<String>>, defaultValue: Long): Long {
+fun getContentLengthFromHeader(responseHeaders: Map<String, List<String>>, defaultValue: Long): Long {
+    val headers = mutableMapOf<String, List<String>>()
+    for (responseHeader in responseHeaders) {
+        headers[responseHeader.key.toLowerCase()] = responseHeader.value
+    }
     var contentLength = defaultValue
-    if (headers.containsKey("Content-Length")) {
-        val size = headers["Content-Length"]?.firstOrNull()?.toLongOrNull()
+    if (headers.containsKey("content-length")) {
+        val size = headers["content-length"]?.firstOrNull()?.toLongOrNull()
         if (size != null && size > 0) {
             contentLength = size
             return contentLength
         }
     }
-    if (headers.containsKey("Content-Range")) {
-        val value = headers["Content-Range"]?.firstOrNull()
+    if (headers.containsKey("content-range")) {
+        val value = headers["content-range"]?.firstOrNull()
         if (value != null) {
             val index = value.lastIndexOf("/")
             if (index != -1 && ((index + 1) < value.length)) {
