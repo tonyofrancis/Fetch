@@ -8,6 +8,7 @@ import android.support.annotation.WorkerThread
 import com.tonyodev.fetch2.database.FetchDatabaseManagerImpl
 import com.tonyodev.fetch2.database.DownloadDatabase
 import com.tonyodev.fetch2.database.DownloadInfo
+import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper
 import com.tonyodev.fetch2.fetch.LiveSettings
 import com.tonyodev.fetch2core.FetchLogger
 import com.tonyodev.fetch2core.DefaultStorageResolver
@@ -39,7 +40,7 @@ import java.sql.SQLException
  * */
 @WorkerThread
 @Throws(exceptionClasses = [SQLException::class, SQLiteConstraintException::class])
-fun migrateFromV1toV2(context: Context, v2Namespace: String): List<DownloadTransferPair> {
+fun migrateFromV1toV2(context: Context, v2Namespace: String, fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper): List<DownloadTransferPair> {
     val fetchOneDatabaseHelper = DatabaseHelper(context)
     fetchOneDatabaseHelper.clean()
     fetchOneDatabaseHelper.verifyOK()
@@ -49,7 +50,7 @@ fun migrateFromV1toV2(context: Context, v2Namespace: String): List<DownloadTrans
     if (cursor != null) {
         cursor.moveToFirst()
         while (!cursor.isAfterLast) {
-            val downloadTransferPair = v1CursorToV2DownloadInfo(cursor)
+            val downloadTransferPair = v1CursorToV2DownloadInfo(cursor, fetchDatabaseManagerWrapper)
             (downloadTransferPair.newDownload as DownloadInfo).namespace = v2Namespace
             downloadInfoList.add(downloadTransferPair)
             cursor.moveToNext()

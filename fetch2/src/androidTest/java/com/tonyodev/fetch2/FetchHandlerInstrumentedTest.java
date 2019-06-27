@@ -424,7 +424,7 @@ public class FetchHandlerInstrumentedTest {
         final Pair<Download, Error> download = fetchHandler.enqueue(request);
         assertNotNull(download);
         assertEquals(request.getId(), download.getFirst().getId());
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(download.getFirst());
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(download.getFirst(), new DownloadInfo());
         downloadInfo.setStatus(Status.FAILED);
         fetchDatabaseManager.update(downloadInfo);
         final List<Download> queuedDownloads = fetchHandler.retry(getIdList(request.getId()));

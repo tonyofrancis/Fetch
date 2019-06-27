@@ -6,8 +6,7 @@ import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2core.getUniqueId
 
-fun Request.toDownloadInfo(): DownloadInfo {
-    val downloadInfo = DownloadInfo()
+fun Request.toDownloadInfo(downloadInfo: DownloadInfo): DownloadInfo {
     downloadInfo.id = id
     downloadInfo.url = url
     downloadInfo.file = file
@@ -28,8 +27,7 @@ fun Request.toDownloadInfo(): DownloadInfo {
     return downloadInfo
 }
 
-fun Download.toDownloadInfo(): DownloadInfo {
-    val downloadInfo = DownloadInfo()
+fun Download.toDownloadInfo(downloadInfo: DownloadInfo): DownloadInfo {
     downloadInfo.id = id
     downloadInfo.namespace = namespace
     downloadInfo.url = url
@@ -53,8 +51,7 @@ fun Download.toDownloadInfo(): DownloadInfo {
     return downloadInfo
 }
 
-fun CompletedDownload.toDownloadInfo(): DownloadInfo {
-    val downloadInfo = DownloadInfo()
+fun CompletedDownload.toDownloadInfo(downloadInfo: DownloadInfo): DownloadInfo {
     downloadInfo.id = getUniqueId(url, file)
     downloadInfo.url = url
     downloadInfo.file = file

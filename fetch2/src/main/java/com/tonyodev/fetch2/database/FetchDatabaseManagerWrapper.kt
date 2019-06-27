@@ -154,6 +154,10 @@ class FetchDatabaseManagerWrapper(private val fetchDatabaseManager: FetchDatabas
         }
     }
 
+    override fun getNewDownloadInfoInstance(): DownloadInfo {
+        return fetchDatabaseManager.getNewDownloadInfoInstance()
+    }
+
     override fun close() {
         synchronized(fetchDatabaseManager) {
             fetchDatabaseManager.close()

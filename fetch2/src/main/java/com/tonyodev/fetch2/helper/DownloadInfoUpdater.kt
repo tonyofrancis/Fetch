@@ -14,4 +14,8 @@ class DownloadInfoUpdater(private val fetchDatabaseManagerWrapper: FetchDatabase
         fetchDatabaseManagerWrapper.update(downloadInfo)
     }
 
+    fun getNewDownloadInfoInstance(): DownloadInfo {
+        return fetchDatabaseManagerWrapper.getNewDownloadInfoInstance()
+    }
+
 }

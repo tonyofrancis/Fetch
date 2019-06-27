@@ -314,6 +314,10 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         logger.d("Database closed")
     }
 
+    override fun getNewDownloadInfoInstance(): DownloadInfo {
+        return DownloadInfo()
+    }
+
     private fun throwExceptionIfClosed() {
         if (closed) {
             throw FetchException("$namespace database is closed")

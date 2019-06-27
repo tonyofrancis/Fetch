@@ -60,7 +60,7 @@ class FetchHandlerImpl(private val namespace: String,
     private fun enqueueRequests(requests: List<Request>): List<Pair<Download, Error>> {
         val results = mutableListOf<Pair<Download, Error>>()
         requests.forEach {
-            val downloadInfo = it.toDownloadInfo()
+            val downloadInfo = it.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
             downloadInfo.namespace = namespace
             try {
                 val existing = prepareDownloadInfoForEnqueue(downloadInfo)
@@ -187,7 +187,7 @@ class FetchHandlerImpl(private val namespace: String,
 
     override fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download> {
         return completedDownloads.map {
-            val downloadInfo = it.toDownloadInfo()
+            val downloadInfo = it.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
             downloadInfo.namespace = namespace
             downloadInfo.status = Status.COMPLETED
             prepareCompletedDownloadInfoForEnqueue(downloadInfo)
@@ -389,7 +389,7 @@ class FetchHandlerImpl(private val namespace: String,
         }
         return if (oldDownloadInfo != null) {
             if (newRequest.file == oldDownloadInfo.file) {
-                val newDownloadInfo = newRequest.toDownloadInfo()
+                val newDownloadInfo = newRequest.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
                 newDownloadInfo.namespace = namespace
                 newDownloadInfo.downloaded = oldDownloadInfo.downloaded
                 newDownloadInfo.total = oldDownloadInfo.total
@@ -423,7 +423,7 @@ class FetchHandlerImpl(private val namespace: String,
         if (downloadWithFile != null) {
             throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
         }
-        val copy = download.copy() as DownloadInfo
+        val copy = download.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
         copy.id = getUniqueId(download.url, newFileName)
         copy.file = newFileName
         val pair = fetchDatabaseManagerWrapper.insert(copy)

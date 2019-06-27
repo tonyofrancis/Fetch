@@ -89,7 +89,7 @@ object FetchModulesBuilder {
 
     class Modules constructor(val fetchConfiguration: FetchConfiguration,
                               val handlerWrapper: HandlerWrapper,
-                              fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper,
+                              val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper,
                               val downloadProvider: DownloadProvider,
                               val groupInfoProvider: GroupInfoProvider,
                               val uiHandler: Handler,

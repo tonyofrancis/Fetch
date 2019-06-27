@@ -72,7 +72,7 @@ public class DownloadProviderInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         fetchDatabaseManager.insert(downloadInfoList);
@@ -86,7 +86,7 @@ public class DownloadProviderInstrumentedTest {
     public void getId() throws Exception {
         fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
         fetchDatabaseManager.insert(downloadInfo);
         final Download query = downloadProvider.getDownload(downloadInfo.getId());
         assertNotNull(query);
@@ -106,7 +106,7 @@ public class DownloadProviderInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         fetchDatabaseManager.insert(downloadInfoList);
@@ -137,7 +137,7 @@ public class DownloadProviderInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         for (DownloadInfo downloadInfo : downloadInfoList) {
@@ -167,7 +167,7 @@ public class DownloadProviderInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         for (DownloadInfo downloadInfo : downloadInfoList) {

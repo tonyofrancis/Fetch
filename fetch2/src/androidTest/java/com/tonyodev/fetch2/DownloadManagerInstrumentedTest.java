@@ -92,7 +92,7 @@ public class DownloadManagerInstrumentedTest {
     @Test
     public void start() throws Exception {
         final Request request = getTestRequest();
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
         final Boolean started = downloadManager.start(downloadInfo);
         downloadManager.cancel(downloadInfo.getId());
         deleteTestFile(downloadInfo.getFile());
@@ -102,7 +102,7 @@ public class DownloadManagerInstrumentedTest {
     @Test
     public void cancel() throws Exception {
         final Request request = getTestRequest();
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
         downloadManager.start(downloadInfo);
         final Boolean cancelled = downloadManager.cancel(downloadInfo.getId());
         deleteTestFile(downloadInfo.getFile());
@@ -112,7 +112,7 @@ public class DownloadManagerInstrumentedTest {
     @Test
     public void cancelAll() throws Exception {
         final Request request = getTestRequest();
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
         downloadManager.start(downloadInfo);
         downloadManager.cancelAll();
         deleteTestFile(downloadInfo.getFile());
@@ -122,7 +122,7 @@ public class DownloadManagerInstrumentedTest {
     @Test
     public void contains() throws Exception {
         final Request request = getTestRequest();
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
         downloadManager.start(downloadInfo);
         final Boolean contains = downloadManager.contains(downloadInfo.getId());
         downloadManager.cancel(downloadInfo.getId());
