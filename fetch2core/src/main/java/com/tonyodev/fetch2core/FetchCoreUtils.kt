@@ -337,10 +337,15 @@ fun getSimpleInterruptMonitor() = object : InterruptMonitor {
         get() = false
 }
 
+@Suppress("SENSELESS_COMPARISON")
 fun getContentLengthFromHeader(responseHeaders: Map<String, List<String>>, defaultValue: Long): Long {
     val headers = mutableMapOf<String, List<String>>()
     for (responseHeader in responseHeaders) {
-        headers[responseHeader.key.toLowerCase()] = responseHeader.value
+        val key = responseHeader.key
+        val value = responseHeader.value
+        if (key != null && value != null) {
+            headers[responseHeader.key] = value
+        }
     }
     var contentLength = defaultValue
     if (headers.containsKey("content-length")) {
