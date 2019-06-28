@@ -22,7 +22,7 @@ class FetchDatabaseManagerImpl constructor(context: Context,
                                            migrations: Array<Migration>,
                                            private val liveSettings: LiveSettings,
                                            private val fileExistChecksEnabled: Boolean,
-                                           private val defaultStorageResolver: DefaultStorageResolver) : FetchDatabaseManager {
+                                           private val defaultStorageResolver: DefaultStorageResolver) : FetchDatabaseManager<DownloadInfo> {
 
     @Volatile
     private var closed = false
@@ -30,7 +30,7 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         get() {
             return closed
         }
-    override var delegate: FetchDatabaseManager.Delegate? = null
+    override var delegate: FetchDatabaseManager.Delegate<DownloadInfo>? = null
     private val requestDatabase: DownloadDatabase
     private val database: SupportSQLiteDatabase
 

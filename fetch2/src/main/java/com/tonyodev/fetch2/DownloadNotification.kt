@@ -11,10 +11,20 @@ open class DownloadNotification(download: Download) : Parcelable, Serializable {
     /*The download the download notification object represents.*/
     var download: Download = download
         set(value) {
+            lastKnownStatus = status
+            lastKnownProgress = progress
+            status = download.status
+            progress = download.progress
             notificationId = download.id
             groupId = download.group
             field = value
         }
+
+    /** The download status*/
+    var status: Status = Status.NONE
+
+    /** Returns the progress of a download or -1 if the progress is unknown.*/
+    var progress: Int = -1
 
     /** The notification id for this download.*/
     var notificationId = download.id
@@ -118,17 +128,21 @@ open class DownloadNotification(download: Download) : Parcelable, Serializable {
             }
         }
 
-    /** Returns the progress of a download or -1 if the progress is unknown.*/
-    val progress: Int
-        get() {
-            return download.progress
-        }
-
     /** Returns if the progress of a download is indeterminate.*/
     val progressIndeterminate: Boolean
         get() {
             return download.total == -1L
         }
+
+    /**
+     * The Download notification's last known status
+     * */
+    var lastKnownStatus = Status.NONE
+
+    /**
+     * The Download notification's last known progress
+     * */
+    var lastKnownProgress = -1
 
     /** Download Action Types used by the FetchNotificationBroadcastReceiver.*/
     enum class ActionType {
@@ -160,6 +174,8 @@ open class DownloadNotification(download: Download) : Parcelable, Serializable {
         dest?.writeInt(groupId)
         dest?.writeLong(etaInMilliSeconds)
         dest?.writeLong(downloadedBytesPerSecond)
+        dest?.writeInt(lastKnownStatus.value)
+        dest?.writeInt(lastKnownProgress)
     }
 
     override fun describeContents(): Int {
@@ -175,6 +191,8 @@ open class DownloadNotification(download: Download) : Parcelable, Serializable {
         if (groupId != other.groupId) return false
         if (etaInMilliSeconds != other.etaInMilliSeconds) return false
         if (downloadedBytesPerSecond != other.downloadedBytesPerSecond) return false
+        if (lastKnownStatus != other.lastKnownStatus) return false
+        if (lastKnownProgress != other.lastKnownProgress) return false
         return true
     }
 
@@ -184,13 +202,15 @@ open class DownloadNotification(download: Download) : Parcelable, Serializable {
         result = 31 * result + groupId
         result = 31 * result + etaInMilliSeconds.hashCode()
         result = 31 * result + downloadedBytesPerSecond.hashCode()
+        result = 31 * result + lastKnownStatus.hashCode()
+        result = 31 * result + lastKnownProgress.hashCode()
         return result
     }
 
     override fun toString(): String {
         return "DownloadNotification(download=$download, notificationId=$notificationId, " +
                 "groupId=$groupId, etaInMilliSeconds=$etaInMilliSeconds, " +
-                "downloadedBytesPerSecond=$downloadedBytesPerSecond)"
+                "downloadedBytesPerSecond=$downloadedBytesPerSecond, lastKnownStatus=$lastKnownStatus, lastKnownProgress=$lastKnownProgress)"
     }
 
     companion object CREATOR : Parcelable.Creator<DownloadNotification> {
@@ -201,11 +221,16 @@ open class DownloadNotification(download: Download) : Parcelable, Serializable {
             val groupId = source.readInt()
             val etaInMilliSeconds = source.readLong()
             val downloadedBytesPerSeconds = source.readLong()
+            val lastKnownStatus = Status.valueOf(source.readInt())
+            val lastKnownProgress = source.readInt()
             val downloadNotification = DownloadNotification(download)
             downloadNotification.notificationId = notificationId
             downloadNotification.groupId = groupId
             downloadNotification.etaInMilliSeconds = etaInMilliSeconds
             downloadNotification.downloadedBytesPerSecond = downloadedBytesPerSeconds
+            downloadNotification.lastKnownStatus = lastKnownStatus
+            downloadNotification.lastKnownProgress = lastKnownProgress
+
             return downloadNotification
         }
 
