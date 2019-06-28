@@ -5,7 +5,7 @@ import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.Logger
 
-class FetchDatabaseManagerWrapper(private val fetchDatabaseManager: FetchDatabaseManager): FetchDatabaseManager {
+class FetchDatabaseManagerWrapper(private val fetchDatabaseManager: FetchDatabaseManager<DownloadInfo>): FetchDatabaseManager<DownloadInfo> {
 
     override val logger: Logger = fetchDatabaseManager.logger
 
@@ -16,7 +16,7 @@ class FetchDatabaseManagerWrapper(private val fetchDatabaseManager: FetchDatabas
             }
         }
 
-    override var delegate: FetchDatabaseManager.Delegate?
+    override var delegate: FetchDatabaseManager.Delegate<DownloadInfo>?
         get() {
             return synchronized(fetchDatabaseManager) {
                 fetchDatabaseManager.delegate

@@ -149,7 +149,7 @@ object FetchModulesBuilder {
                     groupInfoProvider = groupInfoProvider,
                     prioritySort = fetchConfiguration.prioritySort,
                     createFileOnEnqueue = fetchConfiguration.createFileOnEnqueue)
-            fetchDatabaseManagerWrapper.delegate = object : FetchDatabaseManager.Delegate {
+            fetchDatabaseManagerWrapper.delegate = object : FetchDatabaseManager.Delegate<DownloadInfo> {
                 override fun deleteTempFilesForDownload(downloadInfo: DownloadInfo) {
                     val tempDir = fetchConfiguration.storageResolver
                             .getDirectoryForFileDownloaderTypeParallel(getRequestForDownload(downloadInfo))
