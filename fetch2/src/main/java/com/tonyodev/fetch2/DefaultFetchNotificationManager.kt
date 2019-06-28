@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2
 
+import android.annotation.SuppressLint
 import android.app.*
 import android.content.Context
 import android.content.Intent
@@ -196,12 +197,14 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
             val notificationIdList = mutableListOf<Int>()
             val notificationOngoingList = mutableListOf<Boolean>()
             for (downloadNotification in groupedDownloadNotifications) {
-                notificationId = downloadNotification.notificationId
-                notificationBuilder = getNotificationBuilder(notificationId, groupId)
-                updateNotification(notificationBuilder, downloadNotification, context)
-                notificationIdList.add(notificationId)
-                notificationOngoingList.add(downloadNotification.isOnGoingNotification)
-                notificationManager.notify(notificationId, notificationBuilder.build())
+                if (shouldUpdateExistingNotification(downloadNotification)) {
+                    notificationId = downloadNotification.notificationId
+                    notificationBuilder = getNotificationBuilder(notificationId, groupId)
+                    updateNotification(notificationBuilder, downloadNotification, context)
+                    notificationIdList.add(notificationId)
+                    notificationOngoingList.add(downloadNotification.isOnGoingNotification)
+                    notificationManager.notify(notificationId, notificationBuilder.build())
+                }
             }
             if (useGroupNotification) {
                 notificationIdList.add(groupId)
@@ -211,6 +214,13 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
             for (index in 0 until notificationIdList.size) {
                 handleNotificationOngoingDismissal(notificationIdList[index], groupId, notificationOngoingList[index])
             }
+        }
+    }
+
+    override fun shouldUpdateExistingNotification(downloadNotification: DownloadNotification): Boolean {
+        return when {
+            downloadNotification.status != downloadNotification.lastKnownStatus || downloadNotification.status == Status.DOWNLOADING && downloadNotification.progress != downloadNotification.lastKnownProgress -> true
+            else -> false
         }
     }
 
@@ -233,6 +243,7 @@ open class DefaultFetchNotificationManager(context: Context) : FetchNotification
         }
     }
 
+    @SuppressLint("RestrictedApi")
     override fun getNotificationBuilder(notificationId: Int, groupId: Int): NotificationCompat.Builder {
         synchronized(downloadNotificationsMap) {
             val notificationBuilder = downloadNotificationsBuilderMap[notificationId]

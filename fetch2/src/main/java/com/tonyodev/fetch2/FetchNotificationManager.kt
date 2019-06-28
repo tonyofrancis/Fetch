@@ -131,4 +131,11 @@ interface FetchNotificationManager {
      * */
     fun getNotificationBuilder(notificationId: Int, groupId: Int): NotificationCompat.Builder
 
+    /**
+     * Indicates if the download notification should update an existing notification.
+     * @param downloadNotification the download notification.
+     * @return true if the existing notification should be updated. False otherwise.
+     * */
+    fun shouldUpdateExistingNotification(downloadNotification: DownloadNotification): Boolean
+
 }
