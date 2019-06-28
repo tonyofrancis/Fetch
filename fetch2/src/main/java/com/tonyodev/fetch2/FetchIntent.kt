@@ -2,7 +2,6 @@
 
 package com.tonyodev.fetch2
 
-const val ACTION_NOTIFICATION_ACTION = "com.tonyodev.fetch2.action.NOTIFICATION_ACTION"
 const val ACTION_NOTIFICATION_CHECK = "com.tonyodev.fetch2.action.NOTIFICATION_CHECK"
 const val ACTION_QUEUE_BACKOFF_RESET = "com.tonyodev.fetch2.action.QUEUE_BACKOFF_RESET"
 

@@ -2,6 +2,7 @@ package com.tonyodev.fetch2
 
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.support.v4.app.NotificationCompat
 
@@ -10,6 +11,16 @@ import android.support.v4.app.NotificationCompat
  * for Fetch downloads.
  * */
 interface FetchNotificationManager {
+
+    /**
+     * The notification manager's broadcast receiver
+     * that intercepts notification actions of notifications
+     * it posted.
+     * */
+    val broadcastReceiver: BroadcastReceiver
+
+    /** The notification manager intent filter action.*/
+    val notificationManagerAction: String
 
     /**
      * The progress reporting interval time used to report the downloads status changes by Fetch.
@@ -137,5 +148,22 @@ interface FetchNotificationManager {
      * @return true if the existing notification should be updated. False otherwise.
      * */
     fun shouldUpdateExistingNotification(downloadNotification: DownloadNotification): Boolean
+
+    /**
+     * Registers the notification manager broadcast receiver
+     * */
+    fun registerBroadcastReceiver()
+
+    /**
+     * UnRegisters the notification manager broadcast receiver
+     * */
+    fun unregisterBroadcastReceiver()
+
+    /**
+     * Gets the Fetch Instance for the namespace.
+     * @param namespace the fetch namespace.
+     * @return fetch instance.
+     * */
+    fun getFetchInstanceForNamespace(namespace: String): Fetch
 
 }

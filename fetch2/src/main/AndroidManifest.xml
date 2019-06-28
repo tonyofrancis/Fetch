@@ -5,17 +5,4 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <application>
-        <receiver
-            android:name="com.tonyodev.fetch2.FetchNotificationBroadcastReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.tonyodev.fetch2.action.NOTIFICATION_ACTION" />
-                <action android:name="com.tonyodev.fetch2.action.NOTIFICATION_CHECK" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </receiver>
-    </application>
-
 </manifest>
