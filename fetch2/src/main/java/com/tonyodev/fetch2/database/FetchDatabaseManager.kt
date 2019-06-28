@@ -176,7 +176,7 @@ interface FetchDatabaseManager<T: DownloadInfo> : Closeable {
      * Get a new instance of DownloadInfo.
      * Note: Be sure to override DownloadInfo create parcelable and copy methods.
      * */
-    fun getNewDownloadInfoInstance(): DownloadInfo
+    fun getNewDownloadInfoInstance(): T
 
     /**
      * Interface used for the DownloadManager's delegate.
