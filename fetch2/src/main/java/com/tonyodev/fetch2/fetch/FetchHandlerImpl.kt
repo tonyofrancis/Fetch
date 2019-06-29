@@ -117,8 +117,7 @@ class FetchHandlerImpl(private val namespace: String,
                 }
             } else if (existingDownload?.status == Status.COMPLETED
                     && downloadInfo.enqueueAction == EnqueueAction.UPDATE_ACCORDINGLY) {
-                if (!checkFileExist(existingDownload.file)
-                        || !storageResolver.fileExists(existingDownload.file)) {
+                if (!storageResolver.fileExists(existingDownload.file)) {
                     try {
                         fetchDatabaseManagerWrapper.delete(existingDownload)
                     } catch (e: Exception) {
