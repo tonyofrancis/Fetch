@@ -220,3 +220,6 @@ fun awaitFinishOrTimeout(allowTimeInMilliseconds: Long, fetchHandler: FetchHandl
         pendingCount = fetchHandler.getPendingCount()
     }
 }
+
+fun checkFileExist(filePath: String): Boolean =
+        filePath.takeIf { it.isNotEmpty() }?.let { File(it).exists() } ?: false
