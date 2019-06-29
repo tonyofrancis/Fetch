@@ -156,8 +156,6 @@ object FetchModulesBuilder {
                     deleteAllInFolderForId(downloadInfo.id, tempDir)
                 }
             }
-            fetchConfiguration.fetchNotificationManager?.progressReportingIntervalInMillis =
-                    fetchConfiguration.progressReportingIntervalMillis
         }
 
     }

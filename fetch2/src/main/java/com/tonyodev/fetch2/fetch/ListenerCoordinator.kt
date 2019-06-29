@@ -231,7 +231,7 @@ class ListenerCoordinator(val namespace: String,
                 fetchNotificationHandler.post {
                     synchronized(lock) {
                         for (fetchNotificationManager in fetchNotificationManagerList) {
-                            if (fetchNotificationManager.postNotificationUpdate(download)) break
+                            if (fetchNotificationManager.postDownloadUpdate(download)) break
                         }
                     }
                 }
@@ -282,7 +282,7 @@ class ListenerCoordinator(val namespace: String,
                 fetchNotificationHandler.post {
                     synchronized(lock) {
                         for (fetchNotificationManager in fetchNotificationManagerList) {
-                            if (fetchNotificationManager.postNotificationUpdate(download)) break
+                            if (fetchNotificationManager.postDownloadUpdate(download)) break
                         }
                     }
                 }
@@ -364,7 +364,7 @@ class ListenerCoordinator(val namespace: String,
                 fetchNotificationHandler.post {
                     synchronized(lock) {
                         for (fetchNotificationManager in fetchNotificationManagerList) {
-                            if (fetchNotificationManager.postNotificationUpdate(download)) break
+                            if (fetchNotificationManager.postDownloadUpdate(download)) break
                         }
                     }
                 }
@@ -415,7 +415,7 @@ class ListenerCoordinator(val namespace: String,
                 fetchNotificationHandler.post {
                     synchronized(lock) {
                         for (fetchNotificationManager in fetchNotificationManagerList) {
-                            if (fetchNotificationManager.postNotificationUpdate(download, etaInMilliSeconds, downloadedBytesPerSecond)) break
+                            if (fetchNotificationManager.postDownloadUpdate(download)) break
                         }
                     }
                 }
@@ -466,7 +466,7 @@ class ListenerCoordinator(val namespace: String,
                 fetchNotificationHandler.post {
                     synchronized(lock) {
                         for (fetchNotificationManager in fetchNotificationManagerList) {
-                            if (fetchNotificationManager.postNotificationUpdate(download)) break
+                            if (fetchNotificationManager.postDownloadUpdate(download)) break
                         }
                     }
                 }
@@ -517,7 +517,7 @@ class ListenerCoordinator(val namespace: String,
                 fetchNotificationHandler.post {
                     synchronized(lock) {
                         for (fetchNotificationManager in fetchNotificationManagerList) {
-                            if (fetchNotificationManager.postNotificationUpdate(download)) break
+                            if (fetchNotificationManager.postDownloadUpdate(download)) break
                         }
                     }
                 }
@@ -568,7 +568,7 @@ class ListenerCoordinator(val namespace: String,
                 fetchNotificationHandler.post {
                     synchronized(lock) {
                         for (fetchNotificationManager in fetchNotificationManagerList) {
-                            if (fetchNotificationManager.postNotificationUpdate(download)) break
+                            if (fetchNotificationManager.postDownloadUpdate(download)) break
                         }
                     }
                 }
@@ -619,7 +619,7 @@ class ListenerCoordinator(val namespace: String,
                 fetchNotificationHandler.post {
                     synchronized(lock) {
                         for (fetchNotificationManager in fetchNotificationManagerList) {
-                            if (fetchNotificationManager.postNotificationUpdate(download)) break
+                            if (fetchNotificationManager.postDownloadUpdate(download)) break
                         }
                     }
                 }
@@ -670,7 +670,7 @@ class ListenerCoordinator(val namespace: String,
                 fetchNotificationHandler.post {
                     synchronized(lock) {
                         for (fetchNotificationManager in fetchNotificationManagerList) {
-                            if (fetchNotificationManager.postNotificationUpdate(download)) break
+                            if (fetchNotificationManager.postDownloadUpdate(download)) break
                         }
                     }
                 }

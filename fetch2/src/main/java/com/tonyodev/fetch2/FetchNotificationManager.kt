@@ -12,21 +12,15 @@ import android.support.v4.app.NotificationCompat
  * */
 interface FetchNotificationManager {
 
+    /** The notification manager intent filter action.*/
+    val notificationManagerAction: String
+
     /**
      * The notification manager's broadcast receiver
      * that intercepts notification actions of notifications
      * it posted.
      * */
     val broadcastReceiver: BroadcastReceiver
-
-    /** The notification manager intent filter action.*/
-    val notificationManagerAction: String
-
-    /**
-     * The progress reporting interval time used to report the downloads status changes by Fetch.
-     * The Fetch instance associated with this FetchNotificationManager sets this value automatically.
-     * */
-    var progressReportingIntervalInMillis: Long
 
     /**
      * Create the notification for a group of downloads. Called on a background notification thread.
@@ -110,29 +104,9 @@ interface FetchNotificationManager {
      * Called on a background notification thread. This method is called by the associated fetch instance
      * to create/update notifications for a download.
      * @param download the download
-     * @param etaInMilliSeconds Estimated time remaining in milliseconds for the download to complete.
-     *         -1 if the eta is unknown.
-     * @param downloadedBytesPerSecond Average downloaded bytes per second.
-     *         -1 if the downloadedBytesPerSecond is unknown or not provided.
      * @return returns true if the post update was handled by this notification manager otherwise false.
      * */
-    fun postNotificationUpdate(download: Download, etaInMilliSeconds: Long = -1, downloadedBytesPerSecond: Long = -1): Boolean
-
-    /**
-     * Handles canceling ongoing download notifications when fetch closes or the app closes.
-     * @param notificationId the download notification id.
-     * @param groupId the group id
-     * @param ongoingNotification true if the download notification is ongoing.
-     * */
-    fun handleNotificationOngoingDismissal(notificationId: Int, groupId: Int, ongoingNotification: Boolean)
-
-    /**
-     * Get the delay in milliseconds before an ongoing download notification (Status.Queued or Status.Downloading)
-     * is cancelled because of inactivity.
-     * @param notificationId the notificationId
-     * @param groupId the group id
-     * */
-    fun getOngoingDismissalDelay(notificationId: Int, groupId: Int): Long
+    fun postDownloadUpdate(download: Download): Boolean
 
     /**
      * Gets the notification builder for a download notification.
@@ -147,7 +121,7 @@ interface FetchNotificationManager {
      * @param downloadNotification the download notification.
      * @return true if the existing notification should be updated. False otherwise.
      * */
-    fun shouldUpdateExistingNotification(downloadNotification: DownloadNotification): Boolean
+    fun shouldUpdateNotification(downloadNotification: DownloadNotification): Boolean
 
     /**
      * Registers the notification manager broadcast receiver

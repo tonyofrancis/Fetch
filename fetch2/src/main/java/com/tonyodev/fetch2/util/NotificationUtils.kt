@@ -41,10 +41,10 @@ fun onDownloadNotificationActionTriggered(context: Context?, intent: Intent?, fe
                     }
                 } else {
                     if (notificationGroupId != NOTIFICATION_GROUP_ID_INVALID && downloadNotifications.isNotEmpty()) {
-                        downloadNotifications.groupBy { it.download.namespace }.forEach { entry ->
+                        downloadNotifications.groupBy { it.namespace }.forEach { entry ->
                             val fetchNamespace = entry.key
                             val downloadIds = entry.value.map { downloadNotification ->
-                                downloadNotification.download.id
+                                downloadNotification.notificationId
                             }
                             val fetch = fetchNotificationManager.getFetchInstanceForNamespace(fetchNamespace)
                             if (!fetch.isClosed) {

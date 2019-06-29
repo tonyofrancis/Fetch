@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2
 
-import android.annotation.SuppressLint
+import                                                                                                                                                                                                                                           android.annotation.SuppressLint
 import android.app.*
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
-import android.os.SystemClock
 import android.support.v4.app.NotificationCompat
 
 import com.tonyodev.fetch2.DownloadNotification.ActionType.*
@@ -23,11 +22,8 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
 
     private val context: Context = context.applicationContext
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     private val downloadNotificationsMap = mutableMapOf<Int, DownloadNotification>()
     private val downloadNotificationsBuilderMap = mutableMapOf<Int, NotificationCompat.Builder>()
-
-    override var progressReportingIntervalInMillis: Long = 0L
 
     override val notificationManagerAction: String = "DEFAULT_FETCH2_NOTIFICATION_MANAGER_ACTION_" + System.currentTimeMillis()
 
@@ -79,9 +75,8 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                                                 context: Context): Boolean {
         val style = NotificationCompat.InboxStyle()
         for (downloadNotification in downloadNotifications) {
-            val title = getContentTitle(downloadNotification)
             val contentTitle = getContentText(context, downloadNotification)
-            style.addLine("$title $contentTitle")
+            style.addLine("$${downloadNotification.total} $contentTitle")
         }
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(android.R.drawable.stat_sys_download_done)
@@ -103,7 +98,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         }
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(smallIcon)
-                .setContentTitle(getContentTitle(downloadNotification))
+                .setContentTitle(downloadNotification.title)
                 .setContentText(getContentText(context, downloadNotification))
                 .setOngoing(downloadNotification.isOnGoingNotification)
                 .setGroup(downloadNotification.groupId.toString())
@@ -113,8 +108,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         } else {
             val progressIndeterminate = downloadNotification.progressIndeterminate
             val maxProgress = if (downloadNotification.progressIndeterminate) 0 else 100
-            val download = downloadNotification.download
-            val progress = if (download.progress < 0) 0 else download.progress
+            val progress = if (downloadNotification.progress < 0) 0 else downloadNotification.progress
             notificationBuilder.setProgress(maxProgress, progress, progressIndeterminate)
         }
         when {
@@ -141,8 +135,8 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                                         actionType: DownloadNotification.ActionType): PendingIntent {
         synchronized(downloadNotificationsMap) {
             val intent = Intent(notificationManagerAction)
-            intent.putExtra(EXTRA_NAMESPACE, downloadNotification.download.namespace)
-            intent.putExtra(EXTRA_DOWNLOAD_ID, downloadNotification.download.id)
+            intent.putExtra(EXTRA_NAMESPACE, downloadNotification.namespace)
+            intent.putExtra(EXTRA_DOWNLOAD_ID, downloadNotification.notificationId)
             intent.putExtra(EXTRA_NOTIFICATION_ID, downloadNotification.notificationId)
             intent.putExtra(EXTRA_GROUP_ACTION, false)
             intent.putExtra(EXTRA_NOTIFICATION_GROUP_ID, downloadNotification.groupId)
@@ -211,50 +205,45 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
     override fun notify(groupId: Int) {
         synchronized(downloadNotificationsMap) {
             val groupedDownloadNotifications = downloadNotificationsMap.values.filter { it.groupId == groupId }
-            val ongoingNotification = groupedDownloadNotifications.any { it.isOnGoingNotification }
             val groupSummaryNotificationBuilder = getNotificationBuilder(groupId, groupId)
             val useGroupNotification = updateGroupSummaryNotification(groupId, groupSummaryNotificationBuilder, groupedDownloadNotifications, context)
             var notificationId: Int
             var notificationBuilder: NotificationCompat.Builder
-            val notificationIdList = mutableListOf<Int>()
-            val notificationOngoingList = mutableListOf<Boolean>()
             for (downloadNotification in groupedDownloadNotifications) {
-                if (shouldUpdateExistingNotification(downloadNotification)) {
+                if (shouldUpdateNotification(downloadNotification)) {
                     notificationId = downloadNotification.notificationId
                     notificationBuilder = getNotificationBuilder(notificationId, groupId)
                     updateNotification(notificationBuilder, downloadNotification, context)
-                    notificationIdList.add(notificationId)
-                    notificationOngoingList.add(downloadNotification.isOnGoingNotification)
                     notificationManager.notify(notificationId, notificationBuilder.build())
                 }
             }
             if (useGroupNotification) {
-                notificationIdList.add(groupId)
-                notificationOngoingList.add(ongoingNotification)
                 notificationManager.notify(groupId, groupSummaryNotificationBuilder.build())
-            }
-            for (index in 0 until notificationIdList.size) {
-                handleNotificationOngoingDismissal(notificationIdList[index], groupId, notificationOngoingList[index])
             }
         }
     }
 
-    override fun shouldUpdateExistingNotification(downloadNotification: DownloadNotification): Boolean {
+    override fun shouldUpdateNotification(downloadNotification: DownloadNotification): Boolean {
         return when {
             downloadNotification.status != downloadNotification.lastKnownStatus || (downloadNotification.status == Status.DOWNLOADING && downloadNotification.progress != downloadNotification.lastKnownProgress) -> true
             else -> false
         }
     }
 
-    override fun postNotificationUpdate(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long): Boolean {
+    override fun postDownloadUpdate(download: Download): Boolean {
         return synchronized(downloadNotificationsMap) {
             val downloadNotification = downloadNotificationsMap[download.id]
-                    ?: DownloadNotification(download)
+                    ?: DownloadNotification()
+            downloadNotification.status = download.status
+            downloadNotification.progress = download.progress
             downloadNotification.notificationId = download.id
             downloadNotification.groupId = download.group
-            downloadNotification.download = download
-            downloadNotification.downloadedBytesPerSecond = downloadedBytesPerSecond
-            downloadNotification.etaInMilliSeconds = etaInMilliSeconds
+            downloadNotification.etaInMilliSeconds = download.etaInMilliSeconds
+            downloadNotification.downloadedBytesPerSecond = download.downloadedBytesPerSecond
+            downloadNotification.total = download.total
+            downloadNotification.downloaded = download.downloaded
+            downloadNotification.namespace = download.namespace
+            downloadNotification.title = getContentTitle(download)
             downloadNotificationsMap[download.id] = downloadNotification
             if (downloadNotification.isCancelledNotification) {
                 cancelNotification(downloadNotification.notificationId)
@@ -287,33 +276,9 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         }
     }
 
-    override fun handleNotificationOngoingDismissal(notificationId: Int, groupId: Int, ongoingNotification: Boolean) {
-        synchronized(downloadNotificationsMap) {
-            if (progressReportingIntervalInMillis > 0) {
-                val alarmIntent = Intent(ACTION_NOTIFICATION_CHECK)
-                alarmIntent.putExtra(EXTRA_NOTIFICATION_ID, notificationId)
-                val pendingIntent = PendingIntent.getBroadcast(context, notificationId, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT)
-                alarmManager.cancel(pendingIntent)
-                if (ongoingNotification) {
-                    val alarmTimeMillis = SystemClock.elapsedRealtime() + progressReportingIntervalInMillis + getOngoingDismissalDelay(notificationId, groupId)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, alarmTimeMillis, pendingIntent)
-                    } else {
-                        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, alarmTimeMillis, pendingIntent)
-                    }
-                }
-            }
-        }
-    }
-
-    override fun getOngoingDismissalDelay(notificationId: Int, groupId: Int): Long {
-        return 3000
-    }
-
     abstract override fun getFetchInstanceForNamespace(namespace: String): Fetch
 
-    private fun getContentTitle(downloadNotification: DownloadNotification): String {
-        val download = downloadNotification.download
+    private fun getContentTitle(download: Download): String {
         return download.fileUri.lastPathSegment ?: Uri.parse(download.url).lastPathSegment
         ?: download.url
     }
