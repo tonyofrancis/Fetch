@@ -26,14 +26,16 @@ fun onDownloadNotificationActionTriggered(context: Context?, intent: Intent?, fe
                 if (!isGroupAction) {
                     if (!namespace.isNullOrEmpty() && downloadId != DOWNLOAD_ID_INVALID && actionType != ACTION_TYPE_INVALID) {
                         val fetch = fetchNotificationManager.getFetchInstanceForNamespace(namespace)
-                        when (actionType) {
-                            ACTION_TYPE_CANCEL -> fetch.cancel(downloadId)
-                            ACTION_TYPE_DELETE -> fetch.delete(downloadId)
-                            ACTION_TYPE_PAUSE -> fetch.pause(downloadId)
-                            ACTION_TYPE_RESUME -> fetch.resume(downloadId)
-                            ACTION_TYPE_RETRY -> fetch.retry(downloadId)
-                            else -> {
-                                //do nothing
+                        if (!fetch.isClosed) {
+                            when (actionType) {
+                                ACTION_TYPE_CANCEL -> fetch.cancel(downloadId)
+                                ACTION_TYPE_DELETE -> fetch.delete(downloadId)
+                                ACTION_TYPE_PAUSE -> fetch.pause(downloadId)
+                                ACTION_TYPE_RESUME -> fetch.resume(downloadId)
+                                ACTION_TYPE_RETRY -> fetch.retry(downloadId)
+                                else -> {
+                                    //do nothing
+                                }
                             }
                         }
                     }
@@ -45,14 +47,16 @@ fun onDownloadNotificationActionTriggered(context: Context?, intent: Intent?, fe
                                 downloadNotification.download.id
                             }
                             val fetch = fetchNotificationManager.getFetchInstanceForNamespace(fetchNamespace)
-                            when (actionType) {
-                                ACTION_TYPE_CANCEL_ALL -> fetch.cancel(downloadIds)
-                                ACTION_TYPE_DELETE_ALL -> fetch.delete(downloadIds)
-                                ACTION_TYPE_PAUSE_ALL -> fetch.pause(downloadIds)
-                                ACTION_TYPE_RESUME_ALL -> fetch.resume(downloadIds)
-                                ACTION_TYPE_RETRY_ALL -> fetch.retry(downloadIds)
-                                else -> {
-                                    //do nothing
+                            if (!fetch.isClosed) {
+                                when (actionType) {
+                                    ACTION_TYPE_CANCEL_ALL -> fetch.cancel(downloadIds)
+                                    ACTION_TYPE_DELETE_ALL -> fetch.delete(downloadIds)
+                                    ACTION_TYPE_PAUSE_ALL -> fetch.pause(downloadIds)
+                                    ACTION_TYPE_RESUME_ALL -> fetch.resume(downloadIds)
+                                    ACTION_TYPE_RETRY_ALL -> fetch.retry(downloadIds)
+                                    else -> {
+                                        //do nothing
+                                    }
                                 }
                             }
                         }
