@@ -6,13 +6,13 @@ import android.content.Context
 import android.net.Uri
 import java.io.*
 import java.math.BigInteger
+import java.net.CookieManager
+import java.net.CookiePolicy
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.ceil
-import java.net.CookieManager
-import java.net.CookiePolicy
 
 const val GET_REQUEST_METHOD = "GET"
 
@@ -258,12 +258,9 @@ fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downl
     }
 }
 
-fun isUriPath(path: String): Boolean {
-    return when {
-        path.startsWith("content://") || path.startsWith("file://") -> true
-        else -> false
-    }
-}
+fun isUriPath(path: String): Boolean = path.takeIf { it.isNotEmpty() }
+        ?.let { it.startsWith("content://") || it.startsWith("file://") }
+        ?: false
 
 fun getFileUri(path: String): Uri {
     return when {

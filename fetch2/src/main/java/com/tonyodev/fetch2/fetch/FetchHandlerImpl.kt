@@ -113,7 +113,7 @@ class FetchHandlerImpl(private val namespace: String,
                 try {
                     fetchDatabaseManagerWrapper.update(existingDownload)
                 } catch (e: Exception) {
-
+                    logger.e(e.message ?: "", e)
                 }
             } else if (existingDownload?.status == Status.COMPLETED
                     && downloadInfo.enqueueAction == EnqueueAction.UPDATE_ACCORDINGLY) {
@@ -121,6 +121,7 @@ class FetchHandlerImpl(private val namespace: String,
                     try {
                         fetchDatabaseManagerWrapper.delete(existingDownload)
                     } catch (e: Exception) {
+                        logger.e(e.message ?: "", e)
                     }
                     existingDownload = null
                     if (downloadInfo.enqueueAction != EnqueueAction.INCREMENT_FILE_NAME) {
@@ -172,7 +173,7 @@ class FetchHandlerImpl(private val namespace: String,
             }
             EnqueueAction.INCREMENT_FILE_NAME -> {
                 if (createFileOnEnqueue) {
-                     storageResolver.createFile(downloadInfo.file, true)
+                    storageResolver.createFile(downloadInfo.file, true)
                 }
                 downloadInfo.file = downloadInfo.file
                 downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
@@ -415,7 +416,8 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun renameCompletedDownloadFile(id: Int, newFileName: String): Download {
-        val download = fetchDatabaseManagerWrapper.get(id) ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
+        val download = fetchDatabaseManagerWrapper.get(id)
+                ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
         if (download.status != Status.COMPLETED) {
             FetchException(FAILED_RENAME_FILE_ASSOCIATED_WITH_INCOMPLETE_DOWNLOAD)
         }
@@ -428,7 +430,7 @@ class FetchHandlerImpl(private val namespace: String,
         copy.file = newFileName
         val pair = fetchDatabaseManagerWrapper.insert(copy)
         if (!pair.second) {
-         throw FetchException(FILE_CANNOT_BE_RENAMED)
+            throw FetchException(FILE_CANNOT_BE_RENAMED)
         }
         val renamed = storageResolver.renameFile(download.file, newFileName)
         return if (!renamed) {
