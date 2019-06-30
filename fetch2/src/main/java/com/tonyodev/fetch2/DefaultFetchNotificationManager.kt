@@ -232,6 +232,10 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
 
     override fun postDownloadUpdate(download: Download): Boolean {
         return synchronized(downloadNotificationsMap) {
+            if (downloadNotificationsMap.size > 50) {
+                downloadNotificationsBuilderMap.clear()
+                downloadNotificationsMap.clear()
+            }
             val downloadNotification = downloadNotificationsMap[download.id]
                     ?: DownloadNotification()
             downloadNotification.status = download.status
