@@ -402,6 +402,7 @@ class FetchHandlerImpl(private val namespace: String,
                     newDownloadInfo.error = oldDownloadInfo.error
                 }
                 fetchDatabaseManagerWrapper.delete(oldDownloadInfo)
+                listenerCoordinator.mainListener.onDeleted(oldDownloadInfo)
                 fetchDatabaseManagerWrapper.insert(newDownloadInfo)
                 startPriorityQueueIfNotStarted()
                 return Pair(newDownloadInfo, true)
@@ -419,7 +420,7 @@ class FetchHandlerImpl(private val namespace: String,
         val download = fetchDatabaseManagerWrapper.get(id)
                 ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
         if (download.status != Status.COMPLETED) {
-            FetchException(FAILED_RENAME_FILE_ASSOCIATED_WITH_INCOMPLETE_DOWNLOAD)
+            throw FetchException(FAILED_RENAME_FILE_ASSOCIATED_WITH_INCOMPLETE_DOWNLOAD)
         }
         val downloadWithFile = fetchDatabaseManagerWrapper.getByFile(newFileName)
         if (downloadWithFile != null) {
