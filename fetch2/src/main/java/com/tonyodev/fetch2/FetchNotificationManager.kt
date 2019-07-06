@@ -140,4 +140,31 @@ interface FetchNotificationManager {
      * */
     fun getFetchInstanceForNamespace(namespace: String): Fetch
 
+    /**
+     * Returns the time in millis before a notification
+     * is cancelled because it was not updated or have an active status.
+     *
+     * Note: This value should be updated if you have set a different
+     * value for progress interval on a FetchConfiguration. Also
+     * this value should be more than the progress interval update.
+     * */
+    fun getNotificationTimeOutMillis(): Long
+
+    /**
+     * Gets the title for a download notification.
+     * @param download the download
+     * @return the title for the download which will be displayed in the
+     * notification.
+     * */
+    fun getDownloadNotificationTitle(download: Download): String
+
+    /**
+     * Gets the text that will be displayed on the right side of the notification.
+     * Eg: eta, download status, etc.
+     * @param context the context
+     * @param downloadNotification the download notification
+     * @return the subtitle text
+     * */
+    fun getSubtitleText(context: Context, downloadNotification: DownloadNotification): String
+
 }

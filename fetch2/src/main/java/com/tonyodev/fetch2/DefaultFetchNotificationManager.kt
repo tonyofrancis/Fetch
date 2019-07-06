@@ -11,6 +11,8 @@ import android.os.Build
 import android.support.v4.app.NotificationCompat
 
 import com.tonyodev.fetch2.DownloadNotification.ActionType.*
+import com.tonyodev.fetch2.util.DEFAULT_NOTIFICATION_TIMEOUT_AFTER
+import com.tonyodev.fetch2.util.DEFAULT_NOTIFICATION_TIMEOUT_AFTER_RESET
 import com.tonyodev.fetch2.util.onDownloadNotificationActionTriggered
 
 /**
@@ -36,9 +38,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         get() = object: BroadcastReceiver() {
 
             override fun onReceive(context: Context?, intent: Intent?) {
-                synchronized(downloadNotificationsMap) {
-                    onDownloadNotificationActionTriggered(context, intent, this@DefaultFetchNotificationManager)
-                }
+                onDownloadNotificationActionTriggered(context, intent, this@DefaultFetchNotificationManager)
             }
 
         }
@@ -82,7 +82,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                                                 context: Context): Boolean {
         val style = NotificationCompat.InboxStyle()
         for (downloadNotification in downloadNotifications) {
-            val contentTitle = getContentText(context, downloadNotification)
+            val contentTitle = getSubtitleText(context, downloadNotification)
             style.addLine("$${downloadNotification.total} $contentTitle")
         }
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -106,7 +106,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(smallIcon)
                 .setContentTitle(downloadNotification.title)
-                .setContentText(getContentText(context, downloadNotification))
+                .setContentText(getSubtitleText(context, downloadNotification))
                 .setOngoing(downloadNotification.isOnGoingNotification)
                 .setGroup(downloadNotification.groupId.toString())
                 .setGroupSummary(false)
@@ -120,20 +120,28 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         }
         when {
             downloadNotification.isDownloading -> {
-                notificationBuilder.addAction(R.drawable.fetch_notification_pause,
-                        context.getString(R.string.fetch_notification_download_pause),
-                        getActionPendingIntent(downloadNotification, PAUSE))
+                notificationBuilder.setTimeoutAfter(getNotificationTimeOutMillis())
+                        .addAction(R.drawable.fetch_notification_pause,
+                                context.getString(R.string.fetch_notification_download_pause),
+                                getActionPendingIntent(downloadNotification, PAUSE))
                         .addAction(R.drawable.fetch_notification_cancel,
                                 context.getString(R.string.fetch_notification_download_cancel),
                                 getActionPendingIntent(downloadNotification, CANCEL))
             }
             downloadNotification.isPaused -> {
-                notificationBuilder.addAction(R.drawable.fetch_notification_resume,
-                        context.getString(R.string.fetch_notification_download_resume),
-                        getActionPendingIntent(downloadNotification, RESUME))
+                notificationBuilder.setTimeoutAfter(getNotificationTimeOutMillis())
+                        .addAction(R.drawable.fetch_notification_resume,
+                                context.getString(R.string.fetch_notification_download_resume),
+                                getActionPendingIntent(downloadNotification, RESUME))
                         .addAction(R.drawable.fetch_notification_cancel,
                                 context.getString(R.string.fetch_notification_download_cancel),
                                 getActionPendingIntent(downloadNotification, CANCEL))
+            }
+            downloadNotification.isQueued -> {
+                notificationBuilder.setTimeoutAfter(getNotificationTimeOutMillis())
+            }
+            else -> {
+                notificationBuilder.setTimeoutAfter(DEFAULT_NOTIFICATION_TIMEOUT_AFTER_RESET)
             }
         }
     }
@@ -200,7 +208,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
             var downloadNotification: DownloadNotification
             while (iterator.hasNext()) {
                 downloadNotification = iterator.next()
-                if (downloadNotification.isActive) {
+                if (!downloadNotification.isFailed && !downloadNotification.isCompleted) {
                     notificationManager.cancel(downloadNotification.notificationId)
                     downloadNotificationsBuilderMap.remove(downloadNotification.notificationId)
                     downloadNotificationExcludeSet.remove(downloadNotification.notificationId)
@@ -247,8 +255,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                 downloadNotificationsBuilderMap.clear()
                 downloadNotificationsMap.clear()
             }
-            val downloadNotification = downloadNotificationsMap[download.id]
-                    ?: DownloadNotification()
+            val downloadNotification = downloadNotificationsMap[download.id] ?: DownloadNotification()
             downloadNotification.status = download.status
             downloadNotification.progress = download.progress
             downloadNotification.notificationId = download.id
@@ -258,8 +265,15 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
             downloadNotification.total = download.total
             downloadNotification.downloaded = download.downloaded
             downloadNotification.namespace = download.namespace
-            downloadNotification.title = getContentTitle(download)
+            downloadNotification.title = getDownloadNotificationTitle(download)
             downloadNotificationsMap[download.id] = downloadNotification
+            if (downloadNotification.title.contains("android-logo.png")) {
+                val x = downloadNotification.title
+            }
+            if (downloadNotificationExcludeSet.contains(downloadNotification.notificationId)
+                    && !downloadNotification.isFailed && !downloadNotification.isCompleted) {
+                downloadNotificationExcludeSet.remove(downloadNotification.notificationId)
+            }
             if (downloadNotification.isCancelledNotification) {
                 cancelNotification(downloadNotification.notificationId)
             } else {
@@ -283,6 +297,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                     .setContentText(null)
                     .setContentIntent(null)
                     .setGroupSummary(false)
+                    .setTimeoutAfter(DEFAULT_NOTIFICATION_TIMEOUT_AFTER_RESET)
                     .setOngoing(false)
                     .setGroup(groupId.toString())
                     .setSmallIcon(android.R.drawable.stat_sys_download_done)
@@ -291,13 +306,17 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         }
     }
 
+    override fun getNotificationTimeOutMillis(): Long {
+        return DEFAULT_NOTIFICATION_TIMEOUT_AFTER
+    }
+
     abstract override fun getFetchInstanceForNamespace(namespace: String): Fetch
 
-    private fun getContentTitle(download: Download): String {
+    override fun getDownloadNotificationTitle(download: Download): String {
         return download.fileUri.lastPathSegment ?: Uri.parse(download.url).lastPathSegment ?: download.url
     }
 
-    private fun getContentText(context: Context, downloadNotification: DownloadNotification): String {
+    override fun getSubtitleText(context: Context, downloadNotification: DownloadNotification): String {
         return when {
             downloadNotification.isCompleted -> context.getString(R.string.fetch_notification_download_complete)
             downloadNotification.isFailed -> context.getString(R.string.fetch_notification_download_failed)
