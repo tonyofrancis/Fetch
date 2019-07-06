@@ -232,10 +232,9 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                     notificationBuilder = getNotificationBuilder(notificationId, groupId)
                     updateNotification(notificationBuilder, downloadNotification, context)
                     notificationManager.notify(notificationId, notificationBuilder.build())
-                    when(downloadNotification.status) {
-                        Status.FAILED,
-                        Status.COMPLETED  -> downloadNotificationExcludeSet.add(downloadNotification.notificationId)
-                        else -> { }
+                    if (!downloadNotificationExcludeSet.contains(downloadNotification.notificationId) &&
+                            (downloadNotification.isFailed || downloadNotification.isCompleted)) {
+                        downloadNotificationExcludeSet.add(downloadNotification.notificationId)
                     }
                 }
             }
