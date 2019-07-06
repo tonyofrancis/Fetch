@@ -906,6 +906,21 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun getAllGroupIds(): Convertible<List<Int>> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(Any())
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val fetchGroupIdList = fetchHandler.getAllGroupIds()
+                        Flowable.just(fetchGroupIdList)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
     override fun addCompletedDownload(completedDownload: CompletedDownload, alertListeners: Boolean): Convertible<Download> {
         return addCompletedDownloads(listOf(completedDownload), alertListeners)
                 .flowable

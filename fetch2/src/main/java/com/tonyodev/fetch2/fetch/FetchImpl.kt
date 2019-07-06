@@ -906,6 +906,19 @@ open class FetchImpl constructor(override val namespace: String,
         }
     }
 
+    override fun getAllGroupIds(func: Func<List<Int>>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                val groupIdList = fetchHandler.getAllGroupIds()
+                uiHandler.post {
+                    func.call(groupIdList)
+                }
+            }
+            return this
+        }
+    }
+
     override fun addCompletedDownload(completedDownload: CompletedDownload, alertListeners: Boolean, func: Func<Download>?, func2: Func<Error>?): Fetch {
         return addCompletedDownloads(listOf(completedDownload), alertListeners, Func { downloads ->
             if (downloads.isNotEmpty()) {

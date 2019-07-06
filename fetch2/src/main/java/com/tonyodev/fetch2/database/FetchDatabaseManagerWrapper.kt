@@ -118,6 +118,12 @@ class FetchDatabaseManagerWrapper(private val fetchDatabaseManager: FetchDatabas
         }
     }
 
+    override fun getAllGroupIds(): List<Int> {
+        return synchronized(fetchDatabaseManager) {
+            fetchDatabaseManager.getAllGroupIds()
+        }
+    }
+
     override fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>): List<DownloadInfo> {
         return synchronized(fetchDatabaseManager) {
             fetchDatabaseManager.getDownloadsInGroupWithStatus(groupId, statuses)

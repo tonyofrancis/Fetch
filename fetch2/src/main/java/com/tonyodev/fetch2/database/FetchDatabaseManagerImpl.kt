@@ -198,6 +198,11 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         return downloads
     }
 
+    override fun getAllGroupIds(): List<Int> {
+        throwExceptionIfClosed()
+        return requestDatabase.requestDao().getAllGroupIds()
+    }
+
     private val pendingCountQuery = "SELECT ${DownloadDatabase.COLUMN_ID} FROM ${DownloadDatabase.TABLE_NAME}" +
             " WHERE ${DownloadDatabase.COLUMN_STATUS} = '${Status.QUEUED.value}'" +
             " OR ${DownloadDatabase.COLUMN_STATUS} = '${Status.DOWNLOADING.value}'"

@@ -69,4 +69,7 @@ interface DownloadDao {
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_IDENTIFIER = :identifier")
     fun getDownloadsByRequestIdentifier(identifier: Long): List<DownloadInfo>
 
+    @Query("SELECT DISTINCT $COLUMN_GROUP from $TABLE_NAME")
+    fun getAllGroupIds(): List<Int>
+
 }

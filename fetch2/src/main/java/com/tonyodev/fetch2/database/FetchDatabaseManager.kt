@@ -143,6 +143,12 @@ interface FetchDatabaseManager<T: DownloadInfo> : Closeable {
     fun getDownloadsByRequestIdentifier(identifier: Long): List<T>
 
     /**
+     * Gets a list of the ids of all groups managed my this fetch namespace.
+     * @return a list of all groupIDs found in the database.
+     * */
+    fun getAllGroupIds(): List<Int>
+
+    /**
      * Get a list of downloads that are pending(status = Queued) for download in sorted order by(priority(DESC), created(ASC)
      * @param prioritySort the sort priority for created. Default is ASC
      * @return list of pending downloads in sorted order.

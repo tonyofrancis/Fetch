@@ -393,6 +393,13 @@ interface RxFetch {
      * */
     fun getFetchGroup(group: Int): Convertible<FetchGroup>
 
+    /**
+     * Gets a list of the ids of all groups managed my this fetch namespace.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Convertible with results.
+     * */
+    fun getAllGroupIds(): Convertible<List<Int>>
+
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener
      * @throws FetchException if this instance of Fetch has been closed.

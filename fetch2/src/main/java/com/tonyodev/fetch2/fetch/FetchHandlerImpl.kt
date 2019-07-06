@@ -489,6 +489,10 @@ class FetchHandlerImpl(private val namespace: String,
         return fetchDatabaseManagerWrapper.getDownloadsByRequestIdentifier(identifier)
     }
 
+    override fun getAllGroupIds(): List<Int> {
+        return fetchDatabaseManagerWrapper.getAllGroupIds()
+    }
+
     override fun getDownloadBlocks(id: Int): List<DownloadBlock> {
         val download = fetchDatabaseManagerWrapper.get(id)
         return if (download != null) {
