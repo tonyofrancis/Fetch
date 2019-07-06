@@ -83,7 +83,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         val style = NotificationCompat.InboxStyle()
         for (downloadNotification in downloadNotifications) {
             val contentTitle = getSubtitleText(context, downloadNotification)
-            style.addLine("$${downloadNotification.total} $contentTitle")
+            style.addLine("${downloadNotification.total} $contentTitle")
         }
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(android.R.drawable.stat_sys_download_done)
