@@ -10,17 +10,9 @@ open class DownloadNotification: Parcelable, Serializable {
 
     /** The download status*/
     var status: Status = Status.NONE
-        set(value) {
-            lastKnownStatus = status
-            field = value
-        }
 
     /** Returns the progress of a download or -1 if the progress is unknown.*/
     var progress: Int = -1
-        set(value) {
-            lastKnownProgress = progress
-            field = value
-        }
 
     /** The notification id for this download.*/
     var notificationId = -1
@@ -41,16 +33,6 @@ open class DownloadNotification: Parcelable, Serializable {
 
     /** The downloaded file bytes*/
     var downloaded = -1L
-
-    /**
-     * The Download notification's last known status
-     * */
-    var lastKnownStatus = Status.NONE
-
-    /**
-     * The Download notification's last known progress
-     * */
-    var lastKnownProgress = -1
 
     /**
      * The Fetch namespace this download notification belongs too
@@ -187,8 +169,6 @@ open class DownloadNotification: Parcelable, Serializable {
         dest.writeLong(downloadedBytesPerSecond)
         dest.writeLong(total)
         dest.writeLong(downloaded)
-        dest.writeInt(lastKnownStatus.value)
-        dest.writeInt(lastKnownProgress)
         dest.writeString(namespace)
         dest.writeString(title)
     }
@@ -209,8 +189,6 @@ open class DownloadNotification: Parcelable, Serializable {
         if (downloadedBytesPerSecond != other.downloadedBytesPerSecond) return false
         if (total != other.total) return false
         if (downloaded != other.downloaded) return false
-        if (lastKnownStatus != other.lastKnownStatus) return false
-        if (lastKnownProgress != other.lastKnownProgress) return false
         if (namespace != other.namespace) return false
         if (title != other.title) return false
         return true
@@ -225,8 +203,6 @@ open class DownloadNotification: Parcelable, Serializable {
         result = 31 * result + downloadedBytesPerSecond.hashCode()
         result = 31 * result + total.hashCode()
         result = 31 * result + downloaded.hashCode()
-        result = 31 * result + lastKnownStatus.hashCode()
-        result = 31 * result + lastKnownProgress
         result = 31 * result + namespace.hashCode()
         result = 31 * result + title.hashCode()
         return result
@@ -235,10 +211,8 @@ open class DownloadNotification: Parcelable, Serializable {
     override fun toString(): String {
         return "DownloadNotification(status=$status, progress=$progress, notificationId=$notificationId," +
                 " groupId=$groupId, etaInMilliSeconds=$etaInMilliSeconds, downloadedBytesPerSecond=$downloadedBytesPerSecond, " +
-                "total=$total, downloaded=$downloaded, lastKnownStatus=$lastKnownStatus, lastKnownProgress=$lastKnownProgress," +
-                " namespace='$namespace', title='$title')"
+                "total=$total, downloaded=$downloaded, namespace='$namespace', title='$title')"
     }
-
 
     companion object CREATOR : Parcelable.Creator<DownloadNotification> {
 
@@ -251,8 +225,6 @@ open class DownloadNotification: Parcelable, Serializable {
             val downloadedBytesPerSeconds = source.readLong()
             val total = source.readLong()
             val downloaded = source.readLong()
-            val lastKnownStatus = Status.valueOf(source.readInt())
-            val lastKnownProgress = source.readInt()
             val namespace = source.readString() ?: ""
             val title = source.readString() ?: ""
             val downloadNotification = DownloadNotification()
@@ -264,8 +236,6 @@ open class DownloadNotification: Parcelable, Serializable {
             downloadNotification.downloadedBytesPerSecond = downloadedBytesPerSeconds
             downloadNotification.total = total
             downloadNotification.downloaded = downloaded
-            downloadNotification.lastKnownStatus = lastKnownStatus
-            downloadNotification.lastKnownProgress = lastKnownProgress
             downloadNotification.namespace = namespace
             downloadNotification.title = title
             return downloadNotification
