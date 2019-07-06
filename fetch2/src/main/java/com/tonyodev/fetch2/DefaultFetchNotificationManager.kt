@@ -267,9 +267,6 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
             downloadNotification.namespace = download.namespace
             downloadNotification.title = getDownloadNotificationTitle(download)
             downloadNotificationsMap[download.id] = downloadNotification
-            if (downloadNotification.title.contains("android-logo.png")) {
-                val x = downloadNotification.title
-            }
             if (downloadNotificationExcludeSet.contains(downloadNotification.notificationId)
                     && !downloadNotification.isFailed && !downloadNotification.isCompleted) {
                 downloadNotificationExcludeSet.remove(downloadNotification.notificationId)
