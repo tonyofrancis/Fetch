@@ -124,6 +124,13 @@ interface FetchNotificationManager {
     fun shouldUpdateNotification(downloadNotification: DownloadNotification): Boolean
 
     /**
+     * Indicates if the download notification should be cancelled.
+     * @param downloadNotification the download notification.
+     * @return true if the existing notification should be cancelled. False otherwise.
+     * */
+    fun shouldCancelNotification(downloadNotification: DownloadNotification): Boolean
+
+    /**
      * Registers the notification manager broadcast receiver
      * */
     fun registerBroadcastReceiver()

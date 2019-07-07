@@ -248,6 +248,10 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         return !downloadNotificationExcludeSet.contains(downloadNotification.notificationId)
     }
 
+    override fun shouldCancelNotification(downloadNotification: DownloadNotification): Boolean {
+        return false
+    }
+
     override fun postDownloadUpdate(download: Download): Boolean {
         return synchronized(downloadNotificationsMap) {
             if (downloadNotificationsMap.size > 50) {
@@ -270,7 +274,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                     && !downloadNotification.isFailed && !downloadNotification.isCompleted) {
                 downloadNotificationExcludeSet.remove(downloadNotification.notificationId)
             }
-            if (downloadNotification.isCancelledNotification) {
+            if (downloadNotification.isCancelledNotification || shouldCancelNotification(downloadNotification)) {
                 cancelNotification(downloadNotification.notificationId)
             } else {
                 notify(download.group)
