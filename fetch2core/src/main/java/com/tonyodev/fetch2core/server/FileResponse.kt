@@ -52,13 +52,13 @@ data class FileResponse(val status: Int = HttpURLConnection.HTTP_UNSUPPORTED_TYP
 
         const val CLOSE_CONNECTION = 0
         const val OPEN_CONNECTION = 1
-        const val FIELD_STATUS = "status"
-        const val FIELD_TYPE = "type"
-        const val FIELD_CONNECTION = "connection"
-        const val FIELD_DATE = "date"
-        const val FIELD_CONTENT_LENGTH = "content-length"
-        const val FIELD_MD5 = "md5"
-        const val FIELD_SESSION_ID = "sessionid"
+        const val FIELD_STATUS = "Status"
+        const val FIELD_TYPE = "Type"
+        const val FIELD_CONNECTION = "Connection"
+        const val FIELD_DATE = "Date"
+        const val FIELD_CONTENT_LENGTH = "Content-Length"
+        const val FIELD_MD5 = "Md5"
+        const val FIELD_SESSION_ID = "SessionId"
 
 
         override fun createFromParcel(source: Parcel): FileResponse {

@@ -220,11 +220,11 @@ fun getFileMd5String(file: String): String? {
 }
 
 fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): Boolean {
-    val transferEncoding = responseHeaders["transfer-encoding"]?.firstOrNull()
-            ?: responseHeaders["transferencoding"]?.firstOrNull()
+    val transferEncoding = responseHeaders["Transfer-Encoding"]?.firstOrNull()
+            ?: responseHeaders["TransferEncoding"]?.firstOrNull()
             ?: ""
-    val contentLength = (responseHeaders["content-length"]?.firstOrNull()?.toLongOrNull()
-            ?: responseHeaders["contentlength"]?.firstOrNull()?.toLongOrNull())
+    val contentLength = (responseHeaders["Content-Length"]?.firstOrNull()?.toLongOrNull()
+            ?: responseHeaders["ContentLength"]?.firstOrNull()?.toLongOrNull())
             ?: -1L
     return transferEncoding != "chunked" && contentLength > -1L
 }
@@ -339,15 +339,15 @@ fun getSimpleInterruptMonitor() = object : InterruptMonitor {
 
 fun getContentLengthFromHeader(headers: Map<String, List<String>>, defaultValue: Long): Long {
     var contentLength = defaultValue
-    if (headers.containsKey("content-length")) {
-        val size = headers["content-length"]?.firstOrNull()?.toLongOrNull()
+    if (headers.containsKey("Content-Length")) {
+        val size = headers["Content-Length"]?.firstOrNull()?.toLongOrNull()
         if (size != null && size > 0) {
             contentLength = size
             return contentLength
         }
     }
-    if (headers.containsKey("content-range")) {
-        val value = headers["content-range"]?.firstOrNull()
+    if (headers.containsKey("Content-Range")) {
+        val value = headers["Content-Range"]?.firstOrNull()
         if (value != null) {
             val index = value.lastIndexOf("/")
             if (index != -1 && ((index + 1) < value.length)) {
