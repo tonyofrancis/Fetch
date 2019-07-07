@@ -13,6 +13,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import android.view.View;
 
 import com.tonyodev.fetch2.AbstractFetchListener;
+import com.tonyodev.fetch2.DefaultFetchNotificationManager;
 import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2core.Downloader;
@@ -52,6 +53,13 @@ public class DownloadListActivity extends AppCompatActivity implements ActionLis
                 .setDownloadConcurrentLimit(4)
                 .setHttpDownloader(new OkHttpDownloader(Downloader.FileDownloaderType.PARALLEL))
                 .setNamespace(FETCH_NAMESPACE)
+                .setNotificationManager(new DefaultFetchNotificationManager(this) {
+                    @NotNull
+                    @Override
+                    public Fetch getFetchInstanceForNamespace(@NotNull String namespace) {
+                        return fetch;
+                    }
+                })
                 .build();
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
         checkStoragePermissions();

@@ -3,6 +3,7 @@ package com.tonyodev.fetch2
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.database.FetchDatabaseManager
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.util.*
@@ -27,7 +28,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val fileExistChecksEnabled: Boolean,
                                              val storageResolver: StorageResolver,
                                              val fetchNotificationManager: FetchNotificationManager?,
-                                             val fetchDatabaseManager: FetchDatabaseManager?,
+                                             val fetchDatabaseManager: FetchDatabaseManager<DownloadInfo>?,
                                              val backgroundHandler: Handler?,
                                              val prioritySort: PrioritySort,
                                              val internetCheckUrl: String?,
@@ -62,7 +63,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var fileExistChecksEnabled = DEFAULT_FILE_EXIST_CHECKS
         private var storageResolver: StorageResolver = DefaultStorageResolver(appContext, getFileTempDir(appContext))
         private var fetchNotificationManager: FetchNotificationManager? = null
-        private var fetchDatabaseManager: FetchDatabaseManager? = null
+        private var fetchDatabaseManager: FetchDatabaseManager<DownloadInfo>? = null
         private var backgroundHandler: Handler? = null
         private var prioritySort: PrioritySort = defaultPrioritySort
         private var internetCheckUrl: String? = null
@@ -255,7 +256,7 @@ class FetchConfiguration private constructor(val appContext: Context,
          * @param fetchDatabaseManager the Fetch database managers.
          * @return Builder
          * */
-        fun setDatabaseManager(fetchDatabaseManager: FetchDatabaseManager?): Builder {
+        fun setDatabaseManager(fetchDatabaseManager: FetchDatabaseManager<DownloadInfo>?): Builder {
             this.fetchDatabaseManager = fetchDatabaseManager
             return this
         }

@@ -9,6 +9,7 @@ import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_ID
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_IDENTIFIER
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_PRIORITY
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_STATUS
+import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_TAG
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.TABLE_NAME
 
 
@@ -68,5 +69,11 @@ interface DownloadDao {
 
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_IDENTIFIER = :identifier")
     fun getDownloadsByRequestIdentifier(identifier: Long): List<DownloadInfo>
+
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_TAG = :tag")
+    fun getDownloadsByTag(tag: String): List<DownloadInfo>
+
+    @Query("SELECT DISTINCT $COLUMN_GROUP from $TABLE_NAME")
+    fun getAllGroupIds(): List<Int>
 
 }

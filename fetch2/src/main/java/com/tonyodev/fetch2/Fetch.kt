@@ -705,6 +705,15 @@ interface Fetch {
     fun getDownloadsByRequestIdentifier(identifier: Long, func: Func<List<Download>>): Fetch
 
     /**
+     * Gets all downloads containing the tag.
+     * @param tag tag.
+     * @param func Callback that the results will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance
+     * */
+    fun getDownloadsByTag(tag: String, func: Func<List<Download>>): Fetch
+
+    /**
      * Gets the FetchGroup by id. Even if the database does not contain downloads with this group id
      * a FetchGroup will be returned. It will contain no downloads however. When a download with this
      * group id is added. The downloads field on this object will be update and attached FetchObservers will be notified.
@@ -714,6 +723,14 @@ interface Fetch {
      * @return Instance.
      * */
     fun getFetchGroup(group: Int, func: Func<FetchGroup>): Fetch
+
+    /**
+     * Gets a list of the ids of all groups managed my this fetch namespace.
+     * @param func callback that the results will be returned on.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Instance.
+     * */
+    fun getAllGroupIds(func: Func<List<Int>>): Fetch
 
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener

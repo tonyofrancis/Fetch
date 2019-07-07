@@ -1,10 +1,11 @@
 package com.tonyodev.fetch2.database
 
-import androidx.sqlite.db.SupportSQLiteDatabase
-import androidx.room.Room
+
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteException
+import androidx.room.Room
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.tonyodev.fetch2.PrioritySort
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.migration.Migration
@@ -22,7 +23,7 @@ class FetchDatabaseManagerImpl constructor(context: Context,
                                            migrations: Array<Migration>,
                                            private val liveSettings: LiveSettings,
                                            private val fileExistChecksEnabled: Boolean,
-                                           private val defaultStorageResolver: DefaultStorageResolver) : FetchDatabaseManager {
+                                           private val defaultStorageResolver: DefaultStorageResolver) : FetchDatabaseManager<DownloadInfo> {
 
     @Volatile
     private var closed = false
@@ -30,7 +31,7 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         get() {
             return closed
         }
-    override var delegate: FetchDatabaseManager.Delegate? = null
+    override var delegate: FetchDatabaseManager.Delegate<DownloadInfo>? = null
     private val requestDatabase: DownloadDatabase
     private val database: SupportSQLiteDatabase
 
@@ -198,6 +199,18 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         return downloads
     }
 
+    override fun getAllGroupIds(): List<Int> {
+        throwExceptionIfClosed()
+        return requestDatabase.requestDao().getAllGroupIds()
+    }
+
+    override fun getDownloadsByTag(tag: String): List<DownloadInfo> {
+        throwExceptionIfClosed()
+        val downloads = requestDatabase.requestDao().getDownloadsByTag(tag)
+        sanitize(downloads)
+        return downloads
+    }
+
     private val pendingCountQuery = "SELECT ${DownloadDatabase.COLUMN_ID} FROM ${DownloadDatabase.TABLE_NAME}" +
             " WHERE ${DownloadDatabase.COLUMN_STATUS} = '${Status.QUEUED.value}'" +
             " OR ${DownloadDatabase.COLUMN_STATUS} = '${Status.DOWNLOADING.value}'"
@@ -312,6 +325,10 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         closed = true
         requestDatabase.close()
         logger.d("Database closed")
+    }
+
+    override fun getNewDownloadInfoInstance(): DownloadInfo {
+        return DownloadInfo()
     }
 
     private fun throwExceptionIfClosed() {

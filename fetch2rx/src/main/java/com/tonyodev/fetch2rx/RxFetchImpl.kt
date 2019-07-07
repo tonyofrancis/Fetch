@@ -7,6 +7,7 @@ import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
 import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.Status
+import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper
 import com.tonyodev.fetch2.util.ActiveDownloadInfo
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_AUTOSTART_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
@@ -22,7 +23,8 @@ open class RxFetchImpl(override val namespace: String,
                        private val uiHandler: Handler,
                        private val fetchHandler: FetchHandler,
                        private val logger: Logger,
-                       private val listenerCoordinator: ListenerCoordinator) : RxFetch {
+                       private val listenerCoordinator: ListenerCoordinator,
+                       private val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper) : RxFetch {
 
     private val scheduler = AndroidSchedulers.from(handlerWrapper.getLooper())
     private val uiScheduler = AndroidSchedulers.mainThread()
@@ -115,7 +117,7 @@ open class RxFetchImpl(override val namespace: String,
                                         logger.d("Added $download")
                                     }
                                     Status.QUEUED -> {
-                                        val downloadCopy = download.toDownloadInfo()
+                                        val downloadCopy = download.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
                                         downloadCopy.status = Status.ADDED
                                         listenerCoordinator.mainListener.onAdded(downloadCopy)
                                         logger.d("Added $download")
@@ -727,7 +729,7 @@ open class RxFetchImpl(override val namespace: String,
                                     }
                                     Status.QUEUED -> {
                                         if (!downloadPair.second) {
-                                            val downloadCopy = download.copy().toDownloadInfo()
+                                            val downloadCopy = download.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
                                             downloadCopy.status = Status.ADDED
                                             listenerCoordinator.mainListener.onAdded(downloadCopy)
                                             logger.d("Added $download")
@@ -898,6 +900,36 @@ open class RxFetchImpl(override val namespace: String,
                         throwExceptionIfClosed()
                         val fetchGroup = fetchHandler.getFetchGroup(group)
                         Flowable.just(fetchGroup)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
+    override fun getAllGroupIds(): Convertible<List<Int>> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(Any())
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val fetchGroupIdList = fetchHandler.getAllGroupIds()
+                        Flowable.just(fetchGroupIdList)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
+    override fun getDownloadsByTag(tag: String): Convertible<List<Download>> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(tag)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloadsByTag(it)
+                        Flowable.just(downloads)
                     }
                     .observeOn(uiScheduler)
                     .toConvertible()
@@ -1168,7 +1200,8 @@ open class RxFetchImpl(override val namespace: String,
                     uiHandler = modules.uiHandler,
                     fetchHandler = modules.fetchHandler,
                     logger = modules.fetchConfiguration.logger,
-                    listenerCoordinator = modules.listenerCoordinator)
+                    listenerCoordinator = modules.listenerCoordinator,
+                    fetchDatabaseManagerWrapper = modules.fetchDatabaseManagerWrapper)
         }
 
     }

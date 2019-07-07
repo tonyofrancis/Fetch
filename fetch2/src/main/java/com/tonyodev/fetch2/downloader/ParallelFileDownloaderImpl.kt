@@ -48,7 +48,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
 
     override var delegate: FileDownloader.Delegate? = null
 
-    private val downloadInfo = initialDownload.toDownloadInfo()
+    private val downloadInfo by lazy { initialDownload.toDownloadInfo(delegate!!.getNewDownloadInfoInstance()) }
 
     override val download: Download
         get () {

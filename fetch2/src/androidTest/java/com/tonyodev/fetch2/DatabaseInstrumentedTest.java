@@ -71,7 +71,7 @@ public class DatabaseInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         fetchDatabaseManager.insert(downloadInfoList);
@@ -84,7 +84,7 @@ public class DatabaseInstrumentedTest {
     public void insertSingle() throws Exception {
         fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
         final Pair<DownloadInfo, Boolean> pair = fetchDatabaseManager.insert(downloadInfo);
         assertTrue(pair.getSecond());
     }
@@ -103,7 +103,7 @@ public class DatabaseInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         final List<Pair<DownloadInfo, Boolean>> insertedList = fetchDatabaseManager.insert(downloadInfoList);
@@ -116,7 +116,7 @@ public class DatabaseInstrumentedTest {
     public void deleteSingle() throws Exception {
         fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
         fetchDatabaseManager.insert(downloadInfo);
         fetchDatabaseManager.delete(downloadInfo);
         final Download query = fetchDatabaseManager.get(downloadInfo.getId());
@@ -136,7 +136,7 @@ public class DatabaseInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         fetchDatabaseManager.insert(downloadInfoList);
@@ -154,7 +154,7 @@ public class DatabaseInstrumentedTest {
         fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
         final File file = FetchCoreUtils.getFile(request.getFile());
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
         fetchDatabaseManager.insert(downloadInfo);
         final int groupId = 2;
         final Priority priority = Priority.HIGH;
@@ -183,7 +183,7 @@ public class DatabaseInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         fetchDatabaseManager.insert(downloadInfoList);
@@ -225,7 +225,7 @@ public class DatabaseInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         fetchDatabaseManager.insert(downloadInfoList);
@@ -239,7 +239,7 @@ public class DatabaseInstrumentedTest {
     public void getId() throws Exception {
         fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
         fetchDatabaseManager.insert(downloadInfo);
         final Download query = fetchDatabaseManager.get(downloadInfo.getId());
         assertNotNull(query);
@@ -259,7 +259,7 @@ public class DatabaseInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         fetchDatabaseManager.insert(downloadInfoList);
@@ -290,7 +290,7 @@ public class DatabaseInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         for (DownloadInfo downloadInfo : downloadInfoList) {
@@ -321,7 +321,7 @@ public class DatabaseInstrumentedTest {
         }
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         for (DownloadInfo downloadInfo : downloadInfoList) {
@@ -343,7 +343,7 @@ public class DatabaseInstrumentedTest {
         final List<Request> requests = getTestRequestList(20);
         final List<DownloadInfo> downloadInfoList = new ArrayList<>(20);
         for (Request request : requests) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfo.setStatus(Status.DOWNLOADING);
             downloadInfoList.add(downloadInfo);
             final File file = FetchCoreUtils.getFile(request.getFile());
@@ -376,7 +376,7 @@ public class DatabaseInstrumentedTest {
 
         final List<DownloadInfo> downloadInfoList = new ArrayList<>();
         for (Request request : requestList) {
-            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+            final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
             downloadInfoList.add(downloadInfo);
         }
         for (int i = 0; i <= 4; i++) {
@@ -412,7 +412,7 @@ public class DatabaseInstrumentedTest {
     public void fileUpdate() throws Exception {
         fetchDatabaseManager.deleteAll();
         final Request request = getTestRequest();
-        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request);
+        final DownloadInfo downloadInfo = FetchTypeConverterExtensions.toDownloadInfo(request, new DownloadInfo());
         final Pair<DownloadInfo, Boolean> pair = fetchDatabaseManager.insert(downloadInfo);
         assertTrue(pair.getSecond());
         final long downloaded = 2000;

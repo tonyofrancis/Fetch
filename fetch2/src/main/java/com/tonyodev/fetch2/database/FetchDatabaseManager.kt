@@ -11,7 +11,7 @@ import java.io.Closeable
  * The default Fetch Database Manager is FetchDatabaseManagerImpl which uses sqlite/room
  * to store download information. All methods and fields will be called on Fetch's background thread.
  * */
-interface FetchDatabaseManager : Closeable {
+interface FetchDatabaseManager<T: DownloadInfo> : Closeable {
 
     /**
      * Checks if the database is closed.
@@ -26,7 +26,7 @@ interface FetchDatabaseManager : Closeable {
      * This field is set by the Fetch Builder directly. Your implemention should set this to null
      * by default.
      * */
-    var delegate: Delegate?
+    var delegate: Delegate<T>?
 
     /**
      * Inserts a new download into the database.
@@ -34,7 +34,7 @@ interface FetchDatabaseManager : Closeable {
      * @return a pair with the store or updated download information and a boolean.
      * indicated if the insert was a success.
      * */
-    fun insert(downloadInfo: DownloadInfo): Pair<DownloadInfo, Boolean>
+    fun insert(downloadInfo: T): Pair<T, Boolean>
 
     /**
      * Inserts a list of downloads into the database.
@@ -42,19 +42,19 @@ interface FetchDatabaseManager : Closeable {
      * @return a list of pairs with the store or updated download information and a boolean.
      * indicated if the insert for each download was a success.
      * */
-    fun insert(downloadInfoList: List<DownloadInfo>): List<Pair<DownloadInfo, Boolean>>
+    fun insert(downloadInfoList: List<T>): List<Pair<T, Boolean>>
 
     /**
      * Deletes a download from the database.
      * @param downloadInfo object containing the download information.
      * */
-    fun delete(downloadInfo: DownloadInfo)
+    fun delete(downloadInfo: T)
 
     /**
      * Deletes a list of downloads from the database.
      * @param downloadInfoList list of objects containing the download information.
      * */
-    fun delete(downloadInfoList: List<DownloadInfo>)
+    fun delete(downloadInfoList: List<T>)
 
     /**
     * Deletes all downloads in the database.
@@ -65,31 +65,31 @@ interface FetchDatabaseManager : Closeable {
      * Updates a download in the database.
      * @param downloadInfo the download information.
      * */
-    fun update(downloadInfo: DownloadInfo)
+    fun update(downloadInfo: T)
 
     /**
      * Updates a list of downloads in the database.
      * @param downloadInfoList list of downloads.
      * */
-    fun update(downloadInfoList: List<DownloadInfo>)
+    fun update(downloadInfoList: List<T>)
 
     /**
      * Updates only the file bytes and status of a download in the database.
      * @param downloadInfo the download information.
      * */
-    fun updateFileBytesInfoAndStatusOnly(downloadInfo: DownloadInfo)
+    fun updateFileBytesInfoAndStatusOnly(downloadInfo: T)
 
     /**
      * Gets a list of all the downloads in the database.
      * */
-    fun get(): List<DownloadInfo>
+    fun get(): List<T>
 
     /**
      * Gets a download from the database by id if it exists.
      * @param id download id.
      * @return the download or null.
      * */
-    fun get(id: Int): DownloadInfo?
+    fun get(id: Int): T?
 
     /**
      * Gets a list of downloads from the database by id if it exists.
@@ -97,35 +97,35 @@ interface FetchDatabaseManager : Closeable {
      * @return the list of downloads for each of ids in order. If a download
      * does not exist for an id null will be returned.
      * */
-    fun get(ids: List<Int>): List<DownloadInfo?>
+    fun get(ids: List<Int>): List<T?>
 
     /**
      * Gets a download by file name if it exists.
      * @param file the file
      * @return the download if it exists.
      * */
-    fun getByFile(file: String): DownloadInfo?
+    fun getByFile(file: String): T?
 
     /**
      * Get all downloads by the specified status.
      * @param status the query status.
      * @return all downloads in the database with the specified status.
      * */
-    fun getByStatus(status: Status): List<DownloadInfo>
+    fun getByStatus(status: Status): List<T>
 
     /**
      * Get all downloads by the specified statuses.
      * @param statuses the query statuses list.
      * @return all downloads in the database with the specified statuses.
      * */
-    fun getByStatus(statuses: List<Status>): List<DownloadInfo>
+    fun getByStatus(statuses: List<Status>): List<T>
 
     /**
      * Gets all downloads that belongs to the specified group.
      * @param group the group id
      * @return list of downloads belonging to the group
      * */
-    fun getByGroup(group: Int): List<DownloadInfo>
+    fun getByGroup(group: Int): List<T>
 
     /**
      * Gets all downloads in the specified group with the specified statuses.
@@ -133,21 +133,34 @@ interface FetchDatabaseManager : Closeable {
      * @param statuses the list of statues to query against.
      * @return list of downloads matching the query.
      * */
-    fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>): List<DownloadInfo>
+    fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>): List<T>
 
     /**
      * Get a list of downloads by the specified request identifier.
      * @param identifier the request identifier
      * @return list of downloads matching the query.
      * */
-    fun getDownloadsByRequestIdentifier(identifier: Long): List<DownloadInfo>
+    fun getDownloadsByRequestIdentifier(identifier: Long): List<T>
+
+    /**
+     * Get a list of downloads by the specified tag.
+     * @param tag the tag.
+     * @return list of downloads matching the query.
+     * */
+    fun getDownloadsByTag(tag: String): List<T>
+
+    /**
+     * Gets a list of the ids of all groups managed my this fetch namespace.
+     * @return a list of all groupIDs found in the database.
+     * */
+    fun getAllGroupIds(): List<Int>
 
     /**
      * Get a list of downloads that are pending(status = Queued) for download in sorted order by(priority(DESC), created(ASC)
      * @param prioritySort the sort priority for created. Default is ASC
      * @return list of pending downloads in sorted order.
      * */
-    fun getPendingDownloadsSorted(prioritySort: PrioritySort): List<DownloadInfo>
+    fun getPendingDownloadsSorted(prioritySort: PrioritySort): List<T>
 
     /**
      * Called when the first instance of Fetch for a namespace is created. Use this method
@@ -162,7 +175,7 @@ interface FetchDatabaseManager : Closeable {
      * @param id the download id.
      * @param extras the new extras that will replace the existing extras on the download.
      * */
-    fun updateExtras(id: Int, extras: Extras): DownloadInfo?
+    fun updateExtras(id: Int, extras: Extras): T?
 
     /**
      * Gets the count/sum of all downloads with the status of Queued and Downloading combined.
@@ -173,15 +186,21 @@ interface FetchDatabaseManager : Closeable {
     fun getPendingCount(includeAddedDownloads: Boolean): Long
 
     /**
+     * Get a new instance of DownloadInfo.
+     * Note: Be sure to override DownloadInfo create parcelable and copy methods.
+     * */
+    fun getNewDownloadInfoInstance(): T
+
+    /**
      * Interface used for the DownloadManager's delegate.
      * */
-    interface Delegate {
+    interface Delegate<T: DownloadInfo> {
 
         /**
          * Deletes all associated temp files used to perform a download for a download.
          * @param downloadInfo download information.
          * */
-        fun deleteTempFilesForDownload(downloadInfo: DownloadInfo)
+        fun deleteTempFilesForDownload(downloadInfo: T)
 
     }
 

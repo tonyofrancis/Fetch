@@ -95,6 +95,9 @@ fun getOutputResourceWrapper(filePath: String): OutputResourceWrapper {
 }
 
 fun getOutputResourceWrapper(file: File): OutputResourceWrapper {
+    if (!file.exists()) {
+        throw FileNotFoundException("${file.canonicalPath} $FILE_NOT_FOUND")
+    }
     return getOutputResourceWrapper(RandomAccessFile(file, "rw"))
 }
 

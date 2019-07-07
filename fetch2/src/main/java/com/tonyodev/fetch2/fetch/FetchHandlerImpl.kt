@@ -60,7 +60,7 @@ class FetchHandlerImpl(private val namespace: String,
     private fun enqueueRequests(requests: List<Request>): List<Pair<Download, Error>> {
         val results = mutableListOf<Pair<Download, Error>>()
         requests.forEach {
-            val downloadInfo = it.toDownloadInfo()
+            val downloadInfo = it.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
             downloadInfo.namespace = namespace
             try {
                 val existing = prepareDownloadInfoForEnqueue(downloadInfo)
@@ -113,7 +113,7 @@ class FetchHandlerImpl(private val namespace: String,
                 try {
                     fetchDatabaseManagerWrapper.update(existingDownload)
                 } catch (e: Exception) {
-
+                    logger.e(e.message ?: "", e)
                 }
             } else if (existingDownload?.status == Status.COMPLETED
                     && downloadInfo.enqueueAction == EnqueueAction.UPDATE_ACCORDINGLY) {
@@ -121,6 +121,7 @@ class FetchHandlerImpl(private val namespace: String,
                     try {
                         fetchDatabaseManagerWrapper.delete(existingDownload)
                     } catch (e: Exception) {
+                        logger.e(e.message ?: "", e)
                     }
                     existingDownload = null
                     if (downloadInfo.enqueueAction != EnqueueAction.INCREMENT_FILE_NAME) {
@@ -172,7 +173,7 @@ class FetchHandlerImpl(private val namespace: String,
             }
             EnqueueAction.INCREMENT_FILE_NAME -> {
                 if (createFileOnEnqueue) {
-                     storageResolver.createFile(downloadInfo.file, true)
+                    storageResolver.createFile(downloadInfo.file, true)
                 }
                 downloadInfo.file = downloadInfo.file
                 downloadInfo.id = getUniqueId(downloadInfo.url, downloadInfo.file)
@@ -187,7 +188,7 @@ class FetchHandlerImpl(private val namespace: String,
 
     override fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download> {
         return completedDownloads.map {
-            val downloadInfo = it.toDownloadInfo()
+            val downloadInfo = it.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
             downloadInfo.namespace = namespace
             downloadInfo.status = Status.COMPLETED
             prepareCompletedDownloadInfoForEnqueue(downloadInfo)
@@ -389,7 +390,7 @@ class FetchHandlerImpl(private val namespace: String,
         }
         return if (oldDownloadInfo != null) {
             if (newRequest.file == oldDownloadInfo.file) {
-                val newDownloadInfo = newRequest.toDownloadInfo()
+                val newDownloadInfo = newRequest.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
                 newDownloadInfo.namespace = namespace
                 newDownloadInfo.downloaded = oldDownloadInfo.downloaded
                 newDownloadInfo.total = oldDownloadInfo.total
@@ -401,6 +402,7 @@ class FetchHandlerImpl(private val namespace: String,
                     newDownloadInfo.error = oldDownloadInfo.error
                 }
                 fetchDatabaseManagerWrapper.delete(oldDownloadInfo)
+                listenerCoordinator.mainListener.onDeleted(oldDownloadInfo)
                 fetchDatabaseManagerWrapper.insert(newDownloadInfo)
                 startPriorityQueueIfNotStarted()
                 return Pair(newDownloadInfo, true)
@@ -415,20 +417,21 @@ class FetchHandlerImpl(private val namespace: String,
     }
 
     override fun renameCompletedDownloadFile(id: Int, newFileName: String): Download {
-        val download = fetchDatabaseManagerWrapper.get(id) ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
+        val download = fetchDatabaseManagerWrapper.get(id)
+                ?: throw FetchException(REQUEST_DOES_NOT_EXIST)
         if (download.status != Status.COMPLETED) {
-            FetchException(FAILED_RENAME_FILE_ASSOCIATED_WITH_INCOMPLETE_DOWNLOAD)
+            throw FetchException(FAILED_RENAME_FILE_ASSOCIATED_WITH_INCOMPLETE_DOWNLOAD)
         }
         val downloadWithFile = fetchDatabaseManagerWrapper.getByFile(newFileName)
         if (downloadWithFile != null) {
             throw FetchException(REQUEST_WITH_FILE_PATH_ALREADY_EXIST)
         }
-        val copy = download.copy() as DownloadInfo
+        val copy = download.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
         copy.id = getUniqueId(download.url, newFileName)
         copy.file = newFileName
         val pair = fetchDatabaseManagerWrapper.insert(copy)
         if (!pair.second) {
-         throw FetchException(FILE_CANNOT_BE_RENAMED)
+            throw FetchException(FILE_CANNOT_BE_RENAMED)
         }
         val renamed = storageResolver.renameFile(download.file, newFileName)
         return if (!renamed) {
@@ -484,6 +487,14 @@ class FetchHandlerImpl(private val namespace: String,
 
     override fun getDownloadsByRequestIdentifier(identifier: Long): List<Download> {
         return fetchDatabaseManagerWrapper.getDownloadsByRequestIdentifier(identifier)
+    }
+
+    override fun getAllGroupIds(): List<Int> {
+        return fetchDatabaseManagerWrapper.getAllGroupIds()
+    }
+
+    override fun getDownloadsByTag(tag: String): List<Download> {
+        return fetchDatabaseManagerWrapper.getDownloadsByTag(tag)
     }
 
     override fun getDownloadBlocks(id: Int): List<DownloadBlock> {

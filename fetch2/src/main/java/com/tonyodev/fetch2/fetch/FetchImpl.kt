@@ -3,6 +3,7 @@ package com.tonyodev.fetch2.fetch
 
 import android.os.Handler
 import com.tonyodev.fetch2.*
+import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder.Modules
@@ -18,7 +19,8 @@ open class FetchImpl constructor(override val namespace: String,
                                  private val uiHandler: Handler,
                                  private val fetchHandler: FetchHandler,
                                  private val logger: Logger,
-                                 private val listenerCoordinator: ListenerCoordinator) : Fetch {
+                                 private val listenerCoordinator: ListenerCoordinator,
+                                 private val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper) : Fetch {
 
     private val lock = Object()
     @Volatile
@@ -108,7 +110,7 @@ open class FetchImpl constructor(override val namespace: String,
                                 logger.d("Added $download")
                             }
                             Status.QUEUED -> {
-                                val downloadCopy = download.toDownloadInfo()
+                                val downloadCopy = download.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
                                 downloadCopy.status = Status.ADDED
                                 listenerCoordinator.mainListener.onAdded(downloadCopy)
                                 logger.d("Added $download")
@@ -711,7 +713,7 @@ open class FetchImpl constructor(override val namespace: String,
                             }
                             Status.QUEUED -> {
                                 if (!downloadPair.second) {
-                                    val downloadCopy = download.copy().toDownloadInfo()
+                                    val downloadCopy = download.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
                                     downloadCopy.status = Status.ADDED
                                     listenerCoordinator.mainListener.onAdded(downloadCopy)
                                     logger.d("Added $download")
@@ -896,6 +898,32 @@ open class FetchImpl constructor(override val namespace: String,
             throwExceptionIfClosed()
             handlerWrapper.post {
                 val downloads = fetchHandler.getDownloadsWithStatus(statuses)
+                uiHandler.post {
+                    func.call(downloads)
+                }
+            }
+            return this
+        }
+    }
+
+    override fun getAllGroupIds(func: Func<List<Int>>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                val groupIdList = fetchHandler.getAllGroupIds()
+                uiHandler.post {
+                    func.call(groupIdList)
+                }
+            }
+            return this
+        }
+    }
+
+    override fun getDownloadsByTag(tag: String, func: Func<List<Download>>): Fetch {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                val downloads = fetchHandler.getDownloadsByTag(tag)
                 uiHandler.post {
                     func.call(downloads)
                 }
@@ -1247,7 +1275,8 @@ open class FetchImpl constructor(override val namespace: String,
                     uiHandler = modules.uiHandler,
                     fetchHandler = modules.fetchHandler,
                     logger = modules.fetchConfiguration.logger,
-                    listenerCoordinator = modules.listenerCoordinator)
+                    listenerCoordinator = modules.listenerCoordinator,
+                    fetchDatabaseManagerWrapper = modules.fetchDatabaseManagerWrapper)
         }
 
     }

@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.DownloadInfo
+import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper
 import com.tonyodev.fetch2.util.DEFAULT_DOWNLOAD_ON_ENQUEUE
 import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetchmigrator.fetch1.DatabaseHelper
@@ -13,7 +14,7 @@ import com.tonyodev.fetchmigrator.fetch1.DownloadTransferPair
 import com.tonyodev.fetchmigrator.fetch1.FetchConst
 import org.json.JSONObject
 
-fun v1CursorToV2DownloadInfo(cursor: Cursor): DownloadTransferPair {
+fun v1CursorToV2DownloadInfo(cursor: Cursor, databaseManagerWrapper: FetchDatabaseManagerWrapper): DownloadTransferPair {
     val id = cursor.getLong(DatabaseHelper.INDEX_ID)
     val status = cursor.getInt(DatabaseHelper.INDEX_COLUMN_STATUS)
     val url = cursor.getString(DatabaseHelper.INDEX_COLUMN_URL)
@@ -24,7 +25,7 @@ fun v1CursorToV2DownloadInfo(cursor: Cursor): DownloadTransferPair {
     val downloaded = cursor.getLong(DatabaseHelper.INDEX_COLUMN_DOWNLOADED_BYTES)
     val headers = cursor.getString(DatabaseHelper.INDEX_COLUMN_HEADERS)
 
-    val downloadInfo = DownloadInfo()
+    val downloadInfo = databaseManagerWrapper.getNewDownloadInfoInstance()
     downloadInfo.id = (url.hashCode() * 31) + file.hashCode()
     downloadInfo.url = url
     downloadInfo.file = file

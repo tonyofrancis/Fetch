@@ -46,7 +46,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
     @Volatile
     private var downloaded: Long = 0
     private var estimatedTimeRemainingInMilliseconds: Long = -1
-    private val downloadInfo = initialDownload.toDownloadInfo()
+    private val downloadInfo by lazy { initialDownload.toDownloadInfo(delegate!!.getNewDownloadInfoInstance()) }
     private var averageDownloadedBytesPerSecond = 0.0
     private val movingAverageCalculator = AverageCalculator(5)
     private val downloadBlock = {

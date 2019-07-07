@@ -9,6 +9,8 @@ import androidx.annotation.NonNull;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.tonyodev.fetch2.Fetch;
@@ -67,6 +69,12 @@ public class MainActivity extends AppCompatActivity {
                 deleteDownloadedFiles();
             }
         });
+
+        ViewGroup container = ((ViewGroup) findViewById(R.id.singleDemoButton).getParent());
+        for (int i = 0; i < container.getChildCount(); i++) {
+            TextView button = (TextView) container.getChildAt(i);
+            button.setAllCaps(false);
+        }
     }
 
     private void deleteDownloadedFiles() {

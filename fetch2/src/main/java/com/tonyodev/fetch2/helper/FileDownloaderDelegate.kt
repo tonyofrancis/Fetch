@@ -82,4 +82,8 @@ class FileDownloaderDelegate(private val downloadInfoUpdater: DownloadInfoUpdate
         }
     }
 
+    override fun getNewDownloadInfoInstance(): DownloadInfo {
+        return downloadInfoUpdater.getNewDownloadInfoInstance()
+    }
+
 }

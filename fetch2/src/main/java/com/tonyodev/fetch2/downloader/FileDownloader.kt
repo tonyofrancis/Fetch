@@ -2,6 +2,7 @@ package com.tonyodev.fetch2.downloader
 
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Error
+import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2core.DownloadBlock
 
 interface FileDownloader : Runnable {
@@ -27,6 +28,8 @@ interface FileDownloader : Runnable {
         fun onComplete(download: Download)
 
         fun saveDownloadProgress(download: Download)
+
+        fun getNewDownloadInfoInstance(): DownloadInfo
 
     }
 

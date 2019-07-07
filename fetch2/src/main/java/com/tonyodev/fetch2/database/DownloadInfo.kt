@@ -113,7 +113,7 @@ open class DownloadInfo : Download {
         }
 
     override fun copy(): Download {
-        return this.toDownloadInfo()
+        return this.toDownloadInfo(DownloadInfo())
     }
 
     override fun equals(other: Any?): Boolean {
