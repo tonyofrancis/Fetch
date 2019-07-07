@@ -18,6 +18,20 @@ const val GET_REQUEST_METHOD = "GET"
 
 const val HEAD_REQUEST_METHOD = "HEAD"
 
+internal const val HEADER_CONTENT_LENGTH = "content-length"
+
+internal const val HEADER_CONTENT_LENGTH_LEGACY = "Content-Length"
+
+internal const val HEADER_CONTENT_LENGTH_COMPAT = "ContentLength"
+
+internal const val HEADER_CONTENT_RANGE = "content-range"
+
+internal const val HEADER_CONTENT_RANGE_LEGACY = "Content-Range"
+
+internal const val HEADER_TRANSFER_ENCODING = "Transfer-Encoding"
+
+internal const val HEADER_TRANSFER_ENCODING_COMPAT = "TransferEncoding"
+
 fun calculateProgress(downloaded: Long, total: Long): Int {
     return when {
         total < 1 -> -1
@@ -220,13 +234,19 @@ fun getFileMd5String(file: String): String? {
 }
 
 fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): Boolean {
-    val transferEncoding = responseHeaders["Transfer-Encoding"]?.firstOrNull()
-            ?: responseHeaders["TransferEncoding"]?.firstOrNull()
+    val transferEncoding = responseHeaders[HEADER_TRANSFER_ENCODING]?.firstOrNull()
+            ?: responseHeaders[HEADER_TRANSFER_ENCODING_COMPAT]?.firstOrNull()
             ?: ""
-    val contentLength = (responseHeaders["Content-Length"]?.firstOrNull()?.toLongOrNull()
-            ?: responseHeaders["ContentLength"]?.firstOrNull()?.toLongOrNull())
-            ?: -1L
-    return transferEncoding != "chunked" && contentLength > -1L
+    return transferEncoding.takeIf { it != "chunked" }?.let {
+        responseHeaders.let { headers ->
+            when {
+                headers.containsKey(HEADER_CONTENT_LENGTH) -> headers[HEADER_CONTENT_LENGTH]
+                headers.containsKey(HEADER_CONTENT_LENGTH_LEGACY) -> headers[HEADER_CONTENT_LENGTH_LEGACY]
+                headers.containsKey(HEADER_CONTENT_LENGTH_COMPAT) -> headers[HEADER_CONTENT_LENGTH_COMPAT]
+                else -> null
+            }?.firstOrNull()?.toLongOrNull()
+        }.let { value -> value != null && value > -1 }
+    } ?: false
 }
 
 fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Set<Downloader.FileDownloaderType> {
@@ -334,37 +354,28 @@ fun getSimpleInterruptMonitor() = object : InterruptMonitor {
         get() = false
 }
 
-@Suppress("SENSELESS_COMPARISON")
 fun getContentLengthFromHeader(responseHeaders: Map<String, List<String>>, defaultValue: Long): Long {
-    val headers = mutableMapOf<String, List<String>>()
-    for (responseHeader in responseHeaders) {
-        val key = responseHeader.key
-        val value = responseHeader.value
-        if (key != null && value != null) {
-            headers[responseHeader.key] = value
-        }
+    // responseHeaders declared with Not-Null keys and Not-Null values
+    // remove unnecessary conversions here
+    when {
+        responseHeaders.containsKey(HEADER_CONTENT_LENGTH) -> responseHeaders[HEADER_CONTENT_LENGTH]
+        // HTTP/1.1 compat
+        responseHeaders.containsKey(HEADER_CONTENT_LENGTH_LEGACY) -> responseHeaders[HEADER_CONTENT_LENGTH_LEGACY]
+        else -> null
+    }?.firstOrNull()?.toLongOrNull()?.takeIf { it > 0 }?.also {
+        return it
     }
-    var contentLength = defaultValue
-    if (headers.containsKey("content-length")) {
-        val size = headers["content-length"]?.firstOrNull()?.toLongOrNull()
-        if (size != null && size > 0) {
-            contentLength = size
-            return contentLength
-        }
+    when {
+        responseHeaders.containsKey(HEADER_CONTENT_RANGE) -> responseHeaders[HEADER_CONTENT_RANGE]
+        // HTTP/1.1 compat
+        responseHeaders.containsKey(HEADER_CONTENT_RANGE_LEGACY) -> responseHeaders[HEADER_CONTENT_RANGE_LEGACY]
+        else -> null
+    }?.firstOrNull()?.also { value ->
+        value.lastIndexOf("/")
+                .takeIf { it != -1 && it < value.length.minus(1) }
+                ?.let { index -> value.substring(index + 1).toLongOrNull() }
+                ?.takeIf { size -> size > 0 }
+                ?.also { size -> return size }
     }
-    if (headers.containsKey("content-range")) {
-        val value = headers["content-range"]?.firstOrNull()
-        if (value != null) {
-            val index = value.lastIndexOf("/")
-            if (index != -1 && ((index + 1) < value.length)) {
-                val sizeText = value.substring(index + 1)
-                val size = sizeText.toLongOrNull()
-                if (size != null && size > 0) {
-                    contentLength = size
-                    return contentLength
-                }
-            }
-        }
-    }
-    return contentLength
+    return defaultValue
 }
