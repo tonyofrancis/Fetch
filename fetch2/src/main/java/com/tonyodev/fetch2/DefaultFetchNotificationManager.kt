@@ -249,7 +249,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
     }
 
     override fun shouldCancelNotification(downloadNotification: DownloadNotification): Boolean {
-        return false
+        return downloadNotification.isPaused
     }
 
     override fun postDownloadUpdate(download: Download): Boolean {
