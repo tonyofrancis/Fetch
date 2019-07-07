@@ -143,6 +143,13 @@ interface FetchDatabaseManager<T: DownloadInfo> : Closeable {
     fun getDownloadsByRequestIdentifier(identifier: Long): List<T>
 
     /**
+     * Get a list of downloads by the specified tag.
+     * @param tag the tag.
+     * @return list of downloads matching the query.
+     * */
+    fun getDownloadsByTag(tag: String): List<T>
+
+    /**
      * Gets a list of the ids of all groups managed my this fetch namespace.
      * @return a list of all groupIDs found in the database.
      * */

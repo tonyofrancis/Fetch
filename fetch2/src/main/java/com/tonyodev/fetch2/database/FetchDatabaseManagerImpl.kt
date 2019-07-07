@@ -203,6 +203,13 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         return requestDatabase.requestDao().getAllGroupIds()
     }
 
+    override fun getDownloadsByTag(tag: String): List<DownloadInfo> {
+        throwExceptionIfClosed()
+        val downloads = requestDatabase.requestDao().getDownloadsByTag(tag)
+        sanitize(downloads)
+        return downloads
+    }
+
     private val pendingCountQuery = "SELECT ${DownloadDatabase.COLUMN_ID} FROM ${DownloadDatabase.TABLE_NAME}" +
             " WHERE ${DownloadDatabase.COLUMN_STATUS} = '${Status.QUEUED.value}'" +
             " OR ${DownloadDatabase.COLUMN_STATUS} = '${Status.DOWNLOADING.value}'"

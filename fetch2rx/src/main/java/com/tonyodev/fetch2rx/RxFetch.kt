@@ -400,6 +400,14 @@ interface RxFetch {
      * */
     fun getAllGroupIds(): Convertible<List<Int>>
 
+    /**
+     * Gets all downloads containing the tag.
+     * @param tag tag.
+     * @throws FetchException if this instance of Fetch has been closed.
+     * @return Convertible with results.
+     * */
+    fun getDownloadsByTag(tag: String): Convertible<List<Download>>
+
     /** Attaches a FetchListener to this instance of Fetch.
      * @param listener Fetch Listener
      * @throws FetchException if this instance of Fetch has been closed.

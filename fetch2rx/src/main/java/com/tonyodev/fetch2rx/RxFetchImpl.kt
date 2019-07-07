@@ -921,6 +921,21 @@ open class RxFetchImpl(override val namespace: String,
         }
     }
 
+    override fun getDownloadsByTag(tag: String): Convertible<List<Download>> {
+        return synchronized(lock) {
+            throwExceptionIfClosed()
+            Flowable.just(tag)
+                    .subscribeOn(scheduler)
+                    .flatMap {
+                        throwExceptionIfClosed()
+                        val downloads = fetchHandler.getDownloadsByTag(it)
+                        Flowable.just(downloads)
+                    }
+                    .observeOn(uiScheduler)
+                    .toConvertible()
+        }
+    }
+
     override fun addCompletedDownload(completedDownload: CompletedDownload, alertListeners: Boolean): Convertible<Download> {
         return addCompletedDownloads(listOf(completedDownload), alertListeners)
                 .flowable
