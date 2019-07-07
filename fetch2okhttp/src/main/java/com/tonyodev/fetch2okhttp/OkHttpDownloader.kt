@@ -55,7 +55,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
         for (i in 0 until okResponseHeaders.size()) {
             val key = okResponseHeaders.name(i)
             val values = okResponseHeaders.values(key)
-            headers[key.toLowerCase()] = values
+            headers[key] = values
         }
         return headers
     }
@@ -89,9 +89,9 @@ open class OkHttpDownloader @JvmOverloads constructor(
         var code = okHttpResponse.code()
         if ((code == HttpURLConnection.HTTP_MOVED_TEMP
                         || code == HttpURLConnection.HTTP_MOVED_PERM
-                        || code == HttpURLConnection.HTTP_SEE_OTHER) && responseHeaders.containsKey("location")) {
+                        || code == HttpURLConnection.HTTP_SEE_OTHER) && responseHeaders.containsKey("Location")) {
             okHttpRequest = onPreClientExecute(client, getRedirectedServerRequest(request,
-                    responseHeaders["location"]?.firstOrNull() ?: ""))
+                    responseHeaders["Location"]?.firstOrNull() ?: ""))
             if (okHttpRequest.header("Referer") == null) {
                 val referer = getRefererFromUrl(request.url)
                 okHttpRequest = okHttpRequest.newBuilder()
@@ -114,11 +114,11 @@ open class OkHttpDownloader @JvmOverloads constructor(
         val hash = getContentHash(responseHeaders)
 
         if (contentLength < 1) {
-            contentLength = responseHeaders["content-length"]?.firstOrNull()?.toLong() ?: -1L
+            contentLength = responseHeaders["Content-Length"]?.firstOrNull()?.toLong() ?: -1L
         }
 
         val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
-                responseHeaders["accept-ranges"]?.firstOrNull() == "bytes"
+                responseHeaders["Accept-Ranges"]?.firstOrNull() == "bytes"
 
         onServerResponse(request, Downloader.Response(
                 code = code,
@@ -147,7 +147,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
     }
 
     override fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String {
-        return responseHeaders["content-md5"]?.firstOrNull() ?: ""
+        return responseHeaders["Content-MD5"]?.firstOrNull() ?: ""
     }
 
     override fun disconnect(response: Downloader.Response) {
