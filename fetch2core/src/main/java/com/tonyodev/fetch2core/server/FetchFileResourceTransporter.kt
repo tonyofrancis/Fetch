@@ -114,7 +114,7 @@ class FetchFileResourceTransporter(private val client: Socket = Socket()) : File
         return synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
-            val json = JSONObject(dataInput.readUTF())
+            val json = JSONObject(dataInput.readUTF().toLowerCase())
             val status = json.getInt(FIELD_STATUS)
             val requestType = json.getInt(FIELD_TYPE)
             val connection = json.getInt(FIELD_CONNECTION)
