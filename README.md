@@ -21,7 +21,7 @@ Features
 * Concurrent downloading support.
 * Ability to pause and resume downloads.
 * Set the priority of a download.
-* Network specific downloading support.
+* Network-specific downloading support.
 * Ability to retry failed downloads.
 * Ability to group downloads.
 * Easy progress and status tracking.
@@ -42,6 +42,12 @@ add the following storage permissions to your application's manifest. For Androi
 ```xml
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+```
+Also, as you are going to use Internet to download files. We need to add the Internet access permissions
+in the Manifest.
+
+```xml
+<uses-permission android:name="android.permission.INTERNET"/>
 ```
 
 How to use Fetch
@@ -177,27 +183,27 @@ You can query Fetch for download information in several ways.
 ```java
 //Query all downloads
 fetch.getDownloads(new Func<List<? extends Download>>() {
-	@Override
+    @Override
         public void call(List<? extends Download> downloads) {
-        	//Access all downloads here
+            //Access all downloads here
         }
 });
 
 //Get all downloads with a status
 fetch.getDownloadsWithStatus(Status.DOWNLOADING, new Func<List<? extends Download>>() {
-	@Override
+    @Override
         public void call(List<? extends Download> downloads) {
-        	//Access downloads that are downloading
+            //Access downloads that are downloading
         }
 });
 
 // You can also access grouped downloads
 int groupId = 52687447745;
 fetch.getDownloadsInGroup(groupId, new Func<List<? extends Download>>() {
-	@Override
-  	public void call(List<? extends Download> downloads) {
-      		//Access grouped downloads
-  	}
+    @Override
+      public void call(List<? extends Download> downloads) {
+              //Access grouped downloads
+      }
 });
 ```
 
@@ -216,7 +222,7 @@ Downloaders
 
 By default Fetch uses the HttpUrlConnection client via the HttpUrlConnectionDownloader
 to download requests. Add the following Gradle dependency to your application's build.gradle
-to use the OkHttp Downloader instead. You can create your own custom downloaders
+to use the OkHttp Downloader instead. You can create your custom downloaders
 if necessary. See the Java docs for details.
 
 ```java
@@ -232,9 +238,9 @@ Set the OkHttp Downloader for Fetch to use.
 OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
 
 FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
-	.setDownloadConcurrentLimit(10)
-	.setHttpDownloader(new OkHttpDownloader(okHttpClient))
-	.build();
+    .setDownloadConcurrentLimit(10)
+    .setHttpDownloader(new OkHttpDownloader(okHttpClient))
+    .build();
 
 Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
 ```
@@ -280,8 +286,8 @@ FetchFileServer
 
 Introducing the FetchFileServer. The FetchFileServer is a lightweight TCP File Server that acts like
 an HTTP file server designed specifically to share files between Android devices. You can host file resources
-with the FetchFileServer on one device and have Fetch download Files from the server
-on another device. See sample app for more information. Wiki on FetchFileServer will be
+with the FetchFileServer on one device and have to Fetch download Files from the server
+on another device. See the sample app for more information. Wiki on FetchFileServer will be
 added in the coming days.
 
 Start using FetchFileServer by adding the gradle dependency to your application's build.gradle file.
@@ -293,7 +299,7 @@ Androidx use:
 implementation "androidx.tonyodev.fetch2fileserver:xfetch2fileserver:3.1.4"
 ```
 
-Start a FetchFileServer instance and add resource files that it can server to connected clients.
+Start a FetchFileServer instance and add resource files that it can serve to connected clients.
 ```java
 public class TestActivity extends AppCompatActivity {
 
@@ -450,7 +456,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-	http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
