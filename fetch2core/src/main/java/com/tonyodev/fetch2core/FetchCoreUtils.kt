@@ -20,13 +20,17 @@ const val GET_REQUEST_METHOD = "GET"
 const val HEAD_REQUEST_METHOD = "HEAD"
 
 internal const val HEADER_CONTENT_LENGTH = "content-length"
-
 internal const val HEADER_CONTENT_LENGTH_LEGACY = "Content-Length"
-
 internal const val HEADER_CONTENT_LENGTH_COMPAT = "ContentLength"
 
-internal const val HEADER_TRANSFER_ENCODING = "Transfer-Encoding"
+internal const val HEADER_CONTENT_RANGE = "content-range"
+internal const val HEADER_CONTENT_RANGE_LEGACY = "Content-Range"
 
+internal const val HEADER_CONTENT_MD5 = "content-md5"
+internal const val HEADER_CONTENT_MD5_LEGACY = "Content-MD5"
+
+internal const val HEADER_TRANSFER_ENCODING = "transfer-encoding"
+internal const val HEADER_TRANSFER_ENCODING_LEGACY = "Transfer-Encoding"
 internal const val HEADER_TRANSFER_ENCODING_COMPAT = "TransferEncoding"
 
 fun calculateProgress(downloaded: Long, total: Long): Int {
@@ -38,9 +42,11 @@ fun calculateProgress(downloaded: Long, total: Long): Int {
     }
 }
 
-fun calculateEstimatedTimeRemainingInMilliseconds(downloadedBytes: Long,
-                                                  totalBytes: Long,
-                                                  downloadedBytesPerSecond: Long): Long {
+fun calculateEstimatedTimeRemainingInMilliseconds(
+    downloadedBytes: Long,
+    totalBytes: Long,
+    downloadedBytesPerSecond: Long
+): Long {
     return when {
         totalBytes < 1 -> -1
         downloadedBytes < 1 -> -1
@@ -52,10 +58,12 @@ fun calculateEstimatedTimeRemainingInMilliseconds(downloadedBytes: Long,
     }
 }
 
-fun hasIntervalTimeElapsed(nanoStartTime: Long, nanoStopTime: Long,
-                           progressIntervalMilliseconds: Long): Boolean {
+fun hasIntervalTimeElapsed(
+    nanoStartTime: Long, nanoStopTime: Long,
+    progressIntervalMilliseconds: Long
+): Boolean {
     return TimeUnit.NANOSECONDS
-            .toMillis(nanoStopTime - nanoStartTime) >= progressIntervalMilliseconds
+        .toMillis(nanoStopTime - nanoStartTime) >= progressIntervalMilliseconds
 }
 
 fun getUniqueId(url: String, file: String): Int {
@@ -231,7 +239,9 @@ fun getFileMd5String(file: String): String? {
 }
 
 fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): Boolean {
-    val transferEncoding = responseHeaders[HEADER_TRANSFER_ENCODING]?.firstOrNull()
+    val transferEncoding =
+        responseHeaders[HEADER_TRANSFER_ENCODING]?.firstOrNull()
+            ?: responseHeaders[HEADER_TRANSFER_ENCODING_LEGACY]?.firstOrNull()
             ?: responseHeaders[HEADER_TRANSFER_ENCODING_COMPAT]?.firstOrNull()
             ?: ""
     return transferEncoding.takeIf { it != "chunked" }?.let {
@@ -239,7 +249,10 @@ fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): 
     } ?: false
 }
 
-fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Set<Downloader.FileDownloaderType> {
+fun getRequestSupportedFileDownloaderTypes(
+    request: Downloader.ServerRequest,
+    downloader: Downloader<*, *>
+): Set<Downloader.FileDownloaderType> {
     val fileDownloaderTypeSet = mutableSetOf(Downloader.FileDownloaderType.SEQUENTIAL)
     return try {
         val response = downloader.execute(request, getSimpleInterruptMonitor())
@@ -283,8 +296,8 @@ fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downl
 }
 
 fun isUriPath(path: String): Boolean = path.takeIf { it.isNotEmpty() }
-        ?.let { it.startsWith("content://") || it.startsWith("file://") }
-        ?: false
+    ?.let { it.startsWith("content://") || it.startsWith("file://") }
+    ?: false
 
 fun getFileUri(path: String): Uri {
     return when {
@@ -302,8 +315,10 @@ fun renameFile(oldFile: File, newFile: File): Boolean {
 }
 
 fun copyDownloadResponseNoStream(response: Downloader.Response): Downloader.Response {
-    return Downloader.Response(response.code, response.isSuccessful, response.contentLength, null,
-            response.request, response.hash, response.responseHeaders, response.acceptsRanges, response.errorResponse)
+    return Downloader.Response(
+        response.code, response.isSuccessful, response.contentLength, null,
+        response.request, response.hash, response.responseHeaders, response.acceptsRanges, response.errorResponse
+    )
 }
 
 fun getDefaultCookieManager(): CookieManager {
@@ -336,7 +351,7 @@ fun copyStreamToString(inputStream: InputStream?, closeStream: Boolean = true): 
             var line: String? = bufferedReader.readLine()
             while (line != null) {
                 stringBuilder.append(line)
-                        .append('\n')
+                    .append('\n')
                 line = bufferedReader.readLine()
             }
             stringBuilder.toString()
@@ -366,4 +381,14 @@ fun getContentLengthFromHeader(headers: Map<String, List<String>>, defaultValue:
         else -> null
     }
     return contentLength?.firstOrNull()?.toLongOrNull() ?: defaultValue
+}
+
+fun getContentChecksum(responseHeaders: Map<String, List<String>>): String {
+    return when {
+        responseHeaders.containsKey(HEADER_CONTENT_MD5) -> responseHeaders[HEADER_CONTENT_MD5]
+        responseHeaders.containsKey(HEADER_CONTENT_MD5_LEGACY) -> responseHeaders[HEADER_CONTENT_MD5_LEGACY]
+        else -> null
+    }
+        ?.firstOrNull()
+        ?: ""
 }
