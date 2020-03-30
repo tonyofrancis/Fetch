@@ -5,14 +5,15 @@ import java.io.InputStream
 import java.net.CookieHandler
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.Collections
+import java.util.*
 import kotlin.collections.HashMap
 
 /**
  * The default Downloader used by Fetch for downloading requests.
  * This downloader uses a HttpUrlConnection to perform http requests
- * @see {@link com.tonyodev.fetch2core.Downloader}
- * */
+ *
+ * @see [com.tonyodev.fetch2core.Downloader]
+ */
 open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         /**
          * HttpUrlConnectionPreferences to set preference settings for the
@@ -24,7 +25,9 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
          * The SEQUENTIAL type downloads bytes in sequence.
          * The PARALLEL type downloads bytes in parallel.
          * */
-        private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL) : Downloader<HttpURLConnection, Void> {
+        private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL)
+
+    : Downloader<HttpURLConnection, Void> {
 
     constructor(fileDownloaderType: Downloader.FileDownloaderType) : this(null, fileDownloaderType)
 
@@ -128,7 +131,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     }
 
     override fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String {
-        return responseHeaders["content-md5"]?.firstOrNull() ?: ""
+        return getContentChecksum(responseHeaders)
     }
 
     override fun close() {

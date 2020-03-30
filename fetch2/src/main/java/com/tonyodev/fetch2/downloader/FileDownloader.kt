@@ -1,9 +1,11 @@
 package com.tonyodev.fetch2.downloader
 
+import android.os.Environment
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.Downloader
 
 interface FileDownloader : Runnable {
 
@@ -31,6 +33,37 @@ interface FileDownloader : Runnable {
 
         fun getNewDownloadInfoInstance(): DownloadInfo
 
+    }
+
+}
+
+abstract class AbsFileDownloader(
+    protected val initialDownload: Download
+) : FileDownloader {
+
+    fun checkDownloadSpaceSafely(response: Downloader.Response): Boolean {
+        return response.contentLength.let { len ->
+            if (len < 0) {
+                return@let true
+            }
+            initialDownload.file.let {
+                val spaceLeft = when {
+                    it.startsWith("/data/data") -> {
+                        Environment.getDataDirectory().freeSpace
+                    }
+                    Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED -> {
+                        Environment.getExternalStorageDirectory().freeSpace
+                    }
+                    else -> 0L
+                }
+                spaceLeft > len.times(1.5)
+            }
+        }.let {
+            if (!it) {
+                throw IllegalStateException("No space left on device.")
+            }
+            true
+        }
     }
 
 }

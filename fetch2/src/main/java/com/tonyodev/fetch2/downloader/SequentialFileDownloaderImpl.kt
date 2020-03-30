@@ -10,7 +10,7 @@ import java.io.*
 import java.net.HttpURLConnection
 import kotlin.math.ceil
 
-class SequentialFileDownloaderImpl(private val initialDownload: Download,
+class SequentialFileDownloaderImpl(initialDownload: Download,
                                    private val downloader: Downloader<*, *>,
                                    private val progressReportingIntervalMillis: Long,
                                    private val logger: Logger,
@@ -18,7 +18,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                                    private val retryOnNetworkGain: Boolean,
                                    private val hashCheckingEnabled: Boolean,
                                    private val storageResolver: StorageResolver,
-                                   private val preAllocateFileOnCreation: Boolean) : FileDownloader {
+                                   private val preAllocateFileOnCreation: Boolean)
+    : AbsFileDownloader(initialDownload) {
 
     @Volatile
     override var interrupted = false
@@ -76,6 +77,8 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
             if (!interrupted && !terminated) {
                 val request = getRequest()
                 response = downloader.execute(request, interruptMonitor)
+                    ?.also { checkDownloadSpaceSafely(it) }
+
                 if (response != null) {
                     setIsTotalUnknown(response)
                 }

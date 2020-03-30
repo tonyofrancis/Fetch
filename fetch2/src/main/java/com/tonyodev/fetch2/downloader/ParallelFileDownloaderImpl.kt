@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.ceil
 
-class ParallelFileDownloaderImpl(private val initialDownload: Download,
+class ParallelFileDownloaderImpl(initialDownload: Download,
                                  private val downloader: Downloader<*, *>,
                                  private val progressReportingIntervalMillis: Long,
                                  private val logger: Logger,
@@ -25,7 +25,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                                  private val fileTempDir: String,
                                  private val hashCheckingEnabled: Boolean,
                                  private val storageResolver: StorageResolver,
-                                 private val preAllocateFileOnCreation: Boolean) : FileDownloader {
+                                 private val preAllocateFileOnCreation: Boolean)
+    : AbsFileDownloader(initialDownload) {
 
     @Volatile
     override var interrupted = false
@@ -103,6 +104,8 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 getRequestForDownload(initialDownload)
             }
             openingResponse = downloader.execute(openingRequest, interruptMonitor)
+                ?.also { checkDownloadSpaceSafely(it) }
+
             if (openingResponse != null) {
                 setIsTotalUnknown(openingResponse)
             }

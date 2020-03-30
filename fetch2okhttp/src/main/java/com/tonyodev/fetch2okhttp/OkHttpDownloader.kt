@@ -7,14 +7,17 @@ import okhttp3.Request
 import okhttp3.Response
 import java.io.InputStream
 import java.net.HttpURLConnection
-import java.util.Collections
+import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.collections.HashMap
+import kotlin.collections.set
 
 /**
  * This downloader uses a OkHttpClient to perform http requests.
  * You can also pass in your custom okHttpClient for this downloader to use.
- * @see {@link com.tonyodev.fetch2core.Downloader}
- * */
+ *
+ * @see [com.tonyodev.fetch2core.Downloader]
+ */
 open class OkHttpDownloader @JvmOverloads constructor(
         /** OkHttpClient */
         okHttpClient: OkHttpClient? = null,
@@ -23,6 +26,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
          * The PARALLEL type downloads bytes in parallel.
          * */
         private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL)
+
     : Downloader<OkHttpClient, Request> {
 
     constructor(fileDownloaderType: Downloader.FileDownloaderType) : this(null, fileDownloaderType)
@@ -150,7 +154,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
     }
 
     override fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String {
-        return responseHeaders["content-md5"]?.firstOrNull() ?: ""
+        return getContentChecksum(responseHeaders)
     }
 
     override fun disconnect(response: Downloader.Response) {
