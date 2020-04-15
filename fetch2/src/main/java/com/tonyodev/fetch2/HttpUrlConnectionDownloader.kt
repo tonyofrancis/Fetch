@@ -5,7 +5,7 @@ import java.io.InputStream
 import java.net.CookieHandler
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.*
+import java.util.Collections
 import kotlin.collections.HashMap
 
 /**
