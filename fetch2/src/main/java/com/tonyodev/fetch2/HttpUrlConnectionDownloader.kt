@@ -190,16 +190,9 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     }
 
     override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
-        return when (fileDownloaderType) {
-            Downloader.FileDownloaderType.SEQUENTIAL -> mutableSetOf(fileDownloaderType)
-            else -> try {
-                getRequestSupportedFileDownloaderTypes(request, this)
-            } catch (e: Exception) {
-                mutableSetOf(fileDownloaderType)
-            }
+        if(fileDownloaderType == Downloader.FileDownloaderType.SEQUENTIAL) {
             return mutableSetOf(fileDownloaderType)
         }
-
         return try {
             getRequestSupportedFileDownloaderTypes(request, this)
         } catch (e: Exception) {
