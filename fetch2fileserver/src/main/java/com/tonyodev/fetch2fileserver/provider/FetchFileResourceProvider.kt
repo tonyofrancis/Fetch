@@ -83,7 +83,7 @@ class FetchFileResourceProvider(private val client: Socket,
                                                     fileResource.md5 = getMd5String(catalog)
                                                     inputResourceWrapper = fileResolver.getCatalogInputWrapper(catalog, request, fileResource)
                                                 } else {
-                                                    inputResourceWrapper = fileResolver.getInputWrapper(request, fileResource)
+                                                    inputResourceWrapper = fileResolver.getInputWrapper(fileResource)
                                                     inputResourceWrapper?.setReadOffset(request.rangeStart)
                                                 }
                                             }
