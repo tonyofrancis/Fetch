@@ -1,5 +1,6 @@
 package com.tonyodev.fetch2fileserver
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.os.ParcelFileDescriptor
@@ -12,7 +13,8 @@ import java.io.*
  * */
 abstract class FileResolver(context: Context) {
 
-    private val appContext = context.applicationContext
+    protected val appContext: Context = context.applicationContext
+    protected val contentResolver: ContentResolver = appContext.contentResolver
 
     /**
      * Returns the [InputResourceWrapper] for the catalog file
@@ -41,7 +43,8 @@ abstract class FileResolver(context: Context) {
      * Returns the [InputResourceWrapper] for a [FileResource]. Override this method if your [FileResource.file]
      * is not a traditional File but Uri, etc.
      * */
-    open fun getInputWrapper(request: FileRequest, fileResource: FileResource): InputResourceWrapper {
+    @Throws(IOException::class)
+    open fun getInputWrapper(fileResource: FileResource): InputResourceWrapper {
         val filePath = fileResource.file
         return if (isUriPath(filePath)) {
             getUriInputResourceWrapper(fileResource)
@@ -52,7 +55,6 @@ abstract class FileResolver(context: Context) {
 
     private fun getUriInputResourceWrapper(fileResource: FileResource): InputResourceWrapper {
         val fileUri = Uri.parse(fileResource.file)
-        val contentResolver = appContext.contentResolver
         return when (fileUri.scheme) {
             "content" -> {
                 val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "w")
