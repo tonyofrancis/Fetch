@@ -128,9 +128,14 @@ enum class Error constructor(
     FAILED_TO_RENAME_FILE(29),
 
     /**
-     * Indicates that an error occured when pre allocating the needed space on the storage system for the download.
+     * Indicates that an error occurred when pre allocating the needed space on the storage system for the download.
      * */
-    FILE_ALLOCATION_FAILED(30);
+    FILE_ALLOCATION_FAILED(30),
+
+    /**
+     * Indicates that connection to "http" is not allowed by the OS and "https" is required.
+     * */
+    HTTP_CONNECTION_NOT_ALLOWED(31);
 
     companion object {
 
@@ -166,6 +171,7 @@ enum class Error constructor(
                 28 -> FAILED_TO_RENAME_INCOMPLETE_DOWNLOAD_FILE
                 29 -> FAILED_TO_RENAME_FILE
                 30 -> FILE_ALLOCATION_FAILED
+                31 -> HTTP_CONNECTION_NOT_ALLOWED
                 else -> UNKNOWN
             }
         }
