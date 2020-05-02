@@ -209,7 +209,6 @@ open class OkHttpDownloader @JvmOverloads constructor(
         if(fileDownloaderType == Downloader.FileDownloaderType.SEQUENTIAL) {
             return mutableSetOf(fileDownloaderType)
         }
-
         return try {
             getRequestSupportedFileDownloaderTypes(request, this)
         } catch (e: Exception) {
