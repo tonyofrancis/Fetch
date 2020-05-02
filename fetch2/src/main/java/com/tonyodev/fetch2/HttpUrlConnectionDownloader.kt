@@ -46,6 +46,17 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return null
     }
 
+    private fun getCleanedHeaders(responseHeaders: MutableMap<String?, List<String>?>): MutableMap<String, List<String>> {
+        val headers = mutableMapOf<String, List<String>>()
+        for (responseHeader in responseHeaders) {
+            val key = responseHeader.key
+            if (key != null) {
+                headers[key] = responseHeader.value ?: emptyList()
+            }
+        }
+        return headers
+    }
+
     override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
         CookieHandler.setDefault(cookieManager)
         var httpUrl = URL(request.url)
@@ -56,7 +67,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
             client.addRequestProperty("Referer", referer)
         }
         client.connect()
-        var responseHeaders = client.headerFields
+        var responseHeaders = getCleanedHeaders(client.headerFields)
         var code = client.responseCode
         if ((code == HttpURLConnection.HTTP_MOVED_TEMP
                 || code == HttpURLConnection.HTTP_MOVED_PERM
@@ -69,7 +80,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 client.addRequestProperty("Referer", referer)
             }
             client.connect()
-            responseHeaders = client.headerFields
+            responseHeaders = getCleanedHeaders(client.headerFields)
             code = client.responseCode
         }
         var success = false
