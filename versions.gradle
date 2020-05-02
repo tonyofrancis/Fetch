@@ -1,5 +1,5 @@
 ext {
-    kotlin_version = '1.3.41'
+    kotlin_version = '1.3.72'
     okhttp_version = '3.12.3'
     okhttp_url_version = '3.11.0'
     android_support_version = '1.0.2'
