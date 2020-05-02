@@ -56,12 +56,12 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
             client.addRequestProperty("Referer", referer)
         }
         client.connect()
-        var responseHeaders = getResponseHeaders(client.headerFields)
+        var responseHeaders = client.headerFields
         var code = client.responseCode
         if ((code == HttpURLConnection.HTTP_MOVED_TEMP
                 || code == HttpURLConnection.HTTP_MOVED_PERM
-                || code == HttpURLConnection.HTTP_SEE_OTHER) && responseHeaders.containsKey("location")) {
-            httpUrl = URL(responseHeaders["location"]?.firstOrNull() ?: "")
+                || code == HttpURLConnection.HTTP_SEE_OTHER) && getHeaderValue(responseHeaders, "Location") != null) {
+            httpUrl = URL(getHeaderValue(responseHeaders, "Location")?.firstOrNull() ?: "")
             client = httpUrl.openConnection() as HttpURLConnection
             onPreClientExecute(client, request)
             if (client.getRequestProperty("Referer") == null) {
@@ -69,7 +69,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 client.addRequestProperty("Referer", referer)
             }
             client.connect()
-            responseHeaders = getResponseHeaders(client.headerFields)
+            responseHeaders = client.headerFields
             code = client.responseCode
         }
         var success = false
@@ -87,7 +87,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         }
 
         val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
-                responseHeaders["accept-ranges"]?.firstOrNull() == "bytes"
+                getHeaderValue(responseHeaders, "Accept-Ranges")?.firstOrNull() == "bytes"
 
         onServerResponse(request, Downloader.Response(
                 code = code,
@@ -96,7 +96,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                 byteStream = null,
                 request = request,
                 hash = hash,
-                responseHeaders = responseHeaders,
+                responseHeaders = client.headerFields,
                 acceptsRanges = acceptsRanges,
                 errorResponse = errorResponseString))
 
@@ -128,7 +128,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     }
 
     override fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String {
-        return responseHeaders["content-md5"]?.firstOrNull() ?: ""
+        return getHeaderValue(responseHeaders, "Content-MD5")?.firstOrNull() ?: ""
     }
 
     override fun close() {
@@ -144,20 +144,6 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         } catch (e: Exception) {
 
         }
-    }
-
-    private fun getResponseHeaders(responseHeaders: MutableMap<String, List<String>>): MutableMap<String, List<String>> {
-        val headers = mutableMapOf<String, List<String>>()
-        val iterator = responseHeaders.iterator()
-        var entry: Map.Entry<String, List<String>>
-        while (iterator.hasNext()) {
-            entry = iterator.next()
-            @Suppress("SENSELESS_COMPARISON")
-            if (entry.key != null) {
-                headers[entry.key.toLowerCase()] = entry.value
-            }
-        }
-        return headers
     }
 
     override fun getFileSlicingCount(request: Downloader.ServerRequest, contentLength: Long): Int? {

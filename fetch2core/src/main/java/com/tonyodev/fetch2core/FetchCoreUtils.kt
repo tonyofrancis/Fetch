@@ -2,6 +2,7 @@
 
 package com.tonyodev.fetch2core
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import java.io.*
@@ -23,10 +24,6 @@ internal const val HEADER_CONTENT_LENGTH = "content-length"
 internal const val HEADER_CONTENT_LENGTH_LEGACY = "Content-Length"
 
 internal const val HEADER_CONTENT_LENGTH_COMPAT = "ContentLength"
-
-internal const val HEADER_CONTENT_RANGE = "content-range"
-
-internal const val HEADER_CONTENT_RANGE_LEGACY = "Content-Range"
 
 internal const val HEADER_TRANSFER_ENCODING = "Transfer-Encoding"
 
@@ -238,14 +235,7 @@ fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): 
             ?: responseHeaders[HEADER_TRANSFER_ENCODING_COMPAT]?.firstOrNull()
             ?: ""
     return transferEncoding.takeIf { it != "chunked" }?.let {
-        responseHeaders.let { headers ->
-            when {
-                headers.containsKey(HEADER_CONTENT_LENGTH) -> headers[HEADER_CONTENT_LENGTH]
-                headers.containsKey(HEADER_CONTENT_LENGTH_LEGACY) -> headers[HEADER_CONTENT_LENGTH_LEGACY]
-                headers.containsKey(HEADER_CONTENT_LENGTH_COMPAT) -> headers[HEADER_CONTENT_LENGTH_COMPAT]
-                else -> null
-            }?.firstOrNull()?.toLongOrNull()
-        }.let { value -> value != null && value > -1 }
+        getContentLengthFromHeader(responseHeaders, -1L) > -1L
     } ?: false
 }
 
@@ -263,6 +253,20 @@ fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, do
     } catch (e: Exception) {
         fileDownloaderTypeSet
     }
+}
+
+@SuppressLint("DefaultLocale")
+fun getHeaderValue(headers: MutableMap<String, List<String>>, key: String): List<String>? {
+    return getCompatHeaders(headers)[key.toLowerCase()]
+}
+
+@SuppressLint("DefaultLocale")
+private fun getCompatHeaders(headers: MutableMap<String, List<String>>): MutableMap<String, List<String>> {
+    val compatHeaders = mutableMapOf<String, List<String>>()
+    for (header in headers) {
+        compatHeaders[header.key.toLowerCase()] = header.value
+    }
+    return compatHeaders
 }
 
 fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Long {
@@ -354,11 +358,11 @@ fun getSimpleInterruptMonitor() = object : InterruptMonitor {
         get() = false
 }
 
-fun getContentLengthFromHeader(responseHeaders: Map<String, List<String>>, defaultValue: Long): Long {
+fun getContentLengthFromHeader(headers: Map<String, List<String>>, defaultValue: Long): Long {
     val contentLength = when {
-        responseHeaders.containsKey(HEADER_CONTENT_LENGTH) -> responseHeaders[HEADER_CONTENT_LENGTH]
-        responseHeaders.containsKey(HEADER_CONTENT_LENGTH_LEGACY) -> responseHeaders[HEADER_CONTENT_LENGTH_LEGACY]
-        responseHeaders.containsKey(HEADER_CONTENT_LENGTH_COMPAT) -> responseHeaders[HEADER_CONTENT_LENGTH_COMPAT]
+        headers.containsKey(HEADER_CONTENT_LENGTH) -> headers[HEADER_CONTENT_LENGTH]
+        headers.containsKey(HEADER_CONTENT_LENGTH_LEGACY) -> headers[HEADER_CONTENT_LENGTH_LEGACY]
+        headers.containsKey(HEADER_CONTENT_LENGTH_COMPAT) -> headers[HEADER_CONTENT_LENGTH_COMPAT]
         else -> null
     }
     return contentLength?.firstOrNull()?.toLongOrNull() ?: defaultValue
