@@ -757,7 +757,7 @@ class ListenerCoordinator(val namespace: String,
                 if (iterator != null) {
                     while (iterator.hasNext()) {
                         val reference = iterator.next()
-                        if (reference.get() == fetchObservers) {
+                        if (reference.get() == fetchObserver) {
                             iterator.remove()
                             break
                         }
