@@ -8,8 +8,7 @@ import com.tonyodev.fetch2core.server.FileResponse.CREATOR.CLOSE_CONNECTION
 import com.tonyodev.fetch2core.server.FileResponse.CREATOR.OPEN_CONNECTION
 import com.tonyodev.fetch2core.server.FileResourceTransporter
 import com.tonyodev.fetch2core.server.FetchFileResourceTransporter
-import java.io.ByteArrayInputStream
-import java.io.RandomAccessFile
+import com.tonyodev.fetch2fileserver.FileResolver
 import java.net.HttpURLConnection
 import java.net.Socket
 import java.util.*
@@ -20,7 +19,8 @@ class FetchFileResourceProvider(private val client: Socket,
                                 private val logger: FetchLogger,
                                 private val ioHandler: Handler,
                                 private val progressReportingInMillis: Long,
-                                private val persistentTimeoutInMillis: Long) : FileResourceProvider {
+                                private val persistentTimeoutInMillis: Long,
+                                private val fileResolver: FileResolver) : FileResourceProvider {
 
     override val id = UUID.randomUUID().toString()
     private val lock = Any()
@@ -81,39 +81,9 @@ class FetchFileResourceProvider(private val client: Socket,
                                                     val catalog = fileResource.extras.getString("data", "{}").toByteArray(Charsets.UTF_8)
                                                     fileResource.length = if (request.rangeEnd == -1L) catalog.size.toLong() else request.rangeEnd
                                                     fileResource.md5 = getMd5String(catalog)
-                                                    inputResourceWrapper = object : InputResourceWrapper() {
-
-                                                        private val inputStream = ByteArrayInputStream(catalog, request.rangeStart.toInt(), fileResource.length.toInt())
-
-                                                        override fun read(byteArray: ByteArray, offSet: Int, length: Int): Int {
-                                                            return inputStream.read(byteArray, offSet, length)
-                                                        }
-
-                                                        override fun setReadOffset(offset: Long) {
-                                                            inputStream.skip(offset)
-                                                        }
-
-                                                        override fun close() {
-                                                            inputStream.close()
-                                                        }
-                                                    }
+                                                    inputResourceWrapper = fileResolver.getCatalogInputWrapper(catalog, request, fileResource)
                                                 } else {
-                                                    inputResourceWrapper = object : InputResourceWrapper() {
-
-                                                        val randomAccessFile = RandomAccessFile(fileResource.file, "r")
-
-                                                        override fun read(byteArray: ByteArray, offSet: Int, length: Int): Int {
-                                                            return randomAccessFile.read(byteArray, offSet, length)
-                                                        }
-
-                                                        override fun setReadOffset(offset: Long) {
-                                                            randomAccessFile.seek(offset)
-                                                        }
-
-                                                        override fun close() {
-                                                            randomAccessFile.close()
-                                                        }
-                                                    }
+                                                    inputResourceWrapper = fileResolver.getInputWrapper(request, fileResource)
                                                     inputResourceWrapper?.setReadOffset(request.rangeStart)
                                                 }
                                             }
