@@ -52,7 +52,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
 
     private fun getResponseHeaders(okResponseHeaders: Headers): MutableMap<String, List<String>> {
         val headers = mutableMapOf<String, List<String>>()
-        for (i in 0 until okResponseHeaders.size()) {
+        for (i in 0 until okResponseHeaders.size) {
             val key = okResponseHeaders.name(i)
             @Suppress("SENSELESS_COMPARISON")
             if (key != null) {
@@ -88,8 +88,8 @@ open class OkHttpDownloader @JvmOverloads constructor(
                     .build()
         }
         var okHttpResponse = client.newCall(okHttpRequest).execute()
-        var responseHeaders = getResponseHeaders(okHttpResponse.headers())
-        var code = okHttpResponse.code()
+        var responseHeaders = getResponseHeaders(okHttpResponse.headers)
+        var code = okHttpResponse.code
         if ((code == HttpURLConnection.HTTP_MOVED_TEMP
                         || code == HttpURLConnection.HTTP_MOVED_PERM
                         || code == HttpURLConnection.HTTP_SEE_OTHER) && getHeaderValue(responseHeaders, "Location") != null) {
@@ -102,13 +102,13 @@ open class OkHttpDownloader @JvmOverloads constructor(
                         .build()
             }
             okHttpResponse = client.newCall(okHttpRequest).execute()
-            responseHeaders = getResponseHeaders(okHttpResponse.headers())
-            code = okHttpResponse.code()
+            responseHeaders = getResponseHeaders(okHttpResponse.headers)
+            code = okHttpResponse.code
         }
 
         val success = okHttpResponse.isSuccessful
         val contentLength = getContentLengthFromHeader(responseHeaders, -1L)
-        val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
+        val byteStream: InputStream? = okHttpResponse.body?.byteStream()
         val errorResponseString: String? = if (!success) {
             copyStreamToString(byteStream, false)
         } else {
