@@ -10,7 +10,9 @@ import java.io.*
 /**
  * Used to provide [InputResourceWrapper] for [FileResource]
  * */
-abstract class FileResolver(val context: Context) {
+abstract class FileResolver(context: Context) {
+
+    private val appContext = context.applicationContext
 
     /**
      * Returns the [InputResourceWrapper] for the catalog file
@@ -50,7 +52,7 @@ abstract class FileResolver(val context: Context) {
 
     private fun getUriInputResourceWrapper(fileResource: FileResource): InputResourceWrapper {
         val fileUri = Uri.parse(fileResource.file)
-        val contentResolver = context.contentResolver
+        val contentResolver = appContext.contentResolver
         return when (fileUri.scheme) {
             "content" -> {
                 val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "w")
