@@ -57,7 +57,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
             @Suppress("SENSELESS_COMPARISON")
             if (key != null) {
                 val values = okResponseHeaders.values(key)
-                headers[key.toLowerCase()] = values
+                headers[key] = values
             }
         }
         return headers
@@ -92,9 +92,9 @@ open class OkHttpDownloader @JvmOverloads constructor(
         var code = okHttpResponse.code()
         if ((code == HttpURLConnection.HTTP_MOVED_TEMP
                         || code == HttpURLConnection.HTTP_MOVED_PERM
-                        || code == HttpURLConnection.HTTP_SEE_OTHER) && responseHeaders.containsKey("location")) {
+                        || code == HttpURLConnection.HTTP_SEE_OTHER) && getHeaderValue(responseHeaders, "Location") != null) {
             okHttpRequest = onPreClientExecute(client, getRedirectedServerRequest(request,
-                    responseHeaders["location"]?.firstOrNull() ?: ""))
+                    getHeaderValue(responseHeaders, "Location")?.firstOrNull() ?: ""))
             if (okHttpRequest.header("Referer") == null) {
                 val referer = getRefererFromUrl(request.url)
                 okHttpRequest = okHttpRequest.newBuilder()
@@ -115,11 +115,10 @@ open class OkHttpDownloader @JvmOverloads constructor(
             null
         }
 
-
         val hash = getContentHash(responseHeaders)
 
         val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
-                responseHeaders["accept-ranges"]?.firstOrNull() == "bytes"
+                getHeaderValue(responseHeaders, "Accept-Ranges")?.firstOrNull() == "bytes"
 
         onServerResponse(request, Downloader.Response(
                 code = code,
@@ -148,7 +147,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
     }
 
     override fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String {
-        return responseHeaders["content-md5"]?.firstOrNull() ?: ""
+        return getHeaderValue(responseHeaders, "Content-MD5")?.firstOrNull() ?: ""
     }
 
     override fun disconnect(response: Downloader.Response) {
