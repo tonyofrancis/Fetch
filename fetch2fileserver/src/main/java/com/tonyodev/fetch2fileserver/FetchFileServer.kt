@@ -95,6 +95,7 @@ interface FetchFileServer {
         private var fileResourceDatabaseName = "LibFetchFileServerDatabaseLib.db"
         private var progressReportingInMillis = DEFAULT_PROGRESS_REPORTING_INTERVAL_IN_MILLISECONDS
         private var persistentConnectionTimeout = DEFAULT_PERSISTENT_TIME_OUT_IN_MILLISECONDS
+        private var fileResolver: FileResolver = object: FileResolver(context.applicationContext) {}
 
         /** Set Custom Server Socket
          * @param serverSocket
@@ -194,6 +195,14 @@ interface FetchFileServer {
             return this
         }
 
+        /**
+         * Sets the file resolver that will be used to open [FileResource.file] resources.
+         * */
+        fun setFileResolver(fileResolver: FileResolver): Builder {
+            this.fileResolver = fileResolver
+            return this
+        }
+
         /** Build the FetchFileServer Instance.
          * @return new Fetch File Server instance.
          * */
@@ -207,7 +216,9 @@ interface FetchFileServer {
                     fetchFileServerDelegate = fileServerDelegate,
                     fetchTransferListener = transferListener,
                     progressReportingInMillis = progressReportingInMillis,
-                    persistentTimeoutInMillis = persistentConnectionTimeout)
+                    persistentTimeoutInMillis = persistentConnectionTimeout,
+                    fileResolver = fileResolver
+            )
         }
 
     }
