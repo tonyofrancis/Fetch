@@ -658,7 +658,11 @@ open class RxFetchImpl(override val namespace: String,
                                 listenerCoordinator.mainListener.onQueued(download, false)
                             }
                         }
-                        Flowable.just(download)
+                        if (download != null) {
+                            Flowable.just(download)
+                        } else {
+                            throw FetchException(REQUEST_DOES_NOT_EXIST)
+                        }
                     }
                     .observeOn(uiScheduler)
                     .toConvertible()
@@ -824,7 +828,11 @@ open class RxFetchImpl(override val namespace: String,
                     .flatMap {
                         throwExceptionIfClosed()
                         val download = fetchHandler.getDownload(id)
-                        Flowable.just(download)
+                        if (download != null) {
+                            Flowable.just(download)
+                        } else {
+                            throw FetchException(REQUEST_DOES_NOT_EXIST)
+                        }
                     }
                     .observeOn(uiScheduler)
                     .toConvertible()
