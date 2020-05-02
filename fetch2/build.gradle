@@ -65,6 +65,7 @@ dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     kapt "androidx.room:room-compiler:$room_version"
     api "androidx.room:room-runtime:$room_version"
+    api "androidx.core:core-ktx:$core_version"
     api project(':fetch2core')
 
     testImplementation "junit:junit:$junit_version"
