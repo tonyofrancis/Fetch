@@ -355,27 +355,11 @@ fun getSimpleInterruptMonitor() = object : InterruptMonitor {
 }
 
 fun getContentLengthFromHeader(responseHeaders: Map<String, List<String>>, defaultValue: Long): Long {
-    // responseHeaders declared with Not-Null keys and Not-Null values
-    // remove unnecessary conversions here
-    when {
+    val contentLength = when {
         responseHeaders.containsKey(HEADER_CONTENT_LENGTH) -> responseHeaders[HEADER_CONTENT_LENGTH]
-        // HTTP/1.1 compat
         responseHeaders.containsKey(HEADER_CONTENT_LENGTH_LEGACY) -> responseHeaders[HEADER_CONTENT_LENGTH_LEGACY]
+        responseHeaders.containsKey(HEADER_CONTENT_LENGTH_COMPAT) -> responseHeaders[HEADER_CONTENT_LENGTH_COMPAT]
         else -> null
-    }?.firstOrNull()?.toLongOrNull()?.takeIf { it > 0 }?.also {
-        return it
     }
-    when {
-        responseHeaders.containsKey(HEADER_CONTENT_RANGE) -> responseHeaders[HEADER_CONTENT_RANGE]
-        // HTTP/1.1 compat
-        responseHeaders.containsKey(HEADER_CONTENT_RANGE_LEGACY) -> responseHeaders[HEADER_CONTENT_RANGE_LEGACY]
-        else -> null
-    }?.firstOrNull()?.also { value ->
-        value.lastIndexOf("/")
-                .takeIf { it != -1 && it < value.length.minus(1) }
-                ?.let { index -> value.substring(index + 1).toLongOrNull() }
-                ?.takeIf { size -> size > 0 }
-                ?.also { size -> return size }
-    }
-    return defaultValue
+    return contentLength?.firstOrNull()?.toLongOrNull() ?: defaultValue
 }
