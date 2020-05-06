@@ -56,7 +56,7 @@ abstract class AbsFileDownloader(
                     }
                     else -> 0L
                 }
-                spaceLeft > len.times(1.5)
+                spaceLeft > len.plus(SPACE_RESERVED_DOWNLOAD)
             }
         }.let {
             if (!it) {
@@ -67,3 +67,8 @@ abstract class AbsFileDownloader(
     }
 
 }
+
+/**
+ * Reserved storage space for operation of the system, _128Mb_
+ */
+internal const val SPACE_RESERVED_DOWNLOAD = 134217728L
