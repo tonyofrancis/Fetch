@@ -109,6 +109,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                     } finally {
                         removeDownloadMappings(download)
                         val intent = Intent(ACTION_QUEUE_BACKOFF_RESET)
+                        intent.setPackage(context.packageName)
                         intent.putExtra(EXTRA_NAMESPACE, namespace)
                         context.sendBroadcast(intent)
                     }
