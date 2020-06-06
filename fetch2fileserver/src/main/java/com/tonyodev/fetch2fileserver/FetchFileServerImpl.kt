@@ -156,7 +156,7 @@ class FetchFileServerImpl(context: Context,
             catalogFileResourceInfo.id = FileRequest.CATALOG_ID
             val catalogMap = mutableMapOf<String, String>()
             catalogMap["data"] = catalog
-            catalogFileResourceInfo.extras = JSONObject(catalogMap).toString()
+            catalogFileResourceInfo.extras = JSONObject(catalogMap as Map<*, *>).toString()
             catalogFileResourceInfo.name = FileRequest.CATALOG_NAME
             catalogFileResourceInfo.file = FileRequest.CATALOG_FILE
             return catalogFileResourceInfo.toFileResource()
