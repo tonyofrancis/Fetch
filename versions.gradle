@@ -13,11 +13,11 @@ ext {
     library_compile_version = 29
     library_target_version = 29
     library_build_tools_version = "29.0.3"
-    gradle_tools_version = '4.0.0'
+    gradle_tools_version = '3.4.1'
     rxJava2_version = "2.2.19"
     rxAndroid2_version = "2.1.1"
     timber_version = "4.7.1"
-    novoda_bintray_version = "0.9"
-    library_version = "3.1.4"
-    library_version_code = 73
+    novoda_bintray_version = "0.9.2"
+    library_version = "3.1.5-preview"
+    library_version_code = 74
 }
