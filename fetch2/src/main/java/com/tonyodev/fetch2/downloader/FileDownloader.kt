@@ -38,7 +38,8 @@ interface FileDownloader : Runnable {
 }
 
 abstract class AbsFileDownloader(
-    protected val initialDownload: Download
+    protected val initialDownload: Download,
+    protected val reservedStorageSize: Long
 ) : FileDownloader {
 
     fun checkDownloadSpaceSafely(response: Downloader.Response): Boolean {
@@ -56,7 +57,7 @@ abstract class AbsFileDownloader(
                     }
                     else -> 0L
                 }
-                spaceLeft > len.plus(SPACE_RESERVED_DOWNLOAD)
+                spaceLeft > len.plus(reservedStorageSize)
             }
         }.let {
             if (!it) {
@@ -67,8 +68,3 @@ abstract class AbsFileDownloader(
     }
 
 }
-
-/**
- * Reserved storage space for operation of the system, _128Mb_
- */
-internal const val SPACE_RESERVED_DOWNLOAD = 134217728L

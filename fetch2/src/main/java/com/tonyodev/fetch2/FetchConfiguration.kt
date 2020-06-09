@@ -13,29 +13,32 @@ import com.tonyodev.fetch2core.*
  * Class used to hold the configuration settings for a Fetch instance.
  * @see Builder
  * */
-class FetchConfiguration private constructor(val appContext: Context,
-                                             val namespace: String,
-                                             val concurrentLimit: Int,
-                                             val progressReportingIntervalMillis: Long,
-                                             val loggingEnabled: Boolean,
-                                             val httpDownloader: Downloader<*, *>,
-                                             val globalNetworkType: NetworkType,
-                                             val logger: Logger,
-                                             val autoStart: Boolean,
-                                             val retryOnNetworkGain: Boolean,
-                                             val fileServerDownloader: FileServerDownloader,
-                                             val hashCheckingEnabled: Boolean,
-                                             val fileExistChecksEnabled: Boolean,
-                                             val storageResolver: StorageResolver,
-                                             val fetchNotificationManager: FetchNotificationManager?,
-                                             val fetchDatabaseManager: FetchDatabaseManager<DownloadInfo>?,
-                                             val backgroundHandler: Handler?,
-                                             val prioritySort: PrioritySort,
-                                             val internetCheckUrl: String?,
-                                             val activeDownloadsCheckInterval: Long,
-                                             val createFileOnEnqueue: Boolean,
-                                             val maxAutoRetryAttempts: Int,
-                                             val preAllocateFileOnCreation: Boolean) {
+class FetchConfiguration private constructor(
+    val appContext: Context,
+    val namespace: String,
+    val concurrentLimit: Int,
+    val progressReportingIntervalMillis: Long,
+    val loggingEnabled: Boolean,
+    val httpDownloader: Downloader<*, *>,
+    val globalNetworkType: NetworkType,
+    val logger: Logger,
+    val autoStart: Boolean,
+    val retryOnNetworkGain: Boolean,
+    val fileServerDownloader: FileServerDownloader,
+    val hashCheckingEnabled: Boolean,
+    val fileExistChecksEnabled: Boolean,
+    val storageResolver: StorageResolver,
+    val fetchNotificationManager: FetchNotificationManager?,
+    val fetchDatabaseManager: FetchDatabaseManager<DownloadInfo>?,
+    val backgroundHandler: Handler?,
+    val prioritySort: PrioritySort,
+    val internetCheckUrl: String?,
+    val activeDownloadsCheckInterval: Long,
+    val createFileOnEnqueue: Boolean,
+    val maxAutoRetryAttempts: Int,
+    val preAllocateFileOnCreation: Boolean,
+    val reservedStorageSize: Long
+) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -71,6 +74,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var createFileOnEnqueue = DEFAULT_CREATE_FILE_ON_ENQUEUE
         private var maxAutoRetryAttempts = DEFAULT_GLOBAL_AUTO_RETRY_ATTEMPTS
         private var preAllocateFileOnCreation = DEFAULT_PREALLOCATE_FILE_ON_CREATE
+        private var reservedStorageSize = DEFAULT_RESERVED_STORAGE
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -351,6 +355,17 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Set storage space reserved for operation of the system, default [DEFAULT_RESERVED_STORAGE]
+         *
+         * @param size storage size in bytes
+         * @return Builder
+         */
+        fun reserveStorageSize(size: Long): Builder {
+            this.reservedStorageSize = if (size < 0) DEFAULT_RESERVED_STORAGE else size
+            return this
+        }
+
+        /**
          * Build FetchConfiguration instance.
          * @return new FetchConfiguration instance.
          * */
@@ -365,29 +380,31 @@ class FetchConfiguration private constructor(val appContext: Context,
                 logger.enabled = loggingEnabled
             }
             return FetchConfiguration(
-                    appContext = appContext,
-                    namespace = namespace,
-                    concurrentLimit = concurrentLimit,
-                    progressReportingIntervalMillis = progressReportingIntervalMillis,
-                    loggingEnabled = loggingEnabled,
-                    httpDownloader = httpDownloader,
-                    globalNetworkType = globalNetworkType,
-                    logger = prefsLogger,
-                    autoStart = autoStart,
-                    retryOnNetworkGain = retryOnNetworkGain,
-                    fileServerDownloader = fileServerDownloader,
-                    hashCheckingEnabled = hashCheckEnabled,
-                    fileExistChecksEnabled = fileExistChecksEnabled,
-                    storageResolver = storageResolver,
-                    fetchNotificationManager = fetchNotificationManager,
-                    fetchDatabaseManager = fetchDatabaseManager,
-                    backgroundHandler = backgroundHandler,
-                    prioritySort = prioritySort,
-                    internetCheckUrl = internetCheckUrl,
-                    activeDownloadsCheckInterval = activeDownloadCheckInterval,
-                    createFileOnEnqueue = createFileOnEnqueue,
-                    maxAutoRetryAttempts = maxAutoRetryAttempts,
-                    preAllocateFileOnCreation = preAllocateFileOnCreation)
+                appContext = appContext,
+                namespace = namespace,
+                concurrentLimit = concurrentLimit,
+                progressReportingIntervalMillis = progressReportingIntervalMillis,
+                loggingEnabled = loggingEnabled,
+                httpDownloader = httpDownloader,
+                globalNetworkType = globalNetworkType,
+                logger = prefsLogger,
+                autoStart = autoStart,
+                retryOnNetworkGain = retryOnNetworkGain,
+                fileServerDownloader = fileServerDownloader,
+                hashCheckingEnabled = hashCheckEnabled,
+                fileExistChecksEnabled = fileExistChecksEnabled,
+                storageResolver = storageResolver,
+                fetchNotificationManager = fetchNotificationManager,
+                fetchDatabaseManager = fetchDatabaseManager,
+                backgroundHandler = backgroundHandler,
+                prioritySort = prioritySort,
+                internetCheckUrl = internetCheckUrl,
+                activeDownloadsCheckInterval = activeDownloadCheckInterval,
+                createFileOnEnqueue = createFileOnEnqueue,
+                maxAutoRetryAttempts = maxAutoRetryAttempts,
+                preAllocateFileOnCreation = preAllocateFileOnCreation,
+                reservedStorageSize = reservedStorageSize
+            )
         }
 
     }
@@ -468,7 +485,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                 " backgroundHandler=$backgroundHandler, prioritySort=$prioritySort, internetCheckUrl=$internetCheckUrl," +
                 " activeDownloadsCheckInterval=$activeDownloadsCheckInterval, createFileOnEnqueue=$createFileOnEnqueue," +
                 " preAllocateFileOnCreation=$preAllocateFileOnCreation, " +
-                "maxAutoRetryAttempts=$maxAutoRetryAttempts)"
+                "maxAutoRetryAttempts=$maxAutoRetryAttempts, reservedStorageSize=$reservedStorageSize (Byte))"
     }
 
 }

@@ -31,6 +31,12 @@ const val DEFAULT_DOWNLOAD_ON_ENQUEUE = true
 const val DEFAULT_PREALLOCATE_FILE_ON_CREATE = true
 const val DEFAULT_NOTIFICATION_TIMEOUT_AFTER_RESET = 15552000000 * 2
 const val DEFAULT_NOTIFICATION_TIMEOUT_AFTER = 10_000L
+
+/**
+ * Reserved storage space for operation of the system, _128Mb_
+ */
+const val DEFAULT_RESERVED_STORAGE = 134217728L
+
 val defaultNetworkType = NetworkType.ALL
 val defaultGlobalNetworkType = NetworkType.GLOBAL_OFF
 val defaultPriority = Priority.NORMAL

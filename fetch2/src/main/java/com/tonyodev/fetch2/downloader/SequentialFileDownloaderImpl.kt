@@ -10,16 +10,18 @@ import java.io.*
 import java.net.HttpURLConnection
 import kotlin.math.ceil
 
-class SequentialFileDownloaderImpl(initialDownload: Download,
-                                   private val downloader: Downloader<*, *>,
-                                   private val progressReportingIntervalMillis: Long,
-                                   private val logger: Logger,
-                                   private val networkInfoProvider: NetworkInfoProvider,
-                                   private val retryOnNetworkGain: Boolean,
-                                   private val hashCheckingEnabled: Boolean,
-                                   private val storageResolver: StorageResolver,
-                                   private val preAllocateFileOnCreation: Boolean)
-    : AbsFileDownloader(initialDownload) {
+class SequentialFileDownloaderImpl(
+    initialDownload: Download,
+    reservedStorageSize: Long,
+    private val downloader: Downloader<*, *>,
+    private val progressReportingIntervalMillis: Long,
+    private val logger: Logger,
+    private val networkInfoProvider: NetworkInfoProvider,
+    private val retryOnNetworkGain: Boolean,
+    private val hashCheckingEnabled: Boolean,
+    private val storageResolver: StorageResolver,
+    private val preAllocateFileOnCreation: Boolean
+) : AbsFileDownloader(initialDownload, reservedStorageSize) {
 
     @Volatile
     override var interrupted = false

@@ -104,23 +104,25 @@ object FetchModulesBuilder {
 
         init {
             downloadManager = DownloadManagerImpl(
-                    httpDownloader = fetchConfiguration.httpDownloader,
-                    concurrentLimit = fetchConfiguration.concurrentLimit,
-                    progressReportingIntervalMillis = fetchConfiguration.progressReportingIntervalMillis,
-                    logger = fetchConfiguration.logger,
-                    networkInfoProvider = networkInfoProvider,
-                    retryOnNetworkGain = fetchConfiguration.retryOnNetworkGain,
-                    downloadInfoUpdater = downloadInfoUpdater,
-                    downloadManagerCoordinator = downloadManagerCoordinator,
-                    listenerCoordinator = listenerCoordinator,
-                    fileServerDownloader = fetchConfiguration.fileServerDownloader,
-                    hashCheckingEnabled = fetchConfiguration.hashCheckingEnabled,
-                    storageResolver = fetchConfiguration.storageResolver,
-                    context = fetchConfiguration.appContext,
-                    namespace = fetchConfiguration.namespace,
-                    groupInfoProvider = groupInfoProvider,
-                    globalAutoRetryMaxAttempts = fetchConfiguration.maxAutoRetryAttempts,
-                    preAllocateFileOnCreation = fetchConfiguration.preAllocateFileOnCreation)
+                httpDownloader = fetchConfiguration.httpDownloader,
+                concurrentLimit = fetchConfiguration.concurrentLimit,
+                progressReportingIntervalMillis = fetchConfiguration.progressReportingIntervalMillis,
+                logger = fetchConfiguration.logger,
+                networkInfoProvider = networkInfoProvider,
+                retryOnNetworkGain = fetchConfiguration.retryOnNetworkGain,
+                downloadInfoUpdater = downloadInfoUpdater,
+                downloadManagerCoordinator = downloadManagerCoordinator,
+                listenerCoordinator = listenerCoordinator,
+                fileServerDownloader = fetchConfiguration.fileServerDownloader,
+                hashCheckingEnabled = fetchConfiguration.hashCheckingEnabled,
+                storageResolver = fetchConfiguration.storageResolver,
+                context = fetchConfiguration.appContext,
+                namespace = fetchConfiguration.namespace,
+                groupInfoProvider = groupInfoProvider,
+                globalAutoRetryMaxAttempts = fetchConfiguration.maxAutoRetryAttempts,
+                preAllocateFileOnCreation = fetchConfiguration.preAllocateFileOnCreation,
+                storageSpaceReserved = fetchConfiguration.reservedStorageSize
+            )
             priorityListProcessor = PriorityListProcessorImpl(
                     handlerWrapper = handlerWrapper,
                     downloadProvider = downloadProvider,

@@ -2,38 +2,44 @@ package com.tonyodev.fetch2.downloader
 
 import android.content.Context
 import android.content.Intent
-import com.tonyodev.fetch2.*
+import com.tonyodev.fetch2.ACTION_QUEUE_BACKOFF_RESET
+import com.tonyodev.fetch2.Download
+import com.tonyodev.fetch2.EXTRA_NAMESPACE
 import com.tonyodev.fetch2.exception.FetchException
+import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.helper.DownloadInfoUpdater
 import com.tonyodev.fetch2.helper.FileDownloaderDelegate
-import com.tonyodev.fetch2.fetch.ListenerCoordinator
 import com.tonyodev.fetch2.provider.GroupInfoProvider
 import com.tonyodev.fetch2.provider.NetworkInfoProvider
 import com.tonyodev.fetch2.util.getRequestForDownload
 import com.tonyodev.fetch2core.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.max
 
-class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
-                          concurrentLimit: Int,
-                          private val progressReportingIntervalMillis: Long,
-                          private val logger: Logger,
-                          private val networkInfoProvider: NetworkInfoProvider,
-                          private val retryOnNetworkGain: Boolean,
-                          private val downloadInfoUpdater: DownloadInfoUpdater,
-                          private val downloadManagerCoordinator: DownloadManagerCoordinator,
-                          private val listenerCoordinator: ListenerCoordinator,
-                          private val fileServerDownloader: FileServerDownloader,
-                          private val hashCheckingEnabled: Boolean,
-                          private val storageResolver: StorageResolver,
-                          private val context: Context,
-                          private val namespace: String,
-                          private val groupInfoProvider: GroupInfoProvider,
-                          private val globalAutoRetryMaxAttempts: Int,
-                          private val preAllocateFileOnCreation: Boolean) : DownloadManager {
+class DownloadManagerImpl(
+    private val httpDownloader: Downloader<*, *>,
+    concurrentLimit: Int,
+    private val progressReportingIntervalMillis: Long,
+    private val logger: Logger,
+    private val networkInfoProvider: NetworkInfoProvider,
+    private val retryOnNetworkGain: Boolean,
+    private val downloadInfoUpdater: DownloadInfoUpdater,
+    private val downloadManagerCoordinator: DownloadManagerCoordinator,
+    private val listenerCoordinator: ListenerCoordinator,
+    private val fileServerDownloader: FileServerDownloader,
+    private val hashCheckingEnabled: Boolean,
+    private val storageResolver: StorageResolver,
+    private val context: Context,
+    private val namespace: String,
+    private val groupInfoProvider: GroupInfoProvider,
+    private val globalAutoRetryMaxAttempts: Int,
+    private val preAllocateFileOnCreation: Boolean,
+    storageSpaceReserved: Long = 0L
+) : DownloadManager {
 
-    private val lock = Any()
-    private var executor: ExecutorService? = getNewDownloadExecutorService(concurrentLimit)
+    override val isClosed: Boolean get() = closed
+
     @Volatile
     override var concurrentLimit: Int = concurrentLimit
         set(value) {
@@ -53,15 +59,20 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                 logger.d("DownloadManager concurrentLimit changed from $field to $value")
             }
         }
+
+    private val lock = Any()
+
+    private var executor: ExecutorService? = getNewDownloadExecutorService(concurrentLimit)
+
     private val currentDownloadsMap = hashMapOf<Int, FileDownloader?>()
+
     @Volatile
     private var downloadCounter = 0
+
     @Volatile
     private var closed = false
-    override val isClosed: Boolean
-        get() {
-            return closed
-        }
+
+    private var reservedStorage = max(0, storageSpaceReserved)
 
     override fun start(download: Download): Boolean {
         return synchronized(lock) {
@@ -262,27 +273,31 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
         val supportedDownloadTypes = downloader.getRequestSupportedFileDownloaderTypes(request)
         return if (downloader.getRequestFileDownloaderType(request, supportedDownloadTypes) == Downloader.FileDownloaderType.SEQUENTIAL) {
             SequentialFileDownloaderImpl(
-                    initialDownload = download,
-                    downloader = downloader,
-                    progressReportingIntervalMillis = progressReportingIntervalMillis,
-                    logger = logger,
-                    networkInfoProvider = networkInfoProvider,
-                    retryOnNetworkGain = retryOnNetworkGain,
-                    hashCheckingEnabled = hashCheckingEnabled,
-                    storageResolver = storageResolver,
-                    preAllocateFileOnCreation = preAllocateFileOnCreation)
+                initialDownload = download,
+                reservedStorageSize = reservedStorage,
+                downloader = downloader,
+                progressReportingIntervalMillis = progressReportingIntervalMillis,
+                logger = logger,
+                networkInfoProvider = networkInfoProvider,
+                retryOnNetworkGain = retryOnNetworkGain,
+                hashCheckingEnabled = hashCheckingEnabled,
+                storageResolver = storageResolver,
+                preAllocateFileOnCreation = preAllocateFileOnCreation
+            )
         } else {
             ParallelFileDownloaderImpl(
-                    initialDownload = download,
-                    downloader = downloader,
-                    progressReportingIntervalMillis = progressReportingIntervalMillis,
-                    logger = logger,
-                    networkInfoProvider = networkInfoProvider,
-                    retryOnNetworkGain = retryOnNetworkGain,
-                    fileTempDir = storageResolver.getDirectoryForFileDownloaderTypeParallel(request),
-                    hashCheckingEnabled = hashCheckingEnabled,
-                    storageResolver = storageResolver,
-                    preAllocateFileOnCreation = preAllocateFileOnCreation)
+                initialDownload = download,
+                reservedStorageSize = reservedStorage,
+                downloader = downloader,
+                progressReportingIntervalMillis = progressReportingIntervalMillis,
+                logger = logger,
+                networkInfoProvider = networkInfoProvider,
+                retryOnNetworkGain = retryOnNetworkGain,
+                fileTempDir = storageResolver.getDirectoryForFileDownloaderTypeParallel(request),
+                hashCheckingEnabled = hashCheckingEnabled,
+                storageResolver = storageResolver,
+                preAllocateFileOnCreation = preAllocateFileOnCreation
+            )
         }
     }
 

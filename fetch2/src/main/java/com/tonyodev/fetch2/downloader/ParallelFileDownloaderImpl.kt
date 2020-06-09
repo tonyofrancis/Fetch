@@ -16,17 +16,19 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.ceil
 
-class ParallelFileDownloaderImpl(initialDownload: Download,
-                                 private val downloader: Downloader<*, *>,
-                                 private val progressReportingIntervalMillis: Long,
-                                 private val logger: Logger,
-                                 private val networkInfoProvider: NetworkInfoProvider,
-                                 private val retryOnNetworkGain: Boolean,
-                                 private val fileTempDir: String,
-                                 private val hashCheckingEnabled: Boolean,
-                                 private val storageResolver: StorageResolver,
-                                 private val preAllocateFileOnCreation: Boolean)
-    : AbsFileDownloader(initialDownload) {
+class ParallelFileDownloaderImpl(
+    initialDownload: Download,
+    reservedStorageSize: Long,
+    private val downloader: Downloader<*, *>,
+    private val progressReportingIntervalMillis: Long,
+    private val logger: Logger,
+    private val networkInfoProvider: NetworkInfoProvider,
+    private val retryOnNetworkGain: Boolean,
+    private val fileTempDir: String,
+    private val hashCheckingEnabled: Boolean,
+    private val storageResolver: StorageResolver,
+    private val preAllocateFileOnCreation: Boolean
+) : AbsFileDownloader(initialDownload, reservedStorageSize) {
 
     @Volatile
     override var interrupted = false
