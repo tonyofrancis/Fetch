@@ -9,6 +9,7 @@ import java.io.*
 import java.math.BigInteger
 import java.net.CookieManager
 import java.net.CookiePolicy
+import java.net.HttpURLConnection
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -19,6 +20,12 @@ const val GET_REQUEST_METHOD = "GET"
 
 const val HEAD_REQUEST_METHOD = "HEAD"
 
+internal const val HEADER_ACCEPT_RANGE = "Accept-Ranges"
+
+internal const val HEADER_ACCEPT_RANGE_LEGACY = "accept-ranges"
+
+internal const val HEADER_ACCEPT_RANGE_COMPAT = "AcceptRanges"
+
 internal const val HEADER_CONTENT_LENGTH = "content-length"
 
 internal const val HEADER_CONTENT_LENGTH_LEGACY = "Content-Length"
@@ -27,7 +34,15 @@ internal const val HEADER_CONTENT_LENGTH_COMPAT = "ContentLength"
 
 internal const val HEADER_TRANSFER_ENCODING = "Transfer-Encoding"
 
+internal const val HEADER_TRANSFER_LEGACY = "transfer-encoding"
+
 internal const val HEADER_TRANSFER_ENCODING_COMPAT = "TransferEncoding"
+
+internal const val HEADER_CONTENT_RANGE = "Content-Range"
+
+internal const val HEADER_CONTENT_RANGE_LEGACY = "content-range"
+
+internal const val HEADER_CONTENT_RANGE_COMPAT = "ContentRange"
 
 fun calculateProgress(downloaded: Long, total: Long): Int {
     return when {
@@ -193,9 +208,10 @@ fun getRangeForFetchFileServerRequest(range: String): Pair<Long, Long> {
     return Pair(start, end)
 }
 
+@Suppress("ControlFlowWithEmptyBody")
 fun getMd5String(bytes: ByteArray, start: Int = 0, length: Int = bytes.size): String {
     return try {
-        val buffer = ByteArray(8192)
+        val buffer = ByteArray(kotlin.io.DEFAULT_BUFFER_SIZE)
         val md = MessageDigest.getInstance("MD5")
         val inputStream = DigestInputStream(ByteArrayInputStream(bytes, start, length), md)
         inputStream.use { dis ->
@@ -211,10 +227,11 @@ fun getMd5String(bytes: ByteArray, start: Int = 0, length: Int = bytes.size): St
     }
 }
 
+@Suppress("ControlFlowWithEmptyBody")
 fun getFileMd5String(file: String): String? {
     val contentFile = File(file)
     return try {
-        val buffer = ByteArray(8192)
+        val buffer = ByteArray(kotlin.io.DEFAULT_BUFFER_SIZE)
         val md = MessageDigest.getInstance("MD5")
         val inputStream = DigestInputStream(FileInputStream(contentFile), md)
         inputStream.use { dis ->
@@ -230,21 +247,19 @@ fun getFileMd5String(file: String): String? {
     }
 }
 
-fun isParallelDownloadingSupported(responseHeaders: Map<String, List<String>>): Boolean {
-    val transferEncoding = responseHeaders[HEADER_TRANSFER_ENCODING]?.firstOrNull()
-            ?: responseHeaders[HEADER_TRANSFER_ENCODING_COMPAT]?.firstOrNull()
-            ?: ""
-    return transferEncoding.takeIf { it != "chunked" }?.let {
-        getContentLengthFromHeader(responseHeaders, -1L) > -1L
-    } ?: false
+fun isParallelDownloadingSupported(code: Int, headers: Map<String, List<String>>): Boolean {
+    return acceptRanges(code, headers)
 }
 
-fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Set<Downloader.FileDownloaderType> {
+fun getRequestSupportedFileDownloaderTypes(
+        request: Downloader.ServerRequest,
+        downloader: Downloader<*, *>
+): Set<Downloader.FileDownloaderType> {
     val fileDownloaderTypeSet = mutableSetOf(Downloader.FileDownloaderType.SEQUENTIAL)
     return try {
         val response = downloader.execute(request, getSimpleInterruptMonitor())
         if (response != null) {
-            if (isParallelDownloadingSupported(response.responseHeaders)) {
+            if (isParallelDownloadingSupported(response.code, response.responseHeaders)) {
                 fileDownloaderTypeSet.add(Downloader.FileDownloaderType.PARALLEL)
             }
             downloader.disconnect(response)
@@ -256,23 +271,68 @@ fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest, do
 }
 
 @SuppressLint("DefaultLocale")
-fun getHeaderValue(headers: MutableMap<String, List<String>>, key: String): List<String>? {
-    return getCompatHeaders(headers)[key.toLowerCase()]
+fun acceptRanges(
+        code: Int,
+        headers: Map<String, List<String>>
+): Boolean {
+    val acceptRangeValue = getHeaderValue(
+            headers,
+            HEADER_ACCEPT_RANGE,
+            HEADER_ACCEPT_RANGE_LEGACY,
+            HEADER_ACCEPT_RANGE_COMPAT
+    )
+    val transferValue = getHeaderValue(
+            headers,
+            HEADER_TRANSFER_ENCODING,
+            HEADER_TRANSFER_LEGACY,
+            HEADER_TRANSFER_ENCODING_COMPAT
+    )
+    val contentLength = getContentLengthFromHeader(headers, -1L)
+    val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL || acceptRangeValue == "bytes"
+    return (contentLength > -1L && acceptsRanges) || (contentLength > -1L && transferValue?.toLowerCase() != "chunked")
 }
 
-@SuppressLint("DefaultLocale")
-private fun getCompatHeaders(headers: MutableMap<String, List<String>>): MutableMap<String, List<String>> {
-    val compatHeaders = mutableMapOf<String, List<String>>()
-    for (header in headers) {
-        compatHeaders[header.key.toLowerCase()] = header.value
+fun getContentLengthFromHeader(headers: Map<String, List<String>>, defaultValue: Long): Long {
+    val contentRange = getHeaderValue(
+            headers,
+            HEADER_CONTENT_RANGE,
+            HEADER_CONTENT_RANGE_LEGACY,
+            HEADER_CONTENT_RANGE_COMPAT
+    )
+    val lastIndexOf = contentRange?.lastIndexOf("/")
+    var contentLength = -1L
+    if (lastIndexOf != null && lastIndexOf != -1 && lastIndexOf < contentRange.length) {
+        contentLength = contentRange.substring(lastIndexOf + 1).toLongOrNull() ?: -1L
     }
-    return compatHeaders
+    if (contentLength == -1L) {
+        contentLength = getHeaderValue(
+                headers,
+                HEADER_CONTENT_LENGTH,
+                HEADER_CONTENT_LENGTH_LEGACY,
+                HEADER_CONTENT_LENGTH_COMPAT
+        )?.toLongOrNull() ?: defaultValue
+    }
+    return contentLength
+}
+
+fun getHeaderValue(
+        headers: Map<String, List<String>>,
+        vararg keys: String
+): String? {
+    for (key in keys) {
+        val value = headers[key]?.firstOrNull()
+        if (!value.isNullOrBlank()) {
+            return value
+        }
+    }
+    return null
 }
 
 fun getRequestContentLength(request: Downloader.ServerRequest, downloader: Downloader<*, *>): Long {
     return try {
         val response = downloader.execute(request, getSimpleInterruptMonitor())
-        val contentLength = response?.contentLength ?: -1L
+        val headers = response?.responseHeaders ?: emptyMap()
+        val contentLength = getContentLengthFromHeader(headers, -1L)
         if (response != null) {
             downloader.disconnect(response)
         }
@@ -356,14 +416,4 @@ fun copyStreamToString(inputStream: InputStream?, closeStream: Boolean = true): 
 fun getSimpleInterruptMonitor() = object : InterruptMonitor {
     override val isInterrupted: Boolean
         get() = false
-}
-
-fun getContentLengthFromHeader(headers: Map<String, List<String>>, defaultValue: Long): Long {
-    val contentLength = when {
-        headers.containsKey(HEADER_CONTENT_LENGTH) -> headers[HEADER_CONTENT_LENGTH]
-        headers.containsKey(HEADER_CONTENT_LENGTH_LEGACY) -> headers[HEADER_CONTENT_LENGTH_LEGACY]
-        headers.containsKey(HEADER_CONTENT_LENGTH_COMPAT) -> headers[HEADER_CONTENT_LENGTH_COMPAT]
-        else -> null
-    }
-    return contentLength?.firstOrNull()?.toLongOrNull() ?: defaultValue
 }
