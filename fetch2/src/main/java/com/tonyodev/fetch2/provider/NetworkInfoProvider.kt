@@ -11,6 +11,7 @@ import android.net.NetworkRequest
 import android.os.Build
 import com.tonyodev.fetch2.NetworkType
 import com.tonyodev.fetch2core.isNetworkAvailable
+import com.tonyodev.fetch2core.isOnMeteredConnection
 import com.tonyodev.fetch2core.isOnWiFi
 import java.net.HttpURLConnection
 import java.net.URL
@@ -100,6 +101,9 @@ class NetworkInfoProvider constructor(private val context: Context,
 
     fun isOnAllowedNetwork(networkType: NetworkType): Boolean {
         if (networkType == NetworkType.WIFI_ONLY && context.isOnWiFi()) {
+            return true
+        }
+        if (networkType == NetworkType.UNMETERED && !context.isOnMeteredConnection()) {
             return true
         }
         if (networkType == NetworkType.ALL && context.isNetworkAvailable()) {
