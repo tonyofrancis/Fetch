@@ -70,9 +70,9 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         var responseHeaders = getCleanedHeaders(client.headerFields)
         var code = client.responseCode
         if ((code == HttpURLConnection.HTTP_MOVED_TEMP
-                || code == HttpURLConnection.HTTP_MOVED_PERM
-                || code == HttpURLConnection.HTTP_SEE_OTHER) && getHeaderValue(responseHeaders, "Location") != null) {
-            httpUrl = URL(getHeaderValue(responseHeaders, "Location")?.firstOrNull() ?: "")
+                        || code == HttpURLConnection.HTTP_MOVED_PERM
+                        || code == HttpURLConnection.HTTP_SEE_OTHER) && getHeaderValue(responseHeaders, "Location") != null) {
+            httpUrl = URL(getHeaderValue(responseHeaders, "Location") ?: "")
             client = httpUrl.openConnection() as HttpURLConnection
             onPreClientExecute(client, request)
             if (client.getRequestProperty("Referer") == null) {
@@ -97,8 +97,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
             errorResponseString = copyStreamToString(client.errorStream, false)
         }
 
-        val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
-                getHeaderValue(responseHeaders, "Accept-Ranges")?.firstOrNull() == "bytes"
+        val acceptsRanges = acceptRanges(code, responseHeaders)
 
         onServerResponse(request, Downloader.Response(
                 code = code,
@@ -139,7 +138,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     }
 
     override fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String {
-        return getHeaderValue(responseHeaders, "Content-MD5")?.firstOrNull() ?: ""
+        return getHeaderValue(responseHeaders, "Content-MD5") ?: ""
     }
 
     override fun close() {
@@ -190,7 +189,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     }
 
     override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
-        if(fileDownloaderType == Downloader.FileDownloaderType.SEQUENTIAL) {
+        if (fileDownloaderType == Downloader.FileDownloaderType.SEQUENTIAL) {
             return mutableSetOf(fileDownloaderType)
         }
         return try {
