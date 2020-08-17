@@ -1,3 +1,12 @@
+Version 3.0.11/ Androidx version 3.1.5
+2. Notification sound fixes.
+3. RxJava fixes.
+4. Content Length fixes
+5. Added NetworkType.UNMETERED
+6. Lots of bug fixes.
+
+Thanks to everyone who contributed!
+
 Version 3.0.10/ Androidx version 3.1.4
 1. Improvements/Bug fixes to getting a download's content-length
 2. FetchDatabaseManager interface improvements. It is now easier to create custom fetch databases.
