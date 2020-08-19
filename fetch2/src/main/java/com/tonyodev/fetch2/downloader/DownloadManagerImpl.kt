@@ -109,6 +109,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                     } finally {
                         removeDownloadMappings(download)
                         val intent = Intent(ACTION_QUEUE_BACKOFF_RESET)
+                        intent.setPackage(context.packageName)
                         intent.putExtra(EXTRA_NAMESPACE, namespace)
                         context.sendBroadcast(intent)
                     }
@@ -257,7 +258,12 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
     }
 
     private fun getFileDownloader(download: Download, downloader: Downloader<*, *>): FileDownloader {
-        val request = getRequestForDownload(download)
+        val originalRequest = getRequestForDownload(download)
+        val request = if (downloader.getHeadRequestMethodSupported(originalRequest)) {
+            getRequestForDownload(download, HEAD_REQUEST_METHOD)
+        } else {
+            originalRequest
+        }
         val supportedDownloadTypes = downloader.getRequestSupportedFileDownloaderTypes(request)
         return if (downloader.getRequestFileDownloaderType(request, supportedDownloadTypes) == Downloader.FileDownloaderType.SEQUENTIAL) {
             SequentialFileDownloaderImpl(

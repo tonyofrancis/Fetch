@@ -83,6 +83,8 @@ fun getErrorFromMessage(message: String?): Error {
         Error.FAILED_TO_RENAME_FILE
     } else if(message.contains(FILE_ALLOCATION_ERROR, true)) {
         Error.FILE_ALLOCATION_FAILED
+    }  else if(message.contains(CLEAR_TEXT_NETWORK_VIOLATION, true)) {
+        Error.HTTP_CONNECTION_NOT_ALLOWED
     } else {
         Error.UNKNOWN
     }

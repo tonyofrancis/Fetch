@@ -134,7 +134,7 @@ fun deleteFile(filePath: String, context: Context): Boolean {
         when {
             uri.scheme == "file" -> {
                 val file = File(uri.path)
-                if (file.canWrite() && file.exists()) deleteFile(file) else context.contentResolver.delete(uri, null, null) > 0
+                if (file.canWrite() && file.exists()) deleteFile(file) else false
             }
             uri.scheme == "content" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT

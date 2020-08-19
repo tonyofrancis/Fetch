@@ -297,6 +297,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                         downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
                         downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
+                        val completedDownload = downloadInfo.copy()
                         delegate?.onProgress(
                                 download = downloadInfo,
                                 etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
@@ -304,7 +305,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                         downloadInfo.etaInMilliSeconds = -1
                         downloadInfo.downloadedBytesPerSecond = -1
                         delegate?.onComplete(
-                                download = downloadInfo)
+                                download = completedDownload)
                     }
                 } else {
                     throw FetchException(INVALID_CONTENT_HASH)
@@ -315,6 +316,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                     delegate?.onDownloadBlockUpdated(downloadInfo, downloadBlock, totalDownloadBlocks)
                     downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
                     downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
+                    val completedDownload = downloadInfo.copy()
                     delegate?.onProgress(
                             download = downloadInfo,
                             etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
@@ -322,7 +324,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                     downloadInfo.etaInMilliSeconds = -1
                     downloadInfo.downloadedBytesPerSecond = -1
                     delegate?.onComplete(
-                            download = downloadInfo)
+                            download = completedDownload)
                 }
             }
         }

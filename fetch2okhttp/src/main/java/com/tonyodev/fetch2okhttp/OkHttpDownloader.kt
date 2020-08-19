@@ -1,7 +1,6 @@
 package com.tonyodev.fetch2okhttp
 
 import com.tonyodev.fetch2core.*
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -50,19 +49,6 @@ open class OkHttpDownloader @JvmOverloads constructor(
         return okHttpRequestBuilder.build()
     }
 
-    private fun getResponseHeaders(okResponseHeaders: Headers): MutableMap<String, List<String>> {
-        val headers = mutableMapOf<String, List<String>>()
-        for (i in 0 until okResponseHeaders.size()) {
-            val key = okResponseHeaders.name(i)
-            @Suppress("SENSELESS_COMPARISON")
-            if (key != null) {
-                val values = okResponseHeaders.values(key)
-                headers[key.toLowerCase()] = values
-            }
-        }
-        return headers
-    }
-
     private fun getRedirectedServerRequest(oldRequest: Downloader.ServerRequest, redirectUrl: String): Downloader.ServerRequest {
         return Downloader.ServerRequest(
                 id = oldRequest.id,
@@ -88,13 +74,13 @@ open class OkHttpDownloader @JvmOverloads constructor(
                     .build()
         }
         var okHttpResponse = client.newCall(okHttpRequest).execute()
-        var responseHeaders = getResponseHeaders(okHttpResponse.headers())
-        var code = okHttpResponse.code()
+        var responseHeaders = okHttpResponse.headers.toMultimap()
+        var code = okHttpResponse.code
         if ((code == HttpURLConnection.HTTP_MOVED_TEMP
                         || code == HttpURLConnection.HTTP_MOVED_PERM
-                        || code == HttpURLConnection.HTTP_SEE_OTHER) && responseHeaders.containsKey("location")) {
+                        || code == HttpURLConnection.HTTP_SEE_OTHER) && getHeaderValue(responseHeaders, "Location") != null) {
             okHttpRequest = onPreClientExecute(client, getRedirectedServerRequest(request,
-                    responseHeaders["location"]?.firstOrNull() ?: ""))
+                    getHeaderValue(responseHeaders, "Location") ?: ""))
             if (okHttpRequest.header("Referer") == null) {
                 val referer = getRefererFromUrl(request.url)
                 okHttpRequest = okHttpRequest.newBuilder()
@@ -102,26 +88,22 @@ open class OkHttpDownloader @JvmOverloads constructor(
                         .build()
             }
             okHttpResponse = client.newCall(okHttpRequest).execute()
-            responseHeaders = getResponseHeaders(okHttpResponse.headers())
-            code = okHttpResponse.code()
+            responseHeaders = okHttpResponse.headers.toMultimap()
+            code = okHttpResponse.code
         }
+
         val success = okHttpResponse.isSuccessful
-        var contentLength = getContentLengthFromHeader(responseHeaders, -1)
-        val byteStream: InputStream? = okHttpResponse.body()?.byteStream()
+        val contentLength = getContentLengthFromHeader(responseHeaders, -1L)
+        val byteStream: InputStream? = okHttpResponse.body?.byteStream()
         val errorResponseString: String? = if (!success) {
             copyStreamToString(byteStream, false)
         } else {
             null
         }
 
-        val hash = getContentHash(responseHeaders)
+        val hash = getContentHash(responseHeaders.toMutableMap())
 
-        if (contentLength < 1) {
-            contentLength = responseHeaders["content-length"]?.firstOrNull()?.toLong() ?: -1L
-        }
-
-        val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
-                responseHeaders["accept-ranges"]?.firstOrNull() == "bytes"
+        val acceptsRanges = acceptRanges(code, responseHeaders)
 
         onServerResponse(request, Downloader.Response(
                 code = code,
@@ -150,7 +132,7 @@ open class OkHttpDownloader @JvmOverloads constructor(
     }
 
     override fun getContentHash(responseHeaders: MutableMap<String, List<String>>): String {
-        return responseHeaders["content-md5"]?.firstOrNull() ?: ""
+        return getHeaderValue(responseHeaders, "Content-MD5") ?: ""
     }
 
     override fun disconnect(response: Downloader.Response) {
@@ -209,6 +191,9 @@ open class OkHttpDownloader @JvmOverloads constructor(
     }
 
     override fun getRequestSupportedFileDownloaderTypes(request: Downloader.ServerRequest): Set<Downloader.FileDownloaderType> {
+        if (fileDownloaderType == Downloader.FileDownloaderType.SEQUENTIAL) {
+            return mutableSetOf(fileDownloaderType)
+        }
         return try {
             getRequestSupportedFileDownloaderTypes(request, this)
         } catch (e: Exception) {

@@ -17,7 +17,7 @@ class FileResource : Parcelable, Serializable {
     /** Content Length */
     var length: Long = 0L
 
-    /** Absolute File Path */
+    /** The File Path. Can be a file or uri. */
     var file: String = ""
 
     /** Unique Short name of the File Resource.

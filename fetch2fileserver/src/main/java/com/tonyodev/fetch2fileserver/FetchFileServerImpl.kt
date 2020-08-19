@@ -30,7 +30,8 @@ class FetchFileServerImpl(context: Context,
                           private val fetchFileServerDelegate: FetchFileServerDelegate?,
                           private val fetchTransferListener: FetchTransferListener?,
                           private val progressReportingInMillis: Long,
-                          private val persistentTimeoutInMillis: Long) : FetchFileServer {
+                          private val persistentTimeoutInMillis: Long,
+                          private val fileResolver: FileResolver) : FetchFileServer {
 
     private val lock = Any()
     private val uuid = UUID.randomUUID().toString()
@@ -106,7 +107,9 @@ class FetchFileServerImpl(context: Context,
                     logger = logger,
                     ioHandler = ioHandler,
                     progressReportingInMillis = progressReportingInMillis,
-                    persistentTimeoutInMillis = persistentTimeoutInMillis)
+                    persistentTimeoutInMillis = persistentTimeoutInMillis,
+                    fileResolver = fileResolver
+            )
             try {
                 fileResourceProviderMap[fileResourceProvider.id] = fileResourceProvider
                 fileResourceProvider.execute()
@@ -153,7 +156,7 @@ class FetchFileServerImpl(context: Context,
             catalogFileResourceInfo.id = FileRequest.CATALOG_ID
             val catalogMap = mutableMapOf<String, String>()
             catalogMap["data"] = catalog
-            catalogFileResourceInfo.extras = JSONObject(catalogMap).toString()
+            catalogFileResourceInfo.extras = JSONObject(catalogMap as Map<*, *>).toString()
             catalogFileResourceInfo.name = FileRequest.CATALOG_NAME
             catalogFileResourceInfo.file = FileRequest.CATALOG_FILE
             return catalogFileResourceInfo.toFileResource()

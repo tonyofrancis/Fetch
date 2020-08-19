@@ -1,6 +1,6 @@
 
 [![Build Status](https://travis-ci.org/tonyofrancis/Fetch.svg?branch=v2)](https://travis-ci.org/tonyofrancis/Fetch)
-[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch2/images/download.svg?version=3.0.10) ](https://bintray.com/tonyofrancis/maven/fetch2/3.0.10/link)
+[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch2/images/download.svg?version=3.0.11) ](https://bintray.com/tonyofrancis/maven/fetch2/3.0.11/link)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Networking-blue.svg?style=flat)](https://android-arsenal.com/details/1/5196)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tonyofrancis/Fetch/blob/master/LICENSE)
 
@@ -21,7 +21,7 @@ Features
 * Concurrent downloading support.
 * Ability to pause and resume downloads.
 * Set the priority of a download.
-* Network specific downloading support.
+* Network-specific downloading support.
 * Ability to retry failed downloads.
 * Ability to group downloads.
 * Easy progress and status tracking.
@@ -43,6 +43,12 @@ add the following storage permissions to your application's manifest. For Androi
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 ```
+Also, as you are going to use Internet to download files. We need to add the Internet access permissions
+in the Manifest.
+
+```xml
+<uses-permission android:name="android.permission.INTERNET"/>
+```
 
 How to use Fetch
 ----------------
@@ -50,11 +56,11 @@ How to use Fetch
 Using Fetch is easy! Just add the Gradle dependency to your application's build.gradle file.
 
 ```java
-implementation "com.tonyodev.fetch2:fetch2:3.0.10"
+implementation "com.tonyodev.fetch2:fetch2:3.0.11"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2:xfetch2:3.1.4"
+implementation "androidx.tonyodev.fetch2:xfetch2:3.1.5"
 ```
 
 Next, get an instance of Fetch and request a download.
@@ -177,27 +183,27 @@ You can query Fetch for download information in several ways.
 ```java
 //Query all downloads
 fetch.getDownloads(new Func<List<? extends Download>>() {
-	@Override
+    @Override
         public void call(List<? extends Download> downloads) {
-        	//Access all downloads here
+            //Access all downloads here
         }
 });
 
 //Get all downloads with a status
 fetch.getDownloadsWithStatus(Status.DOWNLOADING, new Func<List<? extends Download>>() {
-	@Override
+    @Override
         public void call(List<? extends Download> downloads) {
-        	//Access downloads that are downloading
+            //Access downloads that are downloading
         }
 });
 
 // You can also access grouped downloads
 int groupId = 52687447745;
 fetch.getDownloadsInGroup(groupId, new Func<List<? extends Download>>() {
-	@Override
-  	public void call(List<? extends Download> downloads) {
-      		//Access grouped downloads
-  	}
+    @Override
+      public void call(List<? extends Download> downloads) {
+              //Access grouped downloads
+      }
 });
 ```
 
@@ -216,15 +222,15 @@ Downloaders
 
 By default Fetch uses the HttpUrlConnection client via the HttpUrlConnectionDownloader
 to download requests. Add the following Gradle dependency to your application's build.gradle
-to use the OkHttp Downloader instead. You can create your own custom downloaders
+to use the OkHttp Downloader instead. You can create your custom downloaders
 if necessary. See the Java docs for details.
 
 ```java
-implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:3.0.10"
+implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:3.0.11"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.1.4"
+implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.1.5"
 ```
 
 Set the OkHttp Downloader for Fetch to use.
@@ -232,9 +238,9 @@ Set the OkHttp Downloader for Fetch to use.
 OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
 
 FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this)
-	.setDownloadConcurrentLimit(10)
-	.setHttpDownloader(new OkHttpDownloader(okHttpClient))
-	.build();
+    .setDownloadConcurrentLimit(10)
+    .setHttpDownloader(new OkHttpDownloader(okHttpClient))
+    .build();
 
 Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
 ```
@@ -246,11 +252,11 @@ If you would like to take advantage of RxJava2 features when using Fetch,
 add the following gradle dependency to your application's build.gradle file.
 
 ```java
-implementation "com.tonyodev.fetch2rx:fetch2rx:3.0.10"
+implementation "com.tonyodev.fetch2rx:fetch2rx:3.0.11"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2rx:xfetch2rx:3.1.4"
+implementation "androidx.tonyodev.fetch2rx:xfetch2rx:3.1.5"
 ```
 
 RxFetch makes it super easy to enqueue download requests and query downloads using rxJava2 functional methods.
@@ -280,20 +286,20 @@ FetchFileServer
 
 Introducing the FetchFileServer. The FetchFileServer is a lightweight TCP File Server that acts like
 an HTTP file server designed specifically to share files between Android devices. You can host file resources
-with the FetchFileServer on one device and have Fetch download Files from the server
-on another device. See sample app for more information. Wiki on FetchFileServer will be
+with the FetchFileServer on one device and have to Fetch download Files from the server
+on another device. See the sample app for more information. Wiki on FetchFileServer will be
 added in the coming days.
 
 Start using FetchFileServer by adding the gradle dependency to your application's build.gradle file.
 ```java
-implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:3.0.10"
+implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:3.0.11"
 ```
 Androidx use: 
 ```java
-implementation "androidx.tonyodev.fetch2fileserver:xfetch2fileserver:3.1.4"
+implementation "androidx.tonyodev.fetch2fileserver:xfetch2fileserver:3.1.5"
 ```
 
-Start a FetchFileServer instance and add resource files that it can server to connected clients.
+Start a FetchFileServer instance and add resource files that it can serve to connected clients.
 ```java
 public class TestActivity extends AppCompatActivity {
 
@@ -399,11 +405,11 @@ Fetch1 Migration
 
 Migrate downloads from Fetch1 to Fetch2 using the migration assistant. Add the following gradle dependency to your application's build.gradle file.
 ```java
-implementation "com.tonyodev.fetchmigrator:fetchmigrator:3.0.10"
+implementation "com.tonyodev.fetchmigrator:fetchmigrator:3.0.11"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetchmigrator:xfetchmigrator:3.1.4"
+implementation "androidx.tonyodev.fetchmigrator:xfetchmigrator:3.1.5"
 ```
 
 Then run the Migrator.
@@ -450,7 +456,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-	http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,

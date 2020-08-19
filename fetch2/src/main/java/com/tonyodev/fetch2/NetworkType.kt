@@ -15,7 +15,10 @@ enum class NetworkType(val value: Int) {
     ALL(0),
 
     /** Indicates that a download can be downloaded only on wifi networks.*/
-    WIFI_ONLY(1);
+    WIFI_ONLY(1),
+
+    /** Indicates that a download can be downloaded only on an unmetered connection.*/
+    UNMETERED(2);
 
     companion object {
 
@@ -25,6 +28,7 @@ enum class NetworkType(val value: Int) {
                 -1 -> GLOBAL_OFF
                 0 -> ALL
                 1 -> WIFI_ONLY
+                2 -> UNMETERED
                 else -> ALL
             }
         }

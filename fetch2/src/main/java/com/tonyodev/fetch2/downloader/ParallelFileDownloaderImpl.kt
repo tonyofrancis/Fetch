@@ -196,6 +196,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         if (!interrupted && !terminated) {
                             downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
                             downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
+                            val completedDownload = downloadInfo.copy()
                             delegate?.onProgress(
                                     download = downloadInfo,
                                     etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
@@ -203,7 +204,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                             downloadInfo.etaInMilliSeconds = -1
                             downloadInfo.downloadedBytesPerSecond = -1
                             delegate?.onComplete(
-                                    download = downloadInfo)
+                                    download = completedDownload)
                         }
                     } else {
                         deleteAllInFolderForId(downloadInfo.id, fileTempDir)
@@ -214,6 +215,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                     if (!interrupted && !terminated) {
                         downloadInfo.etaInMilliSeconds = estimatedTimeRemainingInMilliseconds
                         downloadInfo.downloadedBytesPerSecond = getAverageDownloadedBytesPerSecond()
+                        val completedDownload = downloadInfo.copy()
                         delegate?.onProgress(
                                 download = downloadInfo,
                                 etaInMilliSeconds = downloadInfo.etaInMilliSeconds,
@@ -221,7 +223,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                         downloadInfo.etaInMilliSeconds = -1
                         downloadInfo.downloadedBytesPerSecond = -1
                         delegate?.onComplete(
-                                download = downloadInfo)
+                                download = completedDownload)
                     }
                 }
             }

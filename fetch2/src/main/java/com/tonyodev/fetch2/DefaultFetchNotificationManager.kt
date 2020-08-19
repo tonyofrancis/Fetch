@@ -90,6 +90,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                 .setContentTitle(context.getString(R.string.fetch_notification_default_channel_name))
                 .setContentText("")
                 .setStyle(style)
+                .setOnlyAlertOnce(true)
                 .setGroup(groupId.toString())
                 .setGroupSummary(true)
         return false
@@ -303,6 +304,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                     .setTimeoutAfter(DEFAULT_NOTIFICATION_TIMEOUT_AFTER_RESET)
                     .setOngoing(false)
                     .setGroup(groupId.toString())
+                    .setOnlyAlertOnce(true)
                     .setSmallIcon(android.R.drawable.stat_sys_download_done)
                     .mActions.clear()
             return notificationBuilder
