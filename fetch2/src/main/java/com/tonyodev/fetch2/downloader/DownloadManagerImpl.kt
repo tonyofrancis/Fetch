@@ -139,16 +139,14 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
 
     private fun cancelDownloadNoLock(downloadId: Int): Boolean {
         throwExceptionIfClosed()
-        return if (currentDownloadsMap.containsKey(downloadId)) {
-            val fileDownloader = currentDownloadsMap[downloadId]
-            fileDownloader?.interrupted = true
+        val fileDownloader = currentDownloadsMap[downloadId]
+        return if (fileDownloader != null) {
+            fileDownloader.interrupted = true
             currentDownloadsMap.remove(downloadId)
             downloadCounter -= 1
             downloadManagerCoordinator.removeFileDownloader(downloadId)
-            if (fileDownloader != null) {
-                logger.d("DownloadManager cancelled download ${fileDownloader.download}")
-            }
-            true
+            logger.d("DownloadManager cancelled download ${fileDownloader.download}")
+            fileDownloader.interrupted
         } else {
             downloadManagerCoordinator.interruptDownload(downloadId)
             false
