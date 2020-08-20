@@ -739,9 +739,7 @@ class FetchHandlerImpl(private val namespace: String,
 
     private fun cancelDownloadsIfDownloading(downloads: List<DownloadInfo>) {
         for (download in downloads) {
-            if (downloadManager.contains(download.id)) {
-                downloadManager.cancel(download.id)
-            }
+            downloadManager.cancel(download.id)
         }
     }
 
