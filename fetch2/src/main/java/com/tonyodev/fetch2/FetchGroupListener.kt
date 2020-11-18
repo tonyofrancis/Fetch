@@ -20,7 +20,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onAdded(groupId: Int, download: Download, fetchGroup: FetchGroup)
+    fun onAdded(groupId: Int, download: Download, fetchGroup: FetchGroup) {}
 
     /** Called when a new download is queued for download. The status of the download will be
      * Status.QUEUED.
@@ -33,7 +33,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onQueued(groupId: Int, download: Download, waitingNetwork: Boolean, fetchGroup: FetchGroup)
+    fun onQueued(groupId: Int, download: Download, waitingNetwork: Boolean, fetchGroup: FetchGroup) {}
 
     /**
      * Called to report that the download process has started for a request. The status of the download
@@ -46,7 +46,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onStarted(groupId: Int, download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int, fetchGroup: FetchGroup)
+    fun onStarted(groupId: Int, download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int, fetchGroup: FetchGroup) {}
 
     /** Called when a download completes. The status of the download will be Status.COMPLETED.
      * @param groupId the groupId
@@ -55,7 +55,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onCompleted(groupId: Int, download: Download, fetchGroup: FetchGroup)
+    fun onCompleted(groupId: Int, download: Download, fetchGroup: FetchGroup) {}
 
     /** Called when a download is un-paused and queued again for download.
      * @param groupId the groupId
@@ -65,7 +65,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onResumed(groupId: Int, download: Download, fetchGroup: FetchGroup)
+    fun onResumed(groupId: Int, download: Download, fetchGroup: FetchGroup) {}
 
     /** Called when a download is paused. The status of the download will be Status.PAUSED.
      * @param groupId the groupId
@@ -74,7 +74,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onPaused(groupId: Int, download: Download, fetchGroup: FetchGroup)
+    fun onPaused(groupId: Int, download: Download, fetchGroup: FetchGroup) {}
 
     /** Called when a download is cancelled. The status of the download will be
      * Status.CANCELLED. The file for this download is not deleted.
@@ -84,7 +84,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onCancelled(groupId: Int, download: Download, fetchGroup: FetchGroup)
+    fun onCancelled(groupId: Int, download: Download, fetchGroup: FetchGroup) {}
 
     /** Called when a download is removed and is no longer managed by Fetch or
      * contained in the Fetch database. The file for this download is not deleted.
@@ -95,7 +95,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onRemoved(groupId: Int, download: Download, fetchGroup: FetchGroup)
+    fun onRemoved(groupId: Int, download: Download, fetchGroup: FetchGroup) {}
 
     /** Called when a download is deleted and is no longer managed by Fetch or contained in
      * the fetch database. The downloaded file is deleted. The status of a download will be
@@ -106,7 +106,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onDeleted(groupId: Int, download: Download, fetchGroup: FetchGroup)
+    fun onDeleted(groupId: Int, download: Download, fetchGroup: FetchGroup) {}
 
     /** Called when a download is queued and waiting for the right network conditions to start downloading.
      * The status of the download will be Status.QUEUED. Note this method is called several time on
@@ -117,7 +117,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onWaitingNetwork(groupId: Int, download: Download, fetchGroup: FetchGroup)
+    fun onWaitingNetwork(groupId: Int, download: Download, fetchGroup: FetchGroup) {}
 
     /** Called when an error occurs when downloading a download. The status of the download will be
      * Status.FAILED. See the download error field on the download for more information
@@ -130,7 +130,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onError(groupId: Int, download: Download, error: Error, throwable: Throwable?, fetchGroup: FetchGroup)
+    fun onError(groupId: Int, download: Download, error: Error, throwable: Throwable?, fetchGroup: FetchGroup) {}
 
     /** Called several times to report the progress of a download block belonging to a download.
      * The status of the download will be Status.DOWNLOADING. A download may be downloaded using
@@ -145,7 +145,7 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onDownloadBlockUpdated(groupId: Int, download: Download, downloadBlock: DownloadBlock, totalBlocks: Int, fetchGroup: FetchGroup)
+    fun onDownloadBlockUpdated(groupId: Int, download: Download, downloadBlock: DownloadBlock, totalBlocks: Int, fetchGroup: FetchGroup) {}
 
     /** Called several times to report the progress of a download when downloading.
      * The status of the download will be Status.DOWNLOADING.
@@ -158,6 +158,6 @@ interface FetchGroupListener: FetchListener {
      * @param fetchGroup An immutable object which contains a current snapshot of all the information
      * about a specific download group managed by Fetch.
      * */
-    fun onProgress(groupId: Int, download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long, fetchGroup: FetchGroup)
+    fun onProgress(groupId: Int, download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long, fetchGroup: FetchGroup) {}
 
 }
