@@ -47,9 +47,10 @@ internal class DatabaseHelper constructor(context: Context)
     fun verifyOK() {
         synchronized(lock) {
             db.beginTransaction()
-            db.execSQL("UPDATE " + TABLE_NAME + " SET " + COLUMN_STATUS + " = "
-                    + FetchConst.STATUS_QUEUED + " WHERE " + COLUMN_STATUS
-                    + " = " + FetchConst.STATUS_DOWNLOADING)
+            db.execSQL("UPDATE " + TABLE_NAME + " SET " + COLUMN_STATUS + " = ? "
+                    + "WHERE " + COLUMN_STATUS +" = ?",
+                    arrayOf(FetchConst.STATUS_QUEUED,FetchConst.STATUS_DOWNLOADING)
+            )
             db.setTransactionSuccessful()
             db.endTransaction()
         }
@@ -58,8 +59,8 @@ internal class DatabaseHelper constructor(context: Context)
     fun clean() {
         synchronized(lock) {
             val cursor = db.rawQuery("SELECT " + COLUMN_ID + ", " + COLUMN_FILEPATH
-                    + " FROM " + TABLE_NAME + " WHERE " + COLUMN_STATUS + " = "
-                    + FetchConst.STATUS_DONE, null)
+                    + " FROM " + TABLE_NAME + " WHERE " + COLUMN_STATUS + " = ?",
+                    arrayOf(FetchConst.STATUS_DONE.toString()))
 
             if (cursor.count < 1) {
                 cursor.close()
@@ -72,10 +73,12 @@ internal class DatabaseHelper constructor(context: Context)
                 if (destinationUri != null) {
                     if (!File(destinationUri).exists()) {
                         val id = cursor.getLong(cursor.getColumnIndex(COLUMN_ID))
-                        db.execSQL("UPDATE " + TABLE_NAME + " SET " + COLUMN_STATUS + " = "
-                                + FetchConst.STATUS_ERROR + ", " + COLUMN_ERROR + " = "
-                                + FetchConst.ERROR_FILE_NOT_FOUND + " WHERE "
-                                + COLUMN_ID + " = " + id)
+                        db.execSQL(
+                                "UPDATE " + TABLE_NAME + " SET " + COLUMN_STATUS + " = ?,"
+                                + FetchConst.STATUS_ERROR + ", " + COLUMN_ERROR + " = ? "
+                                + "WHERE " + COLUMN_ID + " = ?",
+                                arrayOf(FetchConst.STATUS_ERROR,FetchConst.ERROR_FILE_NOT_FOUND,id)
+                        )
                     }
                 }
                 cursor.moveToNext()
