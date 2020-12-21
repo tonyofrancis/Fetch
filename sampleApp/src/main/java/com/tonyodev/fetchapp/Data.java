@@ -1,5 +1,6 @@
 package com.tonyodev.fetchapp;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 import androidx.annotation.NonNull;
@@ -26,18 +27,18 @@ public final class Data {
     }
 
     @NonNull
-    private static List<Request> getFetchRequests() {
+    private static List<Request> getFetchRequests(Context context) {
         final List<Request> requests = new ArrayList<>();
         for (String sampleUrl : sampleUrls) {
-            final Request request = new Request(sampleUrl, getFilePath(sampleUrl));
+            final Request request = new Request(sampleUrl, getFilePath(sampleUrl, context));
             requests.add(request);
         }
         return requests;
     }
 
     @NonNull
-    public static List<Request> getFetchRequestWithGroupId(final int groupId) {
-        final List<Request> requests = getFetchRequests();
+    public static List<Request> getFetchRequestWithGroupId(final int groupId, Context context) {
+        final List<Request> requests = getFetchRequests(context);
         for (Request request : requests) {
             request.setGroupId(groupId);
         }
@@ -45,10 +46,10 @@ public final class Data {
     }
 
     @NonNull
-    private static String getFilePath(@NonNull final String url) {
+    private static String getFilePath(@NonNull final String url, Context context) {
         final Uri uri = Uri.parse(url);
         final String fileName = uri.getLastPathSegment();
-        final String dir = getSaveDir();
+        final String dir = getSaveDir(context);
         return (dir + "/DownloadList/" + fileName);
     }
 
@@ -58,11 +59,11 @@ public final class Data {
     }
 
     @NonNull
-    public static List<Request> getGameUpdates() {
+    public static List<Request> getGameUpdates(Context context) {
         final List<Request> requests = new ArrayList<>();
         final String url = "http://speedtest.ftp.otenet.gr/files/test100k.db";
         for (int i = 0; i < 10; i++) {
-            final String filePath = getSaveDir() + "/gameAssets/" + "asset_" + i + ".asset";
+            final String filePath = getSaveDir(context) + "/gameAssets/" + "asset_" + i + ".asset";
             final Request request = new Request(url, filePath);
             request.setPriority(Priority.HIGH);
             requests.add(request);
@@ -71,8 +72,8 @@ public final class Data {
     }
 
     @NonNull
-    public static String getSaveDir() {
-        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "/fetch";
+    public static String getSaveDir(Context context) {
+        return context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString() + "/fetch";
     }
 
 }

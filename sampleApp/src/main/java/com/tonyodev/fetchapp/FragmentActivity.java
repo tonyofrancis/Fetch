@@ -72,7 +72,7 @@ public class FragmentActivity extends AppCompatActivity {
 
     private void enqueueDownload() {
         final String url = Data.sampleUrls[0];
-        final String filePath = Data.getSaveDir() + "/fragments/movie.mp4";
+        final String filePath = Data.getSaveDir(this) + "/fragments/movie.mp4";
         request = new Request(url, filePath);
 
         fetch.attachFetchObserversForDownload(request.getId(), progressFragment1, progressFragment2)
