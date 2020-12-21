@@ -34,7 +34,7 @@ public class FailedMultiEnqueueActivity extends AppCompatActivity {
         final String url = "https://www.notdownloadable.com/test.txt";
         final int size = 15;
         for (int x = 0; x < size; x++) {
-            final String file = Data.getSaveDir() + "/multiTest/file" + (x + 1) + ".txt";
+            final String file = Data.getSaveDir(this) + "/multiTest/file" + (x + 1) + ".txt";
             final Request request = new Request(url, file);
             requests.add(request);
         }

@@ -188,7 +188,7 @@ public class GameFilesActivity extends AppCompatActivity {
     }
 
     private void enqueueFiles() {
-        final List<Request> requestList = Data.getGameUpdates();
+        final List<Request> requestList = Data.getGameUpdates(this);
         for (Request request : requestList) {
             request.setGroupId(groupId);
         }

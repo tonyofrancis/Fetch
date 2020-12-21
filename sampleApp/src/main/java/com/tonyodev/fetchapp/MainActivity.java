@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
                 .build()
                 .shutDown(false);
         try {
-            final File fetchDir = new File(Data.getSaveDir());
+            final File fetchDir = new File(Data.getSaveDir(this));
             Utils.deleteFileAndContents(fetchDir);
             Toast.makeText(MainActivity.this, R.string.downloaded_files_deleted, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {

@@ -80,7 +80,7 @@ public class FileServerActivity extends AppCompatActivity {
     private void copyRawFileToFilesDir() {
         new Thread(() -> {
             try {
-                final String testFilePath = Data.getSaveDir() + "/source/" + CONTENT_PATH;
+                final String testFilePath = Data.getSaveDir(this) + "/source/" + CONTENT_PATH;
                 final File file = Utils.createFile(testFilePath);
                 final InputStream inputStream = new BufferedInputStream(getResources().openRawResource(R.raw.test_file));
                 final OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
@@ -160,7 +160,7 @@ public class FileServerActivity extends AppCompatActivity {
     }
 
     private String getFile(final String incrementer) {
-        return Data.getSaveDir() + "/data/ test_file" + incrementer + ".db";
+        return Data.getSaveDir(this) + "/data/ test_file" + incrementer + ".db";
     }
 
     @Override

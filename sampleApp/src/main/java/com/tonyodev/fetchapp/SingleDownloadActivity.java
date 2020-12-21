@@ -98,7 +98,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchOb
 
     private void enqueueDownload() {
         final String url = Data.sampleUrls[0];
-        final String filePath = Data.getSaveDir() + "/movies/" + Data.getNameFromUrl(url);
+        final String filePath = Data.getSaveDir(this) + "/movies/" + Data.getNameFromUrl(url);
         request = new Request(url, filePath);
         request.setExtras(getExtrasForRequest(request));
 
