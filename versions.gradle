@@ -1,7 +1,7 @@
 ext {
     kotlin_version = '1.3.72'
-    okhttp_version = '3.14.9'
-    okhttp_url_version = '3.14.9'
+    okhttp_version = '3.12.12'
+    okhttp_url_version = '3.12.12'
     android_support_version = '28.0.0'
     constraint_layout_version = "1.1.3"
     room_version = '1.1.1'
