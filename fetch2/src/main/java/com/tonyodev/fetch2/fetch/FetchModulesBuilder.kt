@@ -35,15 +35,16 @@ object FetchModulesBuilder {
             } else {
                 val newHandlerWrapper = HandlerWrapper(fetchConfiguration.namespace, fetchConfiguration.backgroundHandler)
                 val liveSettings = LiveSettings(fetchConfiguration.namespace)
-                val newDatabaseManager = fetchConfiguration.fetchDatabaseManager ?: FetchDatabaseManagerImpl(
-                        context = fetchConfiguration.appContext,
-                        namespace = fetchConfiguration.namespace,
-                        logger = fetchConfiguration.logger,
-                        migrations = DownloadDatabase.getMigrations(),
-                        liveSettings = liveSettings,
-                        fileExistChecksEnabled = fetchConfiguration.fileExistChecksEnabled,
-                        defaultStorageResolver = DefaultStorageResolver(fetchConfiguration.appContext,
-                                getFileTempDir(fetchConfiguration.appContext)))
+                val newDatabaseManager = fetchConfiguration.fetchDatabaseManager
+                        ?: FetchDatabaseManagerImpl(
+                                context = fetchConfiguration.appContext,
+                                namespace = fetchConfiguration.namespace,
+                                logger = fetchConfiguration.logger,
+                                migrations = DownloadDatabase.getMigrations(),
+                                liveSettings = liveSettings,
+                                fileExistChecksEnabled = fetchConfiguration.fileExistChecksEnabled,
+                                defaultStorageResolver = DefaultStorageResolver(fetchConfiguration.appContext,
+                                        getFileTempDir(fetchConfiguration.appContext)))
                 val databaseManagerWrapper = FetchDatabaseManagerWrapper(newDatabaseManager)
                 val downloadProvider = DownloadProvider(databaseManagerWrapper)
                 val downloadManagerCoordinator = DownloadManagerCoordinator(fetchConfiguration.namespace)
@@ -133,7 +134,7 @@ object FetchModulesBuilder {
                     namespace = fetchConfiguration.namespace,
                     prioritySort = fetchConfiguration.prioritySort)
             priorityListProcessor.globalNetworkType = fetchConfiguration.globalNetworkType
-            fetchHandler = FetchHandlerImpl(
+            fetchHandler = fetchConfiguration.fetchHandler ?: FetchHandlerImpl(
                     namespace = fetchConfiguration.namespace,
                     fetchDatabaseManagerWrapper = fetchDatabaseManagerWrapper,
                     downloadManager = downloadManager,

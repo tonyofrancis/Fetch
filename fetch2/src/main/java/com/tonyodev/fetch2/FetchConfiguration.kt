@@ -6,6 +6,7 @@ import android.os.Looper
 import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.database.FetchDatabaseManager
 import com.tonyodev.fetch2.exception.FetchException
+import com.tonyodev.fetch2.fetch.FetchHandler
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2core.*
 
@@ -35,7 +36,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val activeDownloadsCheckInterval: Long,
                                              val createFileOnEnqueue: Boolean,
                                              val maxAutoRetryAttempts: Int,
-                                             val preAllocateFileOnCreation: Boolean) {
+                                             val preAllocateFileOnCreation: Boolean,
+                                             val fetchHandler: FetchHandler?) {
 
     /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
@@ -71,6 +73,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         private var createFileOnEnqueue = DEFAULT_CREATE_FILE_ON_ENQUEUE
         private var maxAutoRetryAttempts = DEFAULT_GLOBAL_AUTO_RETRY_ATTEMPTS
         private var preAllocateFileOnCreation = DEFAULT_PREALLOCATE_FILE_ON_CREATE
+        private var fetchHandler: FetchHandler? = null
 
         /** Sets the namespace which Fetch operates in. Fetch uses
          * a namespace to create a database that the instance will use. Downloads
@@ -278,6 +281,15 @@ class FetchConfiguration private constructor(val appContext: Context,
         }
 
         /**
+         * Sets a fetch handler. This should only be used by advanced users
+         * who know what they are doing.
+         * */
+        fun setFetchHandler(fetchHandler: FetchHandler): Builder {
+            this.fetchHandler = fetchHandler
+            return this
+        }
+
+        /**
          * Used to dictate the order in which Fetch processes request/downloads
          * based on time created. Default is PrioritySort.ASC
          * @param prioritySort the priority sort.
@@ -327,6 +339,7 @@ class FetchConfiguration private constructor(val appContext: Context,
             this.createFileOnEnqueue = create
             return this
         }
+
         /**
          * The Global maximum number of times Fetch will auto retry a failed download. If set,
          * the autoRetryMaxAttempts on the individual download is overridden.
@@ -387,7 +400,8 @@ class FetchConfiguration private constructor(val appContext: Context,
                     activeDownloadsCheckInterval = activeDownloadCheckInterval,
                     createFileOnEnqueue = createFileOnEnqueue,
                     maxAutoRetryAttempts = maxAutoRetryAttempts,
-                    preAllocateFileOnCreation = preAllocateFileOnCreation)
+                    preAllocateFileOnCreation = preAllocateFileOnCreation,
+                    fetchHandler = fetchHandler)
         }
 
     }
@@ -419,7 +433,8 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (createFileOnEnqueue != other.createFileOnEnqueue) return false
         if (maxAutoRetryAttempts != other.maxAutoRetryAttempts) return false
         if (preAllocateFileOnCreation != other.preAllocateFileOnCreation) return false
-        return true
+        if (fetchHandler != other.fetchHandler) return false
+            return true
     }
 
     override fun hashCode(): Int {
@@ -446,6 +461,9 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (backgroundHandler != null) {
             result = 31 * result + backgroundHandler.hashCode()
         }
+        if (fetchHandler != null) {
+            result = 31 * result + fetchHandler.hashCode()
+        }
         result = 31 * result + prioritySort.hashCode()
         if (internetCheckUrl != null) {
             result = 31 * result + internetCheckUrl.hashCode()
@@ -468,7 +486,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                 " backgroundHandler=$backgroundHandler, prioritySort=$prioritySort, internetCheckUrl=$internetCheckUrl," +
                 " activeDownloadsCheckInterval=$activeDownloadsCheckInterval, createFileOnEnqueue=$createFileOnEnqueue," +
                 " preAllocateFileOnCreation=$preAllocateFileOnCreation, " +
-                "maxAutoRetryAttempts=$maxAutoRetryAttempts)"
+                "maxAutoRetryAttempts=$maxAutoRetryAttempts," + " fetchHandler=$fetchHandler)"
     }
 
 }
