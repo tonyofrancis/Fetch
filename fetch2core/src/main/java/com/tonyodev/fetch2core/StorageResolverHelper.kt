@@ -259,6 +259,7 @@ fun allocateFile(file: File, contentLength: Long) {
         try {
             val randomAccessFile = RandomAccessFile(file, "rw")
             randomAccessFile.setLength(contentLength)
+            randomAccessFile.close()
         } catch (e: Exception) {
             throw IOException(FILE_ALLOCATION_ERROR)
         }

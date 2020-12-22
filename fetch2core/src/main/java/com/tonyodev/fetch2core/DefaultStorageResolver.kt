@@ -32,7 +32,8 @@ open class DefaultStorageResolver(
             return false
         }
         return try {
-            getOutputResourceWrapper(file, context.contentResolver)
+            val outputResourceWrapper = getOutputResourceWrapper(file, context.contentResolver)
+            outputResourceWrapper.close()
             true
         } catch (e: Exception) {
             false
