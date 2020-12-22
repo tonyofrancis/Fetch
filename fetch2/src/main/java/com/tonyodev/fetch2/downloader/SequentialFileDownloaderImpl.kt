@@ -86,11 +86,7 @@ class SequentialFileDownloaderImpl(private val initialDownload: Download,
                     } else {
                         0
                     }
-                    total = if (response.contentLength == -1L) {
-                        -1L
-                    } else {
-                        downloaded + response.contentLength
-                    }
+                    total = response.contentLength
                     val seekPosition = if (response.code == HttpURLConnection.HTTP_PARTIAL) {
                         logger.d("FileDownloader resuming Download $download")
                         downloaded
