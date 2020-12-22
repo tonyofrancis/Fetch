@@ -205,7 +205,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
 
     override fun close() {
         synchronized(lock) {
-            networkInfoProvider.registerNetworkChangeListener(networkChangeListener)
+            networkInfoProvider.unregisterNetworkChangeListener(networkChangeListener)
             context.unregisterReceiver(priorityBackoffResetReceiver)
         }
     }
