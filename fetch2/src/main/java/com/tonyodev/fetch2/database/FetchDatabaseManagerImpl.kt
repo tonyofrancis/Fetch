@@ -115,7 +115,7 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         database.execSQL("UPDATE ${DownloadDatabase.TABLE_NAME} SET "
                 + "${DownloadDatabase.COLUMN_EXTRAS} = '?' "
                 + "WHERE ${DownloadDatabase.COLUMN_ID} = ?",
-                arrayOf(extras.toJSONString(),id)
+                arrayOf(extras.toJSONString(), id)
         )
         database.setTransactionSuccessful()
         database.endTransaction()
@@ -179,7 +179,7 @@ class FetchDatabaseManagerImpl constructor(context: Context,
 
     override fun getDownloadsInGroupWithStatus(groupId: Int, statuses: List<Status>): List<DownloadInfo> {
         throwExceptionIfClosed()
-            var downloads = requestDatabase.requestDao().getByGroupWithStatus(groupId, statuses)
+        var downloads = requestDatabase.requestDao().getByGroupWithStatus(groupId, statuses)
         if (sanitize(downloads)) {
             downloads = downloads.filter { download ->
                 statuses.any { it == download.status }
@@ -332,7 +332,16 @@ class FetchDatabaseManagerImpl constructor(context: Context,
             return
         }
         closed = true
-        requestDatabase.close()
+        try {
+            database.close()
+        } catch (e: Exception) {
+
+        }
+        try {
+            requestDatabase.close()
+        } catch (e: Exception) {
+
+        }
         logger.d("Database closed")
     }
 
