@@ -1,7 +1,6 @@
 package com.tonyodev.fetch2.fetch
 
 import com.tonyodev.fetch2.*
-import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2core.*
 import java.io.Closeable
 
@@ -13,7 +12,6 @@ interface FetchHandler : Closeable {
     fun init()
     fun enqueue(request: Request): Pair<Download, Error>
     fun enqueue(requests: List<Request>): List<Pair<Download, Error>>
-    fun enqueueBatch(requests: List<Request>): List<Pair<DownloadInfo, Boolean>>
     fun enqueueCompletedDownload(completedDownload: CompletedDownload): Download
     fun enqueueCompletedDownloads(completedDownloads: List<CompletedDownload>): List<Download>
     fun pause(ids: List<Int>): List<Download>

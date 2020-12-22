@@ -296,19 +296,6 @@ public class FetchHandlerInstrumentedTest {
     }
 
     @Test
-    public void insertBatch() throws Exception {
-        fetchHandler.deleteAll();
-        final int size = 1000;
-        List<Request> requestList = getTestRequestList(size);
-        List<Pair<DownloadInfo, Boolean>> pairs = fetchHandler.enqueueBatch(requestList);
-        assertEquals(1000, pairs.size());
-        for (Pair<DownloadInfo, Boolean> downloadInfoPair : pairs) {
-            assertNotNull(downloadInfoPair);
-            assertTrue(downloadInfoPair.component2());
-        }
-    }
-
-    @Test
     public void deleteWithId() throws Exception {
         fetchHandler.deleteAll();
         final Request request = getTestRequest();

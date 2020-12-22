@@ -57,28 +57,6 @@ class FetchHandlerImpl(private val namespace: String,
         return enqueueRequests(requests)
     }
 
-    override fun enqueueBatch(requests: List<Request>): List<Pair<DownloadInfo, Boolean>> {
-        val downloadInfos = mutableListOf<DownloadInfo>()
-        requests.forEach {
-            val downloadInfo = it.toDownloadInfo(fetchDatabaseManagerWrapper.getNewDownloadInfoInstance())
-
-            downloadInfo.namespace = namespace
-            val existing = prepareDownloadInfoForEnqueue(downloadInfo)
-            downloadInfo.status = if (it.downloadOnEnqueue) {
-                Status.QUEUED
-            } else {
-                Status.ADDED
-            }
-
-            if (downloadInfo.status != Status.COMPLETED && !existing) {
-                downloadInfos.add(downloadInfo);
-            }
-        }
-        val results = fetchDatabaseManagerWrapper.insert(downloadInfos)
-        startPriorityQueueIfNotStarted()
-        return results
-    }
-
     private fun enqueueRequests(requests: List<Request>): List<Pair<Download, Error>> {
         val results = mutableListOf<Pair<Download, Error>>()
         requests.forEach {
