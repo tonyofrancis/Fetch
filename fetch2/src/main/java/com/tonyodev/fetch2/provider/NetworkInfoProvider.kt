@@ -116,6 +116,7 @@ class NetworkInfoProvider constructor(private val context: Context,
         get() {
             val url = internetCheckUrl
             return if (url != null) {
+                var connected = false
                 try {
                     val urlConnection = URL(url)
                     val connection = urlConnection.openConnection() as HttpURLConnection
@@ -125,10 +126,10 @@ class NetworkInfoProvider constructor(private val context: Context,
                     connection.useCaches = false
                     connection.defaultUseCaches = false
                     connection.connect()
-                    connection.responseCode != -1
-                } catch (e: Exception) {
-                    false
-                }
+                    connected = connection.responseCode != -1
+                    connection.disconnect()
+                } catch (e: Exception) { }
+                connected
             } else {
                 context.isNetworkAvailable()
             }
