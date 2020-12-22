@@ -85,11 +85,19 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         throwExceptionIfClosed()
         try {
             database.beginTransaction()
+
             database.execSQL("UPDATE ${DownloadDatabase.TABLE_NAME} SET "
-                    + "${DownloadDatabase.COLUMN_DOWNLOADED} = ${downloadInfo.downloaded}, "
-                    + "${DownloadDatabase.COLUMN_TOTAL} = ${downloadInfo.total}, "
-                    + "${DownloadDatabase.COLUMN_STATUS} = ${downloadInfo.status.value} "
-                    + "WHERE ${DownloadDatabase.COLUMN_ID} = ${downloadInfo.id}")
+                    + "${DownloadDatabase.COLUMN_DOWNLOADED} = ?, "
+                    + "${DownloadDatabase.COLUMN_TOTAL} = ?, "
+                    + "${DownloadDatabase.COLUMN_STATUS} = ? "
+                    + "WHERE ${DownloadDatabase.COLUMN_ID} = ?",
+                    arrayOf(
+                            downloadInfo.downloaded,
+                            downloadInfo.total,
+                            downloadInfo.status.value,
+                            downloadInfo.id
+                    )
+            )
             database.setTransactionSuccessful()
         } catch (e: SQLiteException) {
             logger.e("DatabaseManager exception", e)
@@ -105,8 +113,10 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         throwExceptionIfClosed()
         database.beginTransaction()
         database.execSQL("UPDATE ${DownloadDatabase.TABLE_NAME} SET "
-                + "${DownloadDatabase.COLUMN_EXTRAS} = '${extras.toJSONString()}' "
-                + "WHERE ${DownloadDatabase.COLUMN_ID} = $id")
+                + "${DownloadDatabase.COLUMN_EXTRAS} = '?' "
+                + "WHERE ${DownloadDatabase.COLUMN_ID} = ?",
+                arrayOf(extras.toJSONString(),id)
+        )
         database.setTransactionSuccessful()
         database.endTransaction()
         val download = requestDatabase.requestDao().get(id)
