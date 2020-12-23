@@ -72,6 +72,10 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         if ((code == HttpURLConnection.HTTP_MOVED_TEMP
                         || code == HttpURLConnection.HTTP_MOVED_PERM
                         || code == HttpURLConnection.HTTP_SEE_OTHER) && getHeaderValue(responseHeaders, "Location") != null) {
+            try {
+                client.disconnect()
+            } catch (e: Exception) {
+            }
             httpUrl = URL(getHeaderValue(responseHeaders, "Location") ?: "")
             client = httpUrl.openConnection() as HttpURLConnection
             onPreClientExecute(client, request)
