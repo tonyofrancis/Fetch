@@ -87,6 +87,11 @@ open class OkHttpDownloader @JvmOverloads constructor(
                         .addHeader("Referer", referer)
                         .build()
             }
+            try {
+                okHttpResponse.close()
+            } catch (e: Exception) {
+
+            }
             okHttpResponse = client.newCall(okHttpRequest).execute()
             responseHeaders = okHttpResponse.headers().toMultimap()
             code = okHttpResponse.code()
