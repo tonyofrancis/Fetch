@@ -1,3 +1,16 @@
+Version 3.0.12/ Androidx version 3.1.6
+1. Download TotalBytes fixes. Thanks to @badrazizi
+2. OnCompleted not called in some instances.
+3. Fixed " A resource failed to call close" errors. Thanks to @Braxeo
+4. Fixed Pen Test issues: Thanks to @StuStirling
+5. Added new batch enqueue method. Thanks to @thib-rdr
+6. Fixed rapid pause and resume issues. Thanks to @jpvs0101
+7. Breaking change. Reverted OkHttp client to 3.12.12 to support Android versions older than 21. Thanks to @badrazizi
+8. Fixed issues with sample app
+
+Big thanks to everyone who contributed and open issues. Happy Holidays. Stay Safe!
+
+
 Version 3.0.11/ Androidx version 3.1.5
 2. Notification sound fixes.
 3. RxJava fixes.
