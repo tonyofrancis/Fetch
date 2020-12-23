@@ -40,11 +40,11 @@ class NetworkInfoProvider constructor(private val context: Context,
                     .build()
             val networkCallback: ConnectivityManager.NetworkCallback = object : ConnectivityManager.NetworkCallback() {
 
-                override fun onLost(network: Network?) {
+                override fun onLost(network: Network) {
                     notifyNetworkChangeListeners()
                 }
 
-                override fun onAvailable(network: Network?) {
+                override fun onAvailable(network: Network) {
                     notifyNetworkChangeListeners()
                 }
             }
