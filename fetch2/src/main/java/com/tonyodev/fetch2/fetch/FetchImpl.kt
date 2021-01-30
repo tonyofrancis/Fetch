@@ -3,6 +3,7 @@ package com.tonyodev.fetch2.fetch
 
 import android.os.Handler
 import com.tonyodev.fetch2.*
+import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.getErrorFromMessage
@@ -90,6 +91,24 @@ open class FetchImpl constructor(override val namespace: String,
     override fun enqueue(requests: List<Request>, func: Func<List<Pair<Request, Error>>>?): Fetch {
         enqueueRequest(requests, func, null)
         return this
+    }
+
+    override fun enqueueBatch(requests: List<Request>, func: Func<List<Pair<DownloadInfo, Boolean>>>?) {
+        synchronized(lock) {
+            throwExceptionIfClosed()
+            handlerWrapper.post {
+                try {
+                    val enqueueBatch = fetchHandler.enqueueBatch(requests)
+                    uiHandler.post {
+                        func?.call(enqueueBatch)
+                    }
+                } catch (e: Exception) {
+                    logger.e("Failed to enqueue list $requests")
+                    val error = getErrorFromMessage(e.message)
+                    error.throwable = e
+                }
+            }
+        }
     }
 
     private fun enqueueRequest(requests: List<Request>, func: Func<List<Pair<Request, Error>>>?, func2: Func<Error>?) {
