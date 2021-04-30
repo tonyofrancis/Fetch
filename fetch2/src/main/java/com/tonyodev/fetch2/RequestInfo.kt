@@ -43,8 +43,7 @@ open class RequestInfo : Serializable {
 
     /**
      * Action used by Fetch when enqueuing a request and a previous request with the
-     * same file is already being managed. Default EnqueueAction.REPLACE_EXISTING
-     * which will replaces the existing request.
+     * same file is already being managed. Default is [EnqueueAction.UPDATE_ACCORDINGLY].
      * */
     var enqueueAction = defaultEnqueueAction
 
