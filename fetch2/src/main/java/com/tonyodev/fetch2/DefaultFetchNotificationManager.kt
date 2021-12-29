@@ -31,6 +31,11 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
     private val downloadNotificationsMap = mutableMapOf<Int, DownloadNotification>()
     private val downloadNotificationsBuilderMap = mutableMapOf<Int, NotificationCompat.Builder>()
     private val downloadNotificationExcludeSet = mutableSetOf<Int>()
+    private val pendingIntentFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        PendingIntent.FLAG_IMMUTABLE
+    } else {
+        PendingIntent.FLAG_UPDATE_CURRENT
+    }
 
     override val notificationManagerAction: String = "DEFAULT_FETCH2_NOTIFICATION_MANAGER_ACTION_" + System.currentTimeMillis()
 
@@ -86,13 +91,13 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
             style.addLine("${downloadNotification.total} $contentTitle")
         }
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setSmallIcon(android.R.drawable.stat_sys_download_done)
-                .setContentTitle(context.getString(R.string.fetch_notification_default_channel_name))
-                .setContentText("")
-                .setStyle(style)
-                .setOnlyAlertOnce(true)
-                .setGroup(groupId.toString())
-                .setGroupSummary(true)
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentTitle(context.getString(R.string.fetch_notification_default_channel_name))
+            .setContentText("")
+            .setStyle(style)
+            .setOnlyAlertOnce(true)
+            .setGroup(groupId.toString())
+            .setGroupSummary(true)
         return false
     }
 
@@ -105,12 +110,12 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
             android.R.drawable.stat_sys_download_done
         }
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setSmallIcon(smallIcon)
-                .setContentTitle(downloadNotification.title)
-                .setContentText(getSubtitleText(context, downloadNotification))
-                .setOngoing(downloadNotification.isOnGoingNotification)
-                .setGroup(downloadNotification.groupId.toString())
-                .setGroupSummary(false)
+            .setSmallIcon(smallIcon)
+            .setContentTitle(downloadNotification.title)
+            .setContentText(getSubtitleText(context, downloadNotification))
+            .setOngoing(downloadNotification.isOnGoingNotification)
+            .setGroup(downloadNotification.groupId.toString())
+            .setGroupSummary(false)
         if (downloadNotification.isFailed || downloadNotification.isCompleted) {
             notificationBuilder.setProgress(0, 0, false)
         } else {
@@ -122,21 +127,21 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         when {
             downloadNotification.isDownloading -> {
                 notificationBuilder.setTimeoutAfter(getNotificationTimeOutMillis())
-                        .addAction(R.drawable.fetch_notification_pause,
-                                context.getString(R.string.fetch_notification_download_pause),
-                                getActionPendingIntent(downloadNotification, PAUSE))
-                        .addAction(R.drawable.fetch_notification_cancel,
-                                context.getString(R.string.fetch_notification_download_cancel),
-                                getActionPendingIntent(downloadNotification, CANCEL))
+                    .addAction(R.drawable.fetch_notification_pause,
+                        context.getString(R.string.fetch_notification_download_pause),
+                        getActionPendingIntent(downloadNotification, PAUSE))
+                    .addAction(R.drawable.fetch_notification_cancel,
+                        context.getString(R.string.fetch_notification_download_cancel),
+                        getActionPendingIntent(downloadNotification, CANCEL))
             }
             downloadNotification.isPaused -> {
                 notificationBuilder.setTimeoutAfter(getNotificationTimeOutMillis())
-                        .addAction(R.drawable.fetch_notification_resume,
-                                context.getString(R.string.fetch_notification_download_resume),
-                                getActionPendingIntent(downloadNotification, RESUME))
-                        .addAction(R.drawable.fetch_notification_cancel,
-                                context.getString(R.string.fetch_notification_download_cancel),
-                                getActionPendingIntent(downloadNotification, CANCEL))
+                    .addAction(R.drawable.fetch_notification_resume,
+                        context.getString(R.string.fetch_notification_download_resume),
+                        getActionPendingIntent(downloadNotification, RESUME))
+                    .addAction(R.drawable.fetch_notification_cancel,
+                        context.getString(R.string.fetch_notification_download_cancel),
+                        getActionPendingIntent(downloadNotification, CANCEL))
             }
             downloadNotification.isQueued -> {
                 notificationBuilder.setTimeoutAfter(getNotificationTimeOutMillis())
@@ -165,7 +170,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                 else -> ACTION_TYPE_INVALID
             }
             intent.putExtra(EXTRA_ACTION_TYPE, action)
-            return PendingIntent.getBroadcast(context, downloadNotification.notificationId + action, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            return PendingIntent.getBroadcast(context, downloadNotification.notificationId + action, intent, pendingIntentFlag)
         }
     }
 
@@ -186,7 +191,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                 else -> ACTION_TYPE_INVALID
             }
             intent.putExtra(EXTRA_ACTION_TYPE, action)
-            return PendingIntent.getBroadcast(context, groupId + action, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            return PendingIntent.getBroadcast(context, groupId + action, intent, pendingIntentFlag)
         }
     }
 
@@ -275,7 +280,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
             downloadNotification.title = getDownloadNotificationTitle(download)
             downloadNotificationsMap[download.id] = downloadNotification
             if (downloadNotificationExcludeSet.contains(downloadNotification.notificationId)
-                    && !downloadNotification.isFailed && !downloadNotification.isCompleted) {
+                && !downloadNotification.isFailed && !downloadNotification.isCompleted) {
                 downloadNotificationExcludeSet.remove(downloadNotification.notificationId)
             }
             if (downloadNotification.isCancelledNotification || shouldCancelNotification(downloadNotification)) {
@@ -291,22 +296,22 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
     override fun getNotificationBuilder(notificationId: Int, groupId: Int): NotificationCompat.Builder {
         synchronized(downloadNotificationsMap) {
             val notificationBuilder = downloadNotificationsBuilderMap[notificationId]
-                    ?: NotificationCompat.Builder(context, getChannelId(notificationId, context))
+                ?: NotificationCompat.Builder(context, getChannelId(notificationId, context))
             downloadNotificationsBuilderMap[notificationId] = notificationBuilder
             notificationBuilder
-                    .setGroup(notificationId.toString())
-                    .setStyle(null)
-                    .setProgress(0, 0, false)
-                    .setContentTitle(null)
-                    .setContentText(null)
-                    .setContentIntent(null)
-                    .setGroupSummary(false)
-                    .setTimeoutAfter(DEFAULT_NOTIFICATION_TIMEOUT_AFTER_RESET)
-                    .setOngoing(false)
-                    .setGroup(groupId.toString())
-                    .setOnlyAlertOnce(true)
-                    .setSmallIcon(android.R.drawable.stat_sys_download_done)
-                    .mActions.clear()
+                .setGroup(notificationId.toString())
+                .setStyle(null)
+                .setProgress(0, 0, false)
+                .setContentTitle(null)
+                .setContentText(null)
+                .setContentIntent(null)
+                .setGroupSummary(false)
+                .setTimeoutAfter(DEFAULT_NOTIFICATION_TIMEOUT_AFTER_RESET)
+                .setOngoing(false)
+                .setGroup(groupId.toString())
+                .setOnlyAlertOnce(true)
+                .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                .mActions.clear()
             return notificationBuilder
         }
     }
