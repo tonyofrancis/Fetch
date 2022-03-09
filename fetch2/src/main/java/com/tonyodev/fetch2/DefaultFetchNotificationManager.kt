@@ -165,7 +165,21 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                 else -> ACTION_TYPE_INVALID
             }
             intent.putExtra(EXTRA_ACTION_TYPE, action)
-            return PendingIntent.getBroadcast(context, downloadNotification.notificationId + action, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.getBroadcast(
+                        context,
+                        downloadNotification.notificationId + action,
+                        intent,
+                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                } else {
+                    PendingIntent.getBroadcast(
+                        context,
+                        downloadNotification.notificationId + action,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                }
         }
     }
 
@@ -186,7 +200,21 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
                 else -> ACTION_TYPE_INVALID
             }
             intent.putExtra(EXTRA_ACTION_TYPE, action)
-            return PendingIntent.getBroadcast(context, groupId + action, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        PendingIntent.getBroadcast(
+                            context,
+                            groupId + action,
+                            intent,
+                            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                        )
+                    } else {
+                        PendingIntent.getBroadcast(
+                            context,
+                            groupId + action,
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                        )
+                    }
         }
     }
 
