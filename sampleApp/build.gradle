@@ -26,7 +26,7 @@ android {
         targetSdkVersion library_target_version
         versionCode 8
         versionName "2.6"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     buildTypes {
         release {
@@ -48,10 +48,10 @@ android {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "com.android.support:appcompat-v7:$android_support_version"
-    implementation "com.android.support.constraint:constraint-layout:$constraint_layout_version"
-    implementation "com.android.support:design:$android_support_version"
-    implementation "com.android.support:recyclerview-v7:$android_support_version"
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
     implementation "io.reactivex.rxjava2:rxandroid:$rxAndroid2_version"
     implementation "io.reactivex.rxjava2:rxjava:$rxJava2_version"
@@ -64,6 +64,6 @@ dependencies {
     implementation project(':fetch2fileserver')
 
     testImplementation "junit:junit:$junit_version"
-    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
 }

@@ -4,8 +4,8 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.tonyodev.fetch2.database.FetchDatabaseManager;
 import com.tonyodev.fetch2.database.FetchDatabaseManagerImpl;

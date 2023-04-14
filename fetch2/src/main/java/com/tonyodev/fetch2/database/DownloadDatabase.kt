@@ -1,8 +1,8 @@
 package com.tonyodev.fetch2.database
 
-import android.arch.persistence.room.Database
-import android.arch.persistence.room.RoomDatabase
-import android.arch.persistence.room.TypeConverters
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.DATABASE_VERSION
 import com.tonyodev.fetch2.database.migration.*
 

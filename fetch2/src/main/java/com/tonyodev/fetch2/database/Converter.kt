@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2.database
 
-import android.arch.persistence.room.TypeConverter
+import androidx.room.TypeConverter
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.util.EMPTY_JSON_OBJECT_STRING
 import com.tonyodev.fetch2.NetworkType
