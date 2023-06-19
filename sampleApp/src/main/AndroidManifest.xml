@@ -17,21 +17,31 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:targetApi="n">
-        <activity android:name=".MainActivity">
+        <activity
+            android:exported="true"
+            android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".FragmentActivity" />
-        <activity android:name=".DownloadListActivity" />
         <activity
+            android:exported="false"
+            android:name=".FragmentActivity" />
+        <activity
+            android:exported="false"
+            android:name=".DownloadListActivity" />
+        <activity
+            android:exported="false"
             android:name=".GameFilesActivity"
             android:screenOrientation="landscape" />
-        <activity android:name=".SingleDownloadActivity" />
-        <activity android:name=".FailedMultiEnqueueActivity" />
-        <activity android:name=".FileServerActivity" />
+        <activity
+            android:exported="false" android:name=".SingleDownloadActivity" />
+        <activity
+            android:exported="false" android:name=".FailedMultiEnqueueActivity" />
+        <activity
+            android:exported="false" android:name=".FileServerActivity" />
     </application>
 
 </manifest>

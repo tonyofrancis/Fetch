@@ -1,6 +1,6 @@
 package com.tonyodev.fetch2.database
 
-import android.arch.persistence.room.*
+import androidx.room.*
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable

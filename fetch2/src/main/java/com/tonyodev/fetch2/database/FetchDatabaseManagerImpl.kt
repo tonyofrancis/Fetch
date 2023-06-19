@@ -1,7 +1,7 @@
 package com.tonyodev.fetch2.database
 
-import android.arch.persistence.db.SupportSQLiteDatabase
-import android.arch.persistence.room.Room
+import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.room.Room
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteException

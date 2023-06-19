@@ -10,9 +10,9 @@ ext {
     test_runner_version = '1.0.1'
     library_min_version = '14'
     library_compile_version = 30
-    library_target_version = 30
+    library_target_version = 32
     library_build_tools_version = "30.0.3"
-    gradle_tools_version = '3.4.1'
+    gradle_tools_version = '7.0.4'
     rxJava2_version = "2.2.20"
     rxAndroid2_version = "2.1.1"
     timber_version = "4.7.1"

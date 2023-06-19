@@ -29,7 +29,7 @@ android {
         versionCode library_version_code
         versionName library_version
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 
     }
 
@@ -63,13 +63,13 @@ android {
 dependencies {
 
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    kapt "android.arch.persistence.room:compiler:$room_version"
-    api "android.arch.persistence.room:runtime:$room_version"
+    kapt 'androidx.room:room-compiler:2.0.0'
+    api 'androidx.room:room-runtime:2.0.0'
     api project(':fetch2core')
 
     testImplementation "junit:junit:$junit_version"
-    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
 }
 
 //publish {
