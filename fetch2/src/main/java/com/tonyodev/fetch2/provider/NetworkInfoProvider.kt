@@ -53,7 +53,7 @@ class NetworkInfoProvider constructor(private val context: Context,
             connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
         } else {
             try {
-                context.registerReceiver(networkChangeBroadcastReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+                context.registerReceiver(networkChangeBroadcastReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION), if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) RECEIVER_NOT_EXPORTED else 0)
                 broadcastRegistered = true
             } catch (e: Exception) {
 

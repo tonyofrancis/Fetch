@@ -68,7 +68,7 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
 
     init {
         networkInfoProvider.registerNetworkChangeListener(networkChangeListener)
-        context.registerReceiver(priorityBackoffResetReceiver, IntentFilter(ACTION_QUEUE_BACKOFF_RESET))
+        context.registerReceiver(priorityBackoffResetReceiver, IntentFilter(ACTION_QUEUE_BACKOFF_RESET), if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) RECEIVER_NOT_EXPORTED else 0)
     }
 
     private val priorityIteratorRunnable = Runnable {
