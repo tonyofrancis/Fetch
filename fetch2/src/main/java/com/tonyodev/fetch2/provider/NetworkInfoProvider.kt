@@ -9,6 +9,7 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
+import androidx.core.content.ContextCompat
 import com.tonyodev.fetch2.NetworkType
 import com.tonyodev.fetch2core.isNetworkAvailable
 import com.tonyodev.fetch2core.isOnMeteredConnection
@@ -39,7 +40,6 @@ class NetworkInfoProvider constructor(private val context: Context,
                     .addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
                     .build()
             val networkCallback: ConnectivityManager.NetworkCallback = object : ConnectivityManager.NetworkCallback() {
-
                 override fun onLost(network: Network) {
                     notifyNetworkChangeListeners()
                 }
@@ -52,7 +52,12 @@ class NetworkInfoProvider constructor(private val context: Context,
             connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
         } else {
             try {
-                context.registerReceiver(networkChangeBroadcastReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+                ContextCompat.registerReceiver(
+                    context,
+                    networkChangeBroadcastReceiver,
+                    IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION),
+                    ContextCompat.RECEIVER_EXPORTED
+                )
                 broadcastRegistered = true
             } catch (e: Exception) {
 
@@ -116,7 +121,6 @@ class NetworkInfoProvider constructor(private val context: Context,
         get() {
             val url = internetCheckUrl
             return if (url != null) {
-                var connected = false
                 try {
                     val urlConnection = URL(url)
                     val connection = urlConnection.openConnection() as HttpURLConnection
@@ -126,10 +130,10 @@ class NetworkInfoProvider constructor(private val context: Context,
                     connection.useCaches = false
                     connection.defaultUseCaches = false
                     connection.connect()
-                    connected = connection.responseCode != -1
-                    connection.disconnect()
-                } catch (e: Exception) { }
-                connected
+                    connection.responseCode != -1
+                } catch (e: Exception) {
+                    false
+                }
             } else {
                 context.isNetworkAvailable()
             }
