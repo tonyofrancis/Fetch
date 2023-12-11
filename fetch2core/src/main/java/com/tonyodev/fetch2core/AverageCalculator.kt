@@ -87,7 +87,7 @@ class AverageCalculator @JvmOverloads constructor(
      * @return true if the passed in value was found in the values list. False otherwise.
      * */
     fun hasInputValue(value: Double): Boolean {
-        return valueList.contains(value)
+        return valueList.toList().contains(value)
     }
 
     /** Gets all values contained in the values list.

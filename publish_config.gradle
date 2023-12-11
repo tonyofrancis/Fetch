@@ -1,0 +1,66 @@
+apply plugin: 'maven-publish'
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                groupId releaseGroupId
+                artifactId releaseArtifactId
+                version releaseVersion
+
+                artifact("${project.buildDir}/outputs/aar/${project.name}-release.aar") {
+                    extension "aar"
+                }
+
+                pom.withXml {
+                    def pomXml = asNode()
+                    pomXml.appendNode('name', releaseName)
+                    pomXml.appendNode('description', releaseDescription)
+                    def dependencies = pomXml.appendNode('dependencies')
+
+                    configurations.getByName('releaseCompileClasspath').getResolvedConfiguration().getFirstLevelModuleDependencies().each {
+                        if (it.moduleGroup == rootProject.name) {
+                            def moduleNameMapToArtifact = [
+                                    "fetch2": "xfetch2",
+                                    "fetch2core": "xfetch2core",
+                                    "fetch2fileserver": "xfetch2fileserver",
+                                    "fetch2okhttp": "xfetch2okhttp",
+                                    "fetch2rx": "xfetch2rx",
+                                    "fetchmigrator": "xfetchmigrator"
+                            ]
+                            def moduleArtifactMapToGroupId = [
+                                    "xfetch2": "androidx.tonyodev.fetch2",
+                                    "xfetch2core": "androidx.tonyodev.fetch2core",
+                                    "xfetch2fileserver": "androidx.tonyodev.fetch2fileserver",
+                                    "xfetch2okhttp": "androidx.tonyodev.fetch2okhttp",
+                                    "xfetch2rx": "androidx.tonyodev.fetch2rx",
+                                    "xfetchmigrator": "androidx.tonyodev.fetchmigrator"
+                            ]
+                            def realArtifactId = moduleNameMapToArtifact[it.moduleName]
+                            def realGroupId = moduleArtifactMapToGroupId[realArtifactId]
+                            def dependency = dependencies.appendNode('dependency')
+                            dependency.appendNode('groupId', realGroupId)
+                            dependency.appendNode('artifactId', realArtifactId)
+                            dependency.appendNode('version', releaseVersion)
+                        } else {
+                            def dependency = dependencies.appendNode('dependency')
+                            dependency.appendNode('groupId', it.moduleGroup)
+                            dependency.appendNode('artifactId', it.moduleName)
+                            dependency.appendNode('version', it.moduleVersion)
+                        }
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                name releaseName
+                url rootProject.ext.mavenRepo
+                credentials {
+                    username rootProject.ext.mavenUser
+                    password rootProject.ext.mavenPassword
+                }
+            }
+        }
+    }
+}
