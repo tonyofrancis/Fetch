@@ -64,7 +64,6 @@ implementation "androidx.tonyodev.fetch2:xfetch2:3.2.2"
 OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
 - fetch2-3.2.2.aar
 - fetch2core-3.2.2.aar
-- fetch2okhttp-3.2.2.aar
 
 Next, get an instance of Fetch and request a download.
 
