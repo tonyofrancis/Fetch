@@ -1,6 +1,5 @@
 
 [![Build Status](https://travis-ci.org/tonyofrancis/Fetch.svg?branch=v2)](https://travis-ci.org/tonyofrancis/Fetch)
-[ ![Download](https://api.bintray.com/packages/tonyofrancis/maven/fetch2/images/download.svg?version=3.0.12) ](https://bintray.com/tonyofrancis/maven/fetch2/3.0.12/link)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Networking-blue.svg?style=flat)](https://android-arsenal.com/details/1/5196)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tonyofrancis/Fetch/blob/master/LICENSE)
 
@@ -60,8 +59,11 @@ implementation "com.tonyodev.fetch2:fetch2:3.0.12"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2:xfetch2:3.1.6"
+implementation "androidx.tonyodev.fetch2:xfetch2:3.2.2"
 ```
+OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
+- fetch2-3.2.2.aar
+- fetch2core-3.2.2.aar
 
 Next, get an instance of Fetch and request a download.
 
@@ -230,8 +232,11 @@ implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:3.0.12"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.1.6"
+implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.2.2"
 ```
+OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
+- fetch2core-3.2.2.aar
+- fetch2okhttp-3.2.2.aar
 
 Set the OkHttp Downloader for Fetch to use.
 ```java
@@ -256,8 +261,11 @@ implementation "com.tonyodev.fetch2rx:fetch2rx:3.0.12"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetch2rx:xfetch2rx:3.1.6"
+implementation "androidx.tonyodev.fetch2rx:xfetch2rx:3.2.2"
 ```
+OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
+- fetch2core-3.2.2.aar
+- fetch2rx-3.2.2.aar
 
 RxFetch makes it super easy to enqueue download requests and query downloads using rxJava2 functional methods.
 
@@ -296,8 +304,11 @@ implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:3.0.12"
 ```
 Androidx use: 
 ```java
-implementation "androidx.tonyodev.fetch2fileserver:xfetch2fileserver:3.1.6"
+implementation "androidx.tonyodev.fetch2fileserver:xfetch2fileserver:3.2.2"
 ```
+OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
+- fetch2core-3.2.2.aar
+- fetch2fileserver-3.2.2.aar
 
 Start a FetchFileServer instance and add resource files that it can serve to connected clients.
 ```java
@@ -409,8 +420,11 @@ implementation "com.tonyodev.fetchmigrator:fetchmigrator:3.0.12"
 ```
 Androidx use:
 ```java
-implementation "androidx.tonyodev.fetchmigrator:xfetchmigrator:3.1.6"
+implementation "androidx.tonyodev.fetchmigrator:xfetchmigrator:3.2.2"
 ```
+OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
+- fetch2core-3.2.2.aar
+- fetchmigrator-3.2.2.aar
 
 Then run the Migrator.
 

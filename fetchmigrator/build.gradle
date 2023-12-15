@@ -1,28 +1,25 @@
 apply plugin: 'com.android.library'
-
 apply plugin: 'kotlin-android'
-
-apply plugin: 'com.novoda.bintray-release'
+apply plugin: 'maven-publish'
 
 buildscript {
     apply from: '../versions.gradle'
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$gradle_tools_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.novoda:bintray-release:$novoda_bintray_version"
     }
 }
 
 android {
-    compileSdkVersion library_compile_version
+    compileSdk library_compile_version
 
     defaultConfig {
-        minSdkVersion library_min_version
-        targetSdkVersion library_target_version
+        minSdk library_min_version
+        targetSdk library_target_version
         versionCode library_version_code
         versionName library_version
 
@@ -42,14 +39,16 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
         androidTest.java.srcDirs += 'src/androidTest/kotlin'
     }
+
+    namespace 'com.tonyodev.fetchmigrator'
 }
 
 dependencies {
@@ -64,15 +63,12 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
 }
 
-publish {
-    userOrg = 'tonyofrancis'
-    groupId = 'androidx.tonyodev.fetchmigrator'
-    artifactId = 'xfetchmigrator'
-    publishVersion = library_version
-    desc = 'Migration Assistant for Fetch'
-    website = 'https://github.com/tonyofrancis/fetch'
+ext {
+    releaseName = 'tonyofrancis-fetch'
+    releaseDescription = 'Migration Assistant for Fetch'
+    releaseGroupId = 'androidx.tonyodev.fetchmigrator'
+    releaseArtifactId = 'xfetchmigrator'
+    releaseVersion = library_version
 }
 
-tasks.withType(Javadoc).all {
-    enabled = false
-}
+apply from: '../publish_config.gradle'

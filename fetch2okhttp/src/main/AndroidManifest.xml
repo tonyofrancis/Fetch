@@ -1,2 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.tonyodev.fetch2okhttp" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
