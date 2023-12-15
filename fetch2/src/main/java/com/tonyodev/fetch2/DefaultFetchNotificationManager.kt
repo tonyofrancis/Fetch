@@ -9,7 +9,6 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 
 import com.tonyodev.fetch2.DownloadNotification.ActionType.*
 import com.tonyodev.fetch2.util.DEFAULT_NOTIFICATION_TIMEOUT_AFTER
@@ -54,12 +53,12 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
     }
 
     override fun registerBroadcastReceiver() {
-        ContextCompat.registerReceiver(
-            context,
-            broadcastReceiver,
-            IntentFilter(notificationManagerAction),
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(broadcastReceiver, IntentFilter(notificationManagerAction), Context.RECEIVER_NOT_EXPORTED)
+        }
+        else{
+            context.registerReceiver(broadcastReceiver, IntentFilter(notificationManagerAction))
+        }
     }
 
     override fun unregisterBroadcastReceiver() {
