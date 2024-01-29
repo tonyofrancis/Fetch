@@ -1,6 +1,11 @@
 package com.tonyodev.fetch2.database
 
-import android.arch.persistence.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
 import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_CREATED
 import com.tonyodev.fetch2.database.DownloadDatabase.Companion.COLUMN_FILE
