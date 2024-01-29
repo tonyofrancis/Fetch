@@ -2,12 +2,15 @@
 
 buildscript {
     apply from: 'versions.gradle'
+    ext {
+        agp_version = '8.2.1'
+    }
     repositories {
         google()
         jcenter()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:$gradle_tools_version"
+        classpath "com.android.tools.build:gradle:$agp_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 //        classpath "com.novoda:bintray-release:$novoda_bintray_version"
     }

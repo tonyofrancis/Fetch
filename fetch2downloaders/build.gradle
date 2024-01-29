@@ -20,6 +20,7 @@ buildscript {
 android {
     compileSdkVersion library_compile_version
     buildToolsVersion library_build_tools_version
+    namespace "com.tonyodev.fetch2downloaders"
 
     defaultConfig {
         minSdkVersion library_min_version
