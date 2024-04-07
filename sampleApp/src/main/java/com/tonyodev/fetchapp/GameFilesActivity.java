@@ -121,7 +121,7 @@ public class GameFilesActivity extends AppCompatActivity {
     }
 
     private void checkStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
         } else {
             enqueueFiles();
@@ -159,7 +159,7 @@ public class GameFilesActivity extends AppCompatActivity {
         final Set<Integer> ids = fileProgressMap.keySet();
 
         for (int id : ids) {
-            currentProgress += fileProgressMap.get(id);
+            currentProgress += fileProgressMap.getOrDefault(id, 0);
         }
         currentProgress = (int) (((double) currentProgress / (double) totalProgress) * 100);
         return currentProgress;
@@ -169,7 +169,7 @@ public class GameFilesActivity extends AppCompatActivity {
         int count = 0;
         final Set<Integer> ids = fileProgressMap.keySet();
         for (int id : ids) {
-            int progress = fileProgressMap.get(id);
+            int progress = fileProgressMap.getOrDefault(id, 0);
             if (progress == 100) {
                 count++;
             }

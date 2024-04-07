@@ -54,7 +54,7 @@ public class FragmentActivity extends AppCompatActivity {
     }
 
     private void checkStoragePermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
         } else {
             enqueueDownload();
@@ -63,6 +63,7 @@ public class FragmentActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             enqueueDownload();
         } else {
@@ -76,9 +77,7 @@ public class FragmentActivity extends AppCompatActivity {
         request = new Request(url, filePath);
 
         fetch.attachFetchObserversForDownload(request.getId(), progressFragment1, progressFragment2)
-                .enqueue(request, updatedRequest -> {
-                    request = updatedRequest;
-                }, error -> {
+                .enqueue(request, updatedRequest -> request = updatedRequest, error -> {
                     Timber.d("FragmentActivity Error: %1$s", error.toString());
                     Snackbar.make(rootView, R.string.enqueue_error, Snackbar.LENGTH_INDEFINITE).show();
                 });

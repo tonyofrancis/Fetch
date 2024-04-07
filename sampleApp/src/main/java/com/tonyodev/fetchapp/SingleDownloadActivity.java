@@ -18,7 +18,6 @@ import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2.Status;
 import com.tonyodev.fetch2core.Extras;
 import com.tonyodev.fetch2core.FetchObserver;
-import com.tonyodev.fetch2core.Func;
 import com.tonyodev.fetch2core.MutableExtras;
 import com.tonyodev.fetch2core.Reason;
 
@@ -80,7 +79,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchOb
     }
 
     private void checkStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
         } else {
             enqueueDownload();
@@ -89,6 +88,7 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchOb
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             enqueueDownload();
         } else {
@@ -100,23 +100,13 @@ public class SingleDownloadActivity extends AppCompatActivity implements FetchOb
         final String url = Data.sampleUrls[0];
         final String filePath = Data.getSaveDir(this) + "/movies/" + Data.getNameFromUrl(url);
         request = new Request(url, filePath);
-        request.setExtras(getExtrasForRequest(request));
+        request.setExtras(getExtrasForRequest());
 
         fetch.attachFetchObserversForDownload(request.getId(), this)
-                .enqueue(request, new Func<Request>() {
-                    @Override
-                    public void call(@NotNull Request result) {
-                        request = result;
-                    }
-                }, new Func<Error>() {
-                    @Override
-                    public void call(@NotNull Error result) {
-                        Timber.d("SingleDownloadActivity Error: %1$s", result.toString());
-                    }
-                });
+                .enqueue(request, result -> request = result, result -> Timber.d("SingleDownloadActivity Error: %1$s", result.toString()));
     }
 
-    private Extras getExtrasForRequest(Request request) {
+    private Extras getExtrasForRequest() {
         final MutableExtras extras = new MutableExtras();
         extras.putBoolean("testBoolean", true);
         extras.putString("testString", "test");

@@ -1,8 +1,8 @@
 ext {
-    kotlin_version = '1.9.20'
+    kotlin_version = '1.9.23'
     ksp_version = '1.9.20-1.0.14'
-    okhttp_version = '3.12.12'
-    okhttp_url_version = '3.12.12'
+    okhttp_version = '4.12.0'
+    okhttp_url_version = '4.12.0'
     android_support_version = '1.6.1'
     core_version = '1.12.0'
     constraint_layout_version = "2.1.4"
@@ -14,13 +14,13 @@ ext {
     library_compile_version = 34
     library_target_version = 34
     library_build_tools_version = "34.0.0"
-    gradle_tools_version = '8.2.0'
-    rxJava2_version = "2.2.20"
+    gradle_tools_version = '8.3.1'
+    rxJava2_version = "2.2.21"
     rxAndroid2_version = "2.1.1"
     timber_version = "5.0.1"
-    agp_version = '8.2.0'
+    agp_version = '8.3.1'
     multidex_version = '2.0.1'
 
-    library_version = '3.2.2'
-    library_version_code = 79
+    library_version = '3.2.0'
+    library_version_code = 80
 }

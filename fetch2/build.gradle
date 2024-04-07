@@ -21,8 +21,6 @@ android {
     defaultConfig {
         minSdk library_min_version
         targetSdk library_target_version
-        versionCode library_version_code
-        versionName library_version
 
         buildToolsVersion = library_build_tools_version
 
@@ -41,9 +39,6 @@ android {
         }
     }
 
-    lintOptions {
-        abortOnError false
-    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -56,6 +51,9 @@ android {
     }
 
     namespace 'com.tonyodev.fetch2'
+    lint {
+        abortOnError false
+    }
 }
 
 dependencies {

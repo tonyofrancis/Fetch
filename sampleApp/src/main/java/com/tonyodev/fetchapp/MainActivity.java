@@ -20,6 +20,8 @@ import com.tonyodev.fetch2rx.RxFetch;
 
 import java.io.File;
 
+import timber.log.Timber;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int STORAGE_PERMISSION_CODE = 50;
@@ -63,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.deleteAllButton).setOnClickListener(v -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                 requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
             } else {
                 deleteDownloadedFiles();
@@ -100,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
             Utils.deleteFileAndContents(fetchDir);
             Toast.makeText(MainActivity.this, R.string.downloaded_files_deleted, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            e.printStackTrace();
+            Timber.d(e, "Failed to delete downloads.");
         }
     }
 

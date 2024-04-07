@@ -10,6 +10,7 @@ import com.tonyodev.fetch2.Request;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 public final class Data {
@@ -19,7 +20,8 @@ public final class Data {
             "https://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_720p_stereo.avi",
             "http://media.mongodb.org/zips.json",
             "http://www.exampletonyotest/some/unknown/123/Errorlink.txt",
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Android_logo_2019.svg/687px-Android_logo_2019.svg.png",
+            "https://upload.wikimedia.org/wikipedia/commons/6/64/Android_logo_2019_%28stacked%29.svg",
+            "https://upload.wikimedia.org/wikipedia/commons/6/66/Android_robot.png",
             "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"};
 
     private Data() {
@@ -55,7 +57,7 @@ public final class Data {
 
     @NonNull
     static String getNameFromUrl(final String url) {
-        return Uri.parse(url).getLastPathSegment();
+        return Objects.requireNonNull(Uri.parse(url).getLastPathSegment());
     }
 
     @NonNull
@@ -73,7 +75,7 @@ public final class Data {
 
     @NonNull
     public static String getSaveDir(Context context) {
-        return context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString() + "/fetch";
+        return Objects.requireNonNull(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)) + "/fetch";
     }
 
 }

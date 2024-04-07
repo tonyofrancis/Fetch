@@ -69,7 +69,7 @@ public class FileServerActivity extends AppCompatActivity {
     }
 
     private void checkStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
         } else {
             copyRawFileToFilesDir();
@@ -119,18 +119,12 @@ public class FileServerActivity extends AppCompatActivity {
 
         downloadFileResourceUsingFetch();
         fetch.getFetchFileServerCatalog(getCatalogRequest(),
-                result -> {
-                    Timber.d("Catalog:" + result.toString());
-                },
-                error -> Timber.d("Catalog Fetch error:" + error.toString()));
+                result -> Timber.d("Catalog:%s", result.toString()),
+                error -> Timber.d("Catalog Fetch error:%s", error.toString()));
     }
 
     private void downloadFileResourceUsingFetch() {
-        fetch.addListener(fetchListener).enqueue(getRequest(), request -> {
-            Timber.d(request.toString());
-        }, error -> {
-            Timber.d(error.toString());
-        });
+        fetch.addListener(fetchListener).enqueue(getRequest(), request -> Timber.d(request.toString()), error -> Timber.d(error.toString()));
     }
 
     private Request getRequest() {
@@ -181,7 +175,7 @@ public class FileServerActivity extends AppCompatActivity {
         fetchFileServer.shutDown(false);
     }
 
-    private FetchListener fetchListener = new AbstractFetchListener() {
+    private final FetchListener fetchListener = new AbstractFetchListener() {
 
         @Override
         public void onCompleted(@NotNull Download download) {
@@ -200,7 +194,7 @@ public class FileServerActivity extends AppCompatActivity {
         @Override
         public void onError(@NotNull Download download, @NotNull Error error, @org.jetbrains.annotations.Nullable Throwable throwable) {
             super.onError(download, error, throwable);
-            final String err = "Download From FileServer Error " + download.getError().toString();
+            final String err = "Download From FileServer Error " + download.getError();
             textView.setText(err);
             Timber.d(err);
         }
@@ -208,6 +202,7 @@ public class FileServerActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == STORAGE_PERMISSION_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             copyRawFileToFilesDir();
         } else {

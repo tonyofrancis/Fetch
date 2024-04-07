@@ -3,12 +3,15 @@ package com.tonyodev.fetchapp;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
-import androidx.annotation.NonNull;
 import android.webkit.MimeTypeMap;
+
+import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+
+import timber.log.Timber;
 
 public final class Utils {
 
@@ -37,7 +40,8 @@ public final class Utils {
                     }
                 }
             }
-            file.delete();
+            boolean result = file.delete();
+            Timber.d("The result of the deletion of the (%s) file was (%s)", file.getName(), result);
         }
     }
 
@@ -48,9 +52,9 @@ public final class Utils {
         }
         int seconds = (int) (etaInMilliSeconds / 1000);
         long hours = seconds / 3600;
-        seconds -= hours * 3600;
+        seconds -= (int) (hours * 3600);
         long minutes = seconds / 60;
-        seconds -= minutes * 60;
+        seconds -= (int) (minutes * 60);
         if (hours > 0) {
             return context.getString(R.string.download_eta_hrs, hours, minutes, seconds);
         } else if (minutes > 0) {
@@ -82,28 +86,18 @@ public final class Utils {
         final File file = new File(filePath);
         if (!file.exists()) {
             final File parent = file.getParentFile();
-            if (!parent.exists()) {
-                parent.mkdirs();
+            if (parent != null && !parent.exists()) {
+                boolean result = parent.mkdirs();
+                Timber.d("The result of the creation of the (%s) directory was (%s)", parent.getName(), result);
             }
             try {
-                file.createNewFile();
+                boolean result = file.createNewFile();
+                Timber.d("The result of the creation of the (%s) file was (%s)", file.getName(), result);
             } catch (IOException e) {
-                e.printStackTrace();
+                Timber.d(e, "Failed to create the file: %s", file.getAbsolutePath());
             }
         }
         return file;
-    }
-
-    public static int getProgress(long downloaded, long total) {
-        if (total < 1) {
-            return -1;
-        } else if (downloaded < 1) {
-            return 0;
-        } else if (downloaded >= total) {
-            return 100;
-        } else {
-            return (int) (((double) downloaded / (double) total) * 100);
-        }
     }
 
 }

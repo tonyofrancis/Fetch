@@ -1,3 +1,8 @@
+Version 3.1.0/ Androidx version 3.2.0
+1. Android 14 compatibility, min SDK 16, AGP 8.2.0, Gradle 8.5, Kotlin 1.9.20. Thanks to @helloimfrog
+2. Android SDK 34 and fixes of register receiver. Thanks to @Kutikov
+3. Updated Gradle to 8.3.1 and fixed sampleApp. Thanks to @vicajilau
+
 Version 3.0.12/ Androidx version 3.1.6
 1. Download TotalBytes fixes. Thanks to @badrazizi
 2. OnCompleted not called in some instances.

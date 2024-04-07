@@ -23,6 +23,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import timber.log.Timber;
+
 public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
 
     @NonNull
@@ -34,6 +36,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         this.actionListener = actionListener;
     }
 
+    @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull final ViewGroup parent, int viewType) {
         final View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.download_item, parent, false);
@@ -81,6 +84,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
                 holder.actionButton.setText(R.string.view);
                 holder.actionButton.setOnClickListener(view -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        Timber.d("Downloaded Path: %s", downloadData.download.getFile());
                         Toast.makeText(context, "Downloaded Path:" + downloadData.download.getFile(), Toast.LENGTH_LONG).show();
                         return;
                     }
@@ -198,24 +202,16 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
     }
 
     private String getStatusString(Status status) {
-        switch (status) {
-            case COMPLETED:
-                return "Done";
-            case DOWNLOADING:
-                return "Downloading";
-            case FAILED:
-                return "Error";
-            case PAUSED:
-                return "Paused";
-            case QUEUED:
-                return "Waiting in Queue";
-            case REMOVED:
-                return "Removed";
-            case NONE:
-                return "Not Queued";
-            default:
-                return "Unknown";
-        }
+        return switch (status) {
+            case COMPLETED -> "Done";
+            case DOWNLOADING -> "Downloading";
+            case FAILED -> "Error";
+            case PAUSED -> "Paused";
+            case QUEUED -> "Waiting in Queue";
+            case REMOVED -> "Removed";
+            case NONE -> "Not Queued";
+            default -> "Unknown";
+        };
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -253,6 +249,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
             return id;
         }
 
+        @NonNull
         @Override
         public String toString() {
             if (download == null) {
