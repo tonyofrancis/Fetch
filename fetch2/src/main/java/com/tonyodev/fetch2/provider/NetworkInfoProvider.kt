@@ -39,7 +39,6 @@ class NetworkInfoProvider constructor(private val context: Context,
                     .addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
                     .build()
             val networkCallback: ConnectivityManager.NetworkCallback = object : ConnectivityManager.NetworkCallback() {
-
                 override fun onLost(network: Network) {
                     notifyNetworkChangeListeners()
                 }
@@ -52,7 +51,12 @@ class NetworkInfoProvider constructor(private val context: Context,
             connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
         } else {
             try {
-                context.registerReceiver(networkChangeBroadcastReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    context.registerReceiver(networkChangeBroadcastReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION), Context.RECEIVER_EXPORTED)
+                }
+                else{
+                    context.registerReceiver(networkChangeBroadcastReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+                }
                 broadcastRegistered = true
             } catch (e: Exception) {
 
@@ -116,7 +120,6 @@ class NetworkInfoProvider constructor(private val context: Context,
         get() {
             val url = internetCheckUrl
             return if (url != null) {
-                var connected = false
                 try {
                     val urlConnection = URL(url)
                     val connection = urlConnection.openConnection() as HttpURLConnection
@@ -126,10 +129,10 @@ class NetworkInfoProvider constructor(private val context: Context,
                     connection.useCaches = false
                     connection.defaultUseCaches = false
                     connection.connect()
-                    connected = connection.responseCode != -1
-                    connection.disconnect()
-                } catch (e: Exception) { }
-                connected
+                    connection.responseCode != -1
+                } catch (e: Exception) {
+                    false
+                }
             } else {
                 context.isNetworkAvailable()
             }

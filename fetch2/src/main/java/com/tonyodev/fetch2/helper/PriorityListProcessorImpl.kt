@@ -1,9 +1,11 @@
 package com.tonyodev.fetch2.helper
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.downloader.DownloadManager
 import com.tonyodev.fetch2core.HandlerWrapper
@@ -16,6 +18,7 @@ import com.tonyodev.fetch2core.Logger
 import com.tonyodev.fetch2core.isFetchFileServerUrl
 import java.util.concurrent.TimeUnit
 
+@SuppressLint("UnspecifiedRegisterReceiverFlag")
 class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerWrapper,
                                             private val downloadProvider: DownloadProvider,
                                             private val downloadManager: DownloadManager,
@@ -68,7 +71,12 @@ class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerW
 
     init {
         networkInfoProvider.registerNetworkChangeListener(networkChangeListener)
-        context.registerReceiver(priorityBackoffResetReceiver, IntentFilter(ACTION_QUEUE_BACKOFF_RESET))
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(priorityBackoffResetReceiver, IntentFilter(ACTION_QUEUE_BACKOFF_RESET), Context.RECEIVER_NOT_EXPORTED)
+        }
+        else{
+            context.registerReceiver(priorityBackoffResetReceiver, IntentFilter(ACTION_QUEUE_BACKOFF_RESET))
+        }
     }
 
     private val priorityIteratorRunnable = Runnable {
