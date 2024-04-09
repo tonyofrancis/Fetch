@@ -22,7 +22,7 @@ fun getErrorFromThrowable(throwable: Throwable): Error {
 }
 
 fun getErrorFromMessage(message: String?): Error {
-    return if (message == null || message.isEmpty()) {
+    return if (message.isNullOrEmpty()) {
         Error.UNKNOWN
     } else if (message.equals(REQUEST_WITH_FILE_PATH_ALREADY_EXIST, true)
             || message.contains(FAILED_TO_ENQUEUE_REQUEST_FILE_FOUND, true)) {

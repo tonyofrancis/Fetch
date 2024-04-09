@@ -5,7 +5,7 @@ import com.tonyodev.fetch2core.Downloader
 /**
  * Enumeration which contains specific errors that can occur.
  * */
-enum class Error constructor(
+enum class Error(
         /** Error Value*/
         val value: Int,
         /** A throwable will only be present at the time the error

@@ -39,7 +39,7 @@ class FetchConfiguration private constructor(val appContext: Context,
                                              val preAllocateFileOnCreation: Boolean,
                                              val fetchHandler: FetchHandler?) {
 
-    /* Creates a new Instance of Fetch with this object's configuration settings. Convenience method
+    /** Creates a new Instance of Fetch with this object's configuration settings. Convenience method
     * for Fetch.Impl.getInstance(fetchConfiguration)
     * @return new Fetch instance
     * */
@@ -83,7 +83,7 @@ class FetchConfiguration private constructor(val appContext: Context,
          * @return Builder
          * */
         fun setNamespace(namespace: String? = null): Builder {
-            this.namespace = if (namespace == null || namespace.isEmpty()) {
+            this.namespace = if (namespace.isNullOrEmpty()) {
                 DEFAULT_INSTANCE_NAMESPACE
             } else {
                 namespace
@@ -109,7 +109,7 @@ class FetchConfiguration private constructor(val appContext: Context,
          * Sets the downloader client Fetch will use to perform downloads from a TCP File Server.
          * @see com.tonyodev.fetch2.Downloader
          * @see com.tonyodev.fetch2.FileServerDownloader
-         * @param downloader Downloader Client for Fetch File Server
+         * @param fileServerDownloader Downloader Client for Fetch File Server
          * @return Builder
          * */
         fun setFileServerDownloader(fileServerDownloader: FileServerDownloader): Builder {
@@ -220,7 +220,7 @@ class FetchConfiguration private constructor(val appContext: Context,
          * Fetch will update the database and queued, paused or downloading downloads will
          * have to start at the beginning. Enabled by default. Set to false only if you are
          * monitoring the file existence elsewhere.
-         * @param enable set if file checking is enabled
+         * @param enabled set if file checking is enabled
          * @return Builder
          * */
         fun enableFileExistChecks(enabled: Boolean): Builder {
@@ -434,7 +434,7 @@ class FetchConfiguration private constructor(val appContext: Context,
         if (maxAutoRetryAttempts != other.maxAutoRetryAttempts) return false
         if (preAllocateFileOnCreation != other.preAllocateFileOnCreation) return false
         if (fetchHandler != other.fetchHandler) return false
-            return true
+        return true
     }
 
     override fun hashCode(): Int {

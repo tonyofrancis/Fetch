@@ -42,11 +42,11 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                     getActiveDownloadsIds().forEach { id ->
                         cancelDownloadNoLock(id)
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
                 try {
                     executor?.shutdown()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
                 executor = getNewDownloadExecutorService(value)
                 field = value
@@ -83,7 +83,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
                 downloadExecutor.execute {
                     try {
                         Thread.currentThread().name = "${download.namespace}-${download.id}"
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
 
                     }
                     try {
@@ -203,7 +203,7 @@ class DownloadManagerImpl(private val httpDownloader: Downloader<*, *>,
             logger.d("DownloadManager closing download manager")
             try {
                 executor?.shutdown()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
             }
         }
     }

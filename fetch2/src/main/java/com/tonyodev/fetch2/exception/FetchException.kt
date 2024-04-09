@@ -1,3 +1,3 @@
 package com.tonyodev.fetch2.exception
 
-open class FetchException constructor(message: String) : RuntimeException(message)
+open class FetchException(message: String) : RuntimeException(message)

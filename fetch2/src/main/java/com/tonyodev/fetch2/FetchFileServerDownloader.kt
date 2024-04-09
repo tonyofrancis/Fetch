@@ -30,7 +30,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
         /** The timeout value in milliseconds when trying to connect to the server. Default is 20_000 milliseconds. */
         private val timeout: Long = 20_000) : FileServerDownloader {
 
-    protected val connections: MutableMap<Downloader.Response, FetchFileResourceTransporter> = Collections.synchronizedMap(HashMap<Downloader.Response, FetchFileResourceTransporter>())
+    private val connections: MutableMap<Downloader.Response, FetchFileResourceTransporter> = Collections.synchronizedMap(HashMap())
 
     override fun onPreClientExecute(client: FetchFileResourceTransporter, request: Downloader.ServerRequest): FileServerDownloader.TransporterRequest {
         val headers = request.headers
@@ -73,7 +73,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
             if (serverResponse != null) {
                 val code = serverResponse.status
                 val isSuccessful = serverResponse.connection == FileResponse.OPEN_CONNECTION &&
-                        serverResponse.type == FileRequest.TYPE_FILE && serverResponse.status == HttpURLConnection.HTTP_PARTIAL
+                        serverResponse.type == TYPE_FILE && serverResponse.status == HttpURLConnection.HTTP_PARTIAL
                 val contentLength = serverResponse.contentLength
                 val inputStream = transporter.getInputStream()
                 val errorResponse = if (!isSuccessful) {
@@ -87,7 +87,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                     json.keys().forEach {
                         responseHeaders[it] = listOf(json.get(it).toString())
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
 
                 }
                 if (!responseHeaders.containsKey("Content-MD5")) {
@@ -144,7 +144,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 it.value.close()
             }
             connections.clear()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
 
         }
     }
@@ -187,7 +187,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
             try {
                 val type = response.responseHeaders[FileRequest.FIELD_TYPE]?.firstOrNull()?.toInt()
                         ?: -1
-                if (type != FileRequest.TYPE_FILE) {
+                if (type != TYPE_FILE) {
                     disconnect(response)
                     throw Exception(FETCH_FILE_SERVER_INVALID_RESPONSE_TYPE)
                 }
@@ -197,7 +197,7 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
                 val inputReader = InputStreamReader(response.byteStream, Charsets.UTF_8)
                 var read = inputReader.read(buffer, 0, bufferSize)
                 while (read != -1) {
-                    stringBuilder.append(buffer, 0, read)
+                    stringBuilder.appendRange(buffer, 0, read)
                     read = inputReader.read(buffer, 0, bufferSize)
                 }
                 inputReader.close()

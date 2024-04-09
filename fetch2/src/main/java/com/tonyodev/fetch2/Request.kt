@@ -12,7 +12,7 @@ import java.io.Serializable
  * Use this class to create a request that is used by Fetch to enqueue a download and
  * begin the download process.
  * */
-open class Request constructor(
+open class Request(
         /** The url where the file will be downloaded from.*/
         val url: String,
 

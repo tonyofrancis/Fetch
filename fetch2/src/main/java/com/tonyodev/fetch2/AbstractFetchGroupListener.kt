@@ -38,7 +38,7 @@ abstract class AbstractFetchGroupListener: FetchGroupListener {
      * @param groupId the groupId
      * @param download An immutable object which contains a current snapshot of all the information
      * about a specific download managed by Fetch.
-     * @param waitingOnNetwork Indicates that the download was queued because it is waiting on
+     * @param waitingNetwork Indicates that the download was queued because it is waiting on
      * the right network condition. For example: Waiting on internet access to be restored or
      * waiting for a Wifi connection.
      * @param fetchGroup An immutable object which contains a current snapshot of all the information

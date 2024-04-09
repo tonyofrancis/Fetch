@@ -88,18 +88,18 @@ object FetchModulesBuilder {
                       val listenerCoordinator: ListenerCoordinator,
                       val networkInfoProvider: NetworkInfoProvider)
 
-    class Modules constructor(val fetchConfiguration: FetchConfiguration,
-                              val handlerWrapper: HandlerWrapper,
-                              val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper,
-                              val downloadProvider: DownloadProvider,
-                              val groupInfoProvider: GroupInfoProvider,
-                              val uiHandler: Handler,
-                              downloadManagerCoordinator: DownloadManagerCoordinator,
-                              val listenerCoordinator: ListenerCoordinator) {
+    class Modules(val fetchConfiguration: FetchConfiguration,
+                  val handlerWrapper: HandlerWrapper,
+                  val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper,
+                  downloadProvider: DownloadProvider,
+                  groupInfoProvider: GroupInfoProvider,
+                  val uiHandler: Handler,
+                  downloadManagerCoordinator: DownloadManagerCoordinator,
+                  val listenerCoordinator: ListenerCoordinator) {
 
-        val downloadManager: DownloadManager
-        val priorityListProcessor: PriorityListProcessor<Download>
-        val downloadInfoUpdater = DownloadInfoUpdater(fetchDatabaseManagerWrapper)
+        private val downloadManager: DownloadManager
+        private val priorityListProcessor: PriorityListProcessor<Download>
+        private val downloadInfoUpdater = DownloadInfoUpdater(fetchDatabaseManagerWrapper)
         val networkInfoProvider = NetworkInfoProvider(fetchConfiguration.appContext, fetchConfiguration.internetCheckUrl)
         val fetchHandler: FetchHandler
 

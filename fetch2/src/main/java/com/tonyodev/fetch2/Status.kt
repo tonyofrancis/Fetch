@@ -4,7 +4,7 @@ package com.tonyodev.fetch2
  * Enumeration which contains the different states a download
  * could go through.
  * */
-enum class Status constructor(val value: Int) {
+enum class Status(val value: Int) {
 
     /** Indicates when a download is newly created and not yet queued.*/
     NONE(0),

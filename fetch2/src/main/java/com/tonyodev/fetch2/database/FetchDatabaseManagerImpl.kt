@@ -17,13 +17,13 @@ import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2core.Logger
 
 
-class FetchDatabaseManagerImpl constructor(context: Context,
-                                           private val namespace: String,
-                                           override val logger: Logger,
-                                           migrations: Array<Migration>,
-                                           private val liveSettings: LiveSettings,
-                                           private val fileExistChecksEnabled: Boolean,
-                                           private val defaultStorageResolver: DefaultStorageResolver) : FetchDatabaseManager<DownloadInfo> {
+class FetchDatabaseManagerImpl(context: Context,
+                               private val namespace: String,
+                               override val logger: Logger,
+                               migrations: Array<Migration>,
+                               private val liveSettings: LiveSettings,
+                               private val fileExistChecksEnabled: Boolean,
+                               private val defaultStorageResolver: DefaultStorageResolver) : FetchDatabaseManager<DownloadInfo> {
 
     @Volatile
     private var closed = false
@@ -233,9 +233,9 @@ class FetchDatabaseManagerImpl constructor(context: Context,
     override fun getPendingCount(includeAddedDownloads: Boolean): Long {
         return try {
             val query = if (includeAddedDownloads) pendingCountIncludeAddedQuery else pendingCountQuery
-            val cursor: Cursor? = database.query(query)
-            val count = cursor?.count?.toLong() ?: -1L
-            cursor?.close()
+            val cursor: Cursor = database.query(query)
+            val count = cursor.count.toLong()
+            cursor.close()
             count
         } catch (e: Exception) {
             -1
@@ -257,8 +257,8 @@ class FetchDatabaseManagerImpl constructor(context: Context,
     private fun sanitize(downloads: List<DownloadInfo>, firstEntry: Boolean = false): Boolean {
         updatedDownloadsList.clear()
         var downloadInfo: DownloadInfo
-        for (i in 0 until downloads.size) {
-            downloadInfo = downloads[i]
+        for (element in downloads) {
+            downloadInfo = element
             when (downloadInfo.status) {
                 Status.COMPLETED -> onCompleted(downloadInfo)
                 Status.DOWNLOADING -> onDownloading(downloadInfo, firstEntry)
@@ -335,12 +335,12 @@ class FetchDatabaseManagerImpl constructor(context: Context,
         closed = true
         try {
             database.close()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
 
         }
         try {
             requestDatabase.close()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
 
         }
         logger.d("Database closed")

@@ -28,9 +28,9 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
 
     constructor(fileDownloaderType: Downloader.FileDownloaderType) : this(null, fileDownloaderType)
 
-    protected val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
-    protected val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
-    protected val cookieManager = getDefaultCookieManager()
+    private val connectionPrefs = httpUrlConnectionPreferences ?: HttpUrlConnectionPreferences()
+    private val connections: MutableMap<Downloader.Response, HttpURLConnection> = Collections.synchronizedMap(HashMap<Downloader.Response, HttpURLConnection>())
+    private val cookieManager = getDefaultCookieManager()
 
     override fun onPreClientExecute(client: HttpURLConnection, request: Downloader.ServerRequest): Void? {
         client.requestMethod = request.requestMethod
@@ -74,7 +74,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
                         || code == HttpURLConnection.HTTP_SEE_OTHER) && getHeaderValue(responseHeaders, "Location") != null) {
             try {
                 client.disconnect()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
             }
             httpUrl = URL(getHeaderValue(responseHeaders, "Location") ?: "")
             client = httpUrl.openConnection() as HttpURLConnection
@@ -129,7 +129,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
         return response
     }
 
-    protected fun isResponseOk(responseCode: Int): Boolean {
+    private fun isResponseOk(responseCode: Int): Boolean {
         return responseCode in 200..299
     }
 
@@ -155,7 +155,7 @@ open class HttpUrlConnectionDownloader @JvmOverloads constructor(
     private fun disconnectClient(client: HttpURLConnection?) {
         try {
             client?.disconnect()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
 
         }
     }

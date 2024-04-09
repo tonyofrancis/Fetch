@@ -5,10 +5,16 @@ import com.tonyodev.fetch2.database.DownloadInfo
 import com.tonyodev.fetch2.exception.FetchException
 import com.tonyodev.fetch2.fetch.FetchImpl
 import com.tonyodev.fetch2.fetch.FetchModulesBuilder
-import com.tonyodev.fetch2.util.DEFAULT_AUTO_RETRY_ATTEMPTS
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_REQUEST_UPDATED
-import com.tonyodev.fetch2core.*
+import com.tonyodev.fetch2core.DownloadBlock
+import com.tonyodev.fetch2core.Downloader
+import com.tonyodev.fetch2core.Extras
+import com.tonyodev.fetch2core.FetchObserver
+import com.tonyodev.fetch2core.FileResource
+import com.tonyodev.fetch2core.Func
+import com.tonyodev.fetch2core.Func2
+import com.tonyodev.fetch2core.GLOBAL_FETCH_CONFIGURATION_NOT_SET
 
 /**
  * A light weight file download manager for Android.

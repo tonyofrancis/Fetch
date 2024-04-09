@@ -19,17 +19,17 @@ import com.tonyodev.fetch2core.isFetchFileServerUrl
 import java.util.concurrent.TimeUnit
 
 @SuppressLint("UnspecifiedRegisterReceiverFlag")
-class PriorityListProcessorImpl constructor(private val handlerWrapper: HandlerWrapper,
-                                            private val downloadProvider: DownloadProvider,
-                                            private val downloadManager: DownloadManager,
-                                            private val networkInfoProvider: NetworkInfoProvider,
-                                            private val logger: Logger,
-                                            private val listenerCoordinator: ListenerCoordinator,
-                                            @Volatile
+class PriorityListProcessorImpl(private val handlerWrapper: HandlerWrapper,
+                                private val downloadProvider: DownloadProvider,
+                                private val downloadManager: DownloadManager,
+                                private val networkInfoProvider: NetworkInfoProvider,
+                                private val logger: Logger,
+                                private val listenerCoordinator: ListenerCoordinator,
+                                @Volatile
                                             override var downloadConcurrentLimit: Int,
-                                            private val context: Context,
-                                            private val namespace: String,
-                                            private val prioritySort: PrioritySort)
+                                private val context: Context,
+                                private val namespace: String,
+                                private val prioritySort: PrioritySort)
     : PriorityListProcessor<Download> {
 
     private val lock = Any()

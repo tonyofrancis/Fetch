@@ -419,7 +419,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                 executorService?.execute {
                     try {
                         Thread.currentThread().name = "${downloadInfo.namespace}-${downloadInfo.id}-Slice-${fileSlice.position}"
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
 
                     }
                     val downloadBlock = DownloadBlockInfo()

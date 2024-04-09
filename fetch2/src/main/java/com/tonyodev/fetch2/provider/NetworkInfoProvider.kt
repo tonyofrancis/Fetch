@@ -17,8 +17,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 
-class NetworkInfoProvider constructor(private val context: Context,
-                                      private val internetCheckUrl: String?) {
+class NetworkInfoProvider(private val context: Context,
+                          private val internetCheckUrl: String?) {
 
     private val lock = Any()
     private val networkChangeListenerSet = hashSetOf<NetworkChangeListener>()
@@ -58,7 +58,7 @@ class NetworkInfoProvider constructor(private val context: Context,
                     context.registerReceiver(networkChangeBroadcastReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
                 }
                 broadcastRegistered = true
-            } catch (e: Exception) {
+            } catch (_: Exception) {
 
             }
         }
@@ -90,7 +90,7 @@ class NetworkInfoProvider constructor(private val context: Context,
             if (broadcastRegistered) {
                 try {
                     context.unregisterReceiver(networkChangeBroadcastReceiver)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
 
                 }
             }

@@ -19,11 +19,11 @@ class ListenerCoordinator(val namespace: String,
     private val fetchListenerMap = mutableMapOf<Int, MutableSet<WeakReference<FetchListener>>>()
     private val fetchGroupListenerMap = mutableMapOf<Int, MutableSet<WeakReference<FetchGroupListener>>>()
     private val fetchNotificationManagerList = mutableListOf<FetchNotificationManager>()
-    private val fetchNotificationHandler = {
+    private val fetchNotificationHandler = run {
         val handlerThread = HandlerThread("FetchNotificationsIO")
         handlerThread.start()
         Handler(handlerThread.looper)
-    }()
+    }
     private val downloadsObserverMap = mutableMapOf<Int, MutableList<WeakReference<FetchObserver<Download>>>>()
 
     fun addListener(id: Int, fetchListener: FetchListener) {

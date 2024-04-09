@@ -9,8 +9,7 @@ class ActiveDownloadInfo(val fetchObserver: FetchObserver<Boolean>,
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as ActiveDownloadInfo
-        if (fetchObserver != other.fetchObserver) return false
-        return true
+        return fetchObserver == other.fetchObserver
     }
 
     override fun hashCode(): Int {

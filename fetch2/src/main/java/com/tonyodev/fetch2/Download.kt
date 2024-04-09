@@ -2,7 +2,6 @@ package com.tonyodev.fetch2
 
 import android.net.Uri
 import android.os.Parcelable
-import com.tonyodev.fetch2.util.DEFAULT_AUTO_RETRY_ATTEMPTS
 import com.tonyodev.fetch2core.Extras
 import java.io.Serializable
 

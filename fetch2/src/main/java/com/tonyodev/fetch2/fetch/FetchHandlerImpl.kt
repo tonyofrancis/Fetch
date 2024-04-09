@@ -71,7 +71,7 @@ class FetchHandlerImpl(private val namespace: String,
             }
 
             if (downloadInfo.status != Status.COMPLETED && !existing) {
-                downloadInfos.add(downloadInfo);
+                downloadInfos.add(downloadInfo)
             }
         }
         val results = fetchDatabaseManagerWrapper.insert(downloadInfos)

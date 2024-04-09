@@ -117,7 +117,7 @@ fun getPreviousSliceCount(id: Int, fileTempDir: String): Int {
     var sliceCount = -1
     try {
         sliceCount = getLongDataFromFile(getMetaFilePath(id, fileTempDir))?.toInt() ?: -1
-    } catch (e: Exception) {
+    } catch (_: Exception) {
 
     }
     return sliceCount
@@ -127,10 +127,10 @@ fun getMetaFilePath(id: Int, fileTempDir: String): String {
     return "$fileTempDir/$id.meta.data"
 }
 
-fun saveCurrentSliceCount(id: Int, SliceCount: Int, fileTempDir: String) {
+fun saveCurrentSliceCount(id: Int, sliceCount: Int, fileTempDir: String) {
     try {
-        writeLongToFile(getMetaFilePath(id, fileTempDir), SliceCount.toLong())
-    } catch (e: Exception) {
+        writeLongToFile(getMetaFilePath(id, fileTempDir), sliceCount.toLong())
+    } catch (_: Exception) {
 
     }
 }
@@ -155,7 +155,7 @@ fun deleteAllInFolderForId(id: Int, fileTempDir: String) {
                 }
             }
         }
-    } catch (e: Exception) {
+    } catch (_: Exception) {
 
     }
 }
@@ -164,7 +164,7 @@ fun getSavedDownloadedInfo(id: Int, position: Int, fileTempDir: String): Long {
     var downloaded = 0L
     try {
         downloaded = getLongDataFromFile(getDownloadedInfoFilePath(id, position, fileTempDir)) ?: 0L
-    } catch (e: Exception) {
+    } catch (_: Exception) {
 
     }
     return downloaded
@@ -209,7 +209,7 @@ fun awaitFinishOrTimeout(allowTimeInMilliseconds: Long, fetchHandler: FetchHandl
     while (indefinite || (pendingCount > 0 && !hasAllowedTimeExpired)) {
         try {
             Thread.sleep(sleepTime)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
 
         }
         hasAllowedTimeExpired = if (allowTimeInMilliseconds == -1L) {

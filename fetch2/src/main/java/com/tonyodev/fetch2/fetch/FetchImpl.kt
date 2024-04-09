@@ -14,14 +14,14 @@ import com.tonyodev.fetch2.util.DEFAULT_ENABLE_LISTENER_NOTIFY_ON_ATTACHED
 import com.tonyodev.fetch2.util.toDownloadInfo
 import com.tonyodev.fetch2core.*
 
-open class FetchImpl constructor(override val namespace: String,
-                                 final override val fetchConfiguration: FetchConfiguration,
-                                 private val handlerWrapper: HandlerWrapper,
-                                 private val uiHandler: Handler,
-                                 private val fetchHandler: FetchHandler,
-                                 private val logger: Logger,
-                                 private val listenerCoordinator: ListenerCoordinator,
-                                 private val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper) : Fetch {
+open class FetchImpl(override val namespace: String,
+                     final override val fetchConfiguration: FetchConfiguration,
+                     private val handlerWrapper: HandlerWrapper,
+                     private val uiHandler: Handler,
+                     private val fetchHandler: FetchHandler,
+                     private val logger: Logger,
+                     private val listenerCoordinator: ListenerCoordinator,
+                     private val fetchDatabaseManagerWrapper: FetchDatabaseManagerWrapper) : Fetch {
 
     private val lock = Object()
     @Volatile
@@ -67,7 +67,7 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun enqueue(request: Request, func: Func<Request>?, func2: Func<Error>?): Fetch {
-        enqueueRequest(listOf(request), Func { result ->
+        enqueueRequest(listOf(request), { result ->
             if (result.isNotEmpty()) {
                 val enqueuedPair = result.first()
                 if (enqueuedPair.second != Error.NONE) {
@@ -172,7 +172,7 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun pause(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return pause(listOf(id), Func { downloads ->
+        return pause(listOf(id), { downloads ->
             if (downloads.isNotEmpty()) {
                 func?.call(downloads.first())
             } else {
@@ -319,7 +319,7 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun resume(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return resume(listOf(id), Func { downloads ->
+        return resume(listOf(id), { downloads ->
             if (downloads.isNotEmpty()) {
                 func?.call(downloads.first())
             } else {
@@ -413,7 +413,7 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun remove(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return remove(listOf(id), Func { downloads ->
+        return remove(listOf(id), { downloads ->
             if (downloads.isNotEmpty()) {
                 func?.call(downloads.first())
             } else {
@@ -487,7 +487,7 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun delete(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return delete(listOf(id), Func { downloads ->
+        return delete(listOf(id), { downloads ->
             if (downloads.isNotEmpty()) {
                 func?.call(downloads.first())
             } else {
@@ -573,7 +573,7 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun cancel(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return cancel(listOf(id), Func { downloads ->
+        return cancel(listOf(id), { downloads ->
             if (downloads.isNotEmpty()) {
                 func?.call(downloads.first())
             } else {
@@ -691,7 +691,7 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun retry(id: Int, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return retry(listOf(id), Func { downloads ->
+        return retry(listOf(id), { downloads ->
             if (downloads.isNotEmpty()) {
                 func?.call(downloads.first())
             } else {
@@ -952,7 +952,7 @@ open class FetchImpl constructor(override val namespace: String,
     }
 
     override fun addCompletedDownload(completedDownload: CompletedDownload, alertListeners: Boolean, func: Func<Download>?, func2: Func<Error>?): Fetch {
-        return addCompletedDownloads(listOf(completedDownload), alertListeners, Func { downloads ->
+        return addCompletedDownloads(listOf(completedDownload), alertListeners, { downloads ->
             if (downloads.isNotEmpty()) {
                 func?.call(downloads.first())
             } else {
