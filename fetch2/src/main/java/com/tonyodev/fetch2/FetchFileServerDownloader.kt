@@ -21,14 +21,12 @@ import java.util.*
  * */
 open class FetchFileServerDownloader @JvmOverloads constructor(
 
-        /** The file downloader type used to download a request.
-         * The SEQUENTIAL type downloads bytes in sequence.
-         * The PARALLEL type downloads bytes in parallel.
-         * */
-        private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL,
-
-        /** The timeout value in milliseconds when trying to connect to the server. Default is 20_000 milliseconds. */
-        private val timeout: Long = 20_000) : FileServerDownloader {
+    /** The file downloader type used to download a request.
+     * The SEQUENTIAL type downloads bytes in sequence.
+     * The PARALLEL type downloads bytes in parallel.
+     * */
+    private val fileDownloaderType: Downloader.FileDownloaderType = Downloader.FileDownloaderType.SEQUENTIAL
+) : FileServerDownloader {
 
     private val connections: MutableMap<Downloader.Response, FetchFileResourceTransporter> = Collections.synchronizedMap(HashMap())
 
@@ -63,69 +61,61 @@ open class FetchFileServerDownloader @JvmOverloads constructor(
 
     override fun execute(request: Downloader.ServerRequest, interruptMonitor: InterruptMonitor): Downloader.Response? {
         val transporter = FetchFileResourceTransporter()
-        var timeoutStop: Long
-        val timeoutStart = System.nanoTime()
         val transporterRequest = onPreClientExecute(transporter, request)
         transporter.connect(transporterRequest.inetSocketAddress)
         transporter.sendFileRequest(transporterRequest.fileRequest)
         while (!interruptMonitor.isInterrupted) {
             val serverResponse = transporter.receiveFileResponse()
-            if (serverResponse != null) {
-                val code = serverResponse.status
-                val isSuccessful = serverResponse.connection == FileResponse.OPEN_CONNECTION &&
-                        serverResponse.type == TYPE_FILE && serverResponse.status == HttpURLConnection.HTTP_PARTIAL
-                val contentLength = serverResponse.contentLength
-                val inputStream = transporter.getInputStream()
-                val errorResponse = if (!isSuccessful) {
-                    copyStreamToString(inputStream, false)
-                } else {
-                    null
-                }
-                val responseHeaders = mutableMapOf<String, List<String>>()
-                try {
-                    val json = JSONObject(serverResponse.toJsonString)
-                    json.keys().forEach {
-                        responseHeaders[it] = listOf(json.get(it).toString())
-                    }
-                } catch (_: Exception) {
-
-                }
-                if (!responseHeaders.containsKey("Content-MD5")) {
-                    responseHeaders["Content-MD5"] = listOf(serverResponse.md5)
-                }
-                val hash = getContentHash(responseHeaders)
-                val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
-                        responseHeaders["Accept-Ranges"]?.firstOrNull() == "bytes"
-
-                onServerResponse(request, Downloader.Response(
-                        code = code,
-                        isSuccessful = isSuccessful,
-                        contentLength = contentLength,
-                        byteStream = null,
-                        request = request,
-                        hash = hash,
-                        responseHeaders = responseHeaders,
-                        acceptsRanges = acceptsRanges,
-                        errorResponse = errorResponse))
-
-                val response = Downloader.Response(
-                        code = code,
-                        isSuccessful = isSuccessful,
-                        contentLength = contentLength,
-                        byteStream = inputStream,
-                        request = request,
-                        hash = hash,
-                        responseHeaders = responseHeaders,
-                        acceptsRanges = acceptsRanges,
-                        errorResponse = errorResponse)
-
-                connections[response] = transporter
-                return response
+            val code = serverResponse.status
+            val isSuccessful = serverResponse.connection == FileResponse.OPEN_CONNECTION &&
+                    serverResponse.type == TYPE_FILE && serverResponse.status == HttpURLConnection.HTTP_PARTIAL
+            val contentLength = serverResponse.contentLength
+            val inputStream = transporter.getInputStream()
+            val errorResponse = if (!isSuccessful) {
+                copyStreamToString(inputStream, false)
+            } else {
+                null
             }
-            timeoutStop = System.nanoTime()
-            if (hasIntervalTimeElapsed(timeoutStart, timeoutStop, timeout)) {
-                return null
+            val responseHeaders = mutableMapOf<String, List<String>>()
+            try {
+                val json = JSONObject(serverResponse.toJsonString)
+                json.keys().forEach {
+                    responseHeaders[it] = listOf(json.get(it).toString())
+                }
+            } catch (_: Exception) {
+
             }
+            if (!responseHeaders.containsKey("Content-MD5")) {
+                responseHeaders["Content-MD5"] = listOf(serverResponse.md5)
+            }
+            val hash = getContentHash(responseHeaders)
+            val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL ||
+                    responseHeaders["Accept-Ranges"]?.firstOrNull() == "bytes"
+
+            onServerResponse(request, Downloader.Response(
+                code = code,
+                isSuccessful = isSuccessful,
+                contentLength = contentLength,
+                byteStream = null,
+                request = request,
+                hash = hash,
+                responseHeaders = responseHeaders,
+                acceptsRanges = acceptsRanges,
+                errorResponse = errorResponse))
+
+            val response = Downloader.Response(
+                code = code,
+                isSuccessful = isSuccessful,
+                contentLength = contentLength,
+                byteStream = inputStream,
+                request = request,
+                hash = hash,
+                responseHeaders = responseHeaders,
+                acceptsRanges = acceptsRanges,
+                errorResponse = errorResponse)
+
+            connections[response] = transporter
+            return response
         }
         return null
     }
