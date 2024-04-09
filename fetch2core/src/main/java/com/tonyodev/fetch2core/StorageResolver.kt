@@ -1,4 +1,5 @@
 package com.tonyodev.fetch2core
+import java.io.IOException
 
 /**
  * This interface can be implemented by a class to create a custom StorageResolver.

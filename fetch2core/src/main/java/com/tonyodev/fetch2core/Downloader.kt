@@ -23,7 +23,7 @@ interface Downloader<T, R> : Closeable {
      * @param request the request
      * @return returns any object that makes sense for the specified downloader. can be null.
      * */
-    fun onPreClientExecute(client: T, request: Downloader.ServerRequest): R?
+    fun onPreClientExecute(client: T, request: ServerRequest): R?
 
     /**
      * This method is called by Fetch to execute a request against the client.
@@ -67,7 +67,7 @@ interface Downloader<T, R> : Closeable {
      * @param supportedFileDownloaderTypes a set of file downloader types supported by the request.
      * @return the FileDownloaderType.
      * */
-    fun getRequestFileDownloaderType(request: ServerRequest, supportedFileDownloaderTypes: Set<Downloader.FileDownloaderType>): FileDownloaderType
+    fun getRequestFileDownloaderType(request: ServerRequest, supportedFileDownloaderTypes: Set<FileDownloaderType>): FileDownloaderType
 
     /**
      * This method should be used to verify that the download file Hash matches the

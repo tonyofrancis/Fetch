@@ -12,22 +12,17 @@ import android.provider.DocumentsContract
 import java.io.*
 
 fun getOutputResourceWrapper(parcelFileDescriptor: ParcelFileDescriptor): OutputResourceWrapper {
-    return getOutputResourceWrapper(parcelFileDescriptor.fileDescriptor, parcelFileDescriptor)
+    return getOutputResourceWrapper(parcelFileDescriptor.fileDescriptor)
 }
 
-@JvmOverloads
-fun getOutputResourceWrapper(fileDescriptor: FileDescriptor,
-                             parcelFileDescriptor: ParcelFileDescriptor? = null): OutputResourceWrapper {
-    return getOutputResourceWrapper(FileOutputStream(fileDescriptor), parcelFileDescriptor)
+fun getOutputResourceWrapper(fileDescriptor: FileDescriptor): OutputResourceWrapper {
+    return getOutputResourceWrapper(FileOutputStream(fileDescriptor))
 }
 
-@JvmOverloads
-fun getOutputResourceWrapper(fileOutputStream: FileOutputStream,
-                             parcelFileDescriptor: ParcelFileDescriptor? = null): OutputResourceWrapper {
+fun getOutputResourceWrapper(fileOutputStream: FileOutputStream): OutputResourceWrapper {
     return object : OutputResourceWrapper() {
 
         private val fileOutputStream = fileOutputStream
-        private val parcelFileDescriptor = parcelFileDescriptor
 
         init {
             this.fileOutputStream.channel.position(0)
@@ -61,8 +56,8 @@ fun getOutputResourceWrapper(filePath: String, contentResolver: ContentResolver)
 }
 
 fun getOutputResourceWrapper(fileUri: Uri, contentResolver: ContentResolver): OutputResourceWrapper {
-    return when {
-        fileUri.scheme == "content" -> {
+    return when (fileUri.scheme) {
+        "content" -> {
             val parcelFileDescriptor = contentResolver.openFileDescriptor(fileUri, "w")
             if (parcelFileDescriptor == null) {
                 throw FileNotFoundException("$fileUri $FILE_NOT_FOUND")
@@ -70,8 +65,8 @@ fun getOutputResourceWrapper(fileUri: Uri, contentResolver: ContentResolver): Ou
                 getOutputResourceWrapper(parcelFileDescriptor)
             }
         }
-        fileUri.scheme == "file" -> {
-            val file = File(fileUri.path)
+        "file" -> {
+            val file = File(fileUri.path.toString())
             if (file.exists() && file.canWrite()) {
                 getOutputResourceWrapper(file)
             } else {
@@ -131,14 +126,14 @@ fun getOutputResourceWrapper(randomAccessFile: RandomAccessFile): OutputResource
 fun deleteFile(filePath: String, context: Context): Boolean {
     return if (isUriPath(filePath)) {
         val uri = Uri.parse(filePath)
-        when {
-            uri.scheme == "file" -> {
-                val file = File(uri.path)
+        when (uri.scheme) {
+            "file" -> {
+                val file = File(uri.path.toString())
                 if (file.canWrite() && file.exists()) deleteFile(file) else false
             }
-            uri.scheme == "content" -> {
+            "content" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
-                        && DocumentsContract.isDocumentUri(context, uri)) {
+                    && DocumentsContract.isDocumentUri(context, uri)) {
                     DocumentsContract.deleteDocument(context.contentResolver, uri)
                 } else {
                     context.contentResolver.delete(uri, null, null) > 0
@@ -154,18 +149,18 @@ fun deleteFile(filePath: String, context: Context): Boolean {
 fun renameFile(oldFile: String, newFile: String, context: Context): Boolean {
     return if (isUriPath(oldFile)) {
         val uri = Uri.parse(oldFile)
-        when {
-            uri.scheme == "file" -> {
-                val file = File(uri.path)
+        when (uri.scheme) {
+            "file" -> {
+                val file = File(uri.path.toString())
                 if (file.canWrite() && file.exists()) renameFile(file, File(newFile)) else {
                     val contentValue = ContentValues()
                     contentValue.put("uri", newFile)
                     context.contentResolver.update(uri, contentValue, null, null) > 0
                 }
             }
-            uri.scheme == "content" -> {
+            "content" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-                        && DocumentsContract.isDocumentUri(context, uri)) {
+                    && DocumentsContract.isDocumentUri(context, uri)) {
                     DocumentsContract.renameDocument(context.contentResolver, uri, newFile) != null
                 } else {
                     val contentValue = ContentValues()
@@ -183,15 +178,16 @@ fun renameFile(oldFile: String, newFile: String, context: Context): Boolean {
 fun createFileAtPath(filePath: String, increment: Boolean, context: Context): String {
     return if (isUriPath(filePath)) {
         val uri = Uri.parse(filePath)
-        when {
-            uri.scheme == "file" -> {
+        when (uri.scheme) {
+            "file" -> {
                 createLocalFile(uri.path ?: filePath, increment)
             }
-            uri.scheme == "content" -> {
+            "content" -> {
                 val parcelFileDescriptor = context.contentResolver.openFileDescriptor(uri, "w")
                 if (parcelFileDescriptor == null) {
                     throw IOException(FNC)
                 } else {
+                    parcelFileDescriptor.close()
                     filePath
                 }
             }
@@ -214,11 +210,11 @@ fun createLocalFile(filePath: String, increment: Boolean): String {
 fun allocateFile(filePath: String, contentLength: Long, context: Context) {
     return if (isUriPath(filePath)) {
         val uri = Uri.parse(filePath)
-        when {
-            uri.scheme == "file" -> {
+        when (uri.scheme) {
+            "file" -> {
                 allocateFile(File(uri.path ?: filePath), contentLength)
             }
-            uri.scheme == "content" -> {
+            "content" -> {
                 val parcelFileDescriptor = context.contentResolver.openFileDescriptor(uri, "w")
                 if (parcelFileDescriptor == null) {
                     throw IOException(FILE_ALLOCATION_ERROR)

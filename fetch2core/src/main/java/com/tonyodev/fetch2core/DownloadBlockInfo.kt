@@ -66,7 +66,6 @@ class DownloadBlockInfo : DownloadBlock {
 
     companion object CREATOR : Parcelable.Creator<DownloadBlockInfo> {
 
-        @Suppress("UNCHECKED_CAST")
         override fun createFromParcel(source: Parcel): DownloadBlockInfo {
             val downloadBlockInfo = DownloadBlockInfo()
             downloadBlockInfo.downloadId = source.readInt()

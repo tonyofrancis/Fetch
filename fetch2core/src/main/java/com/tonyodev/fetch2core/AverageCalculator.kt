@@ -7,7 +7,7 @@ class AverageCalculator @JvmOverloads constructor(
          * and the newer value added. Works like a simple cache. The default value is 0 indicating
          * that values are not discarded.
          * */
-        val discardLimit: Int = 0) {
+        private val discardLimit: Int = 0) {
 
     private val defaultValueListSize = 16
     private val defaultIndexPosition = -1
@@ -30,7 +30,7 @@ class AverageCalculator @JvmOverloads constructor(
         }
         endIndex += 1
         if (endIndex == 0) {
-            startIndex = endIndex
+            startIndex = 0
         }
         valueList[endIndex] = value
     }

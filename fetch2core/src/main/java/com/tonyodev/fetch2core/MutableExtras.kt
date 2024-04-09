@@ -96,8 +96,7 @@ open class MutableExtras(protected val mutableData: MutableMap<String, String> =
         if (javaClass != other?.javaClass) return false
         if (!super.equals(other)) return false
         other as MutableExtras
-        if (mutableData != other.mutableData) return false
-        return true
+        return mutableData == other.mutableData
     }
 
     override fun hashCode(): Int {

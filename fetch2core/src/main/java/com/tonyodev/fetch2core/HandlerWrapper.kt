@@ -10,11 +10,11 @@ class HandlerWrapper(val namespace: String,
     private val lock = Any()
     private var closed = false
     private var usageCounter = 0
-    private val handler = backgroundHandler ?: {
+    private val handler = backgroundHandler ?: run {
         val handlerThread = HandlerThread(namespace)
         handlerThread.start()
         Handler(handlerThread.looper)
-    }()
+    }
     private var workerTaskHandler: Handler? = null
 
     fun post(runnable: () -> Unit) {
@@ -113,7 +113,7 @@ class HandlerWrapper(val namespace: String,
                 try {
                     handler.removeCallbacksAndMessages(null)
                     handler.looper.quit()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
 
                 }
                 try {
@@ -121,7 +121,7 @@ class HandlerWrapper(val namespace: String,
                     workerTaskHandler = null
                     workerHandler?.removeCallbacksAndMessages(null)
                     workerHandler?.looper?.quit()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
 
                 }
             }
@@ -132,8 +132,7 @@ class HandlerWrapper(val namespace: String,
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as HandlerWrapper
-        if (namespace != other.namespace) return false
-        return true
+        return namespace == other.namespace
     }
 
     override fun hashCode(): Int {

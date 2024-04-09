@@ -96,8 +96,8 @@ fun getIncrementedFileIfOriginalExists(originalPath: String): File {
 
 fun createFile(file: File) {
     if (!file.exists()) {
-        if (file.parentFile != null && !file.parentFile.exists()) {
-            if (file.parentFile.mkdirs()) {
+        if (file.parentFile != null && !file.parentFile!!.exists()) {
+            if (file.parentFile!!.mkdirs()) {
                 if (!file.createNewFile()) throw FileNotFoundException("$file $FILE_NOT_FOUND")
             } else {
                 throw FileNotFoundException("$file $FILE_NOT_FOUND")
@@ -115,8 +115,8 @@ fun getFileTempDir(context: Context): String {
 fun getFile(filePath: String): File {
     val file = File(filePath)
     if (!file.exists()) {
-        if (file.parentFile != null && !file.parentFile.exists()) {
-            if (file.parentFile.mkdirs()) {
+        if (file.parentFile != null && !file.parentFile!!.exists()) {
+            if (file.parentFile!!.mkdirs()) {
                 file.createNewFile()
             }
         } else {
@@ -134,11 +134,11 @@ fun writeLongToFile(filePath: String, data: Long) {
             randomAccessFile.seek(0)
             randomAccessFile.setLength(0)
             randomAccessFile.writeLong(data)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         } finally {
             try {
                 randomAccessFile.close()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
             }
         }
     }
@@ -151,11 +151,11 @@ fun getLongDataFromFile(filePath: String): Long? {
         val randomAccessFile = RandomAccessFile(file, "r")
         try {
             data = randomAccessFile.readLong()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         } finally {
             try {
                 randomAccessFile.close()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
             }
         }
     }
@@ -289,7 +289,7 @@ fun acceptRanges(
     )
     val contentLength = getContentLengthFromHeader(headers, -1L)
     val acceptsRanges = code == HttpURLConnection.HTTP_PARTIAL || acceptRangeValue == "bytes"
-    return (contentLength > -1L && acceptsRanges) || (contentLength > -1L && transferValue?.toLowerCase() != "chunked")
+    return (contentLength > -1L && acceptsRanges) || (contentLength > -1L && transferValue?.lowercase() != "chunked")
 }
 
 fun getContentLengthFromHeader(headers: Map<String, List<String>>, defaultValue: Long): Long {
@@ -406,7 +406,7 @@ fun copyStreamToString(inputStream: InputStream?, closeStream: Boolean = true): 
             if (closeStream) {
                 try {
                     bufferedReader?.close()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
             }
         }

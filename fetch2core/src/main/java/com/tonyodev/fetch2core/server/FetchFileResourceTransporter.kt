@@ -51,7 +51,7 @@ class FetchFileResourceTransporter(private val client: Socket = Socket()) : File
         }
     }
 
-    override fun receiveFileRequest(): FileRequest? {
+    override fun receiveFileRequest(): FileRequest {
         return synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
@@ -77,7 +77,7 @@ class FetchFileResourceTransporter(private val client: Socket = Socket()) : File
             if ((rangeStart < 0L || rangeStart > rangeEnd) && rangeEnd > -1) {
                 rangeStart = 0L
             }
-            if (rangeEnd < 0L || rangeEnd < rangeStart) {
+            if (rangeEnd < 0L) {
                 rangeEnd = -1L
             }
             if (page < -1) {
@@ -110,11 +110,11 @@ class FetchFileResourceTransporter(private val client: Socket = Socket()) : File
         }
     }
 
-    override fun receiveFileResponse(): FileResponse? {
+    override fun receiveFileResponse(): FileResponse {
         return synchronized(lock) {
             throwExceptionIfClosed()
             throwIfNotConnected()
-            val json = JSONObject(dataInput.readUTF().toLowerCase())
+            val json = JSONObject(dataInput.readUTF().lowercase())
             val status = json.getInt(FIELD_STATUS)
             val requestType = json.getInt(FIELD_TYPE)
             val connection = json.getInt(FIELD_CONNECTION)
@@ -181,15 +181,15 @@ class FetchFileResourceTransporter(private val client: Socket = Socket()) : File
                 closed = true
                 try {
                     dataInput.close()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
                 try {
                     dataOutput.close()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
                 try {
                     client.close()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
             }
         }

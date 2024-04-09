@@ -164,8 +164,7 @@ open class Extras(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as Extras
-        if (data != other.data) return false
-        return true
+        return data == other.data
     }
 
     override fun hashCode(): Int {

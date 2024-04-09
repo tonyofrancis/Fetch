@@ -9,7 +9,7 @@ open class DefaultStorageResolver(
         /* Context*/
         protected val context: Context,
         /**The default temp directory used by Fetch for Parallel Downloaders.*/
-        protected val defaultTempDir: String) : StorageResolver {
+        private val defaultTempDir: String) : StorageResolver {
 
     override fun createFile(file: String, increment: Boolean): String {
         return createFileAtPath(file, increment, context)
