@@ -52,18 +52,19 @@ in the Manifest.
 How to use Fetch
 ----------------
 
-Using Fetch is easy! Just add the Gradle dependency to your application's build.gradle file.
+Using Fetch is easy! Just add the following to your project's build.gradle file.
+```groovy
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
 
-```java
-implementation "com.tonyodev.fetch2:fetch2:3.0.12"
+Add the Gradle dependency to your application's build.gradle file.
+```groovy
+implementation "androidx.tonyodev.fetch2:xfetch2:3.2.3"
 ```
-Androidx use:
-```java
-implementation "androidx.tonyodev.fetch2:xfetch2:3.2.2"
-```
-OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
-- fetch2-3.2.2.aar
-- fetch2core-3.2.2.aar
 
 Next, get an instance of Fetch and request a download.
 
@@ -227,16 +228,9 @@ to download requests. Add the following Gradle dependency to your application's 
 to use the OkHttp Downloader instead. You can create your custom downloaders
 if necessary. See the Java docs for details.
 
-```java
-implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:3.0.12"
+```groovy
+implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.2.3"
 ```
-Androidx use:
-```java
-implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.2.2"
-```
-OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
-- fetch2core-3.2.2.aar
-- fetch2okhttp-3.2.2.aar
 
 Set the OkHttp Downloader for Fetch to use.
 ```java
@@ -256,16 +250,9 @@ RxFetch
 If you would like to take advantage of RxJava2 features when using Fetch,
 add the following gradle dependency to your application's build.gradle file.
 
-```java
-implementation "com.tonyodev.fetch2rx:fetch2rx:3.0.12"
+```groovy
+implementation "androidx.tonyodev.fetch2rx:xfetch2rx:3.2.3"
 ```
-Androidx use:
-```java
-implementation "androidx.tonyodev.fetch2rx:xfetch2rx:3.2.2"
-```
-OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
-- fetch2core-3.2.2.aar
-- fetch2rx-3.2.2.aar
 
 RxFetch makes it super easy to enqueue download requests and query downloads using rxJava2 functional methods.
 
@@ -299,16 +286,10 @@ on another device. See the sample app for more information. Wiki on FetchFileSer
 added in the coming days.
 
 Start using FetchFileServer by adding the gradle dependency to your application's build.gradle file.
-```java
-implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:3.0.12"
+ 
+```groovy
+implementation "androidx.tonyodev.fetch2fileserver:xfetch2fileserver:3.2.3"
 ```
-Androidx use: 
-```java
-implementation "androidx.tonyodev.fetch2fileserver:xfetch2fileserver:3.2.2"
-```
-OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
-- fetch2core-3.2.2.aar
-- fetch2fileserver-3.2.2.aar
 
 Start a FetchFileServer instance and add resource files that it can serve to connected clients.
 ```java
@@ -415,16 +396,10 @@ Fetch1 Migration
 ----------------
 
 Migrate downloads from Fetch1 to Fetch2 using the migration assistant. Add the following gradle dependency to your application's build.gradle file.
-```java
-implementation "com.tonyodev.fetchmigrator:fetchmigrator:3.0.12"
+
+```groovy
+implementation "androidx.tonyodev.fetchmigrator:xfetchmigrator:3.2.3"
 ```
-Androidx use:
-```java
-implementation "androidx.tonyodev.fetchmigrator:xfetchmigrator:3.2.2"
-```
-OR download **required binaries from** [TAG](https://github.com/Kutikov/fetch2-android/releases/tag/3.2.2-android14)
-- fetch2core-3.2.2.aar
-- fetchmigrator-3.2.2.aar
 
 Then run the Migrator.
 
