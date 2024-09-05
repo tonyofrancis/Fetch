@@ -74,7 +74,7 @@ class PriorityListProcessorImpl(private val handlerWrapper: HandlerWrapper,
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.registerReceiver(priorityBackoffResetReceiver, IntentFilter(ACTION_QUEUE_BACKOFF_RESET), Context.RECEIVER_NOT_EXPORTED)
         }
-        else{
+        else {
             context.registerReceiver(priorityBackoffResetReceiver, IntentFilter(ACTION_QUEUE_BACKOFF_RESET))
         }
     }

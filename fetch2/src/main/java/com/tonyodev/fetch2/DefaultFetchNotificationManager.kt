@@ -56,7 +56,7 @@ abstract class DefaultFetchNotificationManager(context: Context) : FetchNotifica
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.registerReceiver(broadcastReceiver, IntentFilter(notificationManagerAction), Context.RECEIVER_NOT_EXPORTED)
         }
-        else{
+        else {
             context.registerReceiver(broadcastReceiver, IntentFilter(notificationManagerAction))
         }
     }

@@ -54,7 +54,7 @@ class NetworkInfoProvider(private val context: Context,
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     context.registerReceiver(networkChangeBroadcastReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION), Context.RECEIVER_EXPORTED)
                 }
-                else{
+                else {
                     context.registerReceiver(networkChangeBroadcastReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
                 }
                 broadcastRegistered = true
