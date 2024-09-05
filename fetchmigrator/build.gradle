@@ -68,8 +68,8 @@ dependencies {
 ext {
     releaseName = 'tonyofrancis-fetch'
     releaseDescription = 'Migration Assistant for Fetch'
-    releaseGroupId = 'androidx.tonyodev.fetchmigrator'
-    releaseArtifactId = 'xfetchmigrator'
+    releaseGroupId = 'com.github.tonyofrancis'
+    releaseArtifactId = 'fetchmigrator'
     releaseVersion = library_version
 }
 

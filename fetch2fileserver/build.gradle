@@ -71,8 +71,8 @@ dependencies {
 ext {
     releaseName = 'tonyofrancis-fetch'
     releaseDescription = 'Fetch File Server'
-    releaseGroupId = 'androidx.tonyodev.fetch2fileserver'
-    releaseArtifactId = 'xfetch2fileserver'
+    releaseGroupId = 'com.github.tonyofrancis'
+    releaseArtifactId = 'fetch2fileserver'
     releaseVersion = library_version
 }
 

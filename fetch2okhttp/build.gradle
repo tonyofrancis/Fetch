@@ -76,8 +76,8 @@ dependencies {
 ext {
     releaseName = 'tonyofrancis-fetch'
     releaseDescription = 'OkHttp Downloader for Fetch2'
-    releaseGroupId = 'androidx.tonyodev.fetch2okhttp'
-    releaseArtifactId = 'xfetch2okhttp'
+    releaseGroupId = 'com.github.tonyofrancis'
+    releaseArtifactId = 'fetch2okhttp'
     releaseVersion = library_version
 }
 

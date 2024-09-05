@@ -69,8 +69,8 @@ dependencies {
 ext {
     releaseName = 'tonyofrancis-fetch'
     releaseDescription = 'RxJava extensions for Fetch2'
-    releaseGroupId = 'androidx.tonyodev.fetch2rx'
-    releaseArtifactId = 'xfetch2rx'
+    releaseGroupId = 'com.github.tonyofrancis'
+    releaseArtifactId = 'fetch2rx'
     releaseVersion = library_version
 }
 

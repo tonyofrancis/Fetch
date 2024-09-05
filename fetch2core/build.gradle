@@ -66,8 +66,8 @@ dependencies {
 ext {
     releaseName = 'tonyofrancis-fetch'
     releaseDescription = 'Fetch Core Library'
-    releaseGroupId = 'androidx.tonyodev.fetch2core'
-    releaseArtifactId = 'xfetch2core'
+    releaseGroupId = 'com.github.tonyofrancis'
+    releaseArtifactId = 'fetch2core'
     releaseVersion = library_version
 }
 
