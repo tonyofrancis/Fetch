@@ -16,13 +16,13 @@ import java.util.Objects;
 public final class Data {
 
     public static final String[] sampleUrls = new String[]{
-            "http://speedtest.ftp.otenet.gr/files/test100Mb.db",
+            "https://gist.githubusercontent.com/gcollazo/884a489a50aec7b53765405f40c6fbd1/raw/49d1568c34090587ac82e80612a9c350108b62c5/sample.json",
             "https://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_720p_stereo.avi",
-            "http://media.mongodb.org/zips.json",
+            "https://media.mongodb.org/zips.json",
             "http://www.exampletonyotest/some/unknown/123/Errorlink.txt",
             "https://upload.wikimedia.org/wikipedia/commons/6/64/Android_logo_2019_%28stacked%29.svg",
             "https://upload.wikimedia.org/wikipedia/commons/6/66/Android_robot.png",
-            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"};
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"};
 
     private Data() {
 
@@ -63,8 +63,8 @@ public final class Data {
     @NonNull
     public static List<Request> getGameUpdates(Context context) {
         final List<Request> requests = new ArrayList<>();
-        final String url = "http://speedtest.ftp.otenet.gr/files/test100k.db";
-        for (int i = 0; i < 10; i++) {
+        final String url = "https://gist.githubusercontent.com/gcollazo/884a489a50aec7b53765405f40c6fbd1/raw/49d1568c34090587ac82e80612a9c350108b62c5/sample.json";
+        for (int i = 0; i < 3; i++) {
             final String filePath = getSaveDir(context) + "/gameAssets/" + "asset_" + i + ".asset";
             final Request request = new Request(url, filePath);
             request.setPriority(Priority.HIGH);
