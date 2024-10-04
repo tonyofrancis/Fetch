@@ -428,7 +428,7 @@ class ParallelFileDownloaderImpl(private val initialDownload: Download,
                     downloadBlock.downloadedBytes = fileSlice.downloaded
                     downloadBlock.startByte = fileSlice.startBytes
                     downloadBlock.endByte = fileSlice.endBytes
-                    val downloadRequest = getRequestForDownload(download = downloadInfo, rangeStart = fileSlice.startBytes + fileSlice.downloaded, segment = fileSlice.position + 1)
+                    val downloadRequest = getRequestForDownload(download = downloadInfo, rangeStart = fileSlice.startBytes + fileSlice.downloaded, rangeEnd = fileSlice.endBytes, segment = fileSlice.position + 1)
                     var downloadResponse: Downloader.Response? = null
                     var saveRandomAccessFile: RandomAccessFile? = null
                     try {
