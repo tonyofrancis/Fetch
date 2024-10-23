@@ -4,29 +4,35 @@ package com.tonyodev.fetch2core
 
 import android.content.Context
 import android.net.ConnectivityManager
-
+import android.net.NetworkCapabilities
+import android.os.Build
 
 fun Context.isOnWiFi(): Boolean {
-    val manager = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val activeNetworkInfo = manager.activeNetworkInfo
-    return if (activeNetworkInfo != null && activeNetworkInfo.isConnected) {
-        activeNetworkInfo.type == ConnectivityManager.TYPE_WIFI
+    val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val network = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
     } else {
-        false
+        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected && activeNetworkInfo.type == ConnectivityManager.TYPE_WIFI
     }
 }
 
 fun Context.isOnMeteredConnection(): Boolean {
-    val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    return cm.isActiveNetworkMetered
+    val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    return connectivityManager.isActiveNetworkMetered
 }
 
 fun Context.isNetworkAvailable(): Boolean {
-    val manager = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val activeNetworkInfo = manager.activeNetworkInfo
-    var connected = activeNetworkInfo != null && activeNetworkInfo.isConnected
-    if (!connected) {
-        connected = manager.allNetworkInfo.any { it.isConnected }
+    val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val network = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    } else {
+        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected
     }
-    return connected
 }
