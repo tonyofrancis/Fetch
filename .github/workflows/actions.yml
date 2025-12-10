@@ -1,0 +1,65 @@
+name: Android CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: 'gradle'
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" "platforms;android-28" "platforms;android-27" "platforms;android-26" "platforms;android-21" "extras;android;m2repository" "extras;google;m2repository"
+          sdkmanager --list_installed
+      
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      
+      - name: Build
+        run: ./gradlew clean assemble
+      
+      - name: Test
+        run: ./gradlew test
+      
+      - name: Assemble Android Test
+        run: ./gradlew assembleAndroidTest
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: '**/build/outputs/*'
+          retention-days: 7
+      
+      - name: Start emulator
+        run: |
+          echo no | avdmanager create avd -n test -t android-21 --abi armeabi-v7a
+          emulator -avd test -no-window &
+          adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+          adb shell input keyevent 82 &
+      
+      - name: Run emulator tests
+        run: |
+          adb shell uiautomator run com.android.tradefed.uiautomator.UiAutomatorTestRunner -c com.android.tradefed.uiautomator.UiAutomatorTestRunner.TestPackage
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/build/reports/tests/**'
+          retention-days: 7
