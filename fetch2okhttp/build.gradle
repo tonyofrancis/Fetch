@@ -4,22 +4,10 @@ apply plugin: 'kotlin-android'
 
 //apply plugin: 'com.novoda.bintray-release'
 
-buildscript {
-    apply from: '../versions.gradle'
-    repositories {
-        google()
-        jcenter()
-    }
-    dependencies {
-        classpath "com.android.tools.build:gradle:$gradle_tools_version"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-//        classpath "com.novoda:bintray-release:$novoda_bintray_version"
-    }
-}
 
 android {
-    compileSdkVersion library_compile_version
-    buildToolsVersion library_build_tools_version
+    compileSdk library_compile_version
+    namespace "com.tonyodev.fetch2okhttp"
 
     defaultConfig {
         minSdkVersion library_min_version
@@ -48,27 +36,24 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-        androidTest.java.srcDirs += 'src/androidTest/kotlin'
-    }
+
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
-    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api "com.squareup.okhttp3:okhttp:$okhttp_version"
     api "com.squareup.okhttp3:okhttp-urlconnection:$okhttp_url_version"
     api project(':fetch2core')
 
+    implementation "androidx.appcompat:appcompat:$app_compat_version"
     testImplementation "junit:junit:$junit_version"
-    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
+    androidTestImplementation "androidx.test.ext:junit:$test_runner_version"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
 }
 
 //publish {
@@ -80,6 +65,3 @@ dependencies {
 //    website = 'https://github.com/tonyofrancis/fetch'
 //}
 
-tasks.withType(Javadoc).all {
-    enabled = false
-}

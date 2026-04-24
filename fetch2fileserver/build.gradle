@@ -6,22 +6,9 @@ apply plugin: 'kotlin-kapt'
 
 //apply plugin: 'com.novoda.bintray-release'
 
-buildscript {
-    apply from: '../versions.gradle'
-    repositories {
-        google()
-        jcenter()
-    }
-    dependencies {
-        classpath "com.android.tools.build:gradle:$gradle_tools_version"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-//        classpath "com.novoda:bintray-release:$novoda_bintray_version"
-    }
-}
-
 android {
-    compileSdkVersion library_compile_version
-
+    compileSdk library_compile_version
+    namespace "com.tonyodev.fetch2fileserver"
     defaultConfig {
         minSdkVersion library_min_version
         targetSdkVersion library_target_version
@@ -44,28 +31,26 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-        androidTest.java.srcDirs += 'src/androidTest/kotlin'
-    }
+
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "com.android.support:appcompat-v7:$android_support_version"
-    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    kapt "android.arch.persistence.room:compiler:$room_version"
-    api "android.arch.persistence.room:runtime:$room_version"
+
+
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt ("androidx.room:room-compiler:$room_version")
 
     api project(':fetch2core')
 
+    implementation "androidx.appcompat:appcompat:$app_compat_version"
     testImplementation "junit:junit:$junit_version"
-    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
+    androidTestImplementation "androidx.test.ext:junit:$test_runner_version"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
 }
 
 //publish {
@@ -77,6 +62,3 @@ dependencies {
 //    website = 'https://github.com/tonyofrancis/fetch'
 //}
 
-tasks.withType(Javadoc).all {
-    enabled = false
-}

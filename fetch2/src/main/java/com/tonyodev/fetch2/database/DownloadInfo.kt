@@ -1,9 +1,13 @@
 package com.tonyodev.fetch2.database
 
-import android.arch.persistence.room.*
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.Ignore
+import androidx.room.Index
+import androidx.room.PrimaryKey
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2.util.*
 import com.tonyodev.fetch2.NetworkType

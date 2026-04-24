@@ -3,8 +3,9 @@ package com.tonyodev.fetchapp;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
-import android.support.annotation.NonNull;
 import android.webkit.MimeTypeMap;
+
+import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.io.IOException;

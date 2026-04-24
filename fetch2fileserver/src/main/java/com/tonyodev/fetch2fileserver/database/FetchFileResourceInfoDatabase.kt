@@ -1,7 +1,7 @@
 package com.tonyodev.fetch2fileserver.database
 
-import android.arch.persistence.room.*
 import android.content.Context
+import androidx.room.Room
 import java.io.Closeable
 
 class FetchFileResourceInfoDatabase(context: Context,
